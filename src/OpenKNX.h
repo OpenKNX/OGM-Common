@@ -1,7 +1,5 @@
 #pragma once
-
-#include <Arduino.h>
-
+#include <knx.h>
 
 class OpenKNX
 {
@@ -10,6 +8,7 @@ class OpenKNX
     // it ensures, that only correct applicatins can be loaded from flash
     static void knxRead(uint8_t openKnxId, uint8_t applicationNumber, uint8_t applicationVersion, uint8_t firmwareRevision);
 
+  private:
     // this function is called during load of knx data from flash and cecks for version compatibility
     static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t *hardwareType);
 };

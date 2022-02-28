@@ -1,5 +1,3 @@
-//#include <knx.h>
-#include "src/extlibs/knx/knx.h"
 #include "OpenKNX.h"
 
 VersionCheckResult OpenKNX::versionCheck(uint16_t manufacturerId, uint8_t *hardwareType)
