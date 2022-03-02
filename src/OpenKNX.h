@@ -10,5 +10,5 @@ class OpenKNX
 
   private:
     // this function is called during load of knx data from flash and cecks for version compatibility
-    static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t *hardwareType);
+    static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t *hardwareType, uint16_t firmwareVersion);
 };

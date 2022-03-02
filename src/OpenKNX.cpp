@@ -1,6 +1,6 @@
 #include "OpenKNX.h"
 
-VersionCheckResult OpenKNX::versionCheck(uint16_t manufacturerId, uint8_t *hardwareType)
+VersionCheckResult OpenKNX::versionCheck(uint16_t manufacturerId, uint8_t *hardwareType, uint16_t firmwareVersion)
 {
     VersionCheckResult check = FlashAllInvalid;
     if (manufacturerId == 0x00FA)
@@ -31,7 +31,7 @@ void OpenKNX::knxRead(uint8_t openKnxId, uint8_t applicationNumber, uint8_t appl
     uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, openKnxId, applicationNumber, applicationVersion, 0x00};
 
     // first setup flash version check
-    knx.bau().addVersionCheckCallback(versionCheck);
+    knx.bau().versionCheckCallback(versionCheck);
     // set correct hardware type for flash compatibility check
     knx.bau().deviceObject().hardwareType(hardwareType);
     // read flash data
