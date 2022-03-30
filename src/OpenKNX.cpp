@@ -39,6 +39,7 @@ void OpenKNX::knxRead(uint8_t openKnxId, uint8_t applicationNumber, uint8_t appl
     // set hardware type again, in case an other hardware type was deserialized from flash
     knx.bau().deviceObject().hardwareType(hardwareType);
     // set firmware version als user info (PID_VERSION)
-    // 5 bit major, 5 bit minor, 6 bit revision
-    knx.bau().deviceObject().version(((applicationVersion & 0xF0) << 7) | ((applicationVersion & 0xF) << 6) | (firmwareRevision & 0x3F));
+    // 5 bit revision, 5 bit major, 6 bit minor
+    // output in ETS as [revision] major.minor
+    knx.bau().deviceObject().version(((firmwareRevision & 0x1F) << 11) | ((applicationVersion & 0xF0) << 3) | (applicationVersion & 0x0F));
 }
