@@ -26,7 +26,7 @@ VersionCheckResult OpenKNX::versionCheck(uint16_t manufacturerId, uint8_t *hardw
     return check;
 }
 
-void OpenKNX::knxRead(uint8_t openKnxId, uint8_t applicationNumber, uint8_t applicationVersion, uint8_t firmwareRevision)
+void OpenKNX::knxRead(uint8_t openKnxId, uint8_t applicationNumber, uint8_t applicationVersion, uint8_t firmwareRevision, const char* OrderNo)
 {
     uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, openKnxId, applicationNumber, applicationVersion, 0x00};
 
@@ -42,4 +42,9 @@ void OpenKNX::knxRead(uint8_t openKnxId, uint8_t applicationNumber, uint8_t appl
     // 5 bit revision, 5 bit major, 6 bit minor
     // output in ETS as [revision] major.minor
     knx.bau().deviceObject().version(((firmwareRevision & 0x1F) << 11) | ((applicationVersion & 0xF0) << 2) | (applicationVersion & 0x0F));
+
+    if(OrderNo)
+    {
+        knx.orderNumber((const uint8_t*)OrderNo);    //set the OrderNumber
+    }
 }
