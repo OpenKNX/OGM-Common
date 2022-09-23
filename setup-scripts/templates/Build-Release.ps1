@@ -80,6 +80,11 @@ Copy-Item ../OGM-Common/setup-scripts/reusable/Readme-Release.txt release/
 Copy-Item ../OGM-Common/setup-scripts/reusable/Build-knxprod.ps1 release/
 Copy-Item scripts/Upload-Firmware*.ps1 release/
 
+# add optional files
+if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
+    Copy-Item scripts/Readme-Hardware.html release/
+}
+
 # cleanup
 Remove-Item "release/$targetName.knxprod"
 

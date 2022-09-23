@@ -47,7 +47,9 @@ else
     Write-Host "Kein RP2040 gefunden!"
     Write-Host 
     Write-Host "Versuche bitte die alternative Setup-Methode: Den RP2040 im BOOTSEL-Modus zu starten"
-    Write-Host "Dazu das Geraet stromlos machen (USB-Stecker ziehen und vom KNX trennen),"
+    Write-Host "Falls die Hardware eine Reset-Taste hat, dann erst die BOOTSEL-Taste drücken und halten,"
+    Write-Host "und dann zusaetzlich die Reset-Taste druecken. Dann beide Tasten loslassen."
+    Write-Host "Ohen Reset-Taste das Geraet stromlos machen (USB-Stecker ziehen und vom KNX trennen),"
     Write-Host "Danach die BOOTSEL-Taste druecken und gleichzeitig USB mit dem Recner verbinden."
     Write-Host "Jetzt befindet sich das Geraet im Bootmodus, die BOOTSEL-Taste kann jetzt losgelassen werden."
     Write-Host "Anschliessend das Skript erneut starten."
