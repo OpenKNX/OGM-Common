@@ -1,28 +1,32 @@
-Import-Module BitsTransfer
+# Import-Module BitsTransfer
 
 $firmwareName = $args[0]
 
-Write-Host Suche RP2040 als Disk-Laufwerk...
+Write-Host "Suche RP2040 im BOOTSEL-Modus (das kann einige Zeit dauern)..."
 $device=$(Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -match "RPI-RP2" })
 if (!$device)
 {
-    Write-Host Nicht gefunden, Suche COM-Port fuer RP2040...
+    Write-Host "Keinen RP2040 im BOOTSEL-Modus gefunden."
+    Write-Host "Alternative: Suche COM-Port fuer RP2040 (auch das kann etwas dauern)..."
     $portList = get-pnpdevice -class Ports
     if ($portList) {
         foreach($usbDevice in $portList) {
             if ($usbDevice.Present) {
-                $isCom = $usbDevice.Name -match "USB.*\(COM(\d{1,3})\)"
-                if($isCom)
+                $isPico = $usbDevice.InstanceId.StartsWith("USB\VID_2E8A")
+                # $isCom = $usbDevice.Name -match "USB.*\((COM\d{1,3})\)"
+                $isCom = $usbDevice.Name -match "COM\d{1,3}"
+                if($isPico)
                 {
-                    Write-Host Gefunden $port
+                    # $port = $Matches[1]
                     $port = $Matches[0]
+                    Write-Host "COM-Port Gefunden: $port"
                     break
                 }
             }
         }
         if($port)
         {
-            Write-Host Verwende $port zum neustart vom RP2040
+            Write-Host "Versuche den RP2040 ueber Port $port in den BOOTSEL-Modus zu versetzen..."
             $serial = new-Object System.IO.Ports.SerialPort $port,1200,None,8,1
             try { $serial.Open()} catch {}
             $serial.Close()
@@ -35,7 +39,7 @@ if (!$device)
 }
 if ($device)
 {
-    Write-Host Installiere firmware...
+    Write-Host "RP2040 gefunden, installiere Firmware..."
     # There are different options how to copy a large file, but most of them have side effects
     
     # the following one prints very often errors AFTER the file was copied 
@@ -61,12 +65,12 @@ else
     Write-Host 
     Write-Host "Kein RP2040 gefunden!"
     Write-Host 
-    Write-Host "Versuche bitte die alternative Setup-Methode: Den RP2040 im BOOTSEL-Modus zu starten"
-    Write-Host "Falls die Hardware eine Reset-Taste hat, dann erst die BOOTSEL-Taste drücken und halten,"
+    Write-Host "Versuche bitte die manuelle Setup-Methode: Den RP2040 selber im BOOTSEL-Modus zu starten"
+    Write-Host "Falls die Hardware eine Reset-Taste hat, dann erst die BOOTSEL-Taste drÃ¼cken und halten,"
     Write-Host "und dann zusaetzlich die Reset-Taste druecken. Dann beide Tasten loslassen."
-    Write-Host "Ohen Reset-Taste das Geraet stromlos machen (USB-Stecker ziehen und vom KNX trennen),"
+    Write-Host "Ohne Reset-Taste das Geraet stromlos machen (USB-Stecker ziehen und vom KNX trennen),"
     Write-Host "Danach die BOOTSEL-Taste druecken und gleichzeitig USB mit dem Recner verbinden."
-    Write-Host "Jetzt befindet sich das Geraet im Bootmodus, die BOOTSEL-Taste kann jetzt losgelassen werden."
+    Write-Host "Jetzt befindet sich das Geraet im BOOTSEL-Modus, die BOOTSEL-Taste kann jetzt losgelassen werden."
     Write-Host "Anschliessend das Skript erneut starten."
     timeout /T 60     
 }
