@@ -24,8 +24,8 @@
 
 
 # set product names, allows mapping of (devel) name in Project to a more consistent name in release
-$sourceName="Logikmodul"  # change this
-$targetName="LogicModule" # change this
+$sourceName="Templatemodul"  # change this
+$targetName="TemplateModule" # change this
 
 # Release indication, set according names for Release or Beta
 $releaseIndication = $args[0]
