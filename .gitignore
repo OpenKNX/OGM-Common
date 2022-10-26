@@ -6,3 +6,5 @@
 **/*.knxprod
 Restart.txt
 *.cppbak
+**/knxprod.h
+**/hardware.h
