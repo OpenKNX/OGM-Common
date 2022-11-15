@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <Arduino.h>
+#include <hardware.h>
 
 // #ifndef BOARD_ENDUSER
 // // Board specific definietions
