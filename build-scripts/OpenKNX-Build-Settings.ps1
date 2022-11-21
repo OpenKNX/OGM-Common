@@ -3,13 +3,29 @@
 $settings = @{}
 
 # internal project name in project
-$settings.sourceName="Templatemodul"
+$settings.sourceName = $args[1]    # i.e. "Templatemodul"
 # public project name i.e. in github  
-$settings.targetName="TemplateModule" 
+$settings.targetName = $args[2]    # i.e. "TemplateModule" 
 
 # the following properties might be derived, but also defined
-$settings.knxprod="src/{0}.h" -f $settings.sourceName
+if (!$settings.targetName) {
+    # if we leave target name empty, source an target name are identical
+    $settings.targetName = $settings.sourceName
+}
+$settings.knxprod = "src/{0}.h" -f $settings.sourceName
 # the name of the hardware definition header file 
-$settings.hardware="src/{0}Hardware.h" -f $settings.sourceName
+$settings.hardware = "src/{0}Hardware.h" -f $settings.sourceName
+$settings.releaseIndication = $args[0]
+if ($settings.releaseIndication) {
+    # name of the release (Release, Beta, Big, ...)
+    $settings.appRelease = $settings.releaseIndication
+    # main xml file name will be accessed with the following name (default is i.e. <sourceName>-Release.xml)
+    $settings.releaseName = "$($settings.sourceName)-$($settings.releaseIndication)"
+} else {
+    # name of default release if you do not specify any specific release
+    $settings.appRelease = "Beta"
+    # main xml file name will be accessed with the following name (default is i.e. <sourceName>.xml)
+    $settings.releaseName = "$($settings.sourceName)"
+}
 
 Return $settings

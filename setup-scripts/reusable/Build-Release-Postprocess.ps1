@@ -2,26 +2,15 @@
 
 
 # get all definitions for this project
-$settings = scripts/OpenKNX-Build-Settings.ps1
-# # set product names, allows mapping of (devel) name in Project to a more consistent name in release
-# $sourceName=$args[0]
-# $targetName=$args[1]
-
-# Release indication, set according names for Release or Beta
-$releaseIndication = $args[0]
-if ($releaseIndication) {
-    $appRelease=$releaseIndication
-} else {
-    $appRelease="Beta"
-}
+$settings = scripts/OpenKNX-Build-Settings.ps1 $args[0]
 
 # add necessary scripts
-Copy-Item ../OGM-Common/setup-scripts/reusable/Readme-Release.txt release/
-Copy-Item ../OGM-Common/setup-scripts/reusable/Build-knxprod.ps1 release/
+Copy-Item lib/OGM-Common/setup-scripts/reusable/Readme-Release.txt release/
+Copy-Item lib/OGM-Common/setup-scripts/reusable/Build-knxprod.ps1 release/
 Copy-Item scripts/Upload-Firmware*.ps1 release/
 
 # here we might need a better switch in future
-if ($releaseIndication -eq "Big") 
+if ($($settings.releaseIndication) -eq "Big") 
 {
     Remove-Item release/Upload-Firmware-*SAMD*.ps1
 }
@@ -49,6 +38,6 @@ if ($appRev -gt 0) {
 # create package 
 Compress-Archive -Path release/* -DestinationPath Release.zip
 Remove-Item -Recurse release/*
-Move-Item Release.zip "release/$($settings.targetName)-$appRelease-$appVersion.zip"
+Move-Item Release.zip "release/$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
 
-Write-Host "Release $($settings.targetName)-$appRelease-$appVersion successfully created!"
+Write-Host "Release $($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!"

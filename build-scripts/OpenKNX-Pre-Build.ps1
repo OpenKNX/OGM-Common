@@ -2,8 +2,10 @@
 
 # get all definitions for this project
 $settings = scripts/OpenKNX-Build-Settings.ps1
-# $knxprod = $args[0]
-# $hardware = $args[1]
+# Output current setting
+# Write-Host "Provided OpenKNX-Build-Settings:"
+# $settings
+# Write-Host "--------------------------------"
 
 Write-Host "OpenKNX pre-build-steps:"
 $headerExists = Test-Path -PathType Leaf $settings.knxprod
