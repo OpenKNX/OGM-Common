@@ -27,7 +27,7 @@
 # $settings = scripts/OpenKNX-Build-Settings.ps1
 
 # execute generic pre-build steps
-../OGM-Common/setup-scripts/reusable/Build-Release-Preprocess.ps1 $args[0]
+lib/OGM-Common/scripts/setup/reusable/Build-Release-Preprocess.ps1 $args[0]
 if (!$?) { exit 1 }
 
 # build firmware based on generated headerfile 
@@ -35,20 +35,20 @@ if (!$?) { exit 1 }
 # see comment in Build-Step.ps1 for argument description
 
 # Example call, the following 2 lines might be there multiple times for each firmware which should be built
-# ../OGM-Common/setup-scripts/reusable/Build-Step.ps1 release_RP2040 firmware uf2
+# ../OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_RP2040 firmware uf2
 # if (!$?) { exit 1 }
 
 # # build firmware for PiPico-BCU-Connector
-# ../OGM-Common/setup-scripts/reusable/Build-Step.ps1 release_PiPico_BCU_Connector firmware_PiPico_BCU_Connector uf2
+# ../OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_PiPico_BCU_Connector firmware_PiPico_BCU_Connector uf2
 # if (!$?) { exit 1 }
 
 # build firmware based on generated headerfile for SAMD
-# ../OGM-Common/setup-scripts/reusable/Build-Step.ps1 release_SAMD_v31 firmware-v31 bin
+# ../OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_SAMD_v31 firmware-v31 bin
 # if (!$?) { exit 1 }
 
-# ../OGM-Common/setup-scripts/reusable/Build-Step.ps1 release_SAMD_v30 firmware-v30 bin
+# ../OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_SAMD_v30 firmware-v30 bin
 # if (!$?) { exit 1 }
 
 # execute generic post-build steps
-../OGM-Common/setup-scripts/reusable/Build-Release-Postprocess.ps1 $args[0]
+lib/OGM-Common/scripts/setup/reusable/Build-Release-Postprocess.ps1 $args[0]
 if (!$?) { exit 1 }

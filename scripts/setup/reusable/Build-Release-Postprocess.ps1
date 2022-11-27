@@ -5,8 +5,8 @@
 $settings = scripts/OpenKNX-Build-Settings.ps1 $args[0]
 
 # add necessary scripts
-Copy-Item lib/OGM-Common/setup-scripts/reusable/Readme-Release.txt release/
-Copy-Item lib/OGM-Common/setup-scripts/reusable/Build-knxprod.ps1 release/
+Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
+Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
 Copy-Item scripts/Upload-Firmware*.ps1 release/
 
 # here we might need a better switch in future

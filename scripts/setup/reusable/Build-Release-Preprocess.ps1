@@ -17,7 +17,7 @@ if (Test-Path -Path release) {
 }
 
 # create required directories
-Copy-Item -Recurse lib/OGM-Common/setup-scripts/reusable/data release
+Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 
 # get xml for kxnprod, always first step which also generates headerfile for release
 ~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="src/$($settings.sourceName).h" "src/$($settings.releaseName).xml"
@@ -28,7 +28,7 @@ if (!$?) {
 Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
 
 # copy generated headerfile and according hardware file to according directory
-lib/OGM-Common/build-scripts/OpenKNX-Pre-Build.ps1
+lib/OGM-Common/scripts/build/OpenKNX-Pre-Build.ps1
 if (!$?) { exit 1 }
 
 exit 0
