@@ -36,7 +36,9 @@ if ($appRev -gt 0) {
 }
 
 # create dependency file
-Remove-Item dependencies.txt
+if (Test-Path -Path dependencies.txt -PathType Leaf) {
+    Remove-Item dependencies.txt
+}
 lib/OGM-Common/scripts/setup/reusable/Build-Dependencies.ps1
 Get-Content dependencies.txt
 
