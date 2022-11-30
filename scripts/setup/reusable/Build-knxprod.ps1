@@ -28,7 +28,7 @@ if (!$toolsExist) {
 }
 
 if ($toolsExist) {
-    $xml = dir data/*.xml
+    $xml = Get-ChildItem data/*.xml
     $filename = [System.IO.Path]::GetFileNameWithoutExtension($xml)
     ~/bin/OpenKNXproducer.exe knxprod --NoXsd --Output="./$filename.knxprod" "data/$filename.xml"
     timeout /T 20 
