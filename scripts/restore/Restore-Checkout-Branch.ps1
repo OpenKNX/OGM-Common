@@ -11,6 +11,7 @@ foreach ($subproject in $subprojects) {
         Write-Host "Subproject $($attr[2])" -ForegroundColor Yellow
         Set-Location $attr[2]
         git checkout $attr[1]
+        if (!$?) { exit 1 }
         Set-Location $currentDir
     }
 }
