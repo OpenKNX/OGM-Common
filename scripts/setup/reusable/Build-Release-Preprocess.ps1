@@ -31,4 +31,10 @@ Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.tar
 lib/OGM-Common/scripts/build/OpenKNX-Pre-Build.ps1
 if (!$?) { exit 1 }
 
+# write content.xml header
+$releaseTarget = "release/data/content.xml"
+"<?xml version=""1.0"" encoding=""UTF-8""?>" >$releaseTarget
+"<Content>" >>$releaseTarget
+"    <ETSapp Name=""$($settings.targetName)"" XmlFile=""$($settings.targetName).xml"" />" >>$releaseTarget
+"    <Products>" >>$releaseTarget
 exit 0

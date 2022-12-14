@@ -4,16 +4,21 @@
 # get all definitions for this project
 $settings = scripts/OpenKNX-Build-Settings.ps1 $args[0]
 
+# closeing tag for content.xml
+$releaseTarget = "release/data/content.xml"
+"    </Products>" >>$releaseTarget
+"</Content>" >>$releaseTarget
+
 # add necessary scripts
 Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
 Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
-Copy-Item scripts/Upload-Firmware*.ps1 release/
+# Copy-Item scripts/Upload-Firmware*.ps1 release/
 
 # here we might need a better switch in future
-if ($($settings.releaseIndication) -eq "Big") 
-{
-    Remove-Item release/Upload-Firmware-*SAMD*.ps1
-}
+# if ($($settings.releaseIndication) -eq "Big") 
+# {
+#     Remove-Item release/Upload-Firmware-*SAMD*.ps1
+# }
 
 # add optional files
 if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
