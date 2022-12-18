@@ -2,101 +2,142 @@
 
 #include <string.h>
 #include "knx.h"
-// #include "knx/bits.h"
+#include "hardware.h"
+#include "Helper.h"
+#include "HardwareDevices.h"
+
+// singleton
+FlashUserData *FlashUserData::_this = nullptr;
 
 FlashUserData::FlashUserData()
-{}
+{
+    // this is a singleton with backreference for static callbacks
+    _this = this;
+    knx.beforeRestartCallback(onBeforeRestartHandler);
+    TableObject::beforeTablesUnloadCallback(onBeforeTablesUnloadHandler);
+    // set interrupt for poweroff handling
+#ifdef SAVE_INTERRUPT_PIN
+    _flashStart = knx.platform().getNonVolatileMemoryStart();
+    size_t flashSize = knx.platform().getNonVolatileMemorySize();
+    size_t userFlashSize = 0;
+#ifdef USERDATA_SAVE_SIZE
+    userFlashSize = USERDATA_SAVE_SIZE + USERDATA_METADATA_SIZE;
+#endif
+    if (_flashStart != nullptr && userFlashSize > 0)
+    {
+        // User flash is at the end of flash memory
+        _userFlashStartRelative =  (flashSize - userFlashSize);
+    }
+#endif
+}
 
 FlashUserData::~FlashUserData()
 {}
 
-void FlashUserData::readFlash()
+bool FlashUserData::readFlash()
 {
-    println("read UserData from flash...");
+    printDebug("read UserData from flash...\n");
+    bool lResult = true;
+    if (_userFlashStartRelative == 0)
+    {
+        printDebug("no flash for UserData available\n");
+        lResult = false;
+    }
+    const uint8_t* buffer = _flashStart + _userFlashStartRelative;
 
-    uint8_t* flashStart = knx.platform().getNonVolatileMemoryStart();
-    size_t flashSize = knx.platform().getNonVolatileMemorySize();
-    size_t userdataSize = 0;
-#ifdef USERDATA_SAVE_SIZE
-    userdataSize = USERDATA_SAVE_SIZE;
+    uint8_t magicWord[USERDATA_METADATA_SIZE];
+    buffer = popByteArray(magicWord, USERDATA_METADATA_SIZE, buffer);
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        if (magicWord[i] != _magicWord[i])
+        {
+            printDebug("no valid UserData found in flash\n");
+            lResult = false;
+        }
+    }
+    
+    if (lResult)
+    {
+        IFlashUserData* next = _first;
+        while (next)
+        {
+            buffer = next->restore(buffer);
+            printDebug("%s (%i bytes)\n", next->name(), buffer - (_flashStart + _userFlashStartRelative));
+            next = next->next();
+        }
+        printDebug("restored UserData\n");
+    }
+#ifdef SAVE_INTERRUPT_PIN
+    // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
+    static bool sSaveInterruptAttached = false;
+    if (!sSaveInterruptAttached)
+    {
+        printDebug("Save interrupt pin attached...\n");
+        pinMode(SAVE_INTERRUPT_PIN, INPUT);
+        attachInterrupt(digitalPinToInterrupt(SAVE_INTERRUPT_PIN), onSafePinInterruptHandler, FALLING);
+    }
+    sSaveInterruptAttached = true;
 #endif
-    if (flashStart == nullptr || userdataSize == 0)
-    {
-        println("no flash for UserData available;");
-        return;
-    }
-    flashStart += flashSize;
-    const uint8_t* buffer = flashStart;
-    // printHex("RESTORED ", flashStart, _metadataSize);
-
-    // uint16_t metadataBlockSize = alignToPageSize(_metadataSize);
-
-    // _freeList = new MemoryBlock(flashStart + metadataBlockSize, flashSize - metadataBlockSize);
-
-    // uint16_t apiVersion = 0;
-    // buffer = popWord(apiVersion, flashStart);
-
-    // uint16_t manufacturerId = 0;
-    // buffer = popWord(manufacturerId, buffer);
-
-    // uint16_t version = 0;
-    // buffer = popWord(version, buffer);
-
-    IFlashUserData* next = _flashUserDataClass;
-    while (next)
-    {
-        buffer = next->restore(buffer);
-        print(next->name());
-        print(" (");
-        print(buffer -flashStart);
-        println(" bytes)");
-        next = next->next();
-    }
-    println("restored UserData");
+    return lResult;
 }
 
-void FlashUserData::writeFlash()
+void FlashUserData::writeFlash(const char* debugText)
 {
-    // first get the necessary size of the writeBuffer
-    uint16_t writeBufferSize = _metadataSize;
-    IFlashUserData* next = _flashUserDataClass;
-    while (next)
+    printDebug("%s", debugText);
+    if (knx.configured() && _userFlashStartRelative > 0) 
     {
-        writeBufferSize = MAX(writeBufferSize, next->saveSize());
-        next = next->next();
-    }
-    uint8_t buffer[writeBufferSize];
-    // uint8_t* flashStart = knx.platform().getNonVolatileMemoryStart();
-    size_t flashSize = knx.platform().getNonVolatileMemorySize();
-    uint32_t flashPos = flashSize; //relative address
-    uint8_t* bufferPos = buffer;
+        // we have to ensure, that writeFlash is not called too often, because flash memory 
+        // does not survive too many writes
+        // possible sources for many writes: bouncing of SAVE_PIN, call cascades of beforeTablesUnload and beforeRestart,
+        // and even touching of the NCN5120 may cause multiple SAVE-Interrupts.
+        if (_writeLastCalled == 0 || delayCheck(_writeLastCalled, 180000)) // 3 Minutes delay
+        {  
+            printDebug("... and executed\n");
+            _writeLastCalled = delayTimerInit(); 
+            // first get the necessary size of the writeBuffer
+            uint16_t writeBufferSize = _metadataSize;
+            IFlashUserData* next = _first;
+            while (next)
+            {
+                writeBufferSize = MAX(writeBufferSize, next->saveSize());
+                next = next->next();
+            }
+            uint8_t buffer[writeBufferSize];
+            uint32_t flashPos = _userFlashStartRelative;
+            uint8_t* bufferPos = buffer;
 
-    if (_metadataSize > 0) 
-    {
-        // currently no metadata necessary, this is just an example how we would write them
-        // bufferPos = pushWord(_deviceObject.apiVersion, bufferPos);
-        // bufferPos = pushWord(_deviceObject.manufacturerId(), bufferPos);
-        // bufferPos = pushByteArray(_deviceObject.hardwareType(), LEN_HARDWARE_TYPE, bufferPos);
-        // bufferPos = pushWord(_deviceObject.version(), bufferPos);
+            if (_metadataSize > 0) 
+            {
+                // currently we write just a magic word, there are also examples how we would write other metadata
+                // bufferPos = pushWord(_deviceObject.apiVersion, bufferPos);
+                // bufferPos = pushWord(_deviceObject.manufacturerId(), bufferPos);
+                bufferPos = pushByteArray(_magicWord, USERDATA_METADATA_SIZE, bufferPos);
+                // bufferPos = pushWord(_deviceObject.version(), bufferPos);
 
-        flashPos = writeFlash(flashPos, bufferPos - buffer, buffer);
+                flashPos = writeFlash(flashPos, bufferPos - buffer, buffer);
+            }
+            printDebug("saving FlashUserData...\n");
+            next = _first;
+            while (next)
+            {
+                bufferPos = next->save(buffer);
+                printDebug("%s (size req: %i, act: %i)\n", next->name(), next->saveSize(), bufferPos - buffer);
+                flashPos = writeFlash(flashPos, bufferPos - buffer, buffer);
+                next = next->next();
+            }
+            saveFlash();
+            printDebug("UserData written to flash, this took %i ms\n", millis() - _writeLastCalled);
+        }
+        else
+        {
+            printDebug("... but not executed due to repeated calls to writeFlash() within 3 minutes\n");
+        }
     }
-    println("saving FlashUserData... ");
-    next = _flashUserDataClass;
-    while (next)
+    else
     {
-        bufferPos = next->save(buffer);
-        print(next->name());
-        print(" (size req: ");
-        print(next->saveSize());
-        print(", act: ");
-        print(bufferPos - buffer);
-        println(")");
-        flashPos = writeFlash(flashPos, bufferPos - buffer, buffer);
-        next = next->next();
+        printDebug("... but not executed due to missing configuration data\n");
     }
-    saveFlash();
-    println("UserData written to flash");
 }
 
 void FlashUserData::saveFlash()
@@ -104,9 +145,20 @@ void FlashUserData::saveFlash()
     knx.platform().commitNonVolatileMemory();
 }
 
-void FlashUserData::addFlashUserDataClass(IFlashUserData* obj)
+void FlashUserData::first(IFlashUserData* obj)
 {
-    _flashUserDataClass = obj;
+    // static bool sFlashWasRed = false;
+    if (_first != 0)
+        obj->next(_first);
+    _first = obj;
+    // as soon as first object is assigned, we read the data from flash, but only once
+    // if (obj != 0 && !sFlashWasRed) readFlash();
+    // sFlashWasRed = true;
+}
+
+IFlashUserData* FlashUserData::first()
+{
+    return _first;
 }
 
 uint32_t FlashUserData::writeFlash(uint32_t relativeAddress, size_t size, uint8_t* data)
@@ -120,4 +172,39 @@ uint32_t FlashUserData::writeFlash(uint32_t relativeAddress, size_t size, uint8_
 //     // pagesize should be a multiply of two
 //     return (size + pageSize - 1) & (-1*pageSize);
 // }
+
+void FlashUserData::onBeforeRestartHandler()
+{
+    _this->writeFlash("beforeRestartHandler called");
+}
+
+void FlashUserData::onBeforeTablesUnloadHandler()
+{
+    _this->writeFlash("beforeTablesUnload called\n");
+}
+
+void FlashUserData::onSafePinInterruptHandler()
+{
+    // turn off power consuming devices
+    savePower();
+    // let each module turn off its power consuming devices
+    IFlashUserData* next = _this->_first;
+    while (next)
+    {
+        next->powerOff();
+        next = next->next();
+    }
+    printDebug("all modules turned power off\n");
+    // write all userdata to flash
+    _this->writeFlash("savePinInterruptHandler called");
+    // in case it was a jitter on the SAVE-Pin, we restore power after save
+    restorePower();
+    next = _this->_first;
+    while (next)
+    {
+        next->powerOn();
+        next = next->next();
+    }
+    printDebug("all modules restored power\n");
+}
 

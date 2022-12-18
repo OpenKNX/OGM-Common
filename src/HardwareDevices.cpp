@@ -24,23 +24,24 @@ void ledProg(bool iOn)
 
 void savePower()
 {
+    // turn off known LED's
+    ledProg(false);
+    ledInfo(false);
+    // init knx-uart to be in control mode
     initUart();
     printDebug("savePower: Stop UART KNX communication...\n");
     sendUartCommand("STOP_MODE", U_STOP_MODE_REQ, U_STOP_MODE_IND);
-    printDebug("savePower: Switching off 5V rail...\n");
-    // turn off 5V rail (CO2-Sensor, Buzzer, RGB-LED-Driver, 1-Wire-Busmaster)
+    printDebug("savePower: Switching off 5V / 20V rail...\n");
+    // turn off 5V and 20V rail 
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT };
     // get rid of knx reference
     Serial1.write(lBuffer, 2);
-    // Turn off on-board leds
-    sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
-    ledProg(false);
-    ledInfo(false);
+    // sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
 }
 
 void restorePower(){
     printDebug("restorePower: Switching on 5V rail...\n");
-    // turn on 5V rail (CO2-Sensor & Buzzer)
+    // turn on 5V and 20V rail
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
     initUart();
     Serial1.write(lBuffer, 2);
