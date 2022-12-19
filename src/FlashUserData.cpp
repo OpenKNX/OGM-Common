@@ -15,20 +15,7 @@ FlashUserData::FlashUserData()
     _this = this;
     knx.beforeRestartCallback(onBeforeRestartHandler);
     TableObject::beforeTablesUnloadCallback(onBeforeTablesUnloadHandler);
-    // set interrupt for poweroff handling
-#ifdef SAVE_INTERRUPT_PIN
     _flashStart = knx.platform().getNonVolatileMemoryStart();
-    size_t flashSize = knx.platform().getNonVolatileMemorySize();
-    size_t userFlashSize = 0;
-#ifdef USERDATA_SAVE_SIZE
-    userFlashSize = USERDATA_SAVE_SIZE + USERDATA_METADATA_SIZE;
-#endif
-    if (_flashStart != nullptr && userFlashSize > 0)
-    {
-        // User flash is at the end of flash memory
-        _userFlashStartRelative =  (flashSize - userFlashSize);
-    }
-#endif
 }
 
 FlashUserData::~FlashUserData()
@@ -38,28 +25,43 @@ bool FlashUserData::readFlash()
 {
     printDebug("read UserData from flash...\n");
     bool lResult = true;
+    // determine size of data to read from flash
+    size_t userFlashSize = 0;
+    IFlashUserData* next = _first;
+    while (next)
+    {
+        userFlashSize += next->saveSize();
+        next = next->next();
+    }
+    if (userFlashSize > 0 && _flashStart != nullptr)
+    {
+        size_t flashSize = knx.platform().getNonVolatileMemorySize();
+        _userFlashStartRelative = flashSize - userFlashSize - USERDATA_METADATA_SIZE;
+    }
     if (_userFlashStartRelative == 0)
     {
         printDebug("no flash for UserData available\n");
         lResult = false;
     }
-    const uint8_t* buffer = _flashStart + _userFlashStartRelative;
-
     uint8_t magicWord[USERDATA_METADATA_SIZE];
-    buffer = popByteArray(magicWord, USERDATA_METADATA_SIZE, buffer);
-
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        if (magicWord[i] != _magicWord[i])
-        {
-            printDebug("no valid UserData found in flash\n");
-            lResult = false;
-        }
-    }
-    
+    const uint8_t* buffer;
     if (lResult)
     {
-        IFlashUserData* next = _first;
+        buffer = _flashStart + _userFlashStartRelative;
+        buffer = popByteArray(magicWord, USERDATA_METADATA_SIZE, buffer);
+
+        for (uint8_t i = 0; i < 4; i++)
+        {
+            if (magicWord[i] != _magicWord[i])
+            {
+                printDebug("no valid UserData found in flash\n");
+                lResult = false;
+            }
+        }
+    }
+    if (lResult)
+    {
+        next = _first;
         while (next)
         {
             buffer = next->restore(buffer);
@@ -147,13 +149,9 @@ void FlashUserData::saveFlash()
 
 void FlashUserData::first(IFlashUserData* obj)
 {
-    // static bool sFlashWasRed = false;
     if (_first != 0)
         obj->next(_first);
     _first = obj;
-    // as soon as first object is assigned, we read the data from flash, but only once
-    // if (obj != 0 && !sFlashWasRed) readFlash();
-    // sFlashWasRed = true;
 }
 
 IFlashUserData* FlashUserData::first()
@@ -165,13 +163,6 @@ uint32_t FlashUserData::writeFlash(uint32_t relativeAddress, size_t size, uint8_
 {
     return knx.platform().writeNonVolatileMemory(relativeAddress, data, size);
 }
-
-// uint16_t FlashUserData::alignToPageSize(size_t size)
-// {
-//     size_t pageSize = 4; //_platform.flashPageSize(); // align to 32bit for now, as aligning to flash-page-size causes side effects in programming
-//     // pagesize should be a multiply of two
-//     return (size + pageSize - 1) & (-1*pageSize);
-// }
 
 void FlashUserData::onBeforeRestartHandler()
 {
