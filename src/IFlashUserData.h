@@ -87,10 +87,13 @@ class IFlashUserData
      * there was no power loss for the processor and the rest of the hardware.
      * In this case you (if there was any action during powerOff()) you can revert this action and resume power for your devices.
      * At this point, the 5V supply from NCN5120/5130 was restored already, you might need there to initialize your hardware again.
+     * 
+     * @return true, if you handled powerOn accordingly, false otherwise.
+     * If any registered module returns false, there will be a reboot of the device to ensure full functionality.
     */
-    virtual void powerOn()
+    virtual bool powerOn()
     {
-        // do nothing as default;
+        return false; //default: mark as not handled, will lead to a reboot.
     }
 
     /**

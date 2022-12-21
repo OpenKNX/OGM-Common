@@ -16,6 +16,11 @@ public:
     {
         return _flashUserDataPtr; 
     }
+
+    void loop() {
+        _flashUserDataPtr->loop();
+        knx.loop();
+    }
 };
 
 extern OpenKNXfacade openknx;

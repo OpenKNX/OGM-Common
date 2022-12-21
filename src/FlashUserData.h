@@ -15,6 +15,7 @@ public:
     void first(IFlashUserData *obj);
     IFlashUserData* first();
     bool readFlash();
+    void loop();
 
 private:
     // singleton
@@ -26,6 +27,7 @@ private:
     static void onBeforeTablesUnloadHandler();
     static void onSafePinInterruptHandler();
 
+    void processSaveInterrupt();
     void writeFlash(const char* debugText);
     uint32_t writeFlash(uint32_t relativeAddress, size_t size, uint8_t* data);
     void saveFlash();
@@ -36,4 +38,5 @@ private:
     uint32_t _writeLastCalled = 0;
     size_t _userFlashStartRelative = 0; 
     uint8_t* _flashStart = 0;
+    bool _saveInterruptHandlerCalled = false;
 };

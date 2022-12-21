@@ -51,13 +51,7 @@ bool FlashUserData::readFlash()
         buffer = popByteArray(magicWord, USERDATA_METADATA_SIZE, buffer);
 
         for (uint8_t i = 0; i < 4; i++)
-        {
-            if (magicWord[i] != _magicWord[i])
-            {
-                printDebug("no valid UserData found in flash\n");
-                lResult = false;
-            }
-        }
+            lResult = lResult && (magicWord[i] == _magicWord[i]);
     }
     if (lResult)
     {
@@ -70,6 +64,9 @@ bool FlashUserData::readFlash()
         }
         printDebug("restored UserData\n");
     }
+    else
+        printDebug("no valid UserData found in flash\n");
+
 #ifdef SAVE_INTERRUPT_PIN
     // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
     static bool sSaveInterruptAttached = false;
@@ -176,26 +173,49 @@ void FlashUserData::onBeforeTablesUnloadHandler()
 
 void FlashUserData::onSafePinInterruptHandler()
 {
-    // turn off power consuming devices
-    savePower();
-    // let each module turn off its power consuming devices
-    IFlashUserData* next = _this->_first;
-    while (next)
-    {
-        next->powerOff();
-        next = next->next();
-    }
-    printDebug("all modules turned power off\n");
-    // write all userdata to flash
-    _this->writeFlash("savePinInterruptHandler called");
-    // in case it was a jitter on the SAVE-Pin, we restore power after save
-    restorePower();
-    next = _this->_first;
-    while (next)
-    {
-        next->powerOn();
-        next = next->next();
-    }
-    printDebug("all modules restored power\n");
+    printDebug("savePinInterruptHandler called\n");
+    _this->_saveInterruptHandlerCalled = true;
 }
 
+void FlashUserData::loop()
+{
+    processSaveInterrupt();
+}
+
+void FlashUserData::processSaveInterrupt()
+{
+    if (_saveInterruptHandlerCalled)
+    {
+        // debounce and prevent additional interrupts during save execution
+        // turn off power consuming devices
+        savePower();
+        // let each module turn off its power consuming devices
+        IFlashUserData* next = _this->_first;
+        while (next)
+        {
+            next->powerOff();
+            next = next->next();
+        }
+        printDebug("all modules turned power off\n");
+        // write all userdata to flash
+        _this->writeFlash("writeFlash called");
+        printDebug("\n");
+        // in case it was a jitter on the SAVE-Pin, we restore power after save
+
+        restorePower();
+        next = _this->_first;
+        bool noReboot = true;
+        while (next && noReboot)
+        {
+            noReboot = noReboot && next->powerOn();
+            next = next->next();
+        }
+        if (noReboot)
+            printDebug("\nall modules restored power\n");
+        else
+            knx.platform().restart();
+        _saveInterruptHandlerCalled = false;
+        printDebug("SaveInterrupt was handled correctly\n");
+
+    }
+}
