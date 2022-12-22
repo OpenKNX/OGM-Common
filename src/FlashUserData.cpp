@@ -58,8 +58,9 @@ bool FlashUserData::readFlash()
         next = _first;
         while (next)
         {
+            const uint8_t* start = buffer;
             buffer = next->restore(buffer);
-            printDebug("%s (%i bytes)\n", next->name(), buffer - (_flashStart + _userFlashStartRelative));
+            printDebug("%s (%i bytes)\n", next->name(), buffer - start);
             next = next->next();
         }
         printDebug("restored UserData\n");
