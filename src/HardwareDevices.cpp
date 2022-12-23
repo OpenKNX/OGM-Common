@@ -24,23 +24,24 @@ void ledProg(bool iOn)
 
 void savePower()
 {
+    // turn off known LED's
+    ledProg(false);
+    ledInfo(false);
+    // init knx-uart to be in control mode
     initUart();
     printDebug("savePower: Stop UART KNX communication...\n");
     sendUartCommand("STOP_MODE", U_STOP_MODE_REQ, U_STOP_MODE_IND);
-    printDebug("savePower: Switching off 5V rail...\n");
-    // turn off 5V rail (CO2-Sensor, Buzzer, RGB-LED-Driver, 1-Wire-Busmaster)
+    printDebug("savePower: Switching off 5V / 20V rail...\n");
+    // turn off 5V and 20V rail 
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT };
     // get rid of knx reference
     Serial1.write(lBuffer, 2);
-    // Turn off on-board leds
-    sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
-    ledProg(false);
-    ledInfo(false);
+    // sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
 }
 
 void restorePower(){
     printDebug("restorePower: Switching on 5V rail...\n");
-    // turn on 5V rail (CO2-Sensor & Buzzer)
+    // turn on 5V and 20V rail
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
     initUart();
     Serial1.write(lBuffer, 2);
@@ -115,9 +116,9 @@ bool boardCheck()
         fatalError(FATAL_I2C_BUSY, "Failed to initialize I2C-Bus");
     }
 #ifdef I2C_EEPROM_DEVICE_ADDRESSS
-    // we check herer Hardware we rely on
+    // we check here Hardware we rely on
     printDebug("Checking EEPROM existence... ");
-    // ceck for I2C ack
+    // check for I2C ack
     Wire.beginTransmission(I2C_EEPROM_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -128,7 +129,7 @@ bool boardCheck()
 #ifdef I2C_1WIRE_DEVICE_ADDRESSS
 #if COUNT_1WIRE_BUSMASTER >= 1
 #ifdef SENSORMODULE
-    // ceck for I2C ack
+    // check for I2C ack
     printDebug("Checking 1-Wire existence... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
@@ -137,7 +138,7 @@ bool boardCheck()
     printResult(lResult);
 #endif
 #ifdef WIREGATEWAY
-    // ceck for I2C ack
+    // check for I2C ack
     printDebug("Checking 1-Wire existence 0x19 ... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 1);
     lResult = (Wire.endTransmission() == 0);
@@ -147,7 +148,7 @@ bool boardCheck()
 #endif
 #endif
 #if COUNT_1WIRE_BUSMASTER >= 2
-    // ceck for I2C ack
+    // check for I2C ack
     printDebug("Checking 1-Wire existence 0x1A... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 2);
     lResult = (Wire.endTransmission() == 0);
@@ -156,7 +157,7 @@ bool boardCheck()
     printResult(lResult);
 #endif
 #if COUNT_1WIRE_BUSMASTER == 3
-    // ceck for I2C ack
+    // check for I2C ack
     printDebug("Checking 1-Wire existence 0x1B... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 3);
     lResult = (Wire.endTransmission() == 0);
@@ -168,7 +169,7 @@ bool boardCheck()
 
 #ifdef I2C_RGBLED_DEVICE_ADDRESS
     printDebug("Checking LED driver existence... ");
-    // ceck for I2C ack
+    // check for I2C ack
     Wire.beginTransmission(I2C_RGBLED_DEVICE_ADDRESS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -199,7 +200,7 @@ bool initUart() {
     Serial1.begin(19200, SERIAL_8E1);
     for (uint16_t lCount = 0; !Serial1 && lCount < 1000; lCount++);
     if (!Serial1) {
-        printDebug("initUart() falied, something is going completely wrong!");
+        printDebug("initUart() failed, something is going completely wrong!");
         return false;
     }
     return true;
@@ -218,7 +219,7 @@ uint8_t sendUartCommand(const char *iInfo, uint8_t iCmd, uint8_t iResp, uint8_t 
         lResp = Serial1.read();
         if (lResp == iResp)
         {
-            printDebug("OK - recieved expected response (%02X)\n", lResp);
+            printDebug("OK - received expected response (%02X)\n", lResp);
             if (iLen == 1)
                 lResp = Serial1.read();
             break;

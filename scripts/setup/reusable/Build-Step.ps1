@@ -15,6 +15,7 @@
 $pioEnv = $args[0]
 $firmwareName = $args[1]
 $binaryFormat = $args[2]
+$productName = $args[3]
 
 ~/.platformio/penv/Scripts/pio.exe run -e $pioEnv
 if (!$?) {
@@ -22,4 +23,17 @@ if (!$?) {
     exit 1
 }
 Copy-Item ".pio/build/$pioEnv/firmware.$binaryFormat" "release/data/$firmwareName.$binaryFormat"
+# create Upload-Firmware-xxx.ps1 file
+if (!$productName) {
+    $productName = $firmwareName.Replace("firmware-", "")
+}
+$processor = "RP2040"
+if ($binaryFormat -eq "bin") {
+    $processor = "SAMD"
+}
+$fileName = "release/Upload-Firmware-$productName.ps1"
+"./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.$binaryFormat" >$fileName
+
+# add entry to content.xml
+"        <Product Name=""$productName"" Firmware=""$firmwareName.$binaryFormat"" Processor=""$processor"" />" >>release/data/content.xml
 exit 0
