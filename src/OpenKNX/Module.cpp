@@ -34,7 +34,7 @@ namespace OpenKNX
   void Module::firstLoop() {}
 
   void Module::processInputKo(GroupObject &iKo) {}
-  void Module::processSaveHandler() {}
+  void Module::processSavePin() {}
   void Module::processBeforeRestart() {}
   void Module::processBeforeTablesUnload() {}
 }

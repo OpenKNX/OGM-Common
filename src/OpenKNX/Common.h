@@ -39,22 +39,24 @@ namespace OpenKNX
         Common();
         ~Common();
 
-        void init(uint8_t firmwareRevision);
-
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
-        void setup();
-        void loop();
+        void init(uint8_t firmwareRevision);
         void initKnx();
-        void addModule(Module* module);
-        void registerCallbacks();
 
-        void processSaveHandler();
+        void setup();
+        void appSetup();
+
+        void loop();
+        void appLoop();
+
+        void addModule(Module* module);
+
+        void registerCallbacks();
+        void processSavePin();
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
-
-        static void beforeRestartHandler();
 
 #ifdef LOG_StartupDelayBase
         uint32_t startupDelay;

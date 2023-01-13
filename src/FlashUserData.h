@@ -21,9 +21,9 @@ public:
     static void onBeforeTablesUnloadHandler();
     static void onSafePinInterruptHandler();
 
-private:
     // singleton
     static FlashUserData* _this;
+private:
     
     uint8_t _magicWord[USERDATA_METADATA_SIZE] = {0xDA, 0x77, 0x6E, 0x82};
 

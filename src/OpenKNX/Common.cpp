@@ -99,30 +99,58 @@ namespace OpenKNX
         // Is the interrup created in RISING or FALLING signal? Default is RISING
         // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
 
+        appSetup();
+
+        // start the framework
+        knx.start();
+
+#ifdef INFO_LED_PIN
+        ledInfo(false);
+#endif
+    }
+
+    void Common::appSetup()
+    {
+        if (!knx.configured())
+            return;
+
+        startupDelay = millis();
+        heartbeatDelay = 0;
+
         // Handle loop of modules
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->setup();
         }
 
-        // start the framework
-        knx.start();
-#ifdef INFO_LED_PIN
-        ledInfo(false);
-#endif
-
         registerCallbacks();
     }
 
+    // main loop
     void Common::loop()
     {
         uint32_t start = millis();
 
-        processSaveHandler();
+        // loop  knx stack
+        knx.loop();
 
+        appLoop();
+
+        if (SERIAL_DEBUG.available())
+            processSerialInput();
+
+#ifdef DEBUG_LOOP_TIME
+        if (delayCheck(start) > DEBUG_LOOP_TIME)
+            SERIAL_DEBUG.printf("loop took too long %i\n\r", (millis() - start));
+#endif
+    }
+
+    // loop with abort conditions
+    void Common::appLoop()
+    {
         // knx is not configured
-        // if (!knx.configured())
-        //     return;
+        if (!knx.configured())
+            return;
 
 #ifdef LOG_StartupDelayBase
         // Handle Startup delay
@@ -135,13 +163,19 @@ namespace OpenKNX
         processHeartbeat();
 #endif
 
+        processSavePin();
+        FlashUserData::_this->loop();
+
         // Trigger afterSetup once (used for readrequest etc)
         if (!firstLoop)
         {
+            SERIAL_DEBUG.println("firstLoopModules");
+
             for (uint8_t i = 1; i <= modules.count; i++)
             {
                 modules.list[i - 1]->firstLoop();
             }
+
             firstLoop = true;
         }
 
@@ -150,17 +184,6 @@ namespace OpenKNX
         {
             modules.list[i - 1]->loop();
         }
-
-        // loop  knx stack
-        knx.loop();
-
-        if (SERIAL_DEBUG.available())
-            processSerialInput();
-
-#ifdef DEBUG_LOOP_TIME
-        if (delayCheck(start) > DEBUG_LOOP_TIME)
-            SERIAL_DEBUG.printf("loop took too long %i\n\r", (millis() - start));
-#endif
     }
 
     void Common::addModule(Module* module)
@@ -189,19 +212,20 @@ namespace OpenKNX
     }
 #endif
 
-    void Common::processSaveHandler()
+    void Common::processSavePin()
     {
         // savePin not triggered
         if (!save)
             return;
+
         // saveHandler already called
         if (saved)
             return;
 
-        SERIAL_DEBUG.println("processSaveHandler");
+        SERIAL_DEBUG.println("processSavePin");
         for (uint8_t i = 1; i <= modules.count; i++)
         {
-            modules.list[i - 1]->processSaveHandler();
+            modules.list[i - 1]->processSavePin();
         }
 
         FlashUserData::onSafePinInterruptHandler();
@@ -291,55 +315,6 @@ OpenKNX::Common openknx;
 
 // namespace OpenKNX
 // {
-
-//   bool Common::loop()
-//   {
-
-//     // Trigger afterSetup once (used for readrequest etc)
-//     if (!calledAfterSetup)
-//     {
-//       for (uint8_t i = 1; i <= modules.count; i++)
-//       {
-//         modules.list[i - 1]->afterSetup();
-//       }
-//       calledAfterSetup = true;
-//     }
-
-//     if (calledSaveInterrupt)
-//     {
-//       SERIAL_DEBUG.println("execute save handling");
-//       for (uint8_t i = 1; i <= modules.count; i++)
-//       {
-//         modules.list[i - 1]->onSafePinInterruptHandler();
-//       }
-//       // TODO SaveToFlash
-
-//       // Then reboot
-//       watchdog_reboot(0, 0, 0);
-//       calledSaveInterrupt = true;
-//     }
-
-//     if (!knx.configured())
-//       return false;
-
-//       // Handle Startup delay
-// #ifdef LOG_StartupDelayBase
-//     if (processStartupDelay())
-//       return false;
-// #endif
-
-//       // Handle heartbeat delay
-// #ifdef LOG_HeartbeatDelayBase
-//     processHeartbeat();
-// #endif
-
-//     for (uint8_t i = 1; i <= modules.count; i++)
-//     {
-//       modules.list[i - 1]->loop();
-//     }
-
-//     return true;
-//   }
 
 //   bool Common::setup()
 //   {

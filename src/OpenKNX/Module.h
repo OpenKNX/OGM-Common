@@ -25,7 +25,7 @@ namespace OpenKNX
         virtual void loop();
         virtual void setup();
         virtual void processInputKo(GroupObject &iKo);
-        virtual void processSaveHandler();
+        virtual void processSavePin();
         virtual void firstLoop();
         virtual void processBeforeRestart();
         virtual void processBeforeTablesUnload();
