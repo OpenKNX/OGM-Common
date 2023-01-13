@@ -17,15 +17,15 @@ public:
     bool readFlash();
     void loop();
 
+    static void onBeforeRestartHandler();
+    static void onBeforeTablesUnloadHandler();
+    static void onSafePinInterruptHandler();
+
 private:
     // singleton
     static FlashUserData* _this;
     
     uint8_t _magicWord[USERDATA_METADATA_SIZE] = {0xDA, 0x77, 0x6E, 0x82};
-
-    static void onBeforeRestartHandler();
-    static void onBeforeTablesUnloadHandler();
-    static void onSafePinInterruptHandler();
 
     void processSaveInterrupt();
     void writeFlash(const char* debugText);

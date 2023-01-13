@@ -13,8 +13,8 @@ FlashUserData::FlashUserData()
 {
     // this is a singleton with backreference for static callbacks
     _this = this;
-    knx.beforeRestartCallback(onBeforeRestartHandler);
-    TableObject::beforeTablesUnloadCallback(onBeforeTablesUnloadHandler);
+    // knx.beforeRestartCallback(onBeforeRestartHandler);
+    // TableObject::beforeTablesUnloadCallback(onBeforeTablesUnloadHandler);
     _flashStart = knx.platform().getNonVolatileMemoryStart();
 }
 
@@ -68,17 +68,17 @@ bool FlashUserData::readFlash()
     else
         printDebug("no valid UserData found in flash\n");
 
-#ifdef SAVE_INTERRUPT_PIN
-    // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
-    static bool sSaveInterruptAttached = false;
-    if (!sSaveInterruptAttached)
-    {
-        printDebug("Save interrupt pin attached...\n");
-        pinMode(SAVE_INTERRUPT_PIN, INPUT);
-        attachInterrupt(digitalPinToInterrupt(SAVE_INTERRUPT_PIN), onSafePinInterruptHandler, FALLING);
-    }
-    sSaveInterruptAttached = true;
-#endif
+// #ifdef SAVE_INTERRUPT_PIN
+//     // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
+//     static bool sSaveInterruptAttached = false;
+//     if (!sSaveInterruptAttached)
+//     {
+//         printDebug("Save interrupt pin attached...\n");
+//         pinMode(SAVE_INTERRUPT_PIN, INPUT);
+//         attachInterrupt(digitalPinToInterrupt(SAVE_INTERRUPT_PIN), onSafePinInterruptHandler, FALLING);
+//     }
+//     sSaveInterruptAttached = true;
+// #endif
     return lResult;
 }
 
