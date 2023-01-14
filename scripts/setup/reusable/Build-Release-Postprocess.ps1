@@ -29,7 +29,7 @@ if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
 Remove-Item "release/$($settings.targetName).knxprod"
 
 # calculate version string
-$appVersion=Select-String -Path src/$($settings.sourceName).h -Pattern MAIN_ApplicationVersion
+$appVersion=Select-String -Path "$($settings.knxprod)" -Pattern MAIN_ApplicationVersion
 $appVersion=$appVersion.ToString().Split()[-1]
 $appMajor=[math]::Floor($appVersion/16)
 $appMinor=$appVersion%16
