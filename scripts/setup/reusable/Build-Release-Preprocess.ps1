@@ -20,7 +20,7 @@ if (Test-Path -Path release) {
 Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 
 # get xml for kxnprod, always first step which also generates headerfile for release
-~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="src/$($settings.sourceName).h" "src/$($settings.releaseName).xml"
+~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="$($settings.knxprod)" "src/$($settings.releaseName).xml"
 if (!$?) {
     Write-Host "Error in knxprod, Release was not built!"
     exit 1
