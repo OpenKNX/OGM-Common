@@ -26,11 +26,28 @@ namespace OpenKNX
     class Common
     {
       private:
+#ifdef DEBUG_LOOP_TIME
+        uint32_t lastDebugTime = 0;
+#endif
         uint8_t firmwareRevision = 0;
         Modules modules;
 
-        bool firstLoop = false;
+        bool firstLoopProcessed = false;
         void processSerialInput();
+        void initKnx();
+        void appSetup();
+        void appLoop();
+        void processFirstLoop();
+        void processModulesLoop();
+        void registerCallbacks();
+#ifdef LOG_StartupDelayBase
+        uint32_t startupDelay;
+        bool processStartupDelay();
+#endif
+#ifdef LOG_HeartbeatDelayBase
+        uint32_t heartbeatDelay;
+        void processHeartbeat();
+#endif
 
       public:
         bool save = false;
@@ -42,30 +59,14 @@ namespace OpenKNX
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
         void init(uint8_t firmwareRevision);
-        void initKnx();
-
         void setup();
-        void appSetup();
-
         void loop();
-        void appLoop();
-
         void addModule(Module* module);
 
-        void registerCallbacks();
         void processSavePin();
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
-
-#ifdef LOG_StartupDelayBase
-        uint32_t startupDelay;
-        bool processStartupDelay();
-#endif
-#ifdef LOG_HeartbeatDelayBase
-        uint32_t heartbeatDelay;
-        void processHeartbeat();
-#endif
     };
 } // namespace OpenKNX
 

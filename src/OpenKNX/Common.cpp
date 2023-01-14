@@ -134,14 +134,19 @@ namespace OpenKNX
         // loop  knx stack
         knx.loop();
 
+        // loop  appstack
         appLoop();
 
         if (SERIAL_DEBUG.available())
             processSerialInput();
 
 #ifdef DEBUG_LOOP_TIME
-        if (delayCheck(start) > DEBUG_LOOP_TIME)
+        // loop took to long and last out is min 1s ago
+        if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, 1000))
+        {
             SERIAL_DEBUG.printf("loop took too long %i\n\r", (millis() - start));
+            lastDebugTime = millis();
+        }
 #endif
     }
 
@@ -166,20 +171,28 @@ namespace OpenKNX
         processSavePin();
         FlashUserData::_this->loop();
 
-        // Trigger afterSetup once (used for readrequest etc)
-        if (!firstLoop)
+        processFirstLoop();
+        processModulesLoop();
+    }
+
+    void Common::processFirstLoop()
+    {
+        // skip if already executed
+        if (firstLoopProcessed)
+            return;
+
+        SERIAL_DEBUG.println("processFirstLoop");
+
+        for (uint8_t i = 1; i <= modules.count; i++)
         {
-            SERIAL_DEBUG.println("firstLoopModules");
-
-            for (uint8_t i = 1; i <= modules.count; i++)
-            {
-                modules.list[i - 1]->firstLoop();
-            }
-
-            firstLoop = true;
+            modules.list[i - 1]->firstLoop();
         }
 
-        // Handle loop of modules
+        firstLoopProcessed = true;
+    }
+
+    void Common::processModulesLoop()
+    {
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->loop();
@@ -228,9 +241,10 @@ namespace OpenKNX
             modules.list[i - 1]->processSavePin();
         }
 
-        FlashUserData::onSafePinInterruptHandler();
+        // FlashUserData::onSafePinInterruptHandler();
         saved = true;
     }
+
     void Common::processBeforeRestart()
     {
         SERIAL_DEBUG.println("processBeforeRestart");
@@ -239,13 +253,14 @@ namespace OpenKNX
             modules.list[i - 1]->processBeforeRestart();
         }
 
-        FlashUserData::onBeforeRestartHandler();
+        // FlashUserData::onBeforeRestartHandler();
     }
+
     void Common::processBeforeTablesUnload()
     {
         SERIAL_DEBUG.println("processBeforeTablesUnload");
 
-        FlashUserData::onBeforeTablesUnloadHandler();
+        // FlashUserData::onBeforeTablesUnloadHandler();
     }
 
     void Common::processInputKo(GroupObject& iKo)
