@@ -169,7 +169,7 @@ namespace OpenKNX
 #endif
 
         processSavePin();
-        FlashUserData::_this->loop();
+        // FlashUserData::_this->loop();
 
         processFirstLoop();
         processModulesLoop();
@@ -302,136 +302,36 @@ namespace OpenKNX
             case 0x56: // V
                 output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "."
                        << firmwareRevision;
-                SERIAL_DEBUG.print("VERSION: ");
-                SERIAL_DEBUG.print(output.str().c_str());
-                SERIAL_DEBUG.println("");
+
+                log("VERSION", output.str().c_str());
                 break;
             case 0x4F: // O
-                SERIAL_DEBUG.printf("OPENKNX: 0x%02X\n\r", MAIN_OpenKnxId);
+                output << "0x" << std::hex << std::uppercase << MAIN_OpenKnxId;
+                log("OPENKNX", output.str().c_str());
+                //SERIAL_DEBUG.printf("OPENKNX: 0x%02X\n\r", MAIN_OpenKnxId);
                 break;
             case 0x53: // S
                 output << MAIN_OrderNumber;
-                SERIAL_DEBUG.print("SOFTWARE: ");
-                SERIAL_DEBUG.print(output.str().c_str());
-                SERIAL_DEBUG.println("");
+                log("SOFTWARE", output.str().c_str());
                 break;
             case 0x48: // H
                 output << HARDWARE_NAME;
-                SERIAL_DEBUG.print("HARDWARE: ");
-                SERIAL_DEBUG.print(output.str().c_str());
-                SERIAL_DEBUG.println("");
+                log("HARDWARE", output.str().c_str());
                 break;
         }
+    }
+
+    int Common::log(const char *prefix, const char *output, ...)
+    {
+        char buffer[256];
+        va_list args;
+        va_start(args, output);
+        int result = vsnprintf(buffer, 256, output, args);
+        va_end(args);
+        SERIAL_DEBUG.printf("%s: %s\n\r", prefix, buffer);
+        return result;
     }
 
 } // namespace OpenKNX
 
 OpenKNX::Common openknx;
-
-// namespace OpenKNX
-// {
-
-//   bool Common::setup()
-//   {
-//     if (!knx.configured())
-//       return false;
-
-//     startupDelay = millis();
-//     heartbeatDelay = 0;
-
-//     for (uint8_t i = 1; i <= modules.count; i++)
-//     {
-//       modules.list[i - 1]->setup();
-//     }
-
-//     return true;
-//   }
-
-//   void Common::onSafePinInterruptHandler()
-//   {
-//     SERIAL_DEBUG.println("hook onSafePinInterruptHandler");
-//     calledSaveInterrupt = true;
-//   }
-
-//   void Common::onBeforeRestartHandler()
-//   {
-//     SERIAL_DEBUG.println("hook onBeforeRestartHandler");
-//   }
-
-//   void Common::onBeforeTablesUnloadHandler()
-//   {
-//     SERIAL_DEBUG.println("hook onBeforeTablesUnloadHandler");
-//   }
-
-//   void Common::processInputKo(GroupObject &iKo)
-//   {
-//     // SERIAL_DEBUG.printf("hook onInputKo %i\n\r", iKo.asap());
-//     for (uint8_t i = 1; i <= modules.count; i++)
-//     {
-//       modules.list[i - 1]->processInputKo(iKo);
-//     }
-//   }
-
-//   void Common::registerCallbacks()
-//   {
-//     knx.beforeRestartCallback(onBeforeRestartHandler);
-//     // GroupObject::classCallback(processInputKo);
-//     TableObject::beforeTablesUnloadCallback(onBeforeTablesUnloadHandler);
-// #ifdef SAVE_INTERRUPT_PIN
-//     // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
-//     pinMode(SAVE_INTERRUPT_PIN, INPUT);
-//     SERIAL_DEBUG.printf("SAVE %i\n\r", digitalPinToInterrupt(SAVE_INTERRUPT_PIN));
-//     attachInterrupt(digitalPinToInterrupt(SAVE_INTERRUPT_PIN), onSafePinInterruptHandler, FALLING);
-// #endif
-//   }
-
-//   void Common::log(const char *iModuleName, const char *iMessage)
-//   {
-//     // TODO Timestamp?
-//     SERIAL_DEBUG.print(iModuleName);
-//     SERIAL_DEBUG.print(": ");
-//     SERIAL_DEBUG.print(iMessage);
-//     SERIAL_DEBUG.println("");
-//   }
-
-//   void Common::processSerialInput()
-//   {
-//     std::stringstream lStringHelper;
-//     switch (SERIAL_DEBUG.read())
-//     {
-//     case 0x56: // V
-//       // TODO firmwareRevision
-//       lStringHelper << MAIN_MAIN_ApplicationNumber << "." << MAIN_MAIN_ApplicationVersion << "." << "0";
-//       log("VERSION", lStringHelper.str().c_str());
-//       break;
-//     case 0x4F: // O
-//       lStringHelper << "0x" << std::hex << std::uppercase << MAIN_MAIN_OpenKnxId;
-//       log("OPENKNX", lStringHelper.str().c_str());
-//       break;
-//     case 0x53: // S
-//       lStringHelper << MAIN_OrderNumber;
-//       log("SOFTWARE", lStringHelper.str().c_str());
-//       break;
-//     case 0x48: // H
-//       lStringHelper << MAIN_Hardware;
-//       log("HARDWARE", lStringHelper.str().c_str());
-//       break;
-//     }
-//   }
-
-// }
-
-// FlashUserData* OpenKNXfacade::flashUserData()
-// {
-//     return _flashUserDataPtr;
-// }
-
-// void OpenKNXfacade::loop() {
-//     _flashUserDataPtr->loop();
-//     knx.loop();
-// }
-
-// void OpenKNXfacade::readMemory(uint8_t MAIN_OpenKnxId, uint8_t MAIN_ApplicationNumber, uint8_t MAIN_ApplicationVersion, uint8_t firmwareRevision, const char* MAIN_OrderNumber /*= nullptr*/)
-// {
-//     OpenKNX::knxRead(MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, firmwareRevision, MAIN_OrderNumber);
-// }

@@ -67,6 +67,7 @@ namespace OpenKNX
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
+        int log(const char *prefix, const char *output, ...);
     };
 } // namespace OpenKNX
 

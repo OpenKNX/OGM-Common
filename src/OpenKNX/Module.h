@@ -4,6 +4,7 @@
 #include "knxprod.h"
 #include <cstdio>
 #include <functional>
+#include <cxxabi.h>
 
 namespace OpenKNX
 {
@@ -20,7 +21,8 @@ namespace OpenKNX
         uint16_t calcKoNumber(uint8_t iKoIndex);
         int8_t calcKoIndex(uint16_t iKoNumber);
         GroupObject *getKo(uint8_t iKoIndex);
-
+        virtual const char* name();
+        int log(const char *output, ...);
       public:
         virtual void loop();
         virtual void setup();
