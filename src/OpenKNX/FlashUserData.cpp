@@ -103,6 +103,8 @@ namespace OpenKNX
 
         lastWrite = millis();
         openknx.debug("FlashUserData", "  complete (%i)", millis() - start);
+
+        delete userData;
     }
 
     uint8_t *FlashUserData::newUserData()
