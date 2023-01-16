@@ -1,11 +1,11 @@
 #include "OpenKNX/Common.h"
-#include "hardware.h"
-#include <knx.h>
 
 namespace OpenKNX
 {
     Common::Common()
-    {}
+    {
+        flashUserData = new FlashUserData();
+    }
     Common::~Common()
     {}
 
@@ -30,6 +30,11 @@ namespace OpenKNX
         initKnx();
     }
 
+    uint16_t Common::version()
+    {
+        return ((firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
+    }
+
     void Common::initKnx()
     {
         SERIAL_DEBUG.println("knx init...");
@@ -51,7 +56,7 @@ namespace OpenKNX
         // set firmware version als user info (PID_VERSION)
         // 5 bit revision, 5 bit major, 6 bit minor
         // output in ETS as [revision] major.minor
-        knx.bau().deviceObject().version(((firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F));
+        knx.bau().deviceObject().version(version());
 
         if (MAIN_OrderNumber)
         {
@@ -88,6 +93,8 @@ namespace OpenKNX
     void Common::setup()
     {
         SERIAL_DEBUG.println("setup...");
+        flashUserData->load();
+
         digitalWrite(PROG_LED_PIN, LOW);
 
         // pin or GPIO the programming led is connected to. Default is LED_BUILDIN
@@ -169,8 +176,6 @@ namespace OpenKNX
 #endif
 
         processSavePin();
-        // FlashUserData::_this->loop();
-
         processFirstLoop();
         processModulesLoop();
     }
@@ -203,6 +208,11 @@ namespace OpenKNX
     {
         modules.count++;
         modules.list[modules.count - 1] = module;
+    }
+
+    Modules* Common::getModules()
+    {
+        return &modules;
     }
 
 #ifdef LOG_StartupDelayBase
@@ -241,7 +251,8 @@ namespace OpenKNX
             modules.list[i - 1]->processSavePin();
         }
 
-        // FlashUserData::onSafePinInterruptHandler();
+        flashUserData->save();
+        //flashUserData->save(true);
         saved = true;
     }
 
@@ -253,14 +264,13 @@ namespace OpenKNX
             modules.list[i - 1]->processBeforeRestart();
         }
 
-        // FlashUserData::onBeforeRestartHandler();
+        flashUserData->save();
     }
 
     void Common::processBeforeTablesUnload()
     {
         SERIAL_DEBUG.println("processBeforeTablesUnload");
-
-        // FlashUserData::onBeforeTablesUnloadHandler();
+        flashUserData->save();
     }
 
     void Common::processInputKo(GroupObject& iKo)
@@ -299,29 +309,30 @@ namespace OpenKNX
         std::stringstream output;
         switch (SERIAL_DEBUG.read())
         {
+            case 0x57: // W
+                flashUserData->save(true);
+                break;
             case 0x56: // V
-                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "."
-                       << firmwareRevision;
-
-                log("VERSION", output.str().c_str());
+                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "." << firmwareRevision;
+                debug("VERSION", output.str().c_str());
                 break;
             case 0x4F: // O
                 output << "0x" << std::hex << std::uppercase << MAIN_OpenKnxId;
-                log("OPENKNX", output.str().c_str());
-                //SERIAL_DEBUG.printf("OPENKNX: 0x%02X\n\r", MAIN_OpenKnxId);
+                debug("OPENKNX", output.str().c_str());
+                // SERIAL_DEBUG.printf("OPENKNX: 0x%02X\n\r", MAIN_OpenKnxId);
                 break;
             case 0x53: // S
                 output << MAIN_OrderNumber;
-                log("SOFTWARE", output.str().c_str());
+                debug("SOFTWARE", output.str().c_str());
                 break;
             case 0x48: // H
                 output << HARDWARE_NAME;
-                log("HARDWARE", output.str().c_str());
+                debug("HARDWARE", output.str().c_str());
                 break;
         }
     }
 
-    int Common::log(const char *prefix, const char *output, ...)
+    int Common::debug(const char* prefix, const char* output, ...)
     {
         char buffer[256];
         va_list args;

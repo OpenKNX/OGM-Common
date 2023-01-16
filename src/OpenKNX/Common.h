@@ -1,15 +1,9 @@
 #pragma once
-#include "Helper.h" // TODO: Hier ist das delayChecks drinne (Logicmodul)
+#include "Helper.h"
 #include "KnxHelper.h"
+#include "OpenKNX/FlashUserData.h"
 #include "OpenKNX/Module.h"
-#include "knxprod.h"
-#include <cstdio>
-#include <cstring>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <string>
-#include "FlashUserData.h"
+#include <knx.h>
 
 #ifndef OPENKNX_MAX_MODULES
 #define OPENKNX_MAX_MODULES 9
@@ -31,6 +25,7 @@ namespace OpenKNX
 #endif
         uint8_t firmwareRevision = 0;
         Modules modules;
+        FlashUserData* flashUserData;
 
         bool firstLoopProcessed = false;
         void processSerialInput();
@@ -59,15 +54,17 @@ namespace OpenKNX
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
         void init(uint8_t firmwareRevision);
+        uint16_t version();
         void setup();
         void loop();
         void addModule(Module* module);
+        Modules* getModules();
 
         void processSavePin();
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
-        int log(const char *prefix, const char *output, ...);
+        int debug(const char* prefix, const char* output, ...);
     };
 } // namespace OpenKNX
 

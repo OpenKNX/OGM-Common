@@ -2,6 +2,10 @@
 
 namespace OpenKNX
 {
+    Test::Test()
+    {
+    }
+
     uint32_t Module::calcParamIndex(uint16_t iParamIndex)
     {
         return iParamIndex + (mChannelIndex * mChannelParamBlockSize) + mChannelParamOffset;
@@ -33,6 +37,7 @@ namespace OpenKNX
 
     void Module::setup()
     {}
+
     void Module::firstLoop()
     {}
 
@@ -54,14 +59,14 @@ namespace OpenKNX
         return abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, &status);
     }
 
-    int Module::log(const char *output, ...)
+    int Module::debug(const char *output, ...)
     {
         char buffer[256];
         va_list args;
         va_start(args, output);
         int result = vsnprintf(buffer, 256, output, args);
         va_end(args);
-        openknx.log(name(), buffer);
+        openknx.debug(name(), buffer);
         return result;
     }
 } // namespace OpenKNX

@@ -1,13 +1,16 @@
 #pragma once
-#include "Helper.h" // TODO: Hier ist das delayChecks drinne (Logicmodul)
-#include "KnxHelper.h"
-#include "knxprod.h"
-#include <cstdio>
-#include <functional>
-#include <cxxabi.h>
+#include "OpenKNX.h"
+// #include "knxprod.h"
+// #include <cstdio>
+// #include <functional>
 
 namespace OpenKNX
 {
+    class Test
+    {
+        Test();
+    };
+
     class Module
     {
       protected:
@@ -20,16 +23,32 @@ namespace OpenKNX
         uint32_t calcParamIndex(uint16_t iParamIndex);
         uint16_t calcKoNumber(uint8_t iKoIndex);
         int8_t calcKoIndex(uint16_t iKoNumber);
-        GroupObject *getKo(uint8_t iKoIndex);
-        virtual const char* name();
-        int log(const char *output, ...);
+        GroupObject* getKo(uint8_t iKoIndex);
+
       public:
+        int debug(const char* output, ...);
+        virtual const char* name();
         virtual void loop();
         virtual void setup();
-        virtual void processInputKo(GroupObject &iKo);
+        virtual void processInputKo(GroupObject& iKo);
         virtual void processSavePin();
         virtual void firstLoop();
         virtual void processBeforeRestart();
         virtual void processBeforeTablesUnload();
+
+        virtual bool saveUserData(uint8_t* data)
+        {
+          return false;
+        }
+
+        virtual bool restoreUserData(const uint8_t* data)
+        {
+          return false;
+        }
+
+        virtual uint16_t userDataSize()
+        {
+            return 0;
+        }
     };
 } // namespace OpenKNX
