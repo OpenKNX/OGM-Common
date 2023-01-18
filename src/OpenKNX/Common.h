@@ -14,6 +14,7 @@ namespace OpenKNX
     struct Modules
     {
         uint8_t count = 0;
+        uint8_t ids[OPENKNX_MAX_MODULES];
         Module* list[OPENKNX_MAX_MODULES];
     };
 
@@ -57,7 +58,8 @@ namespace OpenKNX
         uint16_t version();
         void setup();
         void loop();
-        void addModule(Module* module);
+        void addModule(uint8_t id, Module* module);
+        Module* getModule(uint8_t id);
         Modules* getModules();
 
         void processSavePin();

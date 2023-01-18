@@ -14,59 +14,69 @@ namespace OpenKNX
 
     void FlashUserData::load()
     {
-        openknx.debug("FlashUserData", "Load data");
+        openknx.debug("FlashUserData", "load");
         uint32_t start = millis();
-        uint16_t currentPosition = 0;
-        uint8_t *positionMagicword;
-        uint8_t *positionUserDataSize;
-        uint8_t *positionUserData;
-        uint8_t *currentUserData;
+        uint8_t *currentPosition;
+        uint8_t moduleId = 0;
         uint16_t moduleSize = 0;
-        uint16_t userDataLen = 0;
+        uint16_t userDataSize = 0;
+        uint16_t userDataProcessed = 0;
+        Module *module = nullptr;
 
         // check magicwords exists
-        positionMagicword = flashStart + flashSize - FLASH_USER_DATA_MAGICWORD_LEN;
-        if (positionMagicword[0] != 0xDA || positionMagicword[1] != 0x77 || positionMagicword[2] != 0x6E || positionMagicword[3] != 0x82)
+        currentPosition = flashStart + flashSize - FLASH_USER_DATA_MAGICWORD_LEN;
+        if (currentPosition[0] != 0xDA || currentPosition[1] != 0x73 || currentPosition[2] != 0x6E || currentPosition[3] != 0x81)
         {
             openknx.debug("FlashUserData", "   - No data found");
             return;
         }
 
         // read size
-        positionUserDataSize = (positionMagicword - FLASH_USER_DATA_CHK_LEN - FLASH_USER_DATA_SIZE_LEN);
-        userDataLen = (positionUserDataSize[0] << 8) + positionUserDataSize[1];
+        currentPosition = (currentPosition - FLASH_USER_DATA_CHK_LEN - FLASH_USER_DATA_SIZE_LEN);
+        userDataSize = (currentPosition[0] << 8) + currentPosition[1];
 
         // check
-        positionUserData = (positionUserDataSize - userDataLen);
-        if (!verifyChecksum(positionUserData, userDataLen + FLASH_USER_DATA_SIZE_LEN + FLASH_USER_DATA_CHK_LEN))
+        currentPosition = (currentPosition - userDataSize);
+        if (!verifyChecksum(currentPosition, userDataSize + FLASH_USER_DATA_SIZE_LEN + FLASH_USER_DATA_CHK_LEN))
         {
             openknx.debug("FlashUserData", "   - Checksum invalid!");
             return;
         }
 
-        Modules *modules = openknx.getModules();
-        for (uint8_t i = 1; i <= modules->count; i++)
+        // printHEX("DATA: ", currentPosition, userDataSize);
+        while (userDataProcessed < userDataSize)
         {
-            Module *module = modules->list[i - 1];
-            currentUserData = (positionUserDataSize - currentPosition - FLASH_USER_DATA_SIZE_LEN);
-            moduleSize = (currentUserData[0] << 8) + currentUserData[1];
-            currentPosition += moduleSize + FLASH_USER_DATA_SIZE_LEN;
-            currentUserData = (positionUserDataSize - currentPosition);
-            openknx.debug("FlashUserData", "  %s (%i bytes)", module->name(), moduleSize);
-            module->restoreUserData(currentUserData, moduleSize);
+            moduleId = currentPosition[0];
+            moduleSize = (currentPosition[1] << 8) + currentPosition[2];
+            currentPosition = (currentPosition + FLASH_USER_DATA_MODULE_ID_LEN + FLASH_USER_DATA_SIZE_LEN);
+            userDataProcessed += FLASH_USER_DATA_MODULE_ID_LEN + FLASH_USER_DATA_SIZE_LEN + moduleSize;
+            module = openknx.getModule(moduleId);
+            if (module == nullptr)
+            {
+                openknx.debug("FlashUserData", "  skip module with id %i (not found)", moduleId);
+                currentPosition = (currentPosition + moduleSize);
+                continue;
+            }
+            else
+            {
+                openknx.debug("FlashUserData", "  restore module %s with %i bytes", module->name(), moduleSize);
+                module->restoreUserData(currentPosition, moduleSize);
+                currentPosition = (currentPosition + moduleSize);
+            }
         }
-
         openknx.debug("FlashUserData", "  complete (%i)", millis() - start);
     }
 
     void FlashUserData::save(bool force /* = false */)
     {
         uint32_t start = millis();
-        uint16_t userDataSize = calcUserDataSize();
-
-        // skip if not userdata available
-        if (userDataSize == 0)
-            return;
+        bool moduleSaveStatus = false;
+        uint8_t checksum = 0;
+        uint8_t moduleId = 0;
+        uint16_t userDataSize = 0;
+        uint16_t moduleUserDataSize = 0;
+        uint16_t maxModuleSize = 0;
+        uint32_t currentPosition = 0;
 
         // table is not loaded (ets prog running) and save is not possible
         if (!knx.configured())
@@ -79,61 +89,90 @@ namespace OpenKNX
 
         openknx.debug("FlashUserData", "save <%i>", force);
 
-        uint8_t *userData = new uint8_t[userDataSize];
-        memset(userData, 0, userDataSize);
-
-        uint16_t currentLen = 0;
-        uint16_t currentPosition = 0;
-        uint8_t *currentUserData;
-        uint16_t moduleSize = 0;
-
-        currentPosition += FLASH_USER_DATA_MAGICWORD_LEN + FLASH_USER_DATA_SIZE_LEN + FLASH_USER_DATA_CHK_LEN;
-
+        // determine some values
         Modules *modules = openknx.getModules();
+        userDataSize = 0;
         for (uint8_t i = 1; i <= modules->count; i++)
         {
-            // module user data size
-            moduleSize = modules->list[i - 1]->userDataSize();
+            moduleUserDataSize = modules->list[i - 1]->userDataSize();
+            maxModuleSize = MAX(maxModuleSize, moduleUserDataSize);
 
-            // move pointer to correct position
-            currentPosition += moduleSize + FLASH_USER_DATA_SIZE_LEN;
-            currentUserData = (userData + userDataSize - currentPosition);
+            userDataSize += moduleUserDataSize +
+                            FLASH_USER_DATA_MODULE_ID_LEN +
+                            FLASH_USER_DATA_SIZE_LEN;
+        }
+        openknx.debug("FlashUserData", "userDataSize: %i", userDataSize);
+        uint8_t *buffer = new uint8_t[maxModuleSize];
 
-            // fill module user data to pointer
-            modules->list[i - 1]->saveUserData(currentUserData);
+        // start pointer
+        currentPosition = flashSize -
+                          userDataSize -
+                          FLASH_USER_DATA_META_LEN;
 
-            // save module size after user data
-            currentUserData[moduleSize] = moduleSize >> 8;
-            currentUserData[moduleSize + 1] = moduleSize & 0xff;
+        openknx.debug("FlashUserData", "startPosition: %i", currentPosition);
+        for (uint8_t i = 1; i <= modules->count; i++)
+        {
+            // clear buffer
+            memset(buffer, 0, maxModuleSize);
 
-            // store sum leng
-            currentLen += moduleSize + FLASH_USER_DATA_SIZE_LEN;
+            // get data
+            moduleUserDataSize = modules->list[i - 1]->userDataSize();
+            moduleSaveStatus = modules->list[i - 1]->saveUserData(buffer);
+            moduleId = modules->ids[i - 1];
+
+            // write data
+            currentPosition = writeFlash(currentPosition, moduleId);
+            checksum += moduleId;
+            if (!moduleSaveStatus)
+            {
+                // status false add empty value
+                currentPosition = writeFlash(currentPosition, (uint16_t)0);
+                continue;
+            }
+
+            checksum += calcChecksum(moduleUserDataSize);
+            currentPosition = writeFlash(currentPosition, moduleUserDataSize);
+            checksum += calcChecksum(buffer, moduleUserDataSize);
+            currentPosition = writeFlash(currentPosition, buffer, moduleUserDataSize);
         }
 
-        currentUserData = (userData + userDataSize - FLASH_USER_DATA_SIZE_LEN - FLASH_USER_DATA_CHK_LEN - FLASH_USER_DATA_MAGICWORD_LEN);
-        currentUserData[0] = currentLen >> 8;
-        currentUserData[1] = currentLen & 0xff;
+        // write userDataSize
+        currentPosition = writeFlash(currentPosition, userDataSize);
+        checksum += calcChecksum(userDataSize);
 
-        // checksum
-        writeChecksum(userData, currentLen + FLASH_USER_DATA_SIZE_LEN);
+        // write checksum
+        currentPosition = writeFlash(currentPosition, checksum);
 
-        // write magicword
-        currentUserData = (userData + userDataSize - FLASH_USER_DATA_MAGICWORD_LEN);
-        currentUserData[0] = 0xDA;
-        currentUserData[1] = 0x77;
-        currentUserData[2] = 0x6E;
-        currentUserData[3] = 0x82;
+        uint8_t magicWord[4] = {0xDA, 0x73, 0x6E, 0x81};
+        currentPosition = writeFlash(currentPosition, magicWord, 4);
 
-        // write to flash
-        // printHEX("DATA: ", userData, userDataSize);
-        // openknx.debug("FlashUserData", "  len (%i)", userDataSize);
-        // knx.platform().writeNonVolatileMemory(flashSize - userDataSize, userData, userDataSize);
-        // knx.platform().commitNonVolatileMemory();
+        knx.platform().commitNonVolatileMemory();
+        printHEX("DATA: ", flashStart + flashSize - userDataSize - FLASH_USER_DATA_META_LEN, userDataSize + FLASH_USER_DATA_META_LEN);
 
         lastWrite = millis();
         openknx.debug("FlashUserData", "  complete (%i)", millis() - start);
 
-        delete userData;
+        // delete userData;
+    }
+
+    uint32_t FlashUserData::writeFlash(uint32_t relativeAddress, uint8_t *buffer, size_t size)
+    {
+        return knx.platform().writeNonVolatileMemory(relativeAddress, buffer, size);
+    }
+
+    uint32_t FlashUserData::writeFlash(uint32_t relativeAddress, uint8_t data)
+    {
+        uint8_t *buffer = new uint8_t[1];
+        buffer[0] = data;
+        return writeFlash(relativeAddress, buffer);
+    }
+
+    uint32_t FlashUserData::writeFlash(uint32_t relativeAddress, uint16_t data)
+    {
+        uint8_t *buffer = new uint8_t[1];
+        buffer[0] = data >> 8;
+        buffer[1] = data & 0xff;
+        return writeFlash(relativeAddress, buffer, 2);
     }
 
     uint16_t FlashUserData::calcUserDataSize()
@@ -148,6 +187,11 @@ namespace OpenKNX
                    FLASH_USER_DATA_SIZE_LEN;
 
         return len;
+    }
+
+    uint8_t FlashUserData::calcChecksum(uint16_t data)
+    {
+        return (data >> 8) + (data & 0xff);
     }
 
     uint8_t FlashUserData::calcChecksum(uint8_t *data, uint16_t len)

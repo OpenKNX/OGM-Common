@@ -204,10 +204,22 @@ namespace OpenKNX
         }
     }
 
-    void Common::addModule(Module* module)
+    void Common::addModule(uint8_t id, Module* module)
     {
         modules.count++;
         modules.list[modules.count - 1] = module;
+        modules.ids[modules.count - 1] = id;
+    }
+
+    Module* Common::getModule(uint8_t id)
+    {
+        for (uint8_t i = 1; i <= modules.count; i++)
+        {
+            if (modules.ids[i - 1] == id)
+                return modules.list[i - 1];
+        }
+
+        return nullptr;
     }
 
     Modules* Common::getModules()

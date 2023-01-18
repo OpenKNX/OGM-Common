@@ -41,9 +41,8 @@ namespace OpenKNX
           return false;
         }
 
-        virtual bool restoreUserData(const uint8_t* data, const uint8_t len)
+        virtual void restoreUserData(const uint8_t* data, const uint8_t len)
         {
-          return false;
         }
 
         virtual uint16_t userDataSize()
