@@ -14,6 +14,7 @@ namespace OpenKNX
         uint16_t mChannelParamOffset = 0;
         uint16_t mChannelParamKoBlockSize = 0;
         uint16_t mChannelParamKoOffset = 0;
+        bool _flashLoaded = false;
 
         uint32_t calcParamIndex(uint16_t iParamIndex);
         uint16_t calcKoNumber(uint8_t iKoIndex);
@@ -32,17 +33,22 @@ namespace OpenKNX
         virtual void processBeforeRestart();
         virtual void processBeforeTablesUnload();
 
-        virtual void saveUserData()
+        virtual void writeFlash()
+        {}
+
+        virtual void readFlash(const uint8_t* data, const uint16_t size)
         {
+            _flashLoaded = true;
         }
 
-        virtual void restoreUserData(const uint8_t* data, const uint8_t len)
-        {
-        }
-
-        virtual uint16_t userDataSize()
+        virtual uint16_t flashSize()
         {
             return 0;
+        }
+
+        bool flashLoaded()
+        {
+            return _flashLoaded;
         }
     };
 } // namespace OpenKNX

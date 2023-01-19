@@ -25,6 +25,8 @@ namespace OpenKNX
         ~FlashStorage();
 
         void load();
+        void loadData();
+        void initUnloadedModules();
         void save(bool force = false);
 
         void write(uint8_t *buffer, uint16_t size = 1);

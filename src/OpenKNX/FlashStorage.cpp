@@ -14,8 +14,29 @@ namespace OpenKNX
 
     void FlashStorage::load()
     {
-        openknx.debug("FlashStorage", "load");
         uint32_t start = millis();
+        bool loadedModules[OPENKNX_MAX_MODULES];
+        openknx.debug("FlashStorage", "load");
+        loadData();
+        initUnloadedModules();
+        openknx.debug("FlashStorage", "  complete (%i)", millis() - start);
+    }
+
+    void FlashStorage::initUnloadedModules()
+    {
+        Modules *modules = openknx.getModules();
+        for (uint8_t i = 1; i <= modules->count; i++)
+        {
+            Module *module = modules->list[i - 1];
+            if(!module->flashLoaded()) {
+                openknx.debug("FlashStorage", "  init module %s (%i)", module->name(), modules->ids[i - 1]);
+                module->readFlash(new uint8_t[0], 0);
+            }
+        }
+    }
+
+    void FlashStorage::loadData()
+    {
         uint8_t *currentPosition;
         uint8_t moduleId = 0;
         uint16_t moduleSize = 0;
@@ -75,15 +96,14 @@ namespace OpenKNX
             }
             else
             {
-                openknx.debug("FlashStorage", "  restore module %s with %i bytes", module->name(), moduleSize);
-                module->restoreUserData(currentPosition, moduleSize);
+                openknx.debug("FlashStorage", "  restore module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
+                module->readFlash(currentPosition, moduleSize);
 #ifdef FLASH_DATA_DEBUG
                 printHEX("DATA: ", currentPosition, moduleSize);
 #endif
             }
             currentPosition = (currentPosition + moduleSize);
         }
-        openknx.debug("FlashStorage", "  complete (%i)", millis() - start);
     }
 
     void FlashStorage::save(bool force /* = false */)
@@ -111,7 +131,7 @@ namespace OpenKNX
         userDataSize = 0;
         for (uint8_t i = 1; i <= modules->count; i++)
         {
-            userDataSize += modules->list[i - 1]->userDataSize() +
+            userDataSize += modules->list[i - 1]->flashSize() +
                             FLASH_DATA_MODULE_ID_LEN +
                             FLASH_DATA_SIZE_LEN;
         }
@@ -133,7 +153,7 @@ namespace OpenKNX
         {
             // get data
             module = modules->list[i - 1];
-            moduleUserDataSize = module->userDataSize();
+            moduleUserDataSize = module->flashSize();
             moduleId = modules->ids[i - 1];
 
             // write data
@@ -145,8 +165,8 @@ namespace OpenKNX
 
             maxWriteAddress = currentWriteAddress + moduleUserDataSize;
 
-            openknx.debug("FlashStorage", "  save module %s (max %i bytes)", module->name(), moduleUserDataSize);
-            module->saveUserData();
+            openknx.debug("FlashStorage", "  save module %s (i) wir %i bytes", module->name(), moduleId, moduleUserDataSize);
+            module->writeFlash();
             zeroize();
         }
 
