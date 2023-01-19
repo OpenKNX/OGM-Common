@@ -15,27 +15,31 @@ namespace OpenKNX
     void FlashStorage::load()
     {
         uint32_t start = millis();
-        bool loadedModules[OPENKNX_MAX_MODULES];
+        bool *loadedModules = new bool[OPENKNX_MAX_MODULES];
         openknx.debug("FlashStorage", "load");
-        loadData();
-        initUnloadedModules();
+        readData(loadedModules);
+        initUnloadedModules(loadedModules);
         openknx.debug("FlashStorage", "  complete (%i)", millis() - start);
     }
 
-    void FlashStorage::initUnloadedModules()
+    void FlashStorage::initUnloadedModules(bool *loadedModules)
     {
         Modules *modules = openknx.getModules();
+        Module *module = nullptr;
+        uint8_t moduleId = 0;
         for (uint8_t i = 1; i <= modules->count; i++)
         {
-            Module *module = modules->list[i - 1];
-            if(!module->flashLoaded()) {
-                openknx.debug("FlashStorage", "  init module %s (%i)", module->name(), modules->ids[i - 1]);
+            module = modules->list[i - 1];
+            moduleId = modules->ids[i - 1];
+            if (!loadedModules[moduleId])
+            {
+                openknx.debug("FlashStorage", "  init module %s (%i)", module->name(), moduleId);
                 module->readFlash(new uint8_t[0], 0);
             }
         }
     }
 
-    void FlashStorage::loadData()
+    void FlashStorage::readData(bool *loadedModules)
     {
         uint8_t *currentPosition;
         uint8_t moduleId = 0;
@@ -46,8 +50,6 @@ namespace OpenKNX
 
         // check magicwords exists
         currentPosition = flashStart + flashSize - FLASH_DATA_META_LEN;
-
-        openknx.debug("FlashStorage", "   Init: %i", getInt(currentPosition + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN));
         if (FLASH_DATA_INIT != getInt(currentPosition + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN))
         {
             openknx.debug("FlashStorage", "   - Abort: No data found");
@@ -60,9 +62,9 @@ namespace OpenKNX
         // read FirmwareVersion
         lastOpenKnxId = currentPosition[0];
         lastApplicationNumber = currentPosition[1];
-        openknx.debug("FlashStorage", "   ApplicationNumber: %i", lastApplicationNumber);
+        openknx.debug("FlashStorage", "  ApplicationNumber: %i", lastApplicationNumber);
         lastApplicationVersion = getWord(currentPosition + 2);
-        openknx.debug("FlashStorage", "   ApplicationVersion: %i", lastApplicationVersion);
+        openknx.debug("FlashStorage", "  ApplicationVersion: %i", lastApplicationVersion);
 
         // check
         currentPosition = (currentPosition - userDataSize);
@@ -98,6 +100,7 @@ namespace OpenKNX
             {
                 openknx.debug("FlashStorage", "  restore module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
                 module->readFlash(currentPosition, moduleSize);
+                loadedModules[moduleId] = true;
 #ifdef FLASH_DATA_DEBUG
                 printHEX("DATA: ", currentPosition, moduleSize);
 #endif
@@ -165,7 +168,7 @@ namespace OpenKNX
 
             maxWriteAddress = currentWriteAddress + moduleUserDataSize;
 
-            openknx.debug("FlashStorage", "  save module %s (i) wir %i bytes", module->name(), moduleId, moduleUserDataSize);
+            openknx.debug("FlashStorage", "  save module %s (%i) wir %i bytes", module->name(), moduleId, moduleUserDataSize);
             module->writeFlash();
             zeroize();
         }
