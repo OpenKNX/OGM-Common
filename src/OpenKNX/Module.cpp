@@ -2,10 +2,6 @@
 
 namespace OpenKNX
 {
-    Test::Test()
-    {
-    }
-
     uint32_t Module::calcParamIndex(uint16_t iParamIndex)
     {
         return iParamIndex + (mChannelIndex * mChannelParamBlockSize) + mChannelParamOffset;
@@ -57,6 +53,10 @@ namespace OpenKNX
     {
         int status = -4; // some arbitrary value to eliminate the compiler warning
         return abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, &status);
+    }
+    const char *Module::version()
+    {
+        return "0";
     }
 
     int Module::debug(const char *output, ...)

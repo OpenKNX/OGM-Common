@@ -6,11 +6,6 @@
 
 namespace OpenKNX
 {
-    class Test
-    {
-        Test();
-    };
-
     class Module
     {
       protected:
@@ -28,6 +23,7 @@ namespace OpenKNX
       public:
         int debug(const char* output, ...);
         virtual const char* name();
+        virtual const char* version();
         virtual void loop();
         virtual void setup();
         virtual void processInputKo(GroupObject& iKo);
@@ -36,9 +32,8 @@ namespace OpenKNX
         virtual void processBeforeRestart();
         virtual void processBeforeTablesUnload();
 
-        virtual bool saveUserData(uint8_t* data)
+        virtual void saveUserData()
         {
-          return false;
         }
 
         virtual void restoreUserData(const uint8_t* data, const uint8_t len)

@@ -4,7 +4,6 @@ namespace OpenKNX
 {
     Common::Common()
     {
-        flashUserData = new FlashUserData();
     }
     Common::~Common()
     {}
@@ -30,11 +29,6 @@ namespace OpenKNX
         initKnx();
     }
 
-    uint16_t Common::version()
-    {
-        return ((firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
-    }
-
     void Common::initKnx()
     {
         SERIAL_DEBUG.println("knx init...");
@@ -56,7 +50,7 @@ namespace OpenKNX
         // set firmware version als user info (PID_VERSION)
         // 5 bit revision, 5 bit major, 6 bit minor
         // output in ETS as [revision] major.minor
-        knx.bau().deviceObject().version(version());
+        knx.bau().deviceObject().version(applicationVersion());
 
         if (MAIN_OrderNumber)
         {
@@ -93,7 +87,7 @@ namespace OpenKNX
     void Common::setup()
     {
         SERIAL_DEBUG.println("setup...");
-        flashUserData->load();
+        flash.load();
 
         digitalWrite(PROG_LED_PIN, LOW);
 
@@ -136,7 +130,10 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
+
+#ifdef DEBUG_LOOP_TIME
         uint32_t start = millis();
+#endif
 
         // loop  knx stack
         knx.loop();
@@ -227,6 +224,11 @@ namespace OpenKNX
         return &modules;
     }
 
+    FlashStorage& Common::flash2()
+    {
+        return flash;
+    }
+
 #ifdef LOG_StartupDelayBase
     bool Common::processStartupDelay()
     {
@@ -263,8 +265,8 @@ namespace OpenKNX
             modules.list[i - 1]->processSavePin();
         }
 
-        flashUserData->save();
-        //flashUserData->save(true);
+        flash.save();
+        // flash.save(true);
         saved = true;
     }
 
@@ -276,13 +278,13 @@ namespace OpenKNX
             modules.list[i - 1]->processBeforeRestart();
         }
 
-        flashUserData->save();
+        flash.save();
     }
 
     void Common::processBeforeTablesUnload()
     {
         SERIAL_DEBUG.println("processBeforeTablesUnload");
-        flashUserData->save();
+        flash.save();
     }
 
     void Common::processInputKo(GroupObject& iKo)
@@ -322,10 +324,10 @@ namespace OpenKNX
         switch (SERIAL_DEBUG.read())
         {
             case 0x57: // W
-                flashUserData->save(true);
+                flash.save(true);
                 break;
             case 0x56: // V
-                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "." << firmwareRevision;
+                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "." << (int)firmwareRevision;
                 debug("VERSION", output.str().c_str());
                 break;
             case 0x4F: // O
@@ -351,8 +353,25 @@ namespace OpenKNX
         va_start(args, output);
         int result = vsnprintf(buffer, 256, output, args);
         va_end(args);
-        SERIAL_DEBUG.printf("%s: %s\n\r", prefix, buffer);
+        SERIAL_DEBUG.print(prefix);
+        SERIAL_DEBUG.print(": ");
+        SERIAL_DEBUG.println(buffer);
         return result;
+    }
+
+    uint8_t Common::openKnxId()
+    {
+        return MAIN_OpenKnxId;
+    }
+
+    uint8_t Common::applicationNumber()
+    {
+        return MAIN_ApplicationNumber;
+    }
+
+    uint16_t Common::applicationVersion()
+    {
+        return ((firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
     }
 
 } // namespace OpenKNX

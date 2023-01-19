@@ -6,5 +6,5 @@
 #include "hardware.h"
 #include "knxprod.h"
 #include "OpenKNX/Module.h"
-#include "OpenKNX/FlashUserData.h"
+#include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Common.h"
