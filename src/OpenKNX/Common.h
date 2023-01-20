@@ -1,11 +1,11 @@
 #pragma once
-#include <knx.h>
-#include "hardware.h"
-#include "knxprod.h"
 #include "KnxHelper.h"
+#include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Module.h"
-#include "OpenKNX/FlashStorage.h"
+#include "hardware.h"
+#include "knxprod.h"
+#include <knx.h>
 
 #ifndef OPENKNX_MAX_MODULES
 #define OPENKNX_MAX_MODULES 9
@@ -76,6 +76,7 @@ namespace OpenKNX
         uint8_t openKnxId();
         uint8_t applicationNumber();
         uint16_t applicationVersion();
+        const char* applicationHumanVersion();
     };
 } // namespace OpenKNX
 

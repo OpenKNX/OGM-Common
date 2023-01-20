@@ -1,5 +1,9 @@
 #pragma once
 #include "knx.h"
+#include <cstdint>
+#include <stdio.h>
+#include <stdarg.h>
+#include <Arduino.h>
 
 namespace OpenKNX
 {

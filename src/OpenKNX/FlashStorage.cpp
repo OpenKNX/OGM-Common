@@ -116,7 +116,6 @@ namespace OpenKNX
         uint8_t moduleId = 0;
         uint16_t dataSize = 0;
         uint16_t moduleSize = 0;
-        uint32_t currentPosition = 0;
         Module *module = nullptr;
 
         // table is not loaded (ets prog running) and save is not possible
@@ -242,13 +241,13 @@ namespace OpenKNX
             return;
         }
 
-        // for (uint16_t i = 0; i < size; i++)
-        //     _checksum += value;
-
         for (uint16_t i = 0; i < size; i++)
-            write(&value, 1);
+            _checksum += value;
 
-        // _currentWriteAddress = knx.platform().writeNonVolatileMemory(_currentWriteAddress, value, size);
+        // for (uint16_t i = 0; i < size; i++)
+        //     write(&value, 1);
+
+        _currentWriteAddress = knx.platform().writeNonVolatileMemory(_currentWriteAddress, value, size);
     }
 
     void FlashStorage::writeByte(uint8_t value)

@@ -1,11 +1,6 @@
 #pragma once
 #include <knx.h>
 
-//#include "OpenKNX.h"
-// #include "knxprod.h"
-// #include <cstdio>
-// #include <functional>
-
 namespace OpenKNX
 {
     class Module
@@ -14,7 +9,7 @@ namespace OpenKNX
         virtual GroupObject* getKo(uint16_t koNumber);
 
       public:
-        int debug(const char* output, ...);
+        void debug(const char* output, ...);
         virtual const char* name();
         virtual const char* version();
         virtual void loop();
@@ -24,12 +19,8 @@ namespace OpenKNX
         virtual void firstLoop();
         virtual void processBeforeRestart();
         virtual void processBeforeTablesUnload();
-
-        virtual void writeFlash() {}
-        virtual void readFlash(const uint8_t* data, const uint16_t size) {}
-        virtual uint16_t flashSize()
-        {
-            return 0;
-        }
+        virtual void writeFlash();
+        virtual void readFlash(const uint8_t* data, const uint16_t size);
+        virtual uint16_t flashSize();
     };
 } // namespace OpenKNX

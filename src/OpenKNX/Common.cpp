@@ -1,6 +1,4 @@
 #include "OpenKNX/Common.h"
-#include <iomanip>
-#include <iostream>
 
 namespace OpenKNX
 {
@@ -188,8 +186,8 @@ namespace OpenKNX
 
     void Common::collectMemoryStats()
     {
-        _freeMemoryMin = MIN(freeMemory(), _freeMemoryMin);
-        _freeMemoryMax = MAX(freeMemory(), _freeMemoryMax);
+        _freeMemoryMin = MIN((uint)freeMemory(), _freeMemoryMin);
+        _freeMemoryMax = MAX((uint)freeMemory(), _freeMemoryMax);
     }
 
     void Common::showMemoryStats()
@@ -335,27 +333,20 @@ namespace OpenKNX
 
     void Common::processSerialInput()
     {
-        std::stringstream output;
         switch (SERIAL_DEBUG.read())
         {
             case 0x57: // W
                 flash.save(true);
                 break;
+            case 0x41: // A
             case 0x56: // V
-                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "." << (int)_firmwareRevision;
-                debug("VERSION", output.str().c_str());
-                break;
-            case 0x4F: // O
-                output << "0x" << std::hex << std::uppercase << MAIN_OpenKnxId;
-                debug("OPENKNX", output.str().c_str());
+                debug("VERSION", "%02x %04x (%s)", openknx.applicationNumber(), openknx.applicationVersion(), openknx.applicationHumanVersion());
                 break;
             case 0x53: // S
-                output << MAIN_OrderNumber;
-                debug("SOFTWARE", "%i", MAIN_OrderNumber);
+                debug("SOFTWARE", "%s", MAIN_OrderNumber);
                 break;
             case 0x48: // H
-                debug("SOFTWARE", "%s", HARDWARE_NAME);
-                debug("HARDWARE", output.str().c_str());
+                debug("HARDWARE", "%s", HARDWARE_NAME);
                 break;
             case 0x6D: // m
                 showMemoryStats();
@@ -376,6 +367,13 @@ namespace OpenKNX
     uint16_t Common::applicationVersion()
     {
         return ((_firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
+    }
+
+    const char* Common::applicationHumanVersion()
+    {
+        char* buffer = new char[20];
+        sprintf(buffer, "%i.%i.%i", ((MAIN_ApplicationVersion & 0xF0) >> 4), (MAIN_ApplicationVersion & 0x0F), _firmwareRevision);
+        return buffer;
     }
 
 } // namespace OpenKNX

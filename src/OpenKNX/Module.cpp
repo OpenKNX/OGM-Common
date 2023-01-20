@@ -1,9 +1,9 @@
-#include <knx.h>
-#include <iostream>
-#include <iomanip>
-#include <cxxabi.h>
-#include "OpenKNX/Common.h"
 #include "OpenKNX/Module.h"
+#include "OpenKNX/Common.h"
+#include <cxxabi.h>
+#include <iomanip>
+#include <iostream>
+#include <knx.h>
 
 namespace OpenKNX
 {
@@ -35,23 +35,32 @@ namespace OpenKNX
 
     const char *Module::name()
     {
-        int status = -4; // some arbitrary value to eliminate the compiler warning
-        return abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, &status);
+        return "UnknownModule";
     }
-    
+
     const char *Module::version()
     {
         return "0";
     }
 
-    int Module::debug(const char *output, ...)
+    void Module::debug(const char *output, ...)
     {
         char buffer[256];
         va_list args;
         va_start(args, output);
-        int result = vsnprintf(buffer, 256, output, args);
+        vsnprintf(buffer, 256, output, args);
         va_end(args);
         openknx.debug(name(), buffer);
-        return result;
+    }
+
+    void Module::writeFlash()
+    {}
+
+    void Module::readFlash(const uint8_t *data, const uint16_t size)
+    {}
+
+    uint16_t Module::flashSize()
+    {
+        return 0;
     }
 } // namespace OpenKNX

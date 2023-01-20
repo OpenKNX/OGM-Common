@@ -7,12 +7,12 @@ namespace OpenKNX
         return 0;
     }
 
-    void Helper::debug(const char* prefix, const char* data, ...)
+    void Helper::debug(const char* prefix, const char* output, ...)
     {
         char buffer[256];
         va_list args;
-        va_start(args, data);
-        int result = vsnprintf(buffer, 256, data, args);
+        va_start(args, output);
+        vsnprintf(buffer, 256, output, args);
         va_end(args);
         SERIAL_DEBUG.print(prefix);
         SERIAL_DEBUG.print(": ");
