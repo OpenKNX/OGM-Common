@@ -23,3 +23,5 @@ bool delayCheck(uint32_t iOldTimer, uint32_t iDuration);
 uint32_t delayTimerInit();
 // check for float number
 bool isNum(float iNumber);
+
+int freeMemory();
