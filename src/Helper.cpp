@@ -54,7 +54,7 @@ extern "C" char* sbrk(int incr);
 #else  // __ARM__
 extern char *__brkval;
 #endif  // __arm__
-​
+
 int freeMemory() {
   char top;
 #ifdef __arm__
