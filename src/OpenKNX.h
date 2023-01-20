@@ -1,10 +1,6 @@
 #pragma once
-#include <knx.h>
-#include <iostream>
-#include <iomanip>
-#include <cxxabi.h>
-#include "hardware.h"
-#include "knxprod.h"
+#include "OpenKNX/Helper.h"
 #include "OpenKNX/Module.h"
+#include "OpenKNX/Channel.h"
 #include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Common.h"

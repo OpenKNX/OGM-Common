@@ -1,31 +1,15 @@
-#include "OpenKNX.h"
+#include <knx.h>
+#include <iostream>
+#include <iomanip>
+#include <cxxabi.h>
+#include "OpenKNX/Common.h"
+#include "OpenKNX/Module.h"
 
 namespace OpenKNX
 {
-    uint32_t Module::calcParamIndex(uint16_t iParamIndex)
+    GroupObject *Module::getKo(uint16_t koNumber)
     {
-        return iParamIndex + (mChannelIndex * mChannelParamBlockSize) + mChannelParamOffset;
-    }
-
-    uint16_t Module::calcKoNumber(uint8_t iKoIndex)
-    {
-        return iKoIndex + (mChannelIndex * mChannelParamKoBlockSize) + mChannelParamKoOffset;
-    }
-
-    int8_t Module::calcKoIndex(uint16_t iKoNumber)
-    {
-        int16_t lResult = (iKoNumber - mChannelParamKoOffset);
-        // check if channel is valid
-        if ((int8_t)(lResult / mChannelParamKoBlockSize) == mChannelIndex)
-            lResult = lResult % mChannelParamKoBlockSize;
-        else
-            lResult = -1;
-        return (int8_t)lResult;
-    }
-
-    GroupObject *Module::getKo(uint8_t iKoIndex)
-    {
-        return &knx.getGroupObject(calcKoNumber(iKoIndex));
+        return &knx.getGroupObject(koNumber);
     }
 
     void Module::loop()
@@ -37,7 +21,7 @@ namespace OpenKNX
     void Module::firstLoop()
     {}
 
-    void Module::processInputKo(GroupObject &iKo)
+    void Module::processInputKo(GroupObject &ko)
     {}
 
     void Module::processSavePin()
@@ -54,6 +38,7 @@ namespace OpenKNX
         int status = -4; // some arbitrary value to eliminate the compiler warning
         return abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, &status);
     }
+    
     const char *Module::version()
     {
         return "0";

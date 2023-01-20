@@ -1,4 +1,6 @@
 #include "OpenKNX/Common.h"
+#include <iomanip>
+#include <iostream>
 
 namespace OpenKNX
 {
@@ -10,9 +12,9 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
-        this->firmwareRevision = firmwareRevision;
+        _firmwareRevision = firmwareRevision;
         SERIAL_DEBUG.begin(115200);
-        SERIAL_DEBUG.println("init...");
+        debug("OpenKNX", "init");
         ArduinoPlatform::SerialDebug = &SERIAL_DEBUG;
 
         pinMode(PROG_LED_PIN, OUTPUT);
@@ -31,7 +33,7 @@ namespace OpenKNX
 
     void Common::initKnx()
     {
-        SERIAL_DEBUG.println("knx init...");
+        debug("OpenKNX", "init knx");
 #ifdef ARDUINO_ARCH_RP2040
         Serial1.setRX(KNX_UART_RX_PIN);
         Serial1.setTX(KNX_UART_TX_PIN);
@@ -60,33 +62,31 @@ namespace OpenKNX
 
     VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion)
     {
-        VersionCheckResult check = FlashAllInvalid;
-        if (manufacturerId == 0x00FA)
+        if (manufacturerId != 0x00FA)
         {
-            // hardwareType has the format 0x00 00 Ap nn vv 00
-            if (memcmp(knx.bau().deviceObject().hardwareType(), hardwareType, 4) == 0)
-            {
-                check = FlashTablesInvalid;
-                if (knx.bau().deviceObject().hardwareType()[4] == hardwareType[4])
-                {
-                    check = FlashValid;
-                }
-                else
-                {
-                    println("MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
-                }
-            }
+            openknx.debug("OpenKNX", "This firmware supports only applicationId 0x00FA");
+            return FlashAllInvalid;
         }
-        else
+
+        // hardwareType has the format 0x00 00 Ap nn vv 00
+        if (memcmp(knx.bau().deviceObject().hardwareType(), hardwareType, 4) != 0)
         {
-            println("This firmware supports only applicationId 0x00FA");
+            openknx.debug("OpenKNX", "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
+            return FlashAllInvalid;
         }
-        return check;
+
+        if (knx.bau().deviceObject().hardwareType()[4] != hardwareType[4])
+        {
+            openknx.debug("OpenKNX", "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
+            return FlashTablesInvalid;
+        }
+
+        return FlashValid;
     }
 
     void Common::setup()
     {
-        SERIAL_DEBUG.println("setup...");
+        debug("OpenKNX", "setup");
         flash.load();
 
         digitalWrite(PROG_LED_PIN, LOW);
@@ -115,8 +115,9 @@ namespace OpenKNX
         if (!knx.configured())
             return;
 
-        startupDelay = millis();
-        heartbeatDelay = 0;
+        _startupDelay = millis();
+        _heartbeatDelay = 0;
+        collectMemoryStats();
 
         // Handle loop of modules
         for (uint8_t i = 1; i <= modules.count; i++)
@@ -144,11 +145,13 @@ namespace OpenKNX
         if (SERIAL_DEBUG.available())
             processSerialInput();
 
+        collectMemoryStats();
+
 #ifdef DEBUG_LOOP_TIME
         // loop took to long and last out is min 1s ago
         if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, 1000))
         {
-            SERIAL_DEBUG.printf("loop took too long %i\n\r", (millis() - start));
+            debug("OpenKNX", "loop took too long %i", (millis() - start));
             lastDebugTime = millis();
         }
 #endif
@@ -177,20 +180,37 @@ namespace OpenKNX
         processModulesLoop();
     }
 
+    void Common::loopModule(uint8_t index)
+    {
+        modules.list[index]->loop();
+        collectMemoryStats();
+    }
+
+    void Common::collectMemoryStats()
+    {
+        _freeMemoryMin = MIN(freeMemory(), _freeMemoryMin);
+        _freeMemoryMax = MAX(freeMemory(), _freeMemoryMax);
+    }
+
+    void Common::showMemoryStats()
+    {
+        debug("OpenKNX", "Free Memory\n\r         current: %i\n\r         min: %i\n\r         max: %i\n\r", freeMemory(), _freeMemoryMin, _freeMemoryMax);
+    }
+
     void Common::processFirstLoop()
     {
         // skip if already executed
-        if (firstLoopProcessed)
+        if (_firstLoopProcessed)
             return;
 
-        SERIAL_DEBUG.println("processFirstLoop");
+        debug("OpenKNX", "processFirstLoop");
 
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->firstLoop();
         }
 
-        firstLoopProcessed = true;
+        _firstLoopProcessed = true;
     }
 
     void Common::processModulesLoop()
@@ -224,15 +244,10 @@ namespace OpenKNX
         return &modules;
     }
 
-    FlashStorage& Common::flash2()
-    {
-        return flash;
-    }
-
 #ifdef LOG_StartupDelayBase
     bool Common::processStartupDelay()
     {
-        return !delayCheck(startupDelay, getDelayPattern(LOG_StartupDelayBase));
+        return !delayCheck(_startupDelay, getDelayPattern(LOG_StartupDelayBase));
     }
 #endif
 
@@ -240,11 +255,11 @@ namespace OpenKNX
     void Common::processHeartbeat()
     {
         // the first heartbeat is send directly after startup delay of the device
-        if (heartbeatDelay == 0 || delayCheck(heartbeatDelay, getDelayPattern(LOG_HeartbeatDelayBase)))
+        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, getDelayPattern(LOG_HeartbeatDelayBase)))
         {
             // we waited enough, let's send a heartbeat signal
             knx.getGroupObject(LOG_KoHeartbeat).value(true, getDPT(VAL_DPT_1));
-            heartbeatDelay = millis();
+            _heartbeatDelay = millis();
         }
     }
 #endif
@@ -252,14 +267,14 @@ namespace OpenKNX
     void Common::processSavePin()
     {
         // savePin not triggered
-        if (!save)
+        if (!_save)
             return;
 
         // saveHandler already called
-        if (saved)
+        if (_saved)
             return;
 
-        SERIAL_DEBUG.println("processSavePin");
+        debug("OpenKNX", "processSavePin");
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->processSavePin();
@@ -267,12 +282,12 @@ namespace OpenKNX
 
         flash.save();
         // flash.save(true);
-        saved = true;
+        _saved = true;
     }
 
     void Common::processBeforeRestart()
     {
-        SERIAL_DEBUG.println("processBeforeRestart");
+        debug("OpenKNX", "processBeforeRestart");
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->processBeforeRestart();
@@ -283,7 +298,7 @@ namespace OpenKNX
 
     void Common::processBeforeTablesUnload()
     {
-        SERIAL_DEBUG.println("processBeforeTablesUnload");
+        debug("OpenKNX", "processBeforeTablesUnload");
         flash.save();
     }
 
@@ -312,7 +327,7 @@ namespace OpenKNX
         pinMode(SAVE_INTERRUPT_PIN, INPUT);
         attachInterrupt(
             digitalPinToInterrupt(SAVE_INTERRUPT_PIN), []() -> void {
-                openknx.save = true;
+                openknx._save = true;
             },
             FALLING);
 #endif
@@ -327,36 +342,25 @@ namespace OpenKNX
                 flash.save(true);
                 break;
             case 0x56: // V
-                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "." << (int)firmwareRevision;
+                output << MAIN_ApplicationNumber << "." << MAIN_ApplicationVersion << "." << (int)_firmwareRevision;
                 debug("VERSION", output.str().c_str());
                 break;
             case 0x4F: // O
                 output << "0x" << std::hex << std::uppercase << MAIN_OpenKnxId;
                 debug("OPENKNX", output.str().c_str());
-                // SERIAL_DEBUG.printf("OPENKNX: 0x%02X\n\r", MAIN_OpenKnxId);
                 break;
             case 0x53: // S
                 output << MAIN_OrderNumber;
-                debug("SOFTWARE", output.str().c_str());
+                debug("SOFTWARE", "%i", MAIN_OrderNumber);
                 break;
             case 0x48: // H
-                output << HARDWARE_NAME;
+                debug("SOFTWARE", "%s", HARDWARE_NAME);
                 debug("HARDWARE", output.str().c_str());
                 break;
+            case 0x6D: // m
+                showMemoryStats();
+                break;
         }
-    }
-
-    int Common::debug(const char* prefix, const char* output, ...)
-    {
-        char buffer[256];
-        va_list args;
-        va_start(args, output);
-        int result = vsnprintf(buffer, 256, output, args);
-        va_end(args);
-        SERIAL_DEBUG.print(prefix);
-        SERIAL_DEBUG.print(": ");
-        SERIAL_DEBUG.println(buffer);
-        return result;
     }
 
     uint8_t Common::openKnxId()
@@ -371,7 +375,7 @@ namespace OpenKNX
 
     uint16_t Common::applicationVersion()
     {
-        return ((firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
+        return ((_firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
     }
 
 } // namespace OpenKNX

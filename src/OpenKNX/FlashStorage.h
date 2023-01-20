@@ -1,5 +1,5 @@
 #pragma once
-#include "Helper.h"
+#include <Helper.h>
 #include "knx.h"
 #include "knx/bits.h"
 #include <stddef.h>
@@ -30,6 +30,7 @@ namespace OpenKNX
         void save(bool force = false);
 
         void write(uint8_t *buffer, uint16_t size = 1);
+        void write(uint8_t value, uint16_t size);
         void writeByte(uint8_t value);
         void writeWord(uint16_t value);
         void writeInt(uint32_t value);
@@ -37,16 +38,16 @@ namespace OpenKNX
         uint16_t applicationVersion();
 
       private:
-        uint8_t *flashStart;
-        uint16_t flashSize = 0;
-        uint32_t lastWrite = 0;
-        uint8_t lastOpenKnxId = 0;
-        uint8_t lastApplicationNumber = 0;
-        uint16_t lastApplicationVersion = 0;
+        uint8_t *_flashStart;
+        uint16_t _flashSize = 0;
+        uint32_t _lastWrite = 0;
+        uint8_t _lastOpenKnxId = 0;
+        uint8_t _lastApplicationNumber = 0;
+        uint16_t _lastApplicationVersion = 0;
 
-        uint16_t checksum = 0;
-        uint32_t currentWriteAddress = 0;
-        uint32_t maxWriteAddress = 0;
+        uint16_t _checksum = 0;
+        uint32_t _currentWriteAddress = 0;
+        uint32_t _maxWriteAddress = 0;
 
         void zeroize();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);

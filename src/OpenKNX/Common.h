@@ -1,9 +1,11 @@
 #pragma once
-#include "Helper.h"
-#include "KnxHelper.h"
-#include "OpenKNX/FlashStorage.h"
-#include "OpenKNX/Module.h"
 #include <knx.h>
+#include "hardware.h"
+#include "knxprod.h"
+#include "KnxHelper.h"
+#include "OpenKNX/Helper.h"
+#include "OpenKNX/Module.h"
+#include "OpenKNX/FlashStorage.h"
 
 #ifndef OPENKNX_MAX_MODULES
 #define OPENKNX_MAX_MODULES 9
@@ -18,35 +20,38 @@ namespace OpenKNX
         Module* list[OPENKNX_MAX_MODULES];
     };
 
-    class Common
+    class Common : public Helper
     {
       private:
 #ifdef DEBUG_LOOP_TIME
         uint32_t lastDebugTime = 0;
 #endif
-        uint8_t firmwareRevision = 0;
+        uint8_t _firmwareRevision = 0;
         Modules modules;
 
-        bool firstLoopProcessed = false;
+        bool _firstLoopProcessed = false;
+        uint _freeMemoryMin = -1;
+        uint _freeMemoryMax = 0;
         void processSerialInput();
         void initKnx();
         void appSetup();
         void appLoop();
+        void loopModule(uint8_t id);
         void processFirstLoop();
         void processModulesLoop();
         void registerCallbacks();
 #ifdef LOG_StartupDelayBase
-        uint32_t startupDelay;
+        uint32_t _startupDelay;
         bool processStartupDelay();
 #endif
 #ifdef LOG_HeartbeatDelayBase
-        uint32_t heartbeatDelay;
+        uint32_t _heartbeatDelay;
         void processHeartbeat();
 #endif
 
       public:
-        bool save = false;
-        bool saved = false;
+        bool _save = false;
+        bool _saved = false;
         FlashStorage flash;
 
         Common();
@@ -58,15 +63,15 @@ namespace OpenKNX
         void setup();
         void loop();
         void addModule(uint8_t id, Module* module);
+        void collectMemoryStats();
+        void showMemoryStats();
         Module* getModule(uint8_t id);
         Modules* getModules();
-        FlashStorage &flash2();
 
         void processSavePin();
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
-        int debug(const char* prefix, const char* output, ...);
 
         uint8_t openKnxId();
         uint8_t applicationNumber();
