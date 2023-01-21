@@ -113,7 +113,7 @@ namespace OpenKNX
     {
         _flashSize = knx.platform().getNonVolatileMemorySize();
         _flashStart = knx.platform().getNonVolatileMemoryStart();
-        
+
         uint32_t start = millis();
         uint8_t moduleId = 0;
         uint16_t dataSize = 0;
@@ -136,7 +136,11 @@ namespace OpenKNX
         dataSize = 0;
         for (uint8_t i = 1; i <= modules->count; i++)
         {
-            dataSize += modules->list[i - 1]->flashSize() +
+            moduleSize = modules->list[i - 1]->flashSize();
+            if (moduleSize == 0)
+                continue;
+
+            dataSize += moduleSize +
                         FLASH_DATA_MODULE_ID_LEN +
                         FLASH_DATA_SIZE_LEN;
         }
@@ -161,6 +165,9 @@ namespace OpenKNX
             moduleSize = module->flashSize();
             moduleId = modules->ids[i - 1];
 
+            if (moduleSize == 0)
+                continue;
+
             // write data
             _maxWriteAddress = _currentWriteAddress +
                                FLASH_DATA_MODULE_ID_LEN +
@@ -170,7 +177,7 @@ namespace OpenKNX
 
             _maxWriteAddress = _currentWriteAddress + moduleSize;
 
-            openknx.debug("FlashStorage", "  save module %s (%i) wir %i bytes", module->name(), moduleId, moduleSize);
+            openknx.debug("FlashStorage", "  save module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
             module->writeFlash();
             zeroize();
         }

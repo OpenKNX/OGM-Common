@@ -86,7 +86,6 @@ namespace OpenKNX
     void Common::setup()
     {
         debug("OpenKNX", "setup");
-        flash.load();
 
         digitalWrite(PROG_LED_PIN, LOW);
 
@@ -113,6 +112,8 @@ namespace OpenKNX
     {
         if (!knx.configured())
             return;
+            
+        flash.load();
 
         _startupDelay = millis();
         _heartbeatDelay = 0;
@@ -246,7 +247,7 @@ namespace OpenKNX
 #ifdef LOG_StartupDelayBase
     bool Common::processStartupDelay()
     {
-        return !delayCheck(_startupDelay, getDelayPattern(LOG_StartupDelayBase));
+        return !delayCheck(_startupDelay, paramTimer(ParamLOG_StartupDelayBase, ParamLOG_StartupDelayTime));
     }
 #endif
 
@@ -254,10 +255,10 @@ namespace OpenKNX
     void Common::processHeartbeat()
     {
         // the first heartbeat is send directly after startup delay of the device
-        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, getDelayPattern(LOG_HeartbeatDelayBase)))
+        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, paramTimer(ParamLOG_HeartbeatDelayBase, ParamLOG_HeartbeatDelayTime)))
         {
             // we waited enough, let's send a heartbeat signal
-            knx.getGroupObject(LOG_KoHeartbeat).value(true, getDPT(VAL_DPT_1));
+            KoLOG_Heartbeat.value(true, DPT_Switch);
             _heartbeatDelay = millis();
         }
     }
