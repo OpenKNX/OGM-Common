@@ -1,8 +1,7 @@
 #pragma once
-#include <Helper.h>
 #include "knx.h"
 #include "knx/bits.h"
-#include <stddef.h>
+// #include <stddef.h>
 
 #ifndef FLASH_DATA_WRITE_LIMIT
 #define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay
@@ -25,30 +24,27 @@ namespace OpenKNX
         ~FlashStorage();
 
         void load();
-        void readData(bool *loadedModules);
-        void initUnloadedModules(bool *loadedModules);
+        void readData();
+        void initUnloadedModules();
         void save(bool force = false);
-
         void write(uint8_t *buffer, uint16_t size = 1);
         void write(uint8_t value, uint16_t size);
         void writeByte(uint8_t value);
         void writeWord(uint16_t value);
         void writeInt(uint32_t value);
-
         uint16_t applicationVersion();
 
       private:
+        bool *loadedModules;
         uint8_t *_flashStart;
         uint16_t _flashSize = 0;
         uint32_t _lastWrite = 0;
         uint8_t _lastOpenKnxId = 0;
         uint8_t _lastApplicationNumber = 0;
         uint16_t _lastApplicationVersion = 0;
-
         uint16_t _checksum = 0;
         uint32_t _currentWriteAddress = 0;
         uint32_t _maxWriteAddress = 0;
-
         void zeroize();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);
         uint16_t calcChecksum(uint16_t data);

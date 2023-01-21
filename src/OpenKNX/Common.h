@@ -1,11 +1,12 @@
 #pragma once
+#include <knx.h>
+#include "../Helper.h"
 #include "KnxHelper.h"
-#include "OpenKNX/FlashStorage.h"
-#include "OpenKNX/Helper.h"
-#include "OpenKNX/Module.h"
 #include "hardware.h"
 #include "knxprod.h"
-#include <knx.h>
+#include "OpenKNX/FlashStorage.h"
+#include "OpenKNX/Module.h"
+#include "OpenKNX/Helper.h"
 
 #ifndef OPENKNX_MAX_MODULES
 #define OPENKNX_MAX_MODULES 9
@@ -32,7 +33,6 @@ namespace OpenKNX
         bool _firstLoopProcessed = false;
         uint _freeMemoryMin = -1;
         uint _freeMemoryMax = 0;
-        void processSerialInput();
         void initKnx();
         void appSetup();
         void appLoop();
@@ -40,6 +40,7 @@ namespace OpenKNX
         void processFirstLoop();
         void processModulesLoop();
         void registerCallbacks();
+        void processSerialInput();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
         bool processStartupDelay();

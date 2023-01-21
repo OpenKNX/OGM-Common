@@ -5,8 +5,6 @@ namespace OpenKNX
 {
     FlashStorage::FlashStorage()
     {
-        _flashStart = knx.platform().getNonVolatileMemoryStart();
-        _flashSize = knx.platform().getNonVolatileMemorySize();
     }
 
     FlashStorage::~FlashStorage()
@@ -14,16 +12,17 @@ namespace OpenKNX
 
     void FlashStorage::load()
     {
-        openknx.paramTimer(1, 1);
+        _flashSize = knx.platform().getNonVolatileMemorySize();
+        _flashStart = knx.platform().getNonVolatileMemoryStart();
         uint32_t start = millis();
-        bool *loadedModules = new bool[OPENKNX_MAX_MODULES];
+        loadedModules = new bool[openknx.getModules()->count];
         openknx.debug("FlashStorage", "load");
-        readData(loadedModules);
-        initUnloadedModules(loadedModules);
+        readData();
+        initUnloadedModules();
         openknx.debug("FlashStorage", "  complete (%i)", millis() - start);
     }
 
-    void FlashStorage::initUnloadedModules(bool *loadedModules)
+    void FlashStorage::initUnloadedModules()
     {
         Modules *modules = openknx.getModules();
         Module *module = nullptr;
@@ -40,7 +39,7 @@ namespace OpenKNX
         }
     }
 
-    void FlashStorage::readData(bool *loadedModules)
+    void FlashStorage::readData()
     {
         uint8_t *currentPosition;
         uint8_t moduleId = 0;
@@ -63,7 +62,7 @@ namespace OpenKNX
         // read FirmwareVersion
         _lastOpenKnxId = currentPosition[0];
         _lastApplicationNumber = currentPosition[1];
-        openknx.debug("FlashStorage", "  ApplicationNumber: %i", _lastApplicationNumber);
+        openknx.debug("FlashStorage", "  ApplicationNumber: %02x", _lastApplicationNumber);
         _lastApplicationVersion = getWord(currentPosition + 2);
         openknx.debug("FlashStorage", "  ApplicationVersion: %i", _lastApplicationVersion);
 
@@ -112,6 +111,9 @@ namespace OpenKNX
 
     void FlashStorage::save(bool force /* = false */)
     {
+        _flashSize = knx.platform().getNonVolatileMemorySize();
+        _flashStart = knx.platform().getNonVolatileMemoryStart();
+        
         uint32_t start = millis();
         uint8_t moduleId = 0;
         uint16_t dataSize = 0;
@@ -243,9 +245,6 @@ namespace OpenKNX
 
         for (uint16_t i = 0; i < size; i++)
             _checksum += value;
-
-        // for (uint16_t i = 0; i < size; i++)
-        //     write(&value, 1);
 
         _currentWriteAddress = knx.platform().writeNonVolatileMemory(_currentWriteAddress, value, size);
     }

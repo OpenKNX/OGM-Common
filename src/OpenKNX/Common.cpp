@@ -33,6 +33,7 @@ namespace OpenKNX
     {
         debug("OpenKNX", "init knx");
 #ifdef ARDUINO_ARCH_RP2040
+        debug("OpenKNX", "test");
         Serial1.setRX(KNX_UART_RX_PIN);
         Serial1.setTX(KNX_UART_TX_PIN);
 #endif
@@ -279,7 +280,6 @@ namespace OpenKNX
         }
 
         flash.save();
-        // flash.save(true);
         _saved = true;
     }
 
@@ -339,8 +339,10 @@ namespace OpenKNX
                 flash.save(true);
                 break;
             case 0x41: // A
+                debug("APPLICATION", "%02X%02X", openknx.openKnxId(), openknx.applicationNumber());
+                break;
             case 0x56: // V
-                debug("VERSION", "%02x %04x (%s)", openknx.applicationNumber(), openknx.applicationVersion(), openknx.applicationHumanVersion());
+                debug("VERSION", "%i (%s)", openknx.applicationVersion(), openknx.applicationHumanVersion());
                 break;
             case 0x53: // S
                 debug("SOFTWARE", "%s", MAIN_OrderNumber);
@@ -375,7 +377,6 @@ namespace OpenKNX
         sprintf(buffer, "%i.%i.%i", ((MAIN_ApplicationVersion & 0xF0) >> 4), (MAIN_ApplicationVersion & 0x0F), _firmwareRevision);
         return buffer;
     }
-
 } // namespace OpenKNX
 
 OpenKNX::Common openknx;

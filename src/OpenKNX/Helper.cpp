@@ -4,6 +4,25 @@ namespace OpenKNX
 {
     uint32_t Helper::paramTimer(uint8_t base, uint16_t time)
     {
+        switch (base)
+        {
+            case 3: // 1/10  Sekunde(n)
+                return time * 100;
+                break;
+            case 0: // Sekunde(n)
+                return time * 1000;
+                break;
+            case 1: // Minute(n)
+                return time * 60000;
+                break;
+            case 2: // Stunde(n)
+                if (time > 1000)
+                    time = 1000;
+
+                return time * 3600000;
+                break;
+        }
+
         return 0;
     }
 
