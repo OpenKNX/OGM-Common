@@ -33,7 +33,6 @@ namespace OpenKNX
     {
         debug("OpenKNX", "init knx");
 #ifdef ARDUINO_ARCH_RP2040
-        debug("OpenKNX", "test");
         Serial1.setRX(KNX_UART_RX_PIN);
         Serial1.setTX(KNX_UART_TX_PIN);
 #endif

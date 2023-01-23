@@ -21,7 +21,6 @@ namespace OpenKNX
     {
       public:
         FlashStorage();
-        ~FlashStorage();
 
         void load();
         void readData();

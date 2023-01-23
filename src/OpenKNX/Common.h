@@ -1,12 +1,12 @@
 #pragma once
-#include <knx.h>
 #include "../Helper.h"
 #include "KnxHelper.h"
+#include "OpenKNX/FlashStorage.h"
+#include "OpenKNX/Helper.h"
+#include "OpenKNX/Module.h"
 #include "hardware.h"
 #include "knxprod.h"
-#include "OpenKNX/FlashStorage.h"
-#include "OpenKNX/Module.h"
-#include "OpenKNX/Helper.h"
+#include <knx.h>
 
 #ifndef OPENKNX_MAX_MODULES
 #define OPENKNX_MAX_MODULES 9

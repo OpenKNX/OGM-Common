@@ -1,17 +1,9 @@
 #include "OpenKNX/Module.h"
 #include "OpenKNX/Common.h"
-#include <cxxabi.h>
-#include <iomanip>
-#include <iostream>
 #include <knx.h>
 
 namespace OpenKNX
 {
-    GroupObject *Module::getKo(uint16_t koNumber)
-    {
-        return &knx.getGroupObject(koNumber);
-    }
-
     void Module::loop()
     {}
 
@@ -35,7 +27,7 @@ namespace OpenKNX
 
     const char *Module::name()
     {
-        return "UnknownModule";
+        return "UnnamedModule";
     }
 
     const char *Module::version()

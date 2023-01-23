@@ -6,10 +6,9 @@ namespace OpenKNX
     class Module
     {
       protected:
-        virtual GroupObject* getKo(uint16_t koNumber);
+        void debug(const char* output, ...);
 
       public:
-        void debug(const char* output, ...);
         virtual const char* name();
         virtual const char* version();
         virtual void loop();

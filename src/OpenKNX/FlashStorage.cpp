@@ -7,9 +7,6 @@ namespace OpenKNX
     {
     }
 
-    FlashStorage::~FlashStorage()
-    {}
-
     void FlashStorage::load()
     {
         _flashSize = knx.platform().getNonVolatileMemorySize();
