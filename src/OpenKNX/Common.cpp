@@ -112,19 +112,25 @@ namespace OpenKNX
     {
         if (!knx.configured())
             return;
-            
+
         flash.load();
 
+#ifdef LOG_StartupDelayBase
         _startupDelay = millis();
+#endif
+#ifdef LOG_HeartbeatDelayBase
         _heartbeatDelay = 0;
+#endif
         collectMemoryStats();
 
         // Handle loop of modules
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->setup();
+            collectMemoryStats();
         }
 
+        // register callbacks
         registerCallbacks();
     }
 
@@ -138,6 +144,7 @@ namespace OpenKNX
 
         // loop  knx stack
         knx.loop();
+        collectMemoryStats();
 
         // loop  appstack
         appLoop();
@@ -194,6 +201,7 @@ namespace OpenKNX
 
     void Common::showMemoryStats()
     {
+        collectMemoryStats();
         debug("OpenKNX", "Free Memory\n\r         current: %i\n\r         min: %i\n\r         max: %i\n\r", freeMemory(), _freeMemoryMin, _freeMemoryMax);
     }
 
@@ -247,7 +255,7 @@ namespace OpenKNX
 #ifdef LOG_StartupDelayBase
     bool Common::processStartupDelay()
     {
-        return !delayCheck(_startupDelay, paramTimer(ParamLOG_StartupDelayBase, ParamLOG_StartupDelayTime));
+        return !delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS);
     }
 #endif
 
@@ -255,7 +263,7 @@ namespace OpenKNX
     void Common::processHeartbeat()
     {
         // the first heartbeat is send directly after startup delay of the device
-        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, paramTimer(ParamLOG_HeartbeatDelayBase, ParamLOG_HeartbeatDelayTime)))
+        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, ParamLOG_HeartbeatDelayTimeMS))
         {
             // we waited enough, let's send a heartbeat signal
             KoLOG_Heartbeat.value(true, DPT_Switch);
