@@ -5,3 +5,4 @@
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Common.h"
+#include "hardware.h"

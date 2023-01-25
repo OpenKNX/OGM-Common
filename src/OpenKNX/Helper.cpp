@@ -2,7 +2,7 @@
 
 namespace OpenKNX
 {
-    void Helper::debug(const char* prefix, const char* output, ...)
+    void Helper::log(const char* prefix, const char* output, ...)
     {
         char buffer[256];
         va_list args;
@@ -14,7 +14,7 @@ namespace OpenKNX
         SERIAL_DEBUG.println(buffer);
     }
 
-    void Helper::debugHex(const char* prefix, const uint8_t* data, size_t size)
+    void Helper::logHex(const char* prefix, const uint8_t* data, size_t size)
     {
         SERIAL_DEBUG.print(prefix);
         SERIAL_DEBUG.print(": ");

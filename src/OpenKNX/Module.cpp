@@ -35,14 +35,19 @@ namespace OpenKNX
         return "0";
     }
 
-    void Module::debug(const char *output, ...)
+    void Module::log(const char *output, ...)
     {
         char buffer[256];
         va_list args;
         va_start(args, output);
         vsnprintf(buffer, 256, output, args);
         va_end(args);
-        openknx.debug(name(), buffer);
+        openknx.log(name(), buffer);
+    }
+
+    void Module::logHex(const uint8_t* data, size_t size)
+    {
+        openknx.logHex(name(), data, size);
     }
 
     void Module::writeFlash()

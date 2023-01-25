@@ -6,7 +6,8 @@ namespace OpenKNX
     class Module
     {
       protected:
-        void debug(const char* output, ...);
+        void log(const char* output, ...);
+        void logHex(const uint8_t* data, size_t size);
 
       public:
         virtual const char* name();
