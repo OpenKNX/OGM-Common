@@ -24,10 +24,17 @@ namespace OpenKNX
         Modules *modules = openknx.getModules();
         Module *module = nullptr;
         uint8_t moduleId = 0;
+        uint16_t moduleSize = 0;
         for (uint8_t i = 1; i <= modules->count; i++)
         {
+            // get data
             module = modules->list[i - 1];
             moduleId = modules->ids[i - 1];
+            moduleSize = module->flashSize();
+
+            if(moduleSize == 0)
+                return;
+
             if (!loadedModules[moduleId])
             {
                 openknx.log("FlashStorage", "  init module %s (%i)", module->name(), moduleId);
