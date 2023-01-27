@@ -7,6 +7,11 @@
 #include "hardware.h"
 #include "knxprod.h"
 #include <knx.h>
+#ifdef WATCHDOG
+#include <Adafruit_SleepyDog.h>
+uint32_t gWatchdogDelay;
+uint8_t gWatchdogResetCause;
+#endif
 
 #ifndef OPENKNX_MAX_MODULES
 #define OPENKNX_MAX_MODULES 9
@@ -14,6 +19,14 @@
 
 namespace OpenKNX
 {
+#ifdef WATCHDOG
+    struct WatchdogData
+    {
+        uint32_t timer = 0;
+        uint8_t resetCause;
+    };
+#endif
+
     struct Modules
     {
         uint8_t count = 0;
@@ -29,6 +42,9 @@ namespace OpenKNX
 #endif
         uint8_t _firmwareRevision = 0;
         Modules modules;
+#ifdef WATCHDOG
+        WatchdogData watchdog;
+#endif
 
         bool _firstLoopProcessed = false;
         uint _freeMemoryMin = -1;
@@ -41,6 +57,10 @@ namespace OpenKNX
         void processModulesLoop();
         void registerCallbacks();
         void processSerialInput();
+#ifdef WATCHDOG
+        void watchdogSetup();
+        void watchdogLoop();
+#endif
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
         bool processStartupDelay();

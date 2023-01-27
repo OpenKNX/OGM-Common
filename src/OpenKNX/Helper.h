@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <Arduino.h>
 
+#define MAX_LOG_PREFIX 23
+
 namespace OpenKNX
 {
     class Helper

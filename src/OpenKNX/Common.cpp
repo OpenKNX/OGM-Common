@@ -102,6 +102,10 @@ namespace OpenKNX
         // start the framework
         knx.start();
 
+#ifdef WATCHDOG
+        watchdogSetup();
+#endif
+
 #ifdef INFO_LED_PIN
         ledInfo(false);
 #endif
@@ -111,8 +115,6 @@ namespace OpenKNX
     {
         if (!knx.configured())
             return;
-
-        flash.load();
 
 #ifdef LOG_StartupDelayBase
         _startupDelay = millis();
@@ -129,9 +131,38 @@ namespace OpenKNX
             collectMemoryStats();
         }
 
+        flash.load();
+        collectMemoryStats();
+
         // register callbacks
         registerCallbacks();
     }
+
+#ifdef WATCHDOG
+    void Common::watchdogSetup()
+    {
+        if (!ParamLOG_Watchdog)
+            return;
+
+        // used for Diagnose command
+        watchdog.resetCause = Watchdog.resetCause();
+
+        // setup watchdog to prevent endless loops
+        uint32_t watchtime = Watchdog.enable(16384, false);
+        log("Watchdog", "Started with a watchtime of %i seconds", watchtime / 1000);
+    }
+    void Common::watchdogLoop()
+    {
+        if (!ParamLOG_Watchdog)
+            return;
+
+        if (!delayCheck(watchdog.timer, 1000))
+            return;
+
+        Watchdog.reset();
+        watchdog.timer = millis();
+    }
+#endif
 
     // main loop
     void Common::loop()
@@ -152,6 +183,10 @@ namespace OpenKNX
             processSerialInput();
 
         collectMemoryStats();
+
+#ifdef WATCHDOG
+        watchdogLoop();
+#endif
 
 #ifdef DEBUG_LOOP_TIME
         // loop took to long and last out is min 1s ago
@@ -201,7 +236,7 @@ namespace OpenKNX
     void Common::showMemoryStats()
     {
         collectMemoryStats();
-        log("OpenKNX", "Free Memory\n\r         current: %i\n\r         min: %i\n\r         max: %i\n\r", freeMemory(), _freeMemoryMin, _freeMemoryMax);
+        log("OpenKNX", "Free Memory (current: %i, min: %i max: %i)", freeMemory(), _freeMemoryMin, _freeMemoryMax);
     }
 
     void Common::processFirstLoop()
@@ -344,7 +379,7 @@ namespace OpenKNX
         switch (SERIAL_DEBUG.read())
         {
             case 0x57: // W
-                flash.save(true);
+                flash.save(false);
                 break;
             case 0x41: // A
                 log("APPLICATION", "%02X%02X", openknx.openKnxId(), openknx.applicationNumber());

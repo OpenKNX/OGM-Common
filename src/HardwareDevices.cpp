@@ -1,7 +1,7 @@
-#include <Wire.h>
-#include "Helper.h"
-#include "EepromManager.h"
 #include "HardwareDevices.h"
+#include "EepromManager.h"
+#include "OpenKNX.h"
+#include <Wire.h>
 #ifdef WATCHDOG
 #include <Adafruit_SleepyDog.h>
 #endif
@@ -29,38 +29,40 @@ void savePower()
     ledInfo(false);
     // init knx-uart to be in control mode
     initUart();
-    printDebug("savePower: Stop UART KNX communication...\n");
+    openknx.log("savePower", "Stop UART KNX communication...");
     sendUartCommand("STOP_MODE", U_STOP_MODE_REQ, U_STOP_MODE_IND);
-    printDebug("savePower: Switching off 5V / 20V rail...\n");
-    // turn off 5V and 20V rail 
-    uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT };
+    openknx.log("savePower", "Switching off 5V / 20V rail...");
+    // turn off 5V and 20V rail
+    uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
     // get rid of knx reference
     Serial1.write(lBuffer, 2);
     // sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
 }
 
-void restorePower(){
-    printDebug("restorePower: Switching on 5V rail...\n");
+void restorePower()
+{
+    openknx.log("restorePower", "Switching on 5V rail...");
     // turn on 5V and 20V rail
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
     initUart();
     Serial1.write(lBuffer, 2);
     // give all sensors some time to init
     delay(100);
-    printDebug("restorePower: Start UART KNX communication...\n");
+    openknx.log("restorePower", "Start UART KNX communication...");
     sendUartCommand("EXIT_STOP_MODE", U_EXIT_STOP_MODE_REQ, U_RESET_IND);
 }
 
-void fatalError(uint8_t iErrorCode, const char* iErrorText) {
+void fatalError(uint8_t iErrorCode, const char* iErrorText)
+{
     const uint16_t lDelay = 200;
 #ifdef WATCHDOG
     Watchdog.disable();
 #endif
     for (;;)
     {
-        // we repeat the message on serial bus, so we can get it even 
+        // we repeat the message on serial bus, so we can get it even
         // if we connect USB later
-        printDebug("FatalError %d: %s\n", iErrorCode, iErrorText);
+        openknx.log("fatalError", "%d: %s", iErrorCode, iErrorText);
         ledInfo(true);
         delay(lDelay);
         // number of red blinks during a yellow blink is the error code
@@ -87,7 +89,8 @@ bool boardCheck()
     Wire.end(); // in case, Wire.begin() was called before
     uint8_t lI2c = 0;
     // lI2c = clearI2cBus(); // clear the I2C bus first before calling Wire.begin()
-    if (lI2c != 0) {
+    if (lI2c != 0)
+    {
         // we try to turn off power for the attached sensors or Hardware. Does not work on all devices
         savePower();
         delay(5000);
@@ -96,28 +99,29 @@ bool boardCheck()
     }
     switch (lI2c)
     {
-    case 1:
-        printDebug("SCL clock line held low\n");
-        break;
-    case 2:
-        printDebug("SCL clock line held low by slave clock stretch\n");
-        break;
-    case 3:
-        printDebug("SDA data line held low\n");
-        break;
-    default:
-        printDebug("I2C bus cleared successfully\n");
-        Wire.begin();
-        lResult = true;
-        break;
+        case 1:
+            openknx.log("Helper", "SCL clock line held low\n");
+            break;
+        case 2:
+            openknx.log("Helper", "SCL clock line held low by slave clock stretch\n");
+            break;
+        case 3:
+            openknx.log("Helper", "SDA data line held low\n");
+            break;
+        default:
+            openknx.log("Helper", "I2C bus cleared successfully\n");
+            Wire.begin();
+            lResult = true;
+            break;
     }
 
-    if (!lResult) {
+    if (!lResult)
+    {
         fatalError(FATAL_I2C_BUSY, "Failed to initialize I2C-Bus");
     }
 #ifdef I2C_EEPROM_DEVICE_ADDRESSS
     // we check here Hardware we rely on
-    printDebug("Checking EEPROM existence... ");
+    openknx.log("Helper", "Checking EEPROM existence... ");
     // check for I2C ack
     Wire.beginTransmission(I2C_EEPROM_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
@@ -130,7 +134,7 @@ bool boardCheck()
 #if COUNT_1WIRE_BUSMASTER >= 1
 #ifdef SENSORMODULE
     // check for I2C ack
-    printDebug("Checking 1-Wire existence... ");
+    openknx.log("Helper", "Checking 1-Wire existence... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -139,7 +143,7 @@ bool boardCheck()
 #endif
 #ifdef WIREGATEWAY
     // check for I2C ack
-    printDebug("Checking 1-Wire existence 0x19 ... ");
+    openknx.log("Helper", "Checking 1-Wire existence 0x19 ... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 1);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -149,7 +153,7 @@ bool boardCheck()
 #endif
 #if COUNT_1WIRE_BUSMASTER >= 2
     // check for I2C ack
-    printDebug("Checking 1-Wire existence 0x1A... ");
+    openknx.log("Helper", "Checking 1-Wire existence 0x1A... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 2);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -158,7 +162,7 @@ bool boardCheck()
 #endif
 #if COUNT_1WIRE_BUSMASTER == 3
     // check for I2C ack
-    printDebug("Checking 1-Wire existence 0x1B... ");
+    openknx.log("Helper", "Checking 1-Wire existence 0x1B... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 3);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -168,7 +172,7 @@ bool boardCheck()
 #endif
 
 #ifdef I2C_RGBLED_DEVICE_ADDRESS
-    printDebug("Checking LED driver existence... ");
+    openknx.log("Helper", "Checking LED driver existence... ");
     // check for I2C ack
     Wire.beginTransmission(I2C_RGBLED_DEVICE_ADDRESS);
     lResult = (Wire.endTransmission() == 0);
@@ -183,7 +187,7 @@ bool boardCheck()
 
 bool checkUartExistence()
 {
-    printDebug("Checking UART existence...\n");
+    openknx.log("Helper", "Checking UART existence...\n");
     bool lResult = false;
     initUart();
     // send system state command and interpret answer
@@ -195,20 +199,23 @@ bool checkUartExistence()
     return lResult;
 }
 
-bool initUart() {
+bool initUart()
+{
     Serial1.end();
     Serial1.begin(19200, SERIAL_8E1);
-    for (uint16_t lCount = 0; !Serial1 && lCount < 1000; lCount++);
-    if (!Serial1) {
-        printDebug("initUart() failed, something is going completely wrong!");
+    for (uint16_t lCount = 0; !Serial1 && lCount < 1000; lCount++)
+        ;
+    if (!Serial1)
+    {
+        openknx.log("Helper", "initUart() failed, something is going completely wrong!");
         return false;
     }
     return true;
 }
 
-uint8_t sendUartCommand(const char *iInfo, uint8_t iCmd, uint8_t iResp, uint8_t iLen /* = 0 */)
+uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t iLen /* = 0 */)
 {
-    printDebug("    Send command %s (%02X)... ", iInfo, iCmd);
+    openknx.log("Helper", "    Send command %s (%02X)... ", iInfo, iCmd);
     // send system state command and interpret answer
     Serial1.write(iCmd);
 
@@ -219,7 +226,7 @@ uint8_t sendUartCommand(const char *iInfo, uint8_t iCmd, uint8_t iResp, uint8_t 
         lResp = Serial1.read();
         if (lResp == iResp)
         {
-            printDebug("OK - received expected response (%02X)\n", lResp);
+            openknx.log("Helper", "OK - received expected response (%02X)\n", lResp);
             if (iLen == 1)
                 lResp = Serial1.read();
             break;
@@ -262,7 +269,7 @@ bool boardWithNCN5130()
 uint8_t clearI2cBus()
 {
 #if defined(TWCR) && defined(TWEN)
-    TWCR &= ~(_BV(TWEN)); //Disable the Atmel 2-Wire interface so we can control the SDA and SCL pins directly
+    TWCR &= ~(_BV(TWEN)); // Disable the Atmel 2-Wire interface so we can control the SDA and SCL pins directly
 #endif
     pinMode(SDA, INPUT_PULLUP); // Make SDA (data) and SCL (clock) pins Inputs with pullup.
     pinMode(SCL, INPUT_PULLUP);
@@ -275,8 +282,8 @@ uint8_t clearI2cBus()
 
     boolean SCL_LOW = (digitalRead(SCL) == LOW); // Check is SCL is Low.
     if (SCL_LOW)
-    {             //If it is held low Arduno cannot become the I2C master.
-        return 1; //I2C bus error. Could not clear SCL clock line held low
+    {             // If it is held low Arduno cannot become the I2C master.
+        return 1; // I2C bus error. Could not clear SCL clock line held low
     }
 
     boolean SDA_LOW = (digitalRead(SDA) == LOW); // vi. Check SDA input.

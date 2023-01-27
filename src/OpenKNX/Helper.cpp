@@ -4,13 +4,19 @@ namespace OpenKNX
 {
     void Helper::log(const char* prefix, const char* output, ...)
     {
-        char buffer[256];
+        char buffer[200];
         va_list args;
         va_start(args, output);
         vsnprintf(buffer, 256, output, args);
         va_end(args);
+        
         SERIAL_DEBUG.print(prefix);
         SERIAL_DEBUG.print(": ");
+        size_t prefixLen = strlen(prefix);
+        for (size_t i = 0; i < (MAX_LOG_PREFIX - prefixLen); i++)
+        {
+            SERIAL_DEBUG.print(" ");
+        }        
         SERIAL_DEBUG.println(buffer);
     }
 
@@ -18,6 +24,11 @@ namespace OpenKNX
     {
         SERIAL_DEBUG.print(prefix);
         SERIAL_DEBUG.print(": ");
+        size_t prefixLen = strlen(prefix);
+        for (size_t i = 0; i < (MAX_LOG_PREFIX - prefixLen); i++)
+        {
+            SERIAL_DEBUG.print(" ");
+        }  
         for (size_t i = 0; i < size; i++)
         {
             if (data[i] < 0x10)

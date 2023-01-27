@@ -23,14 +23,16 @@ namespace OpenKNX
         FlashStorage();
 
         void load();
-        void readData();
-        void initUnloadedModules();
         void save(bool force = false);
         void write(uint8_t *buffer, uint16_t size = 1);
         void write(uint8_t value, uint16_t size);
         void writeByte(uint8_t value);
         void writeWord(uint16_t value);
         void writeInt(uint32_t value);
+        uint8_t *read(uint16_t size = 1);
+        uint8_t readByte();
+        uint16_t writeWord();
+        uint32_t readInt();
         uint16_t applicationVersion();
 
       private:
@@ -43,8 +45,11 @@ namespace OpenKNX
         uint16_t _lastApplicationVersion = 0;
         uint16_t _checksum = 0;
         uint32_t _currentWriteAddress = 0;
+        uint8_t *_currentReadAddress = 0;
         uint32_t _maxWriteAddress = 0;
         void zeroize();
+        void readData();
+        void initUnloadedModules();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);
         uint16_t calcChecksum(uint16_t data);
         bool verifyChecksum(uint8_t *data, uint16_t size);
