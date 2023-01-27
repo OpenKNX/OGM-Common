@@ -16,9 +16,6 @@ namespace OpenKNX
     void Module::processInputKo(GroupObject &ko)
     {}
 
-    void Module::processSavePin()
-    {}
-
     void Module::processBeforeRestart()
     {}
 
@@ -45,7 +42,7 @@ namespace OpenKNX
         openknx.log(name(), buffer);
     }
 
-    void Module::logHex(const uint8_t* data, size_t size)
+    void Module::logHex(const uint8_t *data, size_t size)
     {
         openknx.logHex(name(), data, size);
     }
@@ -60,4 +57,16 @@ namespace OpenKNX
     {
         return 0;
     }
+
+    void Module::savePower()
+    {
+        
+    }
+
+    bool Module::restorePower()
+    {
+        return true;
+        // return false; // default: mark as not handled, will lead to a reboot.
+    }
+
 } // namespace OpenKNX

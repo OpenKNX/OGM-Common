@@ -47,8 +47,10 @@ namespace OpenKNX
 #endif
 
         bool _firstLoopProcessed = false;
+        uint32_t _savedPinProcessed = 0;
         uint _freeMemoryMin = -1;
         uint _freeMemoryMax = 0;
+
         void initKnx();
         void appSetup();
         void appLoop();
@@ -57,6 +59,7 @@ namespace OpenKNX
         void processModulesLoop();
         void registerCallbacks();
         void processSerialInput();
+        void processRestoreSavePin();
 #ifdef WATCHDOG
         void watchdogSetup();
         void watchdogLoop();
@@ -71,8 +74,8 @@ namespace OpenKNX
 #endif
 
       public:
-        bool _save = false;
-        bool _saved = false;
+        bool _savePinTriggered = false;
+        
         FlashStorage flash;
 
         Common();

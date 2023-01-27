@@ -41,4 +41,13 @@ namespace OpenKNX
         SERIAL_DEBUG.println();
     }
 
+    void Helper::deactivatePowerTrail() {
+        
+    }
+
+    void Helper::activatePowerTrail() {
+        
+    }
+
+
 } // namespace OpenKNX

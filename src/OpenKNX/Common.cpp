@@ -217,6 +217,7 @@ namespace OpenKNX
 #endif
 
         processSavePin();
+        processRestoreSavePin();
         processFirstLoop();
         processModulesLoop();
     }
@@ -309,21 +310,61 @@ namespace OpenKNX
     void Common::processSavePin()
     {
         // savePin not triggered
-        if (!_save)
+        if (!_savePinTriggered)
             return;
 
-        // saveHandler already called
-        if (_saved)
+        // processSavePin already called
+        if (_savedPinProcessed > 0)
             return;
 
-        log("OpenKNX", "processSavePin");
+        uint32_t start = millis();
+        log("OpenKNX", "savePower");
+
+        // first save all modules to save power before...
         for (uint8_t i = 1; i <= modules.count; i++)
+            modules.list[i - 1]->savePower();
+
+        // ... save power by shutdown >5V power trail
+        deactivatePowerTrail();
+        log("OpenKNX", "savePower (%i ms)", millis() - start);
+
+        // save data
+        flash.save();
+
+        
+
+        _savedPinProcessed = millis();
+    }
+    void Common::processRestoreSavePin()
+    {
+        // savePin not triggered
+        if (!_savePinTriggered)
+            return;
+
+        if (!delayCheck(_savedPinProcessed, 500))
+            return;
+
+        log("OpenKNX", "restorePower after wait 500ms");
+
+        // restore  >5V power trail
+        activatePowerTrail();
+
+        bool noReboot = true;
+
+        // the inform modules
+        for (uint8_t i = 1; i <= modules.count && noReboot; i++)
+            noReboot = noReboot && modules.list[i - 1]->restorePower();
+
+        if (!noReboot)
         {
-            modules.list[i - 1]->processSavePin();
+            log("OpenKNX", "  need reboot");
+            knx.platform().restart();
         }
 
-        flash.save();
-        _saved = true;
+        log("OpenKNX", "  restorePower without reboot was successfull");
+
+        _savePinTriggered = false;
+        _savedPinProcessed = 0;
     }
 
     void Common::processBeforeRestart()
@@ -368,7 +409,7 @@ namespace OpenKNX
         pinMode(SAVE_INTERRUPT_PIN, INPUT);
         attachInterrupt(
             digitalPinToInterrupt(SAVE_INTERRUPT_PIN), []() -> void {
-                openknx._save = true;
+                openknx._savePinTriggered = true;
             },
             FALLING);
 #endif

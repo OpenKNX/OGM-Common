@@ -3,24 +3,109 @@
 
 namespace OpenKNX
 {
+    /*
+     * Abstract class for Modules
+     */
     class Module
     {
       protected:
+        /*
+         * Wrapper for openknx.log. The name() will be used as prefix.
+         */
         void log(const char* output, ...);
+
+        /*
+         * Wrapper for openknx.logHex. The name() will be used as prefix.
+         */
         void logHex(const uint8_t* data, size_t size);
 
       public:
+        /*
+         * The name of module. Used for "log" method.
+         * @return name
+         */
         virtual const char* name();
+
+        /*
+         * The version of module.
+         * @return version
+         */
         virtual const char* version();
-        virtual void loop();
+
+        /*
+         * Called at startup (before startup delay)
+         * Useful for init hardware
+         */
         virtual void setup();
+
+        /*
+         * Module logic
+         */
+        virtual void loop();
+
+        /*
+         * Called on incomming/changing GroupObject
+         * @param GroupObject
+         */
         virtual void processInputKo(GroupObject& ko);
-        virtual void processSavePin();
+
+        /*
+         * Call before the first loop was called. It is useful when you need to wait for startup delay.
+         */
         virtual void firstLoop();
+
+        /*
+         * Called before the device will restart.
+         * This happen when you reset device by knx or the after ETS has parameterized the application
+         */
         virtual void processBeforeRestart();
+
+        /*
+         * Called before unload the group object tables of knx.
+         * This happen when ETS will start parameterization
+         */
         virtual void processBeforeTablesUnload();
+
+        /*
+         * Called when the module should write this data to flash
+         * It must use the write helper of FlashStorage (openknx.flash.writeXXX).
+         * Only the size of flashSize() is allowed to write. missing bytes will auto filled.
+         */
         virtual void writeFlash();
+
+        /*
+         * Called after setup to load data from flash storage.
+         * @param data pointer to data of module in flash, but the better way is to use read helper of FlashStorage (openknx.flash.readXXX)
+         * @param size size of saved data in flash. no data saved, the size is zero (e.g. for init)
+         */
         virtual void readFlash(const uint8_t* data, const uint16_t size);
+
+        /*
+         * This method must returned the size for reservation space in flash storage.
+         * @return size in bytes
+         */
         virtual uint16_t flashSize();
+
+        /**
+         * This method is called if save/restore will be executed in context of a SAVE-Interrupt (power failure on KNX-Bus)
+         * The method should be overridden if there is any hardware to be switched off to save power (i.e. custom LED's or sensors)
+         * Everything what happens here should happen FAST, it makes no sense to spend more processing time on switching off that
+         * the device would take to shorten the available save time.
+         * The 5V power supply from NCN5120/5130 will be turned off as very first action during SAVE-processing. You need not care about this.
+         */
+        virtual void savePower();
+
+        /**
+         * This method is called if save/restore was executed in context of a SAVE-Interrupt (power failure on KNX-Bus) and all
+         * data of all modules was successfully saved to flash.
+         * This is for the (seldom) case that the SAVE-Interrupt was triggered due to a very short power break (< 100 ms), so that
+         * there was no power loss for the processor and the rest of the hardware.
+         * In this case you (if there was any action during powerOff()) you can revert this action and resume power for your devices.
+         * At this point, the 5V supply from NCN5120/5130 was restored already, you might need there to initialize your hardware again.
+         *
+         * @return true, if you handled powerOn accordingly, false otherwise.
+         * If any registered module returns false, there will be a reboot of the device to ensure full functionality.
+         */
+        virtual bool restorePower();
     };
 } // namespace OpenKNX
