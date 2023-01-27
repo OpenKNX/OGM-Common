@@ -127,12 +127,18 @@ bool boardCheck()
 #endif
 
 #ifdef I2C_1WIRE_DEVICE_ADDRESSS
+#ifdef ARDUINO_ARCH_RP2040
+    TwoWire &lWire = Wire1;
+    lWire.begin();
+#else
+    TwoWire &lWire = Wire;
+#endif
 #if COUNT_1WIRE_BUSMASTER >= 1
 #ifdef SENSORMODULE
     // check for I2C ack
     printDebug("Checking 1-Wire existence... ");
-    Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS);
-    lResult = (Wire.endTransmission() == 0);
+    lWire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS);
+    lResult = (lWire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
     printResult(lResult);
@@ -140,8 +146,8 @@ bool boardCheck()
 #ifdef WIREGATEWAY
     // check for I2C ack
     printDebug("Checking 1-Wire existence 0x19 ... ");
-    Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 1);
-    lResult = (Wire.endTransmission() == 0);
+    lWire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 1);
+    lResult = (lWire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
     printResult(lResult);
@@ -150,8 +156,8 @@ bool boardCheck()
 #if COUNT_1WIRE_BUSMASTER >= 2
     // check for I2C ack
     printDebug("Checking 1-Wire existence 0x1A... ");
-    Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 2);
-    lResult = (Wire.endTransmission() == 0);
+    lWire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 2);
+    lResult = (lWire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
     printResult(lResult);
@@ -159,12 +165,13 @@ bool boardCheck()
 #if COUNT_1WIRE_BUSMASTER == 3
     // check for I2C ack
     printDebug("Checking 1-Wire existence 0x1B... ");
-    Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 3);
-    lResult = (Wire.endTransmission() == 0);
+    lWire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 3);
+    lResult = (lWire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
     printResult(lResult);
 #endif
+    // lWire.end();
 #endif
 
 #ifdef I2C_RGBLED_DEVICE_ADDRESS
