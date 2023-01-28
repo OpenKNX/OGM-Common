@@ -1,4 +1,5 @@
-#include "OpenKNX/Common.h"
+#include "Common.h"
+#include "../HardwareDevices.h"
 
 namespace OpenKNX
 {
@@ -141,19 +142,24 @@ namespace OpenKNX
         if (!ParamLOG_Watchdog)
             return;
 
+#if defined(ARDUINO_ARCH_SAMD)
         // used for Diagnose command
         watchdog.resetCause = Watchdog.resetCause();
 
         // setup watchdog to prevent endless loops
-        uint32_t watchtime = Watchdog.enable(16384, false);
-        log("Watchdog", "Started with a watchtime of %i seconds", watchtime / 1000);
+        Watchdog.enable(WATCHDOG_MAX_PERIOD_MS, false);
+#elif defined(ARDUINO_ARCH_RP2040)
+        Watchdog.enable(WATCHDOG_MAX_PERIOD_MS);
+#endif
+
+        log("Watchdog", "Started with a watchtime of %i seconds", WATCHDOG_MAX_PERIOD_MS / 1000);
     }
     void Common::watchdogLoop()
     {
-        if (!ParamLOG_Watchdog)
+        if (!delayCheck(watchdog.timer, WATCHDOG_MAX_PERIOD_MS / 10))
             return;
 
-        if (!delayCheck(watchdog.timer, 1000))
+        if (!ParamLOG_Watchdog)
             return;
 
         Watchdog.reset();
@@ -237,13 +243,22 @@ namespace OpenKNX
         log("OpenKNX", "Free Memory (current: %i, min: %i max: %i)", freeMemory(), _freeMemoryMin, _freeMemoryMax);
     }
 
+    void Common::showKnxInformation()
+    {
+        const uint8_t pa1 = ((knx.individualAddress() & 0xF000) >> 12);
+        const uint8_t pa2 = ((knx.individualAddress() & 0x0F00) >> 8);
+        const uint8_t pa3 = ((knx.individualAddress() & 0x00FF) >> 0);
+        const uint8_t v1 = ((knx.bau().deviceObject().version() & 0xF0) >> 4);
+        const uint8_t v2 = ((knx.bau().deviceObject().version() & 0x0F) >> 0);
+        const uint8_t* orderNumber = knx.bau().deviceObject().orderNumber();
+        log("OpenKNX", "KNX  Address: %i.%i.%i  Application: %s  Version: %i.%i", pa1, pa2, pa3, orderNumber, v1, v2);
+    }
+
     void Common::processFirstLoop()
     {
         // skip if already executed
         if (_firstLoopProcessed)
             return;
-
-        log("OpenKNX", "processFirstLoop");
 
         for (uint8_t i = 1; i <= modules.count; i++)
         {
@@ -304,7 +319,8 @@ namespace OpenKNX
     }
 #endif
 
-    void Common::triggerSavePin() {
+    void Common::triggerSavePin()
+    {
         _savePinTriggered = true;
     }
 
@@ -326,7 +342,7 @@ namespace OpenKNX
             modules.list[i - 1]->savePower();
 
         // ... save power by shutdown >5V power trail
-        deactivatePowerTrail();
+        deactivatePowerRail();
         log("OpenKNX", "savePower (%ims)", millis() - start);
 
         // save data
@@ -346,7 +362,7 @@ namespace OpenKNX
         log("OpenKNX", "restorePower after wait 500ms");
 
         // restore  >5V power trail
-        activatePowerTrail();
+        activatePowerRail();
 
         bool noReboot = true;
 
@@ -422,7 +438,7 @@ namespace OpenKNX
                 openknx._savePinTriggered = true;
                 break;
             case 0x57: // W
-                flash.save(false);
+                flash.save(true);
                 break;
             case 0x41: // A
                 log("APPLICATION", "%02X%02X", openknx.openKnxId(), openknx.applicationNumber());
@@ -439,6 +455,18 @@ namespace OpenKNX
             case 0x6D: // m
                 showMemoryStats();
                 break;
+            case 0x4B: // K
+                showKnxInformation();
+                break;
+            case 0x65: // e
+                fatalError(1, "Test fatal error");
+                break;
+#ifdef WATCHDOG
+            case 0x77: // w
+                log("WATCHDOG", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
+                delay(WATCHDOG_MAX_PERIOD_MS + 1);
+                break;
+#endif
         }
     }
 

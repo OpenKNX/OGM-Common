@@ -22,16 +22,16 @@ void ledProg(bool iOn)
 #endif
 }
 
-void savePower()
+void deactivatePowerRail()
 {
     // turn off known LED's
     ledProg(false);
     ledInfo(false);
     // init knx-uart to be in control mode
     initUart();
-    openknx.log("savePower", "Stop UART KNX communication...");
+    openknx.log("PowerRail", "Stop UART KNX communication...");
     sendUartCommand("STOP_MODE", U_STOP_MODE_REQ, U_STOP_MODE_IND);
-    openknx.log("savePower", "Switching off 5V / 20V rail...");
+    openknx.log("PowerRail", "Switching off 5V / 20V rail...");
     // turn off 5V and 20V rail
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
     // get rid of knx reference
@@ -39,25 +39,27 @@ void savePower()
     // sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
 }
 
-void restorePower()
+void activatePowerRail()
 {
-    openknx.log("restorePower", "Switching on 5V rail...");
+    openknx.log("PowerRail", "Switching on 5V rail...");
     // turn on 5V and 20V rail
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
     initUart();
     Serial1.write(lBuffer, 2);
     // give all sensors some time to init
     delay(100);
-    openknx.log("restorePower", "Start UART KNX communication...");
+    openknx.log("PowerRail", "Start UART KNX communication...");
     sendUartCommand("EXIT_STOP_MODE", U_EXIT_STOP_MODE_REQ, U_RESET_IND);
 }
 
 void fatalError(uint8_t iErrorCode, const char* iErrorText)
 {
+    deactivatePowerRail(); // Disable PowerRail
+
     const uint16_t lDelay = 200;
-#ifdef WATCHDOG
-    Watchdog.disable();
-#endif
+    // #ifdef WATCHDOG
+    //     Watchdog.disable();
+    // #endif
     for (;;)
     {
         // we repeat the message on serial bus, so we can get it even
@@ -72,6 +74,9 @@ void fatalError(uint8_t iErrorCode, const char* iErrorText)
             delay(lDelay);
             ledProg(false);
             delay(lDelay);
+#ifdef WATCHDOG
+        Watchdog.reset();
+#endif
         }
         ledInfo(false);
         delay(lDelay * 5);
@@ -92,24 +97,24 @@ bool boardCheck()
     if (lI2c != 0)
     {
         // we try to turn off power for the attached sensors or Hardware. Does not work on all devices
-        savePower();
+        deactivatePowerRail();
         delay(5000);
-        restorePower();
+        activatePowerRail();
         lI2c = clearI2cBus();
     }
     switch (lI2c)
     {
         case 1:
-            openknx.log("Helper", "SCL clock line held low\n");
+            openknx.log("I2C", "SCL clock line held low\n");
             break;
         case 2:
-            openknx.log("Helper", "SCL clock line held low by slave clock stretch\n");
+            openknx.log("I2C", "SCL clock line held low by slave clock stretch\n");
             break;
         case 3:
-            openknx.log("Helper", "SDA data line held low\n");
+            openknx.log("I2C", "SDA data line held low\n");
             break;
         default:
-            openknx.log("Helper", "I2C bus cleared successfully\n");
+            openknx.log("I2C", "I2C bus cleared successfully\n");
             Wire.begin();
             lResult = true;
             break;
@@ -121,7 +126,7 @@ bool boardCheck()
     }
 #ifdef I2C_EEPROM_DEVICE_ADDRESSS
     // we check here Hardware we rely on
-    openknx.log("Helper", "Checking EEPROM existence... ");
+    openknx.log("I2C", "Checking EEPROM existence... ");
     // check for I2C ack
     Wire.beginTransmission(I2C_EEPROM_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
@@ -134,7 +139,7 @@ bool boardCheck()
 #if COUNT_1WIRE_BUSMASTER >= 1
 #ifdef SENSORMODULE
     // check for I2C ack
-    openknx.log("Helper", "Checking 1-Wire existence... ");
+    openknx.log("I2C", "Checking 1-Wire existence... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -143,7 +148,7 @@ bool boardCheck()
 #endif
 #ifdef WIREGATEWAY
     // check for I2C ack
-    openknx.log("Helper", "Checking 1-Wire existence 0x19 ... ");
+    openknx.log("I2C", "Checking 1-Wire existence 0x19 ... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 1);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -153,7 +158,7 @@ bool boardCheck()
 #endif
 #if COUNT_1WIRE_BUSMASTER >= 2
     // check for I2C ack
-    openknx.log("Helper", "Checking 1-Wire existence 0x1A... ");
+    openknx.log("I2C", "Checking 1-Wire existence 0x1A... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 2);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -162,7 +167,7 @@ bool boardCheck()
 #endif
 #if COUNT_1WIRE_BUSMASTER == 3
     // check for I2C ack
-    openknx.log("Helper", "Checking 1-Wire existence 0x1B... ");
+    openknx.log("I2C", "Checking 1-Wire existence 0x1B... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 3);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
@@ -172,7 +177,7 @@ bool boardCheck()
 #endif
 
 #ifdef I2C_RGBLED_DEVICE_ADDRESS
-    openknx.log("Helper", "Checking LED driver existence... ");
+    openknx.log("I2C", "Checking LED driver existence... ");
     // check for I2C ack
     Wire.beginTransmission(I2C_RGBLED_DEVICE_ADDRESS);
     lResult = (Wire.endTransmission() == 0);

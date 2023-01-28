@@ -9,8 +9,6 @@
 #include <knx.h>
 #ifdef WATCHDOG
 #include <Adafruit_SleepyDog.h>
-uint32_t gWatchdogDelay;
-uint8_t gWatchdogResetCause;
 #endif
 
 #ifndef OPENKNX_MAX_MODULES
@@ -43,6 +41,9 @@ namespace OpenKNX
         uint8_t _firmwareRevision = 0;
         Modules modules;
 #ifdef WATCHDOG
+#ifndef WATCHDOG_MAX_PERIOD_MS
+#define WATCHDOG_MAX_PERIOD_MS 16384
+#endif
         WatchdogData watchdog;
 #endif
 
@@ -75,8 +76,7 @@ namespace OpenKNX
 #endif
 
       public:
-        
-        FlashStorage flash;
+                FlashStorage flash;
 
         Common();
 
@@ -89,6 +89,7 @@ namespace OpenKNX
         void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
         void showMemoryStats();
+        void showKnxInformation();
         Module* getModule(uint8_t id);
         Modules* getModules();
 

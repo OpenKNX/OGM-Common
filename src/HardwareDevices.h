@@ -470,9 +470,9 @@ bool boardWithNCN5130();
 void ledInfo(bool iOn);
 void ledProg(bool iOn);
 // Turn off 5V rail from NCN5130 to save power for EEPROM write during knx save operation
-void savePower();
+void deactivatePowerRail();
 // Turn on 5V rail from NCN5130 in case SAVE-Interrupt was false positive
-void restorePower();
+void activatePowerRail();
 
 void fatalError(uint8_t iErrorCode, const char *iErrorText = 0);
 

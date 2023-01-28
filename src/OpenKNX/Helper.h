@@ -14,7 +14,5 @@ namespace OpenKNX
       public:
         static void log(const char* prefix, const char* output, ...);
         static void logHex(const char* prefix, const uint8_t* data, size_t size);
-        static void deactivatePowerTrail();
-        static void activatePowerTrail();
     };
 } // namespace OpenKNX
