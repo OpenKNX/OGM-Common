@@ -3,9 +3,6 @@
 namespace OpenKNX
 {
     Common::Common()
-    {
-    }
-    Common::~Common()
     {}
 
     void Common::init(uint8_t firmwareRevision)
@@ -307,6 +304,10 @@ namespace OpenKNX
     }
 #endif
 
+    void Common::triggerSavePin() {
+        _savePinTriggered = true;
+    }
+
     void Common::processSavePin()
     {
         // savePin not triggered
@@ -326,12 +327,10 @@ namespace OpenKNX
 
         // ... save power by shutdown >5V power trail
         deactivatePowerTrail();
-        log("OpenKNX", "savePower (%i ms)", millis() - start);
+        log("OpenKNX", "savePower (%ims)", millis() - start);
 
         // save data
         flash.save();
-
-        
 
         _savedPinProcessed = millis();
     }
@@ -409,7 +408,7 @@ namespace OpenKNX
         pinMode(SAVE_INTERRUPT_PIN, INPUT);
         attachInterrupt(
             digitalPinToInterrupt(SAVE_INTERRUPT_PIN), []() -> void {
-                openknx._savePinTriggered = true;
+                openknx.triggerSavePin();
             },
             FALLING);
 #endif
@@ -419,6 +418,9 @@ namespace OpenKNX
     {
         switch (SERIAL_DEBUG.read())
         {
+            case 0x50: // P
+                openknx._savePinTriggered = true;
+                break;
             case 0x57: // W
                 flash.save(false);
                 break;

@@ -48,6 +48,7 @@ namespace OpenKNX
 
         bool _firstLoopProcessed = false;
         uint32_t _savedPinProcessed = 0;
+        bool _savePinTriggered = false;
         uint _freeMemoryMin = -1;
         uint _freeMemoryMax = 0;
 
@@ -74,16 +75,15 @@ namespace OpenKNX
 #endif
 
       public:
-        bool _savePinTriggered = false;
         
         FlashStorage flash;
 
         Common();
-        ~Common();
 
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
         void init(uint8_t firmwareRevision);
+        void triggerSavePin();
         void setup();
         void loop();
         void addModule(uint8_t id, Module* module);

@@ -212,7 +212,7 @@ namespace OpenKNX
 #endif
 
         _lastWrite = millis();
-        openknx.log("FlashStorage", "  complete (%i)", _lastWrite - start);
+        openknx.log("FlashStorage", "  complete (%ims)", _lastWrite - start);
     }
 
     uint16_t FlashStorage::calcChecksum(uint16_t data)
