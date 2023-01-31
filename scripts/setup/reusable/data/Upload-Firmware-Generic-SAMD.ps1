@@ -1,4 +1,5 @@
 $firmwareName = $args[0]
+$isRecursive = $args[1]
 $toolsExist = Test-Path -PathType Leaf ~/bin/bossac.exe
 if (!$toolsExist) {
     ../Build-knxprod.ps1
@@ -26,8 +27,18 @@ if ($toolsExist) {
             $serial.Open()
             $serial.Close()
             Start-Sleep -s 1
-            ~/bin/bossac --info --write --verify --reset --erase data/$firmwareName
-            timeout /T 20 
+            ~/bin/bossac --info --write --verify --reset --erase --port=$port data/$firmwareName
+			if (!$?)
+			{
+                if (!($isRecursive -eq "1"))
+                {
+			        data/Upload-Firmware-Generic-SAMD.ps1 $firmwareName 1
+                }
+			}			
+            if (!($isRecursive -eq "1"))
+            {
+                timeout /T 20
+            } 
         } else {
             Write-Host
             Write-Host "Kein Port gefunden!"
