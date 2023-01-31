@@ -21,7 +21,7 @@ VersionCheckResult OpenKNX::versionCheck(uint16_t manufacturerId, uint8_t *hardw
     }
     else
     {
-        println("This firmware supports only applicationId 0x00FA");
+        println("This firmware supports only ManufacturerID 0x00FA");
     }
     return check;
 }
