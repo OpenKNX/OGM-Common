@@ -15,6 +15,10 @@
 #define OPENKNX_MAX_MODULES 9
 #endif
 
+#ifndef OPENKNX_MAX_LOOPTIME
+#define OPENKNX_MAX_LOOPTIME 4000
+#endif
+
 namespace OpenKNX
 {
 #ifdef WATCHDOG
@@ -38,16 +42,17 @@ namespace OpenKNX
 #ifdef DEBUG_LOOP_TIME
         uint32_t lastDebugTime = 0;
 #endif
-        uint8_t _firmwareRevision = 0;
-        Modules modules;
 #ifdef WATCHDOG
 #ifndef WATCHDOG_MAX_PERIOD_MS
 #define WATCHDOG_MAX_PERIOD_MS 16384
 #endif
         WatchdogData watchdog;
 #endif
+        uint8_t _firmwareRevision = 0;
+        uint8_t _currentModule = 0;
+        uint32_t _loopMicros = 0;
+        Modules modules;
 
-        bool _firstLoopProcessed = false;
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         uint _freeMemoryMin = -1;
@@ -57,7 +62,6 @@ namespace OpenKNX
         void appSetup();
         void appLoop();
         void loopModule(uint8_t id);
-        void processFirstLoop();
         void processModulesLoop();
         void registerCallbacks();
         void processSerialInput();
@@ -65,10 +69,6 @@ namespace OpenKNX
 #ifdef WATCHDOG
         void watchdogSetup();
         void watchdogLoop();
-#endif
-#ifdef LOG_StartupDelayBase
-        uint32_t _startupDelay;
-        bool processStartupDelay();
 #endif
 #ifdef LOG_HeartbeatDelayBase
         uint32_t _heartbeatDelay;
@@ -86,10 +86,15 @@ namespace OpenKNX
         void triggerSavePin();
         void setup();
         void loop();
+#ifdef LOG_StartupDelayBase
+        uint32_t _startupDelay;
+        bool startupReady();
+#endif
         void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
         void showMemoryStats();
         void showKnxInformation();
+        bool freeLoopTime();
         Module* getModule(uint8_t id);
         Modules* getModules();
 

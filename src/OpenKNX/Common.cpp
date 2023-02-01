@@ -174,6 +174,7 @@ namespace OpenKNX
 #ifdef DEBUG_LOOP_TIME
         uint32_t start = millis();
 #endif
+        _loopMicros = micros();
 
         // loop  knx stack
         knx.loop();
@@ -208,12 +209,6 @@ namespace OpenKNX
         if (!knx.configured())
             return;
 
-#ifdef LOG_StartupDelayBase
-        // Handle Startup delay
-        if (processStartupDelay())
-            return;
-#endif
-
 #ifdef LOG_HeartbeatDelayBase
         // Handle heartbeat delay
         processHeartbeat();
@@ -221,14 +216,12 @@ namespace OpenKNX
 
         processSavePin();
         processRestoreSavePin();
-        processFirstLoop();
         processModulesLoop();
     }
 
-    void Common::loopModule(uint8_t index)
+    bool Common::freeLoopTime()
     {
-        modules.list[index]->loop();
-        collectMemoryStats();
+        return ((micros() - _loopMicros) < OPENKNX_MAX_LOOPTIME);
     }
 
     void Common::collectMemoryStats()
@@ -254,26 +247,26 @@ namespace OpenKNX
         log("OpenKNX", "KNX  Address: %i.%i.%i  Application: %s  Version: %i.%i", pa1, pa2, pa3, orderNumber, v1, v2);
     }
 
-    void Common::processFirstLoop()
-    {
-        // skip if already executed
-        if (_firstLoopProcessed)
-            return;
-
-        for (uint8_t i = 1; i <= modules.count; i++)
-        {
-            modules.list[i - 1]->firstLoop();
-        }
-
-        _firstLoopProcessed = true;
-    }
-
     void Common::processModulesLoop()
     {
-        for (uint8_t i = 1; i <= modules.count; i++)
+        while (freeLoopTime())
         {
-            modules.list[i - 1]->loop();
+            if (_currentModule >= modules.count)
+                _currentModule = 0;
+
+            loopModule(_currentModule);
+
+            _currentModule++;
         }
+    }
+
+    void Common::loopModule(uint8_t index)
+    {
+        if (index >= modules.count)
+            return;
+
+        modules.list[index]->loop();
+        collectMemoryStats();
     }
 
     void Common::addModule(uint8_t id, Module* module)
@@ -300,9 +293,9 @@ namespace OpenKNX
     }
 
 #ifdef LOG_StartupDelayBase
-    bool Common::processStartupDelay()
+    bool Common::startupReady()
     {
-        return !delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS);
+        return delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS);
     }
 #endif
 

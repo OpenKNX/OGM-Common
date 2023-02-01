@@ -10,9 +10,6 @@ namespace OpenKNX
     void Module::setup()
     {}
 
-    void Module::firstLoop()
-    {}
-
     void Module::processInputKo(GroupObject &ko)
     {}
 
@@ -59,14 +56,11 @@ namespace OpenKNX
     }
 
     void Module::savePower()
-    {
-        
-    }
+    {}
 
     bool Module::restorePower()
     {
         return true;
-        // return false; // default: mark as not handled, will lead to a reboot.
     }
 
 } // namespace OpenKNX

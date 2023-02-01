@@ -52,7 +52,7 @@ namespace OpenKNX
         /*
          * Call before the first loop was called. It is useful when you need to wait for startup delay.
          */
-        virtual void firstLoop();
+        // virtual void firstLoop();
 
         /*
          * Called before the device will restart.
