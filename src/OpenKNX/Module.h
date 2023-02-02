@@ -50,9 +50,9 @@ namespace OpenKNX
         virtual void processInputKo(GroupObject& ko);
 
         /*
-         * Call before the first loop was called. It is useful when you need to wait for startup delay.
+         * Called after the startup delay time are expired. 
          */
-        // virtual void firstLoop();
+        virtual void processAfterStartupDelay();
 
         /*
          * Called before the device will restart.

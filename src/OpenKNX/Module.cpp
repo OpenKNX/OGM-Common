@@ -13,6 +13,9 @@ namespace OpenKNX
     void Module::processInputKo(GroupObject &ko)
     {}
 
+    void Module::processAfterStartupDelay()
+    {}
+
     void Module::processBeforeRestart()
     {}
 

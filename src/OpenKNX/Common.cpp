@@ -174,13 +174,13 @@ namespace OpenKNX
 #ifdef DEBUG_LOOP_TIME
         uint32_t start = millis();
 #endif
-        _loopMicros = micros();
 
         // loop  knx stack
         knx.loop();
         collectMemoryStats();
 
         // loop  appstack
+        _loopMicros = micros();
         appLoop();
 
         if (SERIAL_DEBUG.available())
@@ -216,6 +216,7 @@ namespace OpenKNX
 
         processSavePin();
         processRestoreSavePin();
+        processAfterStartupDelay();
         processModulesLoop();
     }
 
@@ -292,12 +293,29 @@ namespace OpenKNX
         return &modules;
     }
 
-#ifdef LOG_StartupDelayBase
-    bool Common::startupReady()
+    bool Common::afterStartupDelay()
     {
-        return delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS);
+        return _afterStartupDelay;
     }
+
+    void Common::processAfterStartupDelay()
+    {
+        if (_afterStartupDelay)
+            return;
+
+#ifdef LOG_StartupDelayBase
+        if (!delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS))
+            return;
 #endif
+
+        _afterStartupDelay = true;
+
+        for (uint8_t i = 1; i <= modules.count; i++)
+        {
+            modules.list[i - 1]->processAfterStartupDelay();
+            collectMemoryStats();
+        }
+    }
 
 #ifdef LOG_HeartbeatDelayBase
     void Common::processHeartbeat()

@@ -76,7 +76,7 @@ namespace OpenKNX
 #endif
 
       public:
-                FlashStorage flash;
+        FlashStorage flash;
 
         Common();
 
@@ -88,8 +88,11 @@ namespace OpenKNX
         void loop();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
-        bool startupReady();
 #endif
+        bool _afterStartupDelay = false;
+        bool afterStartupDelay();
+        void processAfterStartupDelay();
+
         void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
         void showMemoryStats();
