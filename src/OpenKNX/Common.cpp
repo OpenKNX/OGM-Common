@@ -300,7 +300,7 @@ namespace OpenKNX
 
     void Common::processAfterStartupDelay()
     {
-        if (_afterStartupDelay)
+        if (afterStartupDelay())
             return;
 
 #ifdef LOG_StartupDelayBase
