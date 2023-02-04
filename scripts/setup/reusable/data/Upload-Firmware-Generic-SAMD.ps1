@@ -32,6 +32,7 @@ if ($toolsExist) {
 			{
                 if (!($isRecursive -eq "1"))
                 {
+                    Write-Host "Mit COM-Port $port hat es nicht funktioniert, versuche einen weiteren..."
 			        data/Upload-Firmware-Generic-SAMD.ps1 $firmwareName 1
                 }
 			}			

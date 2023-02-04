@@ -9,6 +9,8 @@
 class FlashUserData
 {
 public:
+    static void onSafePinInterruptHandler();
+    
     FlashUserData();
     virtual ~FlashUserData();
     // first class to call for serialization data
@@ -25,7 +27,6 @@ private:
 
     static void onBeforeRestartHandler();
     static void onBeforeTablesUnloadHandler();
-    static void onSafePinInterruptHandler();
 
     void processSaveInterrupt();
     void writeFlash(const char* debugText);
