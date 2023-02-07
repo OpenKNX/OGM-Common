@@ -64,7 +64,7 @@ namespace OpenKNX
 
         if (manufacturerId != 0x00FA)
         {
-            openknx.log("OpenKNX", "This firmware supports only applicationId 0x00FA");
+            openknx.log("OpenKNX", "This firmware supports only ManufacturerID 0x00FA");
             return FlashAllInvalid;
         }
 
