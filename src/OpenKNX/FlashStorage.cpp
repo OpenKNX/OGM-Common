@@ -4,8 +4,7 @@
 namespace OpenKNX
 {
     FlashStorage::FlashStorage()
-    {
-    }
+    {}
 
     void FlashStorage::load()
     {
@@ -64,11 +63,12 @@ namespace OpenKNX
         dataSize = (currentPosition[FLASH_DATA_META_LEN - 8] << 8) + currentPosition[FLASH_DATA_META_LEN - 7];
 
         // read FirmwareVersion
-        _lastOpenKnxId = currentPosition[0];
-        _lastApplicationNumber = currentPosition[1];
-        openknx.log("FlashStorage", "  ApplicationNumber: %02x", _lastApplicationNumber);
-        _lastApplicationVersion = getWord(currentPosition + 2);
-        openknx.log("FlashStorage", "  ApplicationVersion: %i", _lastApplicationVersion);
+        _currentReadAddress = currentPosition;
+        _lastFirmwareNumber = readWord();
+        openknx.log("FlashStorage", "  FirmwareNumber: 0x%04X", _lastFirmwareNumber);
+
+        _lastFirmwareVersion = readWord();
+        openknx.log("FlashStorage", "  FirmwareVersion: %i", _lastFirmwareVersion);
 
         // check
         currentPosition = (currentPosition - dataSize);
@@ -79,8 +79,8 @@ namespace OpenKNX
             return;
         }
 
-        // check apliicationNumber
-        if (_lastOpenKnxId != openknx.openKnxId() || _lastApplicationNumber != openknx.applicationNumber())
+        // check FirmwareNumber
+        if (_lastFirmwareNumber != openknx.info.firmwareNumber())
         {
             openknx.log("FlashStorage", "  - Abort: Data from other application");
             return;
@@ -92,8 +92,9 @@ namespace OpenKNX
 
         while (dataProcessed < dataSize)
         {
-            moduleId = currentPosition[0];
-            moduleSize = getWord(currentPosition + 1);
+            _currentReadAddress = currentPosition;
+            moduleId = readByte();
+            moduleSize = readWord();
             currentPosition = (currentPosition + FLASH_DATA_MODULE_ID_LEN + FLASH_DATA_SIZE_LEN);
             dataProcessed += FLASH_DATA_MODULE_ID_LEN + FLASH_DATA_SIZE_LEN + moduleSize;
             module = openknx.getModule(moduleId);
@@ -179,7 +180,9 @@ namespace OpenKNX
             _maxWriteAddress = _currentWriteAddress +
                                FLASH_DATA_MODULE_ID_LEN +
                                FLASH_DATA_SIZE_LEN;
+
             writeByte(moduleId);
+
             writeWord(moduleSize);
 
             _maxWriteAddress = _currentWriteAddress + moduleSize;
@@ -193,9 +196,8 @@ namespace OpenKNX
         _maxWriteAddress = _currentWriteAddress + FLASH_DATA_META_LEN;
 
         // application info
-        writeByte(openknx.openKnxId());
-        writeByte(openknx.applicationNumber());
-        writeWord(openknx.applicationVersion());
+        writeWord(openknx.info.firmwareNumber());
+        writeWord(openknx.info.firmwareVersion());
 
         // write size
         writeWord(dataSize);
@@ -232,7 +234,7 @@ namespace OpenKNX
 
     bool FlashStorage::verifyChecksum(uint8_t *data, uint16_t size)
     {
-        //openknx.log("FlashStorage", "verifyChecksum %i == %i", ((data[size - 2] << 8) + data[size - 1]), calcChecksum(data, size - 2));
+        // openknx.log("FlashStorage", "verifyChecksum %i == %i", ((data[size - 2] << 8) + data[size - 1]), calcChecksum(data, size - 2));
         return ((data[size - 2] << 8) + data[size - 1]) == calcChecksum(data, size - 2);
     }
 
@@ -310,21 +312,24 @@ namespace OpenKNX
         _currentReadAddress += size;
         return address;
     }
+
     uint8_t FlashStorage::readByte()
     {
         return read(1)[0];
     }
-    uint16_t FlashStorage::writeWord()
+
+    uint16_t FlashStorage::readWord()
     {
-        return 0;
-    }
-    uint32_t FlashStorage::readInt()
-    {
-        return 0;
+        return (readByte() << 8) + readByte();
     }
 
-    uint16_t FlashStorage::applicationVersion()
+    uint32_t FlashStorage::readInt()
     {
-        return _lastApplicationVersion;
+        return (readByte() << 24) + (readByte() << 16) + (readByte() << 8) + readByte();
+    }
+
+    uint16_t FlashStorage::firmwareVersion()
+    {
+        return _lastFirmwareVersion;
     }
 } // namespace OpenKNX

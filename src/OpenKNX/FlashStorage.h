@@ -31,18 +31,17 @@ namespace OpenKNX
         void writeInt(uint32_t value);
         uint8_t *read(uint16_t size = 1);
         uint8_t readByte();
-        uint16_t writeWord();
+        uint16_t readWord();
         uint32_t readInt();
-        uint16_t applicationVersion();
+        uint16_t firmwareVersion();
 
       private:
         bool *loadedModules;
         uint8_t *_flashStart;
         uint16_t _flashSize = 0;
         uint32_t _lastWrite = 0;
-        uint8_t _lastOpenKnxId = 0;
-        uint8_t _lastApplicationNumber = 0;
-        uint16_t _lastApplicationVersion = 0;
+        uint16_t _lastFirmwareNumber = 0;
+        uint16_t _lastFirmwareVersion = 0;
         uint16_t _checksum = 0;
         uint32_t _currentWriteAddress = 0;
         uint8_t *_currentReadAddress = 0;

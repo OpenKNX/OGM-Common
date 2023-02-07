@@ -29,7 +29,7 @@ namespace OpenKNX
 
     const char *Module::version()
     {
-        return "0";
+        return "0.0";
     }
 
     void Module::log(const char *output, ...)

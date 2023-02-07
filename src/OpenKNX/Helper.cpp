@@ -2,6 +2,11 @@
 
 namespace OpenKNX
 {
+    void Helper::log(const char* output)
+    {
+        SERIAL_DEBUG.println(output);
+    }
+
     void Helper::log(const char* prefix, const char* output, ...)
     {
         char buffer[200];

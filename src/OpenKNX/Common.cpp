@@ -8,9 +8,7 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
-        _firmwareRevision = firmwareRevision;
         SERIAL_DEBUG.begin(115200);
-        log("OpenKNX", "init");
         ArduinoPlatform::SerialDebug = &SERIAL_DEBUG;
 
         pinMode(PROG_LED_PIN, OUTPUT);
@@ -18,6 +16,9 @@ namespace OpenKNX
 #ifdef DEBUG_DELAY
         delay(DEBUG_DELAY);
 #endif
+
+        log("OpenKNX", "init");
+        openknx.info.firmwareRevision(firmwareRevision);
 
 #ifdef INFO_LED_PIN
         pinMode(INFO_LED_PIN, OUTPUT);
@@ -48,16 +49,19 @@ namespace OpenKNX
         // set firmware version als user info (PID_VERSION)
         // 5 bit revision, 5 bit major, 6 bit minor
         // output in ETS as [revision] major.minor
-        knx.bau().deviceObject().version(applicationVersion());
+        knx.bau().deviceObject().version(openknx.info.firmwareVersion());
 
-        if (MAIN_OrderNumber)
-        {
-            knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
-        }
+#ifdef MAIN_OrderNumber
+        knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
+#endif
     }
 
     VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion)
     {
+        // save ets app data in information struct
+        openknx.info.applicationNumber((hardwareType[2] << 8) | hardwareType[3]);
+        openknx.info.applicationVersion(hardwareType[4]);
+
         if (manufacturerId != 0x00FA)
         {
             openknx.log("OpenKNX", "This firmware supports only applicationId 0x00FA");
@@ -231,23 +235,6 @@ namespace OpenKNX
         _freeMemoryMax = MAX((uint)freeMemory(), _freeMemoryMax);
     }
 
-    void Common::showMemoryStats()
-    {
-        collectMemoryStats();
-        log("OpenKNX", "Free Memory (current: %i, min: %i max: %i)", freeMemory(), _freeMemoryMin, _freeMemoryMax);
-    }
-
-    void Common::showKnxInformation()
-    {
-        const uint8_t pa1 = ((knx.individualAddress() & 0xF000) >> 12);
-        const uint8_t pa2 = ((knx.individualAddress() & 0x0F00) >> 8);
-        const uint8_t pa3 = ((knx.individualAddress() & 0x00FF) >> 0);
-        const uint8_t v1 = ((knx.bau().deviceObject().version() & 0xF0) >> 4);
-        const uint8_t v2 = ((knx.bau().deviceObject().version() & 0x0F) >> 0);
-        const uint8_t* orderNumber = knx.bau().deviceObject().orderNumber();
-        log("OpenKNX", "KNX  Address: %i.%i.%i  Application: %s  Version: %i.%i", pa1, pa2, pa3, orderNumber, v1, v2);
-    }
-
     void Common::processModulesLoop()
     {
         while (freeLoopTime())
@@ -412,7 +399,6 @@ namespace OpenKNX
 
     void Common::processInputKo(GroupObject& iKo)
     {
-        // SERIAL_DEBUG.printf("hook onInputKo %i\n\r", iKo.asap());
         for (uint8_t i = 1; i <= modules.count; i++)
         {
             modules.list[i - 1]->processInputKo(iKo);
@@ -451,56 +437,41 @@ namespace OpenKNX
             case 0x57: // W
                 flash.save(true);
                 break;
-            case 0x41: // A
-                log("APPLICATION", "%02X%02X", openknx.openKnxId(), openknx.applicationNumber());
-                break;
-            case 0x56: // V
-                log("VERSION", "%i (%s)", openknx.applicationVersion(), openknx.applicationHumanVersion());
-                break;
-            case 0x53: // S
-                log("SOFTWARE", "%s", MAIN_OrderNumber);
-                break;
-            case 0x48: // H
-                log("HARDWARE", "%s", HARDWARE_NAME);
-                break;
-            case 0x6D: // m
-                showMemoryStats();
-                break;
-            case 0x4B: // K
-                showKnxInformation();
-                break;
-            case 0x65: // e
+            case 0x45: // E
                 fatalError(1, "Test fatal error");
+                break;
+            case 0x69: // i
+                showInformations();
                 break;
 #ifdef WATCHDOG
             case 0x77: // w
-                log("WATCHDOG", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
+                if (!ParamLOG_Watchdog)
+                    break;
+
+                log("Watchdog", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
                 delay(WATCHDOG_MAX_PERIOD_MS + 1);
                 break;
 #endif
         }
     }
 
-    uint8_t Common::openKnxId()
+    void Common::showInformations()
     {
-        return MAIN_OpenKnxId;
-    }
-
-    uint8_t Common::applicationNumber()
-    {
-        return MAIN_ApplicationNumber;
-    }
-
-    uint16_t Common::applicationVersion()
-    {
-        return ((_firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
-    }
-
-    const char* Common::applicationHumanVersion()
-    {
-        char* buffer = new char[20];
-        sprintf(buffer, "%i.%i.%i", ((MAIN_ApplicationVersion & 0xF0) >> 4), (MAIN_ApplicationVersion & 0x0F), _firmwareRevision);
-        return buffer;
+        log("= Information =");
+        log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress(), openknx.info.individualAddress());
+        log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)", openknx.info.humanApplicationNumber(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion(), openknx.info.applicationVersion());
+        log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
+#ifdef HARDWARE_NAME
+        log("Board", "%s", HARDWARE_NAME);
+#endif
+        char* modulePrefix = new char[10];
+        for (uint8_t i = 1; i <= modules.count; i++)
+        {
+            sprintf(modulePrefix, "Module %i", modules.ids[i - 1]);
+            log(modulePrefix, "Version %s  Name: %s", modules.list[i - 1]->version(), modules.list[i - 1]->name());
+        }
+        collectMemoryStats();
+        log("Free memory", "%.2f KiB (min %.2f KiB - max %.2f KiB)", ((float)freeMemory() / 1024), ((float)_freeMemoryMin / 1024), ((float)_freeMemoryMax / 1024));
     }
 } // namespace OpenKNX
 

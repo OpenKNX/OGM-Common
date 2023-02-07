@@ -4,6 +4,7 @@
 #include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Module.h"
+#include "OpenKNX/Information.h"
 #include "hardware.h"
 #include "knxprod.h"
 #include <knx.h>
@@ -48,7 +49,6 @@ namespace OpenKNX
 #endif
         WatchdogData watchdog;
 #endif
-        uint8_t _firmwareRevision = 0;
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
         Modules modules;
@@ -77,6 +77,7 @@ namespace OpenKNX
 
       public:
         FlashStorage flash;
+        Information info;
 
         Common();
 
@@ -95,8 +96,7 @@ namespace OpenKNX
 
         void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
-        void showMemoryStats();
-        void showKnxInformation();
+        void showInformations();
         bool freeLoopTime();
         Module* getModule(uint8_t id);
         Modules* getModules();
@@ -105,11 +105,6 @@ namespace OpenKNX
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
-
-        uint8_t openKnxId();
-        uint8_t applicationNumber();
-        uint16_t applicationVersion();
-        const char* applicationHumanVersion();
     };
 } // namespace OpenKNX
 
