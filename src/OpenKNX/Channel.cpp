@@ -8,4 +8,9 @@ namespace OpenKNX
     {
         return "UnnamedChannel";
     }
+
+    uint8_t Channel::channelIndex()
+    {
+        return _channelIndex;
+    }
 } // namespace OpenKNX

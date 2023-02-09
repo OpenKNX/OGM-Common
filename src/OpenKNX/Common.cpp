@@ -179,6 +179,10 @@ namespace OpenKNX
         uint32_t start = millis();
 #endif
 
+        // loop console helper
+        console.loop();
+        collectMemoryStats();
+
         // loop  knx stack
         knx.loop();
         collectMemoryStats();
@@ -186,10 +190,6 @@ namespace OpenKNX
         // loop  appstack
         _loopMicros = micros();
         appLoop();
-        collectMemoryStats();
-
-        // loop console helper
-        console.loop();
         collectMemoryStats();
 
 #ifdef WATCHDOG

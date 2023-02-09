@@ -1,30 +1,20 @@
 #pragma once
 #include <knx.h>
+#include "OpenKNX/Base.h"
 
 namespace OpenKNX
 {
     /*
      * Abstract class for Modules
      */
-    class Module
+    class Module : public Base
     {
-      protected:
-        /*
-         * Wrapper for openknx.log. The name() will be used as prefix.
-         */
-        void log(const char* output, ...);
-
-        /*
-         * Wrapper for openknx.logHex. The name() will be used as prefix.
-         */
-        void logHex(const uint8_t* data, size_t size);
-
       public:
         /*
          * The name of module. Used for "log" method.
          * @return name
          */
-        virtual const char* name();
+        const char* name() override;
 
         /*
          * The version of module.
@@ -33,21 +23,24 @@ namespace OpenKNX
         virtual const char* version();
 
         /*
-         * Called at startup (before startup delay)
-         * Useful for init hardware
+         * This method must returned the size for reservation space in flash storage.
+         * @return size in bytes
          */
-        virtual void setup();
+        virtual uint16_t flashSize();
 
         /*
-         * Module logic
+         * Called when the module should write this data to flash
+         * It must use the write helper of FlashStorage (openknx.flash.writeXXX).
+         * Only the size of flashSize() is allowed to write. missing bytes will auto filled.
          */
-        virtual void loop();
+        virtual void writeFlash();
 
         /*
-         * Called on incomming/changing GroupObject
-         * @param GroupObject
+         * Called after setup to load data from flash storage.
+         * @param data pointer to data of module in flash, but the better way is to use read helper of FlashStorage (openknx.flash.readXXX)
+         * @param size size of saved data in flash. no data saved, the size is zero (e.g. for init)
          */
-        virtual void processInputKo(GroupObject& ko);
+        virtual void readFlash(const uint8_t* data, const uint16_t size);
 
         /*
          * Called after the startup delay time are expired. 
@@ -65,26 +58,6 @@ namespace OpenKNX
          * This happen when ETS will start parameterization
          */
         virtual void processBeforeTablesUnload();
-
-        /*
-         * Called when the module should write this data to flash
-         * It must use the write helper of FlashStorage (openknx.flash.writeXXX).
-         * Only the size of flashSize() is allowed to write. missing bytes will auto filled.
-         */
-        virtual void writeFlash();
-
-        /*
-         * Called after setup to load data from flash storage.
-         * @param data pointer to data of module in flash, but the better way is to use read helper of FlashStorage (openknx.flash.readXXX)
-         * @param size size of saved data in flash. no data saved, the size is zero (e.g. for init)
-         */
-        virtual void readFlash(const uint8_t* data, const uint16_t size);
-
-        /*
-         * This method must returned the size for reservation space in flash storage.
-         * @return size in bytes
-         */
-        virtual uint16_t flashSize();
 
         /**
          * This method is called if save/restore will be executed in context of a SAVE-Interrupt (power failure on KNX-Bus)

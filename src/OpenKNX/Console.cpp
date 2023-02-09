@@ -46,7 +46,7 @@ namespace OpenKNX
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash (knx only)", current, (3 - _consoleCharRepeats));
                     break;
                 }
-                Helper::nukeFlashKnxOnly();
+                openknx.nukeFlashKnxOnly();
                 break;
             case 0x4E: // N
                 if (_consoleCharRepeats < 3)
@@ -54,7 +54,7 @@ namespace OpenKNX
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash", current, (3 - _consoleCharRepeats));
                     break;
                 }
-                Helper::nukeFlash();
+                openknx.nukeFlash();
                 break;
 #endif
 #ifdef WATCHDOG
