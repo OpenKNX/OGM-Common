@@ -38,22 +38,25 @@ namespace OpenKNX
             case 0x69: // i
                 showInformations();
                 break;
+
+#ifdef ARDUINO_ARCH_RP2040
             case 0x6E: // n
                 if (_consoleCharRepeats < 3)
                 {
-                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke knx flash", current, (3 - _consoleCharRepeats));
+                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash (knx only)", current, (3 - _consoleCharRepeats));
                     break;
                 }
-                Helper::nukeKnxFlash();
+                Helper::nukeFlashKnxOnly();
                 break;
             case 0x4E: // N
                 if (_consoleCharRepeats < 3)
                 {
-                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke whole flash", current, (3 - _consoleCharRepeats));
+                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash", current, (3 - _consoleCharRepeats));
                     break;
                 }
-                Helper::nukeWholeFlash();
+                Helper::nukeFlash();
                 break;
+#endif
 #ifdef WATCHDOG
             case 0x77: // w
                 if (_consoleCharRepeats < 3)

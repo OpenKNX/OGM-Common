@@ -1,6 +1,12 @@
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Common.h"
 
+#ifdef ARDUINO_ARCH_RP2040
+#include "hardware/flash.h"
+#include "pico/bootrom.h"
+#include "pico/stdlib.h"
+#endif
+
 namespace OpenKNX
 {
     void Helper::log(const char* output)
@@ -47,34 +53,42 @@ namespace OpenKNX
         SERIAL_DEBUG.println();
     }
 
+#ifdef ARDUINO_ARCH_RP2040
     /*
      * Erase whole flash from knx stack (pa, parameters, ... flash storage)
      * would probably be better off in the knx stack
      */
-    void Helper::nukeKnxFlash()
+    void Helper::nukeFlashKnxOnly()
     {
-        uint8_t* flashStart = knx.platform().getNonVolatileMemoryStart();
-        size_t flashSize = knx.platform().getNonVolatileMemorySize();
-
-        // TODO
-#ifdef WATCHDOG
-        openknx.watchdogLoop();
-#endif
-        log("Nuker", "nuke knx flash");
-        knx.platform().restart();
+        nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
     }
 
     /*
      * Erase whole flash also firmware!
      */
-    void Helper::nukeWholeFlash()
+    void Helper::nukeFlash()
     {
-        // TODO
-#ifdef WATCHDOG
-        openknx.watchdogLoop();
+        uint flash_size_bytes;
+#ifndef PICO_FLASH_SIZE_BYTES
+#warning PICO_FLASH_SIZE_BYTES not set, assuming 16M
+        flash_size_bytes = 16 * 1024 * 1024;
+#else
+        flash_size_bytes = PICO_FLASH_SIZE_BYTES;
 #endif
-        log("Nuker", "nuke whole flash");
-        knx.platform().restart();
+        nukeFlash(0, flash_size_bytes);
     }
+
+    void Helper::nukeFlash(uint32_t offset, size_t bytes)
+    {  
+#ifdef WATCHDOG
+        Watchdog.enable(2147483647);
+#endif
+        log("Nuker", "nuke flash ( %i -> %i)", offset, bytes);
+        delay(10);
+        flash_range_erase(offset, bytes);
+        delay(10);
+        watchdog_reboot(0,0,0);
+    }
+#endif
 
 } // namespace OpenKNX

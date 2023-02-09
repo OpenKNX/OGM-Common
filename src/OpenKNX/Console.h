@@ -1,5 +1,8 @@
 #pragma once
 #include "knx.h"
+#ifdef WATCHDOG
+#include <Adafruit_SleepyDog.h>
+#endif
 
 namespace OpenKNX
 {
