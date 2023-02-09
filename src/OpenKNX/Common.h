@@ -5,6 +5,7 @@
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Module.h"
 #include "OpenKNX/Information.h"
+#include "OpenKNX/Console.h"
 #include "hardware.h"
 #include "knxprod.h"
 #include <knx.h>
@@ -51,7 +52,7 @@ namespace OpenKNX
 #endif
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
-        Modules modules;
+        Modules _modules;
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
@@ -64,11 +65,9 @@ namespace OpenKNX
         void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();
-        void processSerialInput();
         void processRestoreSavePin();
 #ifdef WATCHDOG
         void watchdogSetup();
-        void watchdogLoop();
 #endif
 #ifdef LOG_HeartbeatDelayBase
         uint32_t _heartbeatDelay;
@@ -78,6 +77,7 @@ namespace OpenKNX
       public:
         FlashStorage flash;
         Information info;
+        Console console;
 
         Common();
 
@@ -90,13 +90,17 @@ namespace OpenKNX
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif
+#ifdef WATCHDOG
+        void watchdogLoop();
+#endif
         bool _afterStartupDelay = false;
         bool afterStartupDelay();
         void processAfterStartupDelay();
 
         void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
-        void showInformations();
+        uint freeMemoryMin();
+        uint freeMemoryMax();
         bool freeLoopTime();
         Module* getModule(uint8_t id);
         Modules* getModules();

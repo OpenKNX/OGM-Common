@@ -1,0 +1,94 @@
+#include "OpenKNX/Console.h"
+#include "../HardwareDevices.h"
+#include "OpenKNX/Common.h"
+
+namespace OpenKNX
+{
+    void Console::loop()
+    {
+        if (SERIAL_DEBUG.available())
+            processSerialInput();
+    }
+
+    void Console::processSerialInput()
+    {
+
+        uint8_t current = SERIAL_DEBUG.read();
+        if (_consoleCharLast == current)
+        {
+            _consoleCharRepeats++;
+        }
+        else
+        {
+            _consoleCharLast = current;
+            _consoleCharRepeats = 0;
+        }
+
+        switch (current)
+        {
+            case 0x50: // P
+                openknx.triggerSavePin();
+                break;
+            case 0x57: // W
+                openknx.flash.save(true);
+                break;
+            case 0x45: // E
+                fatalError(1, "Test fatal error");
+                break;
+            case 0x69: // i
+                showInformations();
+                break;
+            case 0x6E: // n
+                if (_consoleCharRepeats < 3)
+                {
+                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke knx flash", current, (3 - _consoleCharRepeats));
+                    break;
+                }
+                Helper::nukeKnxFlash();
+                break;
+            case 0x4E: // N
+                if (_consoleCharRepeats < 3)
+                {
+                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke whole flash", current, (3 - _consoleCharRepeats));
+                    break;
+                }
+                Helper::nukeWholeFlash();
+                break;
+#ifdef WATCHDOG
+            case 0x77: // w
+                if (_consoleCharRepeats < 3)
+                {
+                    openknx.log("Watchdog", "repeat \"%c\" %ix to trigger watchdog", current, (3 - _consoleCharRepeats));
+                    break;
+                }
+
+                if (!ParamLOG_Watchdog)
+                    break;
+
+                openknx.log("Watchdog", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
+                delay(WATCHDOG_MAX_PERIOD_MS + 1);
+                break;
+#endif
+        }
+    }
+
+    void Console::showInformations()
+    {
+        openknx.log("= Information =");
+        openknx.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress(), openknx.info.individualAddress());
+        openknx.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)", openknx.info.humanApplicationNumber(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion(), openknx.info.applicationVersion());
+        openknx.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
+#ifdef HARDWARE_NAME
+        openknx.log("Board", "%s", HARDWARE_NAME);
+#endif
+        Modules* modules = openknx.getModules();
+        char* modulePrefix = new char[10];
+        for (uint8_t i = 1; i <= modules->count; i++)
+        {
+            sprintf(modulePrefix, "Module %i", modules->ids[i - 1]);
+            openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i - 1]->version(), modules->list[i - 1]->name());
+        }
+        openknx.collectMemoryStats();
+        openknx.log("Free memory", "%.2f KiB (min %.2f KiB - max %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024), ((float)openknx.freeMemoryMax() / 1024));
+    }
+} // namespace OpenKNX

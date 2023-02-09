@@ -127,9 +127,9 @@ namespace OpenKNX
         collectMemoryStats();
 
         // Handle loop of modules
-        for (uint8_t i = 1; i <= modules.count; i++)
+        for (uint8_t i = 1; i <= _modules.count; i++)
         {
-            modules.list[i - 1]->setup();
+            _modules.list[i - 1]->setup();
             collectMemoryStats();
         }
 
@@ -186,10 +186,10 @@ namespace OpenKNX
         // loop  appstack
         _loopMicros = micros();
         appLoop();
+        collectMemoryStats();
 
-        if (SERIAL_DEBUG.available())
-            processSerialInput();
-
+        // loop console helper
+        console.loop();
         collectMemoryStats();
 
 #ifdef WATCHDOG
@@ -231,6 +231,9 @@ namespace OpenKNX
 
     void Common::collectMemoryStats()
     {
+        if (freeMemory() < 0)
+            return;
+            
         _freeMemoryMin = MIN((uint)freeMemory(), _freeMemoryMin);
         _freeMemoryMax = MAX((uint)freeMemory(), _freeMemoryMax);
     }
@@ -239,7 +242,7 @@ namespace OpenKNX
     {
         while (freeLoopTime())
         {
-            if (_currentModule >= modules.count)
+            if (_currentModule >= _modules.count)
                 _currentModule = 0;
 
             loopModule(_currentModule);
@@ -250,26 +253,26 @@ namespace OpenKNX
 
     void Common::loopModule(uint8_t index)
     {
-        if (index >= modules.count)
+        if (index >= _modules.count)
             return;
 
-        modules.list[index]->loop();
+        _modules.list[index]->loop();
         collectMemoryStats();
     }
 
     void Common::addModule(uint8_t id, Module* module)
     {
-        modules.count++;
-        modules.list[modules.count - 1] = module;
-        modules.ids[modules.count - 1] = id;
+        _modules.count++;
+        _modules.list[_modules.count - 1] = module;
+        _modules.ids[_modules.count - 1] = id;
     }
 
     Module* Common::getModule(uint8_t id)
     {
-        for (uint8_t i = 1; i <= modules.count; i++)
+        for (uint8_t i = 1; i <= _modules.count; i++)
         {
-            if (modules.ids[i - 1] == id)
-                return modules.list[i - 1];
+            if (_modules.ids[i - 1] == id)
+                return _modules.list[i - 1];
         }
 
         return nullptr;
@@ -277,7 +280,7 @@ namespace OpenKNX
 
     Modules* Common::getModules()
     {
-        return &modules;
+        return &_modules;
     }
 
     bool Common::afterStartupDelay()
@@ -297,9 +300,9 @@ namespace OpenKNX
 
         _afterStartupDelay = true;
 
-        for (uint8_t i = 1; i <= modules.count; i++)
+        for (uint8_t i = 1; i <= _modules.count; i++)
         {
-            modules.list[i - 1]->processAfterStartupDelay();
+            _modules.list[i - 1]->processAfterStartupDelay();
             collectMemoryStats();
         }
     }
@@ -336,8 +339,8 @@ namespace OpenKNX
         log("OpenKNX", "savePower");
 
         // first save all modules to save power before...
-        for (uint8_t i = 1; i <= modules.count; i++)
-            modules.list[i - 1]->savePower();
+        for (uint8_t i = 1; i <= _modules.count; i++)
+            _modules.list[i - 1]->savePower();
 
         // ... save power by shutdown >5V power trail
         deactivatePowerRail();
@@ -365,8 +368,8 @@ namespace OpenKNX
         bool noReboot = true;
 
         // the inform modules
-        for (uint8_t i = 1; i <= modules.count && noReboot; i++)
-            noReboot = noReboot && modules.list[i - 1]->restorePower();
+        for (uint8_t i = 1; i <= _modules.count && noReboot; i++)
+            noReboot = noReboot && _modules.list[i - 1]->restorePower();
 
         if (!noReboot)
         {
@@ -383,9 +386,9 @@ namespace OpenKNX
     void Common::processBeforeRestart()
     {
         log("OpenKNX", "processBeforeRestart");
-        for (uint8_t i = 1; i <= modules.count; i++)
+        for (uint8_t i = 1; i <= _modules.count; i++)
         {
-            modules.list[i - 1]->processBeforeRestart();
+            _modules.list[i - 1]->processBeforeRestart();
         }
 
         flash.save();
@@ -399,9 +402,9 @@ namespace OpenKNX
 
     void Common::processInputKo(GroupObject& iKo)
     {
-        for (uint8_t i = 1; i <= modules.count; i++)
+        for (uint8_t i = 1; i <= _modules.count; i++)
         {
-            modules.list[i - 1]->processInputKo(iKo);
+            _modules.list[i - 1]->processInputKo(iKo);
         }
     }
 
@@ -427,51 +430,14 @@ namespace OpenKNX
 #endif
     }
 
-    void Common::processSerialInput()
+    uint Common::freeMemoryMin()
     {
-        switch (SERIAL_DEBUG.read())
-        {
-            case 0x50: // P
-                openknx._savePinTriggered = true;
-                break;
-            case 0x57: // W
-                flash.save(true);
-                break;
-            case 0x45: // E
-                fatalError(1, "Test fatal error");
-                break;
-            case 0x69: // i
-                showInformations();
-                break;
-#ifdef WATCHDOG
-            case 0x77: // w
-                if (!ParamLOG_Watchdog)
-                    break;
-
-                log("Watchdog", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
-                delay(WATCHDOG_MAX_PERIOD_MS + 1);
-                break;
-#endif
-        }
+        return _freeMemoryMin;
     }
 
-    void Common::showInformations()
+    uint Common::freeMemoryMax()
     {
-        log("= Information =");
-        log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress(), openknx.info.individualAddress());
-        log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)", openknx.info.humanApplicationNumber(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion(), openknx.info.applicationVersion());
-        log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
-#ifdef HARDWARE_NAME
-        log("Board", "%s", HARDWARE_NAME);
-#endif
-        char* modulePrefix = new char[10];
-        for (uint8_t i = 1; i <= modules.count; i++)
-        {
-            sprintf(modulePrefix, "Module %i", modules.ids[i - 1]);
-            log(modulePrefix, "Version %s  Name: %s", modules.list[i - 1]->version(), modules.list[i - 1]->name());
-        }
-        collectMemoryStats();
-        log("Free memory", "%.2f KiB (min %.2f KiB - max %.2f KiB)", ((float)freeMemory() / 1024), ((float)_freeMemoryMin / 1024), ((float)_freeMemoryMax / 1024));
+        return _freeMemoryMax;
     }
 } // namespace OpenKNX
 
