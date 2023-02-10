@@ -1,11 +1,12 @@
 #pragma once
 #include "../Helper.h"
 #include "KnxHelper.h"
+#include "OpenKNX/Console.h"
 #include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Helper.h"
-#include "OpenKNX/Module.h"
 #include "OpenKNX/Information.h"
-#include "OpenKNX/Console.h"
+#include "OpenKNX/TimerInterrupt.h"
+#include "OpenKNX/Module.h"
 #include "hardware.h"
 #include "knxprod.h"
 #include <knx.h>
@@ -57,7 +58,6 @@ namespace OpenKNX
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         uint _freeMemoryMin = -1;
-        uint _freeMemoryMax = 0;
 
         void initKnx();
         void appSetup();
@@ -66,6 +66,7 @@ namespace OpenKNX
         void processModulesLoop();
         void registerCallbacks();
         void processRestoreSavePin();
+        void initMemoryTimerInterrupt();
 #ifdef WATCHDOG
         void watchdogSetup();
 #endif
@@ -78,6 +79,7 @@ namespace OpenKNX
         FlashStorage flash;
         Information info;
         Console console;
+        TimerInterrupt timer_interrupt;
 
         Common();
 
@@ -100,7 +102,6 @@ namespace OpenKNX
         void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
         uint freeMemoryMin();
-        uint freeMemoryMax();
         bool freeLoopTime();
         Module* getModule(uint8_t id);
         Modules* getModules();

@@ -1,5 +1,6 @@
 #pragma once
 #include "OpenKNX/Base.h"
+#include <string>
 
 namespace OpenKNX
 {
@@ -13,12 +14,17 @@ namespace OpenKNX
          * The name of channel. Used for "log" methods.
          * @return name
          */
-        virtual const char* name() override;
+        virtual const char *name() override;
 
         /*
          * The channel index
          * @return channelIndex
          */
         virtual uint8_t channelIndex();
+
+        /*
+         * Append a channel suffix
+         */
+        const char *appendChannelSuffix(const char *name);
     };
 } // namespace OpenKNX

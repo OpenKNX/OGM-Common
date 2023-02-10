@@ -124,7 +124,6 @@ namespace OpenKNX
 #ifdef LOG_HeartbeatDelayBase
         _heartbeatDelay = 0;
 #endif
-        collectMemoryStats();
 
         // Handle loop of modules
         for (uint8_t i = 1; i <= _modules.count; i++)
@@ -134,7 +133,6 @@ namespace OpenKNX
         }
 
         flash.load();
-        collectMemoryStats();
 
         // register callbacks
         registerCallbacks();
@@ -231,11 +229,13 @@ namespace OpenKNX
 
     void Common::collectMemoryStats()
     {
-        if (freeMemory() < 0)
+        int current = freeMemory();
+        
+        if (current < 0)
             return;
-            
-        _freeMemoryMin = MIN((uint)freeMemory(), _freeMemoryMin);
-        _freeMemoryMax = MAX((uint)freeMemory(), _freeMemoryMax);
+
+        if ((uint)current < _freeMemoryMin)
+            _freeMemoryMin = current;
     }
 
     void Common::processModulesLoop()
@@ -243,7 +243,10 @@ namespace OpenKNX
         while (freeLoopTime())
         {
             if (_currentModule >= _modules.count)
+            {
                 _currentModule = 0;
+                return;
+            }
 
             loopModule(_currentModule);
 
@@ -257,7 +260,6 @@ namespace OpenKNX
             return;
 
         _modules.list[index]->loop();
-        collectMemoryStats();
     }
 
     void Common::addModule(uint8_t id, Module* module)
@@ -303,7 +305,6 @@ namespace OpenKNX
         for (uint8_t i = 1; i <= _modules.count; i++)
         {
             _modules.list[i - 1]->processAfterStartupDelay();
-            collectMemoryStats();
         }
     }
 
@@ -397,6 +398,10 @@ namespace OpenKNX
     void Common::processBeforeTablesUnload()
     {
         log("OpenKNX", "processBeforeTablesUnload");
+        for (uint8_t i = 1; i <= _modules.count; i++)
+        {
+            _modules.list[i - 1]->processBeforeTablesUnload();
+        }
         flash.save();
     }
 
@@ -433,11 +438,6 @@ namespace OpenKNX
     uint Common::freeMemoryMin()
     {
         return _freeMemoryMin;
-    }
-
-    uint Common::freeMemoryMax()
-    {
-        return _freeMemoryMax;
     }
 } // namespace OpenKNX
 

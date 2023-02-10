@@ -1,5 +1,7 @@
+#include "../Helper.h"
 #include "knxprod.h"
 #include <knx.h>
+#include <string>
 
 namespace OpenKNX
 {
@@ -20,11 +22,11 @@ namespace OpenKNX
             _applicationNumber = applicationNumber;
         }
 
-        char* humanApplicationNumber()
+        const char* humanApplicationNumber()
         {
-            char* buffer = new char[6];
+            char* buffer = new char[10];
             sprintf(buffer, "0x%04X", applicationNumber());
-            return buffer;
+            return clone_const_chars(buffer);
         }
 
         uint16_t applicationVersion()
@@ -37,11 +39,11 @@ namespace OpenKNX
             _applicationVersion = applicationVersion;
         }
 
-        char* humanApplicationVersion()
+        const char*  humanApplicationVersion()
         {
             char* buffer = new char[5];
             sprintf(buffer, "%i.%i", ((applicationVersion() & 0xF0) >> 4), (applicationVersion() & 0x0F));
-            return buffer;
+            return clone_const_chars(buffer);
         }
 
         uint16_t firmwareNumber()
@@ -49,11 +51,11 @@ namespace OpenKNX
             return (MAIN_OpenKnxId << 8) + MAIN_ApplicationNumber;
         }
 
-        char* humanFirmwareNumber()
+        const char*  humanFirmwareNumber()
         {
             char* buffer = new char[6];
             sprintf(buffer, "0x%04X", firmwareNumber());
-            return buffer;
+            return clone_const_chars(buffer);
         }
 
         uint16_t firmwareVersion()
@@ -66,11 +68,11 @@ namespace OpenKNX
             _firmwareRevision = firmwareRevision;
         }
 
-        char* humanFirmwareVersion()
+        const char*  humanFirmwareVersion()
         {
             char* buffer = new char[20];
             sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0)), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11));
-            return buffer;
+            return clone_const_chars(buffer);
         }
 
         uint16_t individualAddress()
@@ -78,11 +80,11 @@ namespace OpenKNX
             return knx.individualAddress();
         }
 
-        char* humanIndividualAddress()
+        const char*  humanIndividualAddress()
         {
             char* buffer = new char[10];
             sprintf(buffer, "%i.%i.%i", ((knx.individualAddress() & 0xF000) >> 12), ((knx.individualAddress() & 0x0F00) >> 8), (knx.individualAddress() & 0x00FF));
-            return buffer;
+            return clone_const_chars(buffer);
         }
     };
 

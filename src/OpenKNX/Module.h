@@ -11,12 +11,6 @@ namespace OpenKNX
     {
       public:
         /*
-         * The name of module. Used for "log" method.
-         * @return name
-         */
-        const char* name() override;
-
-        /*
          * The version of module.
          * @return version
          */

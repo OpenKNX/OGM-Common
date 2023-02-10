@@ -4,12 +4,6 @@
 
 namespace OpenKNX
 {
-
-    const char *Module::name()
-    {
-        return "UnnamedModule";
-    }
-
     const char *Module::version()
     {
         return "0.0";
