@@ -105,16 +105,16 @@ bool boardCheck()
     switch (lI2c)
     {
         case 1:
-            openknx.log("I2C", "SCL clock line held low\n");
+            openknx.log("I2C", "SCL clock line held low");
             break;
         case 2:
-            openknx.log("I2C", "SCL clock line held low by slave clock stretch\n");
+            openknx.log("I2C", "SCL clock line held low by slave clock stretch");
             break;
         case 3:
-            openknx.log("I2C", "SDA data line held low\n");
+            openknx.log("I2C", "SDA data line held low");
             break;
         default:
-            openknx.log("I2C", "I2C bus cleared successfully\n");
+            openknx.log("I2C", "I2C bus cleared successfully");
             Wire.begin();
             lResult = true;
             break;
@@ -192,7 +192,7 @@ bool boardCheck()
 
 bool checkUartExistence()
 {
-    openknx.log("Helper", "Checking UART existence...\n");
+    openknx.log("Helper", "Checking UART existence...");
     bool lResult = false;
     initUart();
     // send system state command and interpret answer
@@ -207,6 +207,7 @@ bool checkUartExistence()
 bool initUart()
 {
     Serial1.end();
+    delay(100);
     Serial1.begin(19200, SERIAL_8E1);
     for (uint16_t lCount = 0; !Serial1 && lCount < 1000; lCount++)
         ;
@@ -231,7 +232,7 @@ uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t 
         lResp = Serial1.read();
         if (lResp == iResp)
         {
-            openknx.log("Helper", "OK - received expected response (%02X)\n", lResp);
+            openknx.log("Helper", "OK - received expected response (%02X)", lResp);
             if (iLen == 1)
                 lResp = Serial1.read();
             break;
