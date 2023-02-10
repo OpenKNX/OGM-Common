@@ -44,24 +44,33 @@ uint32_t delayTimerInit()
 }
 
 // check if a float is a number (false if Not-a-number)
-bool isNum(float iNumber) {
+bool isNum(float iNumber)
+{
     return (iNumber + 10.0) > NO_NUM;
+}
+
+const char* clone_const_chars(const char* in)
+{
+    const char* out = in;
+    delete[] in;
+    return out;
 }
 
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
 extern "C" char* sbrk(int incr);
 #else  // __ARM__
-extern char *__brkval;
-#endif  // __arm__
+extern char* __brkval;
+#endif // __arm__
 
-int freeMemory() {
-  char top;
+int freeMemory()
+{
+    char top;
 #ifdef __arm__
-  return &top - reinterpret_cast<char*>(sbrk(0));
+    return &top - reinterpret_cast<char*>(sbrk(0));
 #elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
-  return &top - __brkval;
+    return &top - __brkval;
 #else  // __arm__
-  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
-#endif  // __arm__
+    return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif // __arm__
 }
