@@ -40,6 +40,7 @@ void savePower()
 }
 
 void restorePower(){
+    delay(500);
     printDebug("restorePower: Switching on 5V rail...\n");
     // turn on 5V and 20V rail
     uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
@@ -204,6 +205,7 @@ bool checkUartExistence()
 
 bool initUart() {
     Serial1.end();
+    delay(100);
     Serial1.begin(19200, SERIAL_8E1);
     for (uint16_t lCount = 0; !Serial1 && lCount < 1000; lCount++);
     if (!Serial1) {
