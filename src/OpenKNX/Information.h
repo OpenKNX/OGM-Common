@@ -80,7 +80,7 @@ namespace OpenKNX
         std::string humanFirmwareVersion()
         {
             char* buffer = new char[14];
-            sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0)), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11));
+            sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11));
 
             std::string returnValue(buffer);
             delete[] buffer;
