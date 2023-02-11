@@ -32,7 +32,7 @@ namespace OpenKNX
         /*
          * Called after setup to load data from flash storage.
          * @param data pointer to data of module in flash, but the better way is to use read helper of FlashStorage (openknx.flash.readXXX)
-         * @param size size of saved data in flash. no data saved, the size is zero (e.g. for init)
+         * @param size number of saved bytes in flash. if no data is saved, the size is 0 (e.g. for init)
          */
         virtual void readFlash(const uint8_t* data, const uint16_t size);
 
