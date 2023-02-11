@@ -59,14 +59,14 @@ namespace OpenKNX
 #endif
 #ifdef WATCHDOG
             case 0x77: // w
+                if (!ParamLOG_Watchdog)
+                    break;
+
                 if (_consoleCharRepeats < 3)
                 {
                     openknx.log("Watchdog", "repeat \"%c\" %ix to trigger watchdog", current, (3 - _consoleCharRepeats));
                     break;
                 }
-
-                if (!ParamLOG_Watchdog)
-                    break;
 
                 openknx.log("Watchdog", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
                 delay(WATCHDOG_MAX_PERIOD_MS + 1);
