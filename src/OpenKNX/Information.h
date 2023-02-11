@@ -44,7 +44,7 @@ namespace OpenKNX
 
         std::string humanApplicationVersion()
         {
-            char* buffer = new char[5];
+            char* buffer = new char[10];
             sprintf(buffer, "%i.%i", ((applicationVersion() & 0xF0) >> 4), (applicationVersion() & 0x0F));
 
             std::string returnValue(buffer);
@@ -79,7 +79,7 @@ namespace OpenKNX
 
         std::string humanFirmwareVersion()
         {
-            char* buffer = new char[20];
+            char* buffer = new char[14];
             sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0)), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11));
 
             std::string returnValue(buffer);
@@ -94,7 +94,7 @@ namespace OpenKNX
 
         std::string humanIndividualAddress()
         {
-            char* buffer = new char[10];
+            char* buffer = new char[14];
             sprintf(buffer, "%i.%i.%i", ((knx.individualAddress() & 0xF000) >> 12), ((knx.individualAddress() & 0x0F00) >> 8), (knx.individualAddress() & 0x00FF));
 
             std::string returnValue(buffer);
