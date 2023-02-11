@@ -44,6 +44,11 @@ namespace OpenKNX
         virtual void loop();
 
         /*
+         * Module logic for second core
+         */
+        virtual void loop2();
+
+        /*
          * Called on incomming/changing GroupObject
          * @param GroupObject
          */

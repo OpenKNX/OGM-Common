@@ -89,6 +89,7 @@ namespace OpenKNX
         void triggerSavePin();
         void setup();
         void loop();
+        void loop2();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif

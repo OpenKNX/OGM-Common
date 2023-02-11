@@ -1,6 +1,8 @@
 #include "Common.h"
 #include "../HardwareDevices.h"
 
+void appLoop2();
+
 namespace OpenKNX
 {
     Common::Common()
@@ -126,9 +128,12 @@ namespace OpenKNX
 #endif
 
         // Handle loop of modules
+        bool useSecCore = false;
         for (uint8_t i = 1; i <= _modules.count; i++)
         {
             _modules.list[i - 1]->setup();
+            if(_modules.list[i - 1]->usesSecCore())
+                useSecCore = true;
             collectMemoryStats();
         }
 
@@ -136,6 +141,11 @@ namespace OpenKNX
 
         // register callbacks
         registerCallbacks();
+
+        if(useSecCore)
+        {
+            multicore_launch_core1(appLoop2);
+        }
     }
 
 #ifdef WATCHDOG
@@ -260,6 +270,12 @@ namespace OpenKNX
             return;
 
         _modules.list[index]->loop();
+    }
+
+    void Common::loop2()
+    {
+        for(uint8_t i = 0;i<_modules.count;i++)
+            _modules.list[i]->loop2();
     }
 
     void Common::addModule(uint8_t id, Module* module)
@@ -442,3 +458,13 @@ namespace OpenKNX
 } // namespace OpenKNX
 
 OpenKNX::Common openknx;
+
+// we need a global function for multicore_launch_core
+void appLoop2()
+{
+    // loop forever..
+    while(true)
+    {
+        openknx.loop2();
+    }
+}

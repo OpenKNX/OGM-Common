@@ -37,4 +37,9 @@ namespace OpenKNX
         return true;
     }
 
+    bool Module::usesSecCore()
+    {
+        return false;
+    }
+
 } // namespace OpenKNX

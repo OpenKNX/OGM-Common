@@ -37,6 +37,9 @@ namespace OpenKNX
     void Base::loop()
     {}
 
+    void Base::loop2()
+    {}
+
     void Base::setup()
     {}
 

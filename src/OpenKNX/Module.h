@@ -74,5 +74,10 @@ namespace OpenKNX
          * If any registered module returns false, there will be a reboot of the device to ensure full functionality.
          */
         virtual bool restorePower();
+
+        /**
+         * @return true, if this module has a loop2 for secondary core, false, otherwise
+         */
+        virtual bool usesSecCore();
     };
 } // namespace OpenKNX
