@@ -17,6 +17,14 @@
 
 namespace OpenKNX
 {
+    /**
+     * OpenKnx FlashStorage for (Runtime) Data owned by Modules
+     * 
+     * Introduced with OpenKnx-Commons v2 to allow flexible extension.
+     * 
+     * Scope/Exclusion: ETS-Parametrization is NOT part of this data. Only e.g. values of Logic-Module, 
+     *                  or calibration-data of sensors which should be saved on power loss.
+     */
     class FlashStorage
     {
       public:
