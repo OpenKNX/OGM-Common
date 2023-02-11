@@ -31,10 +31,7 @@ namespace OpenKNX
             moduleId = modules->ids[i - 1];
             moduleSize = module->flashSize();
 
-            if (moduleSize == 0)
-                return;
-
-            if (!loadedModules[moduleId])
+            if (moduleSize > 0 && !loadedModules[moduleId])
             {
                 openknx.log("FlashStorage", "  init module %s (%i)", module->name(), moduleId);
                 module->readFlash(new uint8_t[0], 0);
