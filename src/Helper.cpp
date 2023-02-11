@@ -49,13 +49,6 @@ bool isNum(float iNumber)
     return (iNumber + 10.0) > NO_NUM;
 }
 
-const char* clone_const_chars(const char* in)
-{
-    const char* out = in;
-    delete[] in;
-    return out;
-}
-
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
 extern "C" char* sbrk(int incr);

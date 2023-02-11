@@ -1,6 +1,6 @@
 #pragma once
-#include <knx.h>
 #include "OpenKNX/Base.h"
+#include <knx.h>
 
 namespace OpenKNX
 {
@@ -37,7 +37,7 @@ namespace OpenKNX
         virtual void readFlash(const uint8_t* data, const uint16_t size);
 
         /*
-         * Called after the startup delay time are expired. 
+         * Called after the startup delay time are expired.
          */
         virtual void processAfterStartupDelay();
 

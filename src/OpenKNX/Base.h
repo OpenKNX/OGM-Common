@@ -19,6 +19,12 @@ namespace OpenKNX
          */
         void logHex(const uint8_t* data, size_t size);
 
+        /*
+         * Get a Pointer to a name for Log
+         * THe point need to be delete[] after usage!
+         */
+        virtual char *logName();
+
       public:
         /*
          * The name. Used for "log" methods.

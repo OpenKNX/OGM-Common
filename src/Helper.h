@@ -16,7 +16,6 @@
 int printDebug(const char *format, ...);
 void printHEX(const char* iPrefix, const uint8_t *iData, size_t iLength);
 void printResult(bool iResult);
-const char* clone_const_chars(const char* in);
 
 // ensure correct time delta check
 // cannot be used in interrupt handler

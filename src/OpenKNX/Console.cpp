@@ -78,14 +78,14 @@ namespace OpenKNX
     void Console::showInformations()
     {
         openknx.log("= Information =");
-        openknx.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress(), openknx.info.individualAddress());
-        openknx.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)", openknx.info.humanApplicationNumber(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion(), openknx.info.applicationVersion());
-        openknx.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
+        openknx.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
+        openknx.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion());
+        openknx.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
 #ifdef HARDWARE_NAME
         openknx.log("Board", "%s", HARDWARE_NAME);
 #endif
         Modules* modules = openknx.getModules();
-        char* modulePrefix = new char[10];
+        char* modulePrefix = new char[12];
         for (uint8_t i = 1; i <= modules->count; i++)
         {
             sprintf(modulePrefix, "Module %i", modules->ids[i - 1]);

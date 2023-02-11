@@ -4,20 +4,15 @@
 
 namespace OpenKNX
 {
-    const char *Channel::name()
-    {
-        return appendChannelSuffix("Unnamed");
-    }
-
     uint8_t Channel::channelIndex()
     {
         return _channelIndex;
     }
 
-    const char *Channel::appendChannelSuffix(const char *name)
+    char *Channel::logName()
     {
-        char *buffer = new char[MAX_LOG_PREFIX];
-        sprintf(buffer, "%s<%i>", name, _channelIndex + 1);
-        return clone_const_chars(buffer);
+        char *buffer = new char[MAX_LOG_PREFIX + 1];
+        sprintf(buffer, "%s<%i>", name(), _channelIndex + 1);
+        return buffer;
     }
 } // namespace OpenKNX

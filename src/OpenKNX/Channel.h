@@ -1,6 +1,5 @@
 #pragma once
 #include "OpenKNX/Base.h"
-#include <string>
 
 namespace OpenKNX
 {
@@ -9,22 +8,17 @@ namespace OpenKNX
       protected:
         uint8_t _channelIndex = 0;
 
-      public:
         /*
-         * The name of channel. Used for "log" methods.
-         * @return name
+         * Get a Pointer to a name for Log
+         * THe point need to be delete[] after usage!
          */
-        virtual const char *name() override;
+        virtual char *logName() override;
 
+      public:
         /*
          * The channel index
          * @return channelIndex
          */
         virtual uint8_t channelIndex();
-
-        /*
-         * Append a channel suffix
-         */
-        const char *appendChannelSuffix(const char *name);
     };
 } // namespace OpenKNX
