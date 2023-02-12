@@ -271,9 +271,7 @@ namespace OpenKNX
         for (uint8_t processed = 0; freeLoopTime() && (processed < _modules.count); processed++)
         {
             if (_currentModule >= _modules.count)
-            {
                 _currentModule = 0;
-            }
 
             loopModule(_currentModule);
 
