@@ -17,9 +17,11 @@ MAIN_ApplicationNumber
 MAIN_ApplicationVersion
 
 # optional (delivered by OAM-LogicModule)
+LOG_StartupDelayBase
+ParamLOG_StartupDelayTimeMS
+LOG_HeartbeatDelayBase
 KoLOG_Heartbeat
 ParamLOG_HeartbeatDelayTimeMS
-LOG_HeartbeatDelayBase
 ```
 
 OpenKNX Common is configured by following defines:
