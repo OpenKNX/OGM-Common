@@ -128,12 +128,11 @@ namespace OpenKNX
 #endif
 
         // Handle loop of modules
-        bool useSecCore = false;
         for (uint8_t i = 1; i <= _modules.count; i++)
         {
             _modules.list[i - 1]->setup();
-            if(_modules.list[i - 1]->usesSecCore())
-                useSecCore = true;
+            if (_modules.list[i - 1]->usesSecCore())
+                _useSecondCore = true;
             collectMemoryStats();
         }
 
@@ -142,10 +141,24 @@ namespace OpenKNX
         // register callbacks
         registerCallbacks();
 
-        if(useSecCore)
+#ifdef ARDUINO_ARCH_RP2040
+        if (useSecondCore())
         {
             multicore_launch_core1(Common::loop2);
         }
+#endif
+    }
+
+    bool Common::useSecondCore()
+    {
+#if defined(ARDUINO_ARCH_RP2040)
+        if (!knx.configured())
+            return false;
+
+        return _useSecondCore;
+#else
+        return false;
+#endif
     }
 
 #ifdef WATCHDOG
@@ -240,7 +253,7 @@ namespace OpenKNX
     void Common::collectMemoryStats()
     {
         int current = freeMemory();
-        
+
         if (current < 0)
             return;
 
@@ -274,13 +287,13 @@ namespace OpenKNX
 
     void Common::loop2()
     {
-        while(true)
+        while (true)
             openknx.appLoop2();
     }
 
     void Common::appLoop2()
     {
-        for(uint8_t i = 0;i<_modules.count;i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
             _modules.list[i]->loop2();
     }
 
@@ -424,6 +437,7 @@ namespace OpenKNX
         {
             _modules.list[i - 1]->processBeforeTablesUnload();
         }
+        multicore_reset_core1();
         flash.save();
     }
 
