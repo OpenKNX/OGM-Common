@@ -245,7 +245,7 @@ namespace OpenKNX
     {
         if ((_currentWriteAddress + size) > _maxWriteAddress)
         {
-            openknx.log("FlashStorage", "write not allow");
+            openknx.log("FlashStorage", "write not allowed");
             return;
         }
 
@@ -259,7 +259,7 @@ namespace OpenKNX
     {
         if ((_currentWriteAddress + size) > _maxWriteAddress)
         {
-            openknx.log("FlashStorage", "write not allow");
+            openknx.log("FlashStorage", "write not allowed");
             return;
         }
 
