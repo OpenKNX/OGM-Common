@@ -437,7 +437,9 @@ namespace OpenKNX
         {
             _modules.list[i]->processBeforeTablesUnload();
         }
+#ifdef ARDUINO_ARCH_RP2040
         multicore_reset_core1();
+#endif
         flash.save();
     }
 
