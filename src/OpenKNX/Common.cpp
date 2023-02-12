@@ -128,10 +128,10 @@ namespace OpenKNX
 #endif
 
         // Handle loop of modules
-        for (uint8_t i = 1; i <= _modules.count; i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
-            _modules.list[i - 1]->setup();
-            if (_modules.list[i - 1]->usesSecCore())
+            _modules.list[i]->setup();
+            if (_modules.list[i]->usesSecCore())
                 _useSecondCore = true;
             collectMemoryStats();
         }
@@ -306,10 +306,10 @@ namespace OpenKNX
 
     Module* Common::getModule(uint8_t id)
     {
-        for (uint8_t i = 1; i <= _modules.count; i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
             if (_modules.ids[i - 1] == id)
-                return _modules.list[i - 1];
+                return _modules.list[i];
         }
 
         return nullptr;
@@ -337,9 +337,9 @@ namespace OpenKNX
 
         _afterStartupDelay = true;
 
-        for (uint8_t i = 1; i <= _modules.count; i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
-            _modules.list[i - 1]->processAfterStartupDelay();
+            _modules.list[i]->processAfterStartupDelay();
         }
     }
 
@@ -375,8 +375,8 @@ namespace OpenKNX
         log("OpenKNX", "savePower");
 
         // first save all modules to save power before...
-        for (uint8_t i = 1; i <= _modules.count; i++)
-            _modules.list[i - 1]->savePower();
+        for (uint8_t i = 0; i < _modules.count; i++)
+            _modules.list[i]->savePower();
 
         // ... save power by shutdown >5V power trail
         deactivatePowerRail();
@@ -405,7 +405,7 @@ namespace OpenKNX
 
         // the inform modules
         for (uint8_t i = 1; i <= _modules.count && noReboot; i++)
-            noReboot = noReboot && _modules.list[i - 1]->restorePower();
+            noReboot = noReboot && _modules.list[i]->restorePower();
 
         if (!noReboot)
         {
@@ -422,9 +422,9 @@ namespace OpenKNX
     void Common::processBeforeRestart()
     {
         log("OpenKNX", "processBeforeRestart");
-        for (uint8_t i = 1; i <= _modules.count; i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
-            _modules.list[i - 1]->processBeforeRestart();
+            _modules.list[i]->processBeforeRestart();
         }
 
         flash.save();
@@ -433,9 +433,9 @@ namespace OpenKNX
     void Common::processBeforeTablesUnload()
     {
         log("OpenKNX", "processBeforeTablesUnload");
-        for (uint8_t i = 1; i <= _modules.count; i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
-            _modules.list[i - 1]->processBeforeTablesUnload();
+            _modules.list[i]->processBeforeTablesUnload();
         }
         multicore_reset_core1();
         flash.save();
@@ -443,9 +443,9 @@ namespace OpenKNX
 
     void Common::processInputKo(GroupObject& iKo)
     {
-        for (uint8_t i = 1; i <= _modules.count; i++)
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
-            _modules.list[i - 1]->processInputKo(iKo);
+            _modules.list[i]->processInputKo(iKo);
         }
     }
 
