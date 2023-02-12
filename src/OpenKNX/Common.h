@@ -62,6 +62,7 @@ namespace OpenKNX
         void initKnx();
         void appSetup();
         void appLoop();
+        void appLoop2();
         void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();
@@ -89,7 +90,7 @@ namespace OpenKNX
         void triggerSavePin();
         void setup();
         void loop();
-        void loop2();
+        static void loop2();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif

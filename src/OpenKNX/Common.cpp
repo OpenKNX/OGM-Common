@@ -144,7 +144,7 @@ namespace OpenKNX
 
         if(useSecCore)
         {
-            multicore_launch_core1(appLoop2);
+            multicore_launch_core1(Common::loop2);
         }
     }
 
@@ -273,6 +273,12 @@ namespace OpenKNX
     }
 
     void Common::loop2()
+    {
+        while(true)
+            openknx.appLoop2();
+    }
+
+    void Common::appLoop2()
     {
         for(uint8_t i = 0;i<_modules.count;i++)
             _modules.list[i]->loop2();
@@ -458,13 +464,3 @@ namespace OpenKNX
 } // namespace OpenKNX
 
 OpenKNX::Common openknx;
-
-// we need a global function for multicore_launch_core
-void appLoop2()
-{
-    // loop forever..
-    while(true)
-    {
-        openknx.loop2();
-    }
-}
