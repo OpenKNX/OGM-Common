@@ -1,8 +1,6 @@
 #include "Common.h"
 #include "../HardwareDevices.h"
 
-void appLoop2();
-
 namespace OpenKNX
 {
     Common::Common()
