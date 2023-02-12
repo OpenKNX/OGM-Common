@@ -259,6 +259,13 @@ namespace OpenKNX
             _freeMemoryMin = current;
     }
 
+    /**
+     * Run loop() of as many modules as possible, within available free loop time.
+     * Each module will be processed 0 or 1 times only, not more.
+     * 
+     * Repeated calls will resume with the first/next unprocessed module.
+     * For all modules the min/max number of loop()-calls will not differ more than 1.
+     */
     void Common::processModulesLoop()
     {
         for (uint8_t processed = 0; freeLoopTime() && (processed < _modules.count); processed++)
