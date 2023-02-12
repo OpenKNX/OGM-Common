@@ -27,15 +27,22 @@ KoLOG_Heartbeat
 ParamLOG_HeartbeatDelayTimeMS
 ```
 
+there are external requirements. Add this to your plattformio.ini 
+```
+lib_deps = 
+  adafruit/Adafruit SleepyDog Library @ ^1.4.0
+  khoih-prog/TimerInterrupt_Generic @ ^1.13.0
+```
+
 ## Configuration
 OpenKNX Common is configured by following defines:
 
 ```
-# shoud configure in plattformio.ini
+# should be configured in plattformio.ini
 WATCHDOG
 DEBUG_DELAY
 
-# optinal (pre defined)
+# optional (pre defined)
 WATCHDOG_MAX_PERIOD_MS
 OPENKNX_MAX_MODULES
 DEBUG_LOOP_TIME
