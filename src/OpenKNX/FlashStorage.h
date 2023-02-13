@@ -60,7 +60,6 @@ namespace OpenKNX
         void readData();
         void initUnloadedModules();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);
-        uint16_t calcChecksum(uint16_t data);
         bool verifyChecksum(uint8_t *data, uint16_t size);
     };
 } // namespace OpenKNX

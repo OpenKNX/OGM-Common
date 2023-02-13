@@ -220,11 +220,6 @@ namespace OpenKNX
         openknx.log("FlashStorage", "  complete (%ims)", _lastWrite - start);
     }
 
-    uint16_t FlashStorage::calcChecksum(uint16_t data)
-    {
-        return (data >> 8) + (data & 0xff);
-    }
-
     uint16_t FlashStorage::calcChecksum(uint8_t *data, uint16_t size)
     {
         uint16_t sum = 0;
