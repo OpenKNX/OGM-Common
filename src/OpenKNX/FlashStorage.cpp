@@ -306,7 +306,7 @@ namespace OpenKNX
 #ifdef FLASH_DATA_TRACE
         openknx.log("FlashStorage", "    zeroize %i", fillSize);
 #endif
-        write((uint8_t)0xFF, fillSize);
+        write((uint8_t)FLASH_DATA_FILLBYTE, fillSize);
     }
 
     uint8_t *FlashStorage::read(uint16_t size /* = 1 */)
