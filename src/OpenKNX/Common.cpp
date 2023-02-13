@@ -140,7 +140,7 @@ namespace OpenKNX
         registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
-        if (useSecondCore() && knx.configured())
+        if (useSecondCore())
         {
             multicore_launch_core1(Common::loop2);
         }
