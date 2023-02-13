@@ -192,7 +192,7 @@ namespace OpenKNX
 
             openknx.log("FlashStorage", "  save module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
             module->writeFlash();
-            zeroize();
+            writeFilldata();
         }
 
         // write magicword
@@ -297,7 +297,7 @@ namespace OpenKNX
         delete buffer;
     }
 
-    void FlashStorage::zeroize()
+    void FlashStorage::writeFilldata()
     {
         uint16_t fillSize = (_maxWriteAddress - _currentWriteAddress);
         if (fillSize == 0)

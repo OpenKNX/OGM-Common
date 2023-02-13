@@ -56,7 +56,7 @@ namespace OpenKNX
         uint32_t _currentWriteAddress = 0;
         uint8_t *_currentReadAddress = 0;
         uint32_t _maxWriteAddress = 0;
-        void zeroize();
+        void writeFilldata();
         void readData();
         void initUnloadedModules();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);
