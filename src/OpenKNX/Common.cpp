@@ -26,6 +26,8 @@ namespace OpenKNX
 #endif
 
         initKnx();
+
+        timerInterrupt.init();
     }
 
     void Common::initKnx()
@@ -131,7 +133,6 @@ namespace OpenKNX
             _modules.list[i]->setup();
             if (_modules.list[i]->usesSecCore())
                 _useSecondCore = true;
-            collectMemoryStats();
         }
 
         flash.load();
@@ -197,16 +198,13 @@ namespace OpenKNX
 
         // loop console helper
         console.loop();
-        collectMemoryStats();
 
         // loop  knx stack
         knx.loop();
-        collectMemoryStats();
 
         // loop  appstack
         _loopMicros = micros();
         appLoop();
-        collectMemoryStats();
 
 #ifdef WATCHDOG
         watchdogLoop();
@@ -259,7 +257,7 @@ namespace OpenKNX
     /**
      * Run loop() of as many modules as possible, within available free loop time.
      * Each module will be processed 0 or 1 times only, not more.
-     * 
+     *
      * Repeated calls will resume with the first/next unprocessed module.
      * For all modules the min/max number of loop()-calls will not differ more than 1.
      */

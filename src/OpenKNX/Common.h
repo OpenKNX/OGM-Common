@@ -58,7 +58,7 @@ namespace OpenKNX
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
-        uint _freeMemoryMin = -1;
+        volatile uint _freeMemoryMin = -1;
 
         void initKnx();
         void appSetup();
@@ -82,7 +82,7 @@ namespace OpenKNX
         Information info;
         Console console;
         Logger logger;
-        TimerInterrupt timer_interrupt;
+        TimerInterrupt timerInterrupt;
 
         Common();
 

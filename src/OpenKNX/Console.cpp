@@ -96,7 +96,6 @@ namespace OpenKNX
             openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i - 1]->version(), modules->list[i - 1]->name());
         }
         delete[] modulePrefix;
-        openknx.collectMemoryStats();
         openknx.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
     }
 

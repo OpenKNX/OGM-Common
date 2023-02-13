@@ -1,8 +1,8 @@
 #pragma once
 #include "knx.h"
 
-#ifndef OPENKNX_INTERUPPT_TIMER
-#define OPENKNX_INTERUPPT_TIMER 1
+#ifndef OPENKNX_INTERRUPT_TIMER
+#define OPENKNX_INTERRUPT_TIMER 1000
 #endif
 
 namespace OpenKNX
@@ -10,7 +10,7 @@ namespace OpenKNX
     class TimerInterrupt
     {
       public:
-        TimerInterrupt();
         void interrupt();
+        void init();
     };
 } // namespace OpenKNX
