@@ -1,6 +1,8 @@
 #pragma once
 #include "knx.h"
+#ifdef ARDUINO_ARCH_RP2040
 #include "pico/sync.h"
+#endif
 
 #ifndef OPENKNX_MAX_LOG_PREFIX_LENGTH
 #define OPENKNX_MAX_LOG_PREFIX_LENGTH 23
@@ -23,7 +25,9 @@ namespace OpenKNX
     class Logger
     {
       private:
+#ifdef ARDUINO_ARCH_RP2040
         mutex_t _mutex;
+#endif
         void mutex_block();
         void mutex_unblock();
         void printMessage(const char* message, va_list args);
