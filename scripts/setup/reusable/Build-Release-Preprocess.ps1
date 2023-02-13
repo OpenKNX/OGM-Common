@@ -23,7 +23,10 @@ Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 ~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="$($settings.knxprod)" "src/$($settings.releaseName).xml"
 if (!$?) {
     Write-Host "Error in knxprod, Release was not built!"
-    exit 1
+    $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
+    if ($prompt -ne "y") {
+        exit 1
+    }
 }
 Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
 
