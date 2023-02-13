@@ -18,6 +18,9 @@ namespace OpenKNX
         openknx.log("FlashStorage", "  complete (%i)", millis() - start);
     }
 
+    /**
+     * Initialize all modules expecting data in flash, but not loaded yet.
+    */
     void FlashStorage::initUnloadedModules()
     {
         Modules *modules = openknx.getModules();
@@ -26,7 +29,7 @@ namespace OpenKNX
         uint16_t moduleSize = 0;
         for (uint8_t i = 1; i <= modules->count; i++)
         {
-            // get data
+            // check module expectation and load state
             module = modules->list[i - 1];
             moduleId = modules->ids[i - 1];
             moduleSize = module->flashSize();
@@ -39,6 +42,9 @@ namespace OpenKNX
         }
     }
 
+    /**
+     * Check version/format/checksum and let matching modules read their data from flash-storage
+    */
     void FlashStorage::readData()
     {
         uint8_t *currentPosition;
@@ -67,7 +73,7 @@ namespace OpenKNX
         _lastFirmwareVersion = readWord();
         openknx.log("FlashStorage", "  FirmwareVersion: %i", _lastFirmwareVersion);
 
-        // check
+        // validate checksum
         currentPosition = (currentPosition - dataSize);
         if (!verifyChecksum(currentPosition, dataSize + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN))
         {
