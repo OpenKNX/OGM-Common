@@ -5,32 +5,31 @@ namespace OpenKNX
 {
     Logger::Logger()
     {
-        // #ifdef ARDUINO_ARCH_RP2040
-        //         if (openknx.useSecondCore())
-        //         {
-        //             SERIAL_DEBUG.println("TEST");
-        //             mutex_init(&_mutex);
-        //         }
-        // #endif
+        #ifdef ARDUINO_ARCH_RP2040
+                if (openknx.useSecondCore())
+                {
+                    mutex_init(&_mutex);
+                }
+        #endif
     }
     void Logger::mutex_block()
     {
-        // #ifdef ARDUINO_ARCH_RP2040
-        //         if (openknx.useSecondCore())
-        //         {
-        //             mutex_enter_blocking(&_mutex);
-        //         }
-        // #endif
+        #ifdef ARDUINO_ARCH_RP2040
+                if (openknx.useSecondCore())
+                {
+                    mutex_enter_blocking(&_mutex);
+                }
+        #endif
     }
 
     void Logger::mutex_unblock()
     {
-        // #ifdef ARDUINO_ARCH_RP2040
-        //         if (openknx.useSecondCore())
-        //         {
-        //             mutex_exit(&_mutex);
-        //         }
-        // #endif
+        #ifdef ARDUINO_ARCH_RP2040
+                if (openknx.useSecondCore())
+                {
+                    mutex_exit(&_mutex);
+                }
+        #endif
     }
 
     void Logger::log(LogLevel level, const char* message)
