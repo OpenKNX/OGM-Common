@@ -3,30 +3,38 @@
 
 namespace OpenKNX
 {
-    char *Base::logName()
+    char *Base::logPrefix()
     {
-        char *buffer = new char[MAX_LOG_PREFIX + 1];
+        char *buffer = new char[OPENKNX_MAX_LOG_PREFIX_LENGTH];
         sprintf(buffer, "%s", name());
         return buffer;
     }
 
-    void Base::log(const char *output, ...)
+    void Base::log(const char *message, ...)
     {
-        char* name = logName();
-        char buffer[256];
+        char *prefix = logPrefix();
         va_list args;
-        va_start(args, output);
-        vsnprintf(buffer, 256, output, args);
+        va_start(args, message);
+        openknx.logger.log(LogLevel::Info, prefix, message, args);
         va_end(args);
-        openknx.log(name, buffer);
-        delete[] name;
+        delete[] prefix;
+    }
+
+    void Base::log(LogLevel level, const char *message, ...)
+    {
+        char *prefix = logPrefix();
+        va_list args;
+        va_start(args, message);
+        openknx.logger.log(level, prefix, message, args);
+        va_end(args);
+        delete[] prefix;
     }
 
     void Base::logHex(const uint8_t *data, size_t size)
     {
-        char* name = logName();
-        openknx.logHex(name, data, size);
-        delete[] name;
+        char *prefix = logPrefix();
+        openknx.logHex(prefix, data, size);
+        delete[] prefix;
     }
 
     const char *Base::name()

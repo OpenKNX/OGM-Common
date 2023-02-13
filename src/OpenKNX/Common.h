@@ -5,8 +5,9 @@
 #include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Information.h"
-#include "OpenKNX/TimerInterrupt.h"
+#include "OpenKNX/Logger.h"
 #include "OpenKNX/Module.h"
+#include "OpenKNX/TimerInterrupt.h"
 #include "hardware.h"
 #include "knxprod.h"
 #include <knx.h>
@@ -81,6 +82,7 @@ namespace OpenKNX
         FlashStorage flash;
         Information info;
         Console console;
+        Logger logger;
         TimerInterrupt timer_interrupt;
 
         Common();
