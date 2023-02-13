@@ -65,7 +65,7 @@ namespace OpenKNX
 
     void Logger::printPrefix(const char* prefix)
     {
-        size_t prefixLen = strlen(prefix);
+        size_t prefixLen = MIN(strlen(prefix), OPENKNX_MAX_LOG_PREFIX_LENGTH);
         for (size_t i = 0; i < (OPENKNX_MAX_LOG_PREFIX_LENGTH + 2); i++)
         {
             if (i < prefixLen)
