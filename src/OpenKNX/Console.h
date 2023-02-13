@@ -14,6 +14,7 @@ namespace OpenKNX
 
         void processSerialInput();
         void showInformations();
+        void showHelp();
 
       public:
         void loop();
