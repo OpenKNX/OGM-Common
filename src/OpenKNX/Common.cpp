@@ -150,9 +150,6 @@ namespace OpenKNX
     bool Common::useSecondCore()
     {
 #if defined(ARDUINO_ARCH_RP2040)
-        if (!knx.configured())
-            return false;
-
         return _useSecondCore;
 #else
         return false;
