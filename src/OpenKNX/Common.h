@@ -1,6 +1,5 @@
 #pragma once
 #include "../Helper.h"
-#include "KnxHelper.h"
 #include "OpenKNX/Console.h"
 #include "OpenKNX/FlashStorage.h"
 #include "OpenKNX/Helper.h"
