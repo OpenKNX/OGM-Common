@@ -2,6 +2,7 @@
 #include "../Helper.h"
 #include "OpenKNX/Console.h"
 #include "OpenKNX/FlashStorage.h"
+#include "OpenKNX/Hardware.h"
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Information.h"
 #include "OpenKNX/Logger.h"
@@ -20,6 +21,10 @@
 
 #ifndef OPENKNX_MAX_LOOPTIME
 #define OPENKNX_MAX_LOOPTIME 4000
+#endif
+
+#ifndef KNX_SERIAL
+#define KNX_SERIAL Serial1
 #endif
 
 namespace OpenKNX
@@ -83,6 +88,7 @@ namespace OpenKNX
         Console console;
         Logger logger;
         TimerInterrupt timerInterrupt;
+        Hardware hardware;
 
         Common();
 

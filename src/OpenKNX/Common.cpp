@@ -26,16 +26,16 @@ namespace OpenKNX
 #endif
 
         initKnx();
-
         timerInterrupt.init();
     }
 
     void Common::initKnx()
     {
         log("OpenKNX", "init knx");
-#ifdef ARDUINO_ARCH_RP2040
-        Serial1.setRX(KNX_UART_RX_PIN);
-        Serial1.setTX(KNX_UART_TX_PIN);
+        
+#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_SERIAL)
+        KNX_SERIAL.setRX(KNX_UART_RX_PIN);
+        KNX_SERIAL.setTX(KNX_UART_TX_PIN);
 #endif
 
         uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, 0x00};
@@ -105,6 +105,9 @@ namespace OpenKNX
 
         // start the framework
         knx.start();
+
+        // when module was restarted during bcu was disabled, reenable
+        hardware.activatePowerRail();
 
 #ifdef WATCHDOG
         watchdogSetup();
@@ -371,12 +374,18 @@ namespace OpenKNX
         uint32_t start = millis();
         log("OpenKNX", "savePower");
 
+        ledProg(false);
+#ifdef INFO_LED_PIN
+        ledInfo(false);
+#endif
+        hardware.stopKnxMode();
+
         // first save all modules to save power before...
         for (uint8_t i = 0; i < _modules.count; i++)
             _modules.list[i]->savePower();
 
-        // ... save power by shutdown >5V power trail
-        deactivatePowerRail();
+        hardware.deactivatePowerRail();
+
         log("OpenKNX", "savePower (%ims)", millis() - start);
 
         // save data
@@ -390,13 +399,13 @@ namespace OpenKNX
         if (!_savePinTriggered)
             return;
 
-        if (!delayCheck(_savedPinProcessed, 500))
+        if (!delayCheck(_savedPinProcessed, 1000))
             return;
 
-        log("OpenKNX", "restorePower after wait 500ms");
+        log("OpenKNX", "restorePower (after 1s)");
 
-        // restore  >5V power trail
-        activatePowerRail();
+        hardware.activatePowerRail();
+        hardware.startKnxMode();
 
         bool reboot = false;
 

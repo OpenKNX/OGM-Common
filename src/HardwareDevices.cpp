@@ -24,32 +24,12 @@ void ledProg(bool iOn)
 
 void deactivatePowerRail()
 {
-    // turn off known LED's
-    ledProg(false);
-    ledInfo(false);
-    // init knx-uart to be in control mode
-    initUart();
-    openknx.log("PowerRail", "Stop UART KNX communication...");
-    sendUartCommand("STOP_MODE", U_STOP_MODE_REQ, U_STOP_MODE_IND);
-    openknx.log("PowerRail", "Switching off 5V / 20V rail...");
-    // turn off 5V and 20V rail
-    uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
-    // get rid of knx reference
-    Serial1.write(lBuffer, 2);
-    // sendUartCommand("READ_ACR0 (Analog control register 0)", U_INT_REG_RD_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT);
+    openknx.hardware.deactivatePowerRail();
 }
 
 void activatePowerRail()
 {
-    openknx.log("PowerRail", "Switching on 5V rail...");
-    // turn on 5V and 20V rail
-    uint8_t lBuffer[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
-    initUart();
-    Serial1.write(lBuffer, 2);
-    // give all sensors some time to init
-    delay(100);
-    openknx.log("PowerRail", "Start UART KNX communication...");
-    sendUartCommand("EXIT_STOP_MODE", U_EXIT_STOP_MODE_REQ, U_RESET_IND);
+    openknx.hardware.activatePowerRail();
 }
 
 void fatalError(uint8_t iErrorCode, const char* iErrorText)
@@ -206,12 +186,12 @@ bool checkUartExistence()
 
 bool initUart()
 {
-    Serial1.end();
+    knx.platform().closeUart();
     delay(100);
-    Serial1.begin(19200, SERIAL_8E1);
-    for (uint16_t lCount = 0; !Serial1 && lCount < 1000; lCount++)
+    knx.platform().setupUart();
+    for (uint16_t lCount = 0; !KNX_SERIAL && lCount < 1000; lCount++)
         ;
-    if (!Serial1)
+    if (!KNX_SERIAL)
     {
         openknx.log("Helper", "initUart() failed, something is going completely wrong!");
         return false;
@@ -223,18 +203,18 @@ uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t 
 {
     openknx.log("Helper", "    Send command %s (%02X)... ", iInfo, iCmd);
     // send system state command and interpret answer
-    Serial1.write(iCmd);
+    knx.platform().knxUart()->write(iCmd);
 
     int lResp = 0;
     uint32_t lUartResponseDelay = millis();
     while (!delayCheck(lUartResponseDelay, 100))
     {
-        lResp = Serial1.read();
+        lResp = knx.platform().knxUart()->read();
         if (lResp == iResp)
         {
             openknx.log("Helper", "OK - received expected response (%02X)", lResp);
             if (iLen == 1)
-                lResp = Serial1.read();
+                lResp = knx.platform().knxUart()->read();
             break;
         }
     }
