@@ -39,14 +39,6 @@ namespace OpenKNX
         mutex_unblock();
     }
 
-    void Logger::log(LogLevel level, const char* prefix, const char* message)
-    {
-        mutex_block();
-        printPrefix(prefix);
-        printMessage(message);
-        mutex_unblock();
-    }
-
     void Logger::log(LogLevel level, const char* prefix, const char* message, va_list args)
     {
         mutex_block();

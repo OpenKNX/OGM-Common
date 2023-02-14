@@ -38,7 +38,6 @@ namespace OpenKNX
         Logger();
         void log(LogLevel level, const char* prefix, const char* message, va_list args);
         void log(LogLevel level, const char* prefix, const char* message, ...);
-        void log(LogLevel level, const char* prefix, const char* message);
         void log(LogLevel level, const char* message);
     };
 } // namespace OpenKNX
