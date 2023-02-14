@@ -80,11 +80,12 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
-        openknx.log("= Information =");
+        openknx.log("");
+        openknx.log("= OpenKNX Device Information =");
         openknx.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
         openknx.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
         openknx.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
-        openknx.log("UID (uC)", "0x%08x", knx.platform().uniqueSerialNumber());
+        openknx.log("Serial", "00FA:%08X", knx.platform().uniqueSerialNumber());
 #ifdef HARDWARE_NAME
         openknx.log("Board", "%s", HARDWARE_NAME);
 #endif
@@ -101,18 +102,19 @@ namespace OpenKNX
 
     void Console::showHelp()
     {
+        openknx.log("");
         openknx.log("= OpenKNX Device Console help =");
         openknx.log("P - Trigger Reaction to Save Pin");
         openknx.log("W - Write Userflash");
         openknx.log("E - Test Fatal Error");
         openknx.log("h - Show this help");
         openknx.log("i - Show device information");
-        #ifdef ARDUINO_ARCH_RP2040
+#ifdef ARDUINO_ARCH_RP2040
         openknx.log("n - Delete (nuke) Userflash");
         openknx.log("N - Delete (nuke) complete device flash");
-        #endif
-        #ifdef WATCHDOG
+#endif
+#ifdef WATCHDOG
         openknx.log("w - Trigger Watchdog");
-        #endif
+#endif
     }
 } // namespace OpenKNX
