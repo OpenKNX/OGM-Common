@@ -398,13 +398,17 @@ namespace OpenKNX
         // restore  >5V power trail
         activatePowerRail();
 
-        bool noReboot = true;
+        bool reboot = false;
 
         // the inform modules
-        for (uint8_t i = 1; i <= _modules.count && noReboot; i++)
-            noReboot = noReboot && _modules.list[i]->restorePower();
+        for (uint8_t i = 0; i < _modules.count; i++)
+            if (!_modules.list[i]->restorePower())
+            {
+                reboot = true;
+                break;
+            }
 
-        if (!noReboot)
+        if (reboot)
         {
             log("OpenKNX", "  need reboot");
             knx.platform().restart();
