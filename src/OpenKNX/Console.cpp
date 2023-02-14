@@ -41,6 +41,9 @@ namespace OpenKNX
             case 0x69: // i
                 showInformations();
                 break;
+            case 0x0D: // Enter
+                openknx.log("");
+                break;
 
 #ifdef ARDUINO_ARCH_RP2040
             case 0x6E: // n
