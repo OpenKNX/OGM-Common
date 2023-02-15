@@ -56,3 +56,21 @@ PROG_LED_PIN
 KNX_UART_RX_PIN
 KNX_UART_TX_PIN
 ```
+
+### Delays at startup (for debugging)
+
+There are three defines that control optional functionality regarding delay at startup - mainly to make sure all output on the serial debug console can be read. They are meant to be used in the plattformio.ini
+
+`DEBUG_DELAY` - static delay in ms at startup
+
+example (wait 5s): `-D DEBUG_DELAY=5000`
+
+
+`DEBUG_WAIT_FOR_SERIAL` - wait at startup until SERIAL_DEBUG is connected. DEBUG_DELAY is ignored
+
+example: `-D DEBUG_WAIT_FOR_SERIAL`
+
+
+`DEBUG_WAIT_FOR_SERIAL_TIMEOUT` - wait at startup until SERIAL_DEBUG is connected or timeout in ms is over. DEBUG_DELAY is ignored. If no value is defined, it works like `DEBUG_WAIT_FOR_SERIAL`
+
+example (20s timeout): `-D DEBUG_WAIT_FOR_SERIAL_TIMEOUT=20000`

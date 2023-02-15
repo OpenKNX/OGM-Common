@@ -13,7 +13,17 @@ namespace OpenKNX
 
         pinMode(PROG_LED_PIN, OUTPUT);
         digitalWrite(PROG_LED_PIN, HIGH);
-#ifdef DEBUG_DELAY
+#if defined(DEBUG_WAIT_FOR_SERIAL) || defined(DEBUG_WAIT_FOR_SERIAL_TIMEOUT)
+        uint32_t timeout_base = millis();
+        while (!SERIAL_DEBUG)
+        {
+            delay(10);     // will until serial console opens
+    #if DEBUG_WAIT_FOR_SERIAL_TIMEOUT > 0
+            if (delayCheck(timeout_base, DEBUG_WAIT_FOR_SERIAL_TIMEOUT))
+                break;
+    #endif
+        }
+#elif defined(DEBUG_DELAY)
         delay(DEBUG_DELAY);
 #endif
 
