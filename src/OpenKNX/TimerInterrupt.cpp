@@ -63,8 +63,15 @@ namespace OpenKNX
 
     void TimerInterrupt::interrupt()
     {
+        // virtual micros() in interrupt
+        _micros += OPENKNX_INTERRUPT_TIMER;
+
         // ISRTimer.run();
         openknx.collectMemoryStats();
+
+        // loop prog & info led
+        openknx.hardware.progLed.loop(_micros);
+        // openknx.hardware.infoLed.loop(_micros);
     }
 
 } // namespace OpenKNX

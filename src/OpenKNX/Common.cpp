@@ -11,17 +11,27 @@ namespace OpenKNX
         SERIAL_DEBUG.begin(115200);
         ArduinoPlatform::SerialDebug = &SERIAL_DEBUG;
 
-        pinMode(PROG_LED_PIN, OUTPUT);
-        digitalWrite(PROG_LED_PIN, HIGH);
+        timerInterrupt.init();
+        hardware.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
+#ifdef INFO_LED_PIN
+        hardware.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
+#endif
+
+#if defined(PROG_LED_SUPPORT_PWM)
+        hardware.progLed.pulsing(2000);
+#else
+        hardware.progLed.on();
+#endif
+
 #if defined(DEBUG_WAIT_FOR_SERIAL) || defined(DEBUG_WAIT_FOR_SERIAL_TIMEOUT)
         uint32_t timeout_base = millis();
         while (!SERIAL_DEBUG)
         {
-            delay(10);     // will until serial console opens
-    #if DEBUG_WAIT_FOR_SERIAL_TIMEOUT > 0
+            delay(10); // will until serial console opens
+#if DEBUG_WAIT_FOR_SERIAL_TIMEOUT > 0
             if (delayCheck(timeout_base, DEBUG_WAIT_FOR_SERIAL_TIMEOUT))
                 break;
-    #endif
+#endif
         }
 #elif defined(DEBUG_DELAY)
         delay(DEBUG_DELAY);
@@ -30,23 +40,27 @@ namespace OpenKNX
         log("OpenKNX", "init");
         openknx.info.firmwareRevision(firmwareRevision);
 
-#ifdef INFO_LED_PIN
-        pinMode(INFO_LED_PIN, OUTPUT);
-        ledInfo(true);
-#endif
+        hardware.infoLed.on();
 
         initKnx();
-        timerInterrupt.init();
     }
 
     void Common::initKnx()
     {
         log("OpenKNX", "init knx");
-        
+
 #if defined(ARDUINO_ARCH_RP2040) && defined(KNX_SERIAL)
         KNX_SERIAL.setRX(KNX_UART_RX_PIN);
         KNX_SERIAL.setTX(KNX_UART_TX_PIN);
 #endif
+
+        knx.ledPin(0);
+        knx.setProgLedOnCallback([]() -> void {
+            openknx.hardware.progLed.forceOn(true);
+        });
+        knx.setProgLedOffCallback([]() -> void {
+            openknx.hardware.progLed.forceOn(false);
+        });
 
         uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, 0x00};
 
@@ -100,18 +114,9 @@ namespace OpenKNX
     {
         log("OpenKNX", "setup");
 
-        digitalWrite(PROG_LED_PIN, LOW);
-
-        // pin or GPIO the programming led is connected to. Default is LED_BUILDIN
-        knx.ledPin(PROG_LED_PIN);
-        // is the led active on HIGH or low? Default is LOW
-        knx.ledPinActiveOn(PROG_LED_PIN_ACTIVE_ON);
-        // pin or GPIO programming button is connected to. Default is 0
-        knx.buttonPin(PROG_BUTTON_PIN);
-        // Is the interrup created in RISING or FALLING signal? Default is RISING
-        // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
-
         appSetup();
+
+        hardware.progLed.off();
 
         // start the framework
         knx.start();
@@ -123,9 +128,7 @@ namespace OpenKNX
         watchdogSetup();
 #endif
 
-#ifdef INFO_LED_PIN
-        ledInfo(false);
-#endif
+        hardware.infoLed.off();
     }
 
     void Common::appSetup()
@@ -204,6 +207,9 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
+#ifdef OPENKNX_DEBUG_LOOP
+        hardware.progLed.debugLoop();
+#endif
 
 #ifdef DEBUG_LOOP_TIME
         uint32_t start = millis();
@@ -298,7 +304,12 @@ namespace OpenKNX
     void Common::loop2()
     {
         while (true)
+        {
+#ifdef OPENKNX_DEBUG_LOOP
+            openknx.hardware.infoLed.debugLoop();
+#endif
             openknx.appLoop2();
+        }
     }
 
     void Common::appLoop2()
@@ -384,10 +395,8 @@ namespace OpenKNX
         uint32_t start = millis();
         log("OpenKNX", "savePower");
 
-        ledProg(false);
-#ifdef INFO_LED_PIN
-        ledInfo(false);
-#endif
+        openknx.hardware.progLed.powerSave();
+        openknx.hardware.infoLed.powerSave();
         hardware.stopKnxMode();
 
         // first save all modules to save power before...
@@ -408,6 +417,9 @@ namespace OpenKNX
         // savePin not triggered
         if (!_savePinTriggered)
             return;
+
+        openknx.hardware.progLed.powerSave(false);
+        openknx.hardware.infoLed.powerSave(false);
 
         if (!delayCheck(_savedPinProcessed, 1000))
             return;

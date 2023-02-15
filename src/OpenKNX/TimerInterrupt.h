@@ -13,6 +13,9 @@ namespace OpenKNX
 {
     class TimerInterrupt
     {
+      protected:
+        uint32_t _micros = 0;
+
       public:
         void interrupt();
         void init();

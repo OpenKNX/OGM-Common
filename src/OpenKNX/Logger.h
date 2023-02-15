@@ -14,7 +14,7 @@
 
 namespace OpenKNX
 {
-    enum LogLevel
+    enum class LogLevel
     {
         Error,
         Info,

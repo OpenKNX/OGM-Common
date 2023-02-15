@@ -1,5 +1,6 @@
 #pragma once
 #include "HardwareDevices.h"
+#include "OpenKNX/Led.h"
 #include "knx.h"
 
 // NCN5130: internal commands
@@ -67,9 +68,12 @@ namespace OpenKNX
     class Hardware
     {
       private:
-        uint8_t feaatures = 0;
+        uint8_t features = 0;
 
       public:
+        Led progLed;
+        Led infoLed;
+
         // Send Command to BCU
         void sendCommandToBcu(const uint8_t* command, const uint8_t length, const char* debug);
         // Receive Response from BCU
