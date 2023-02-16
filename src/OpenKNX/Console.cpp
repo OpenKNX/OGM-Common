@@ -26,19 +26,19 @@ namespace OpenKNX
 
         switch (current)
         {
-            case 0x50: // P
+            case 'P':
                 openknx.triggerSavePin();
                 break;
-            case 0x57: // W
+            case 'W':
                 openknx.flash.save(true);
                 break;
-            case 0x45: // E
+            case 'E':
                 fatalError(5, "Test with 5x blinking");
                 break;
-            case 0x68: // h
+            case 'h':
                 showHelp();
                 break;
-            case 0x69: // i
+            case 'i':
                 showInformations();
                 break;
             case 0x0D: // Enter
@@ -46,7 +46,7 @@ namespace OpenKNX
                 break;
 
 #ifdef ARDUINO_ARCH_RP2040
-            case 0x6E: // n
+            case 'n':
                 if (_consoleCharRepeats < 3)
                 {
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash (knx only)", current, (3 - _consoleCharRepeats));
@@ -54,7 +54,7 @@ namespace OpenKNX
                 }
                 openknx.nukeFlashKnxOnly();
                 break;
-            case 0x4E: // N
+            case 'N':
                 if (_consoleCharRepeats < 3)
                 {
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash", current, (3 - _consoleCharRepeats));
@@ -64,7 +64,7 @@ namespace OpenKNX
                 break;
 #endif
 #ifdef WATCHDOG
-            case 0x77: // w
+            case 'w':
                 if (!ParamLOG_Watchdog)
                     break;
 
