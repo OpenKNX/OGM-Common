@@ -26,6 +26,9 @@ if (!$?) {
     exit 1
 }
 Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
+if (Test-Path -Path "src/$($settings.releaseName).baggages") {
+    Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
+}
 
 # copy generated headerfile and according hardware file to according directory
 lib/OGM-Common/scripts/build/OpenKNX-Pre-Build.ps1
