@@ -29,7 +29,7 @@
 #endif
 
 // include after defines!
-// #include "ISR_Timer_Generic.h"
+#include "ISR_Timer_Generic.h"
 #include "TimerInterrupt_Generic.h"
 
 #if defined(ARDUINO_ARCH_SAMD)
@@ -37,41 +37,46 @@ SAMDTimer ITimer(SELECTED_TIMER);
 #elif defined(ARDUINO_ARCH_RP2040)
 RPI_PICO_Timer ITimer(1);
 #endif
-// ISR_Timer ISRTimer;
+ISR_Timer ISRTimer;
 
 namespace OpenKNX
 {
     void TimerInterrupt::init()
     {
+        // Register 1ms
 #if defined(ARDUINO_ARCH_SAMD)
-        ITimer.attachInterruptInterval(OPENKNX_INTERRUPT_TIMER, []() -> void {
-            openknx.timerInterrupt.interrupt();
+        ITimer.attachInterruptInterval_MS(OPENKNX_INTERRUPT_TIMER_MS, []() -> void {
+            // openknx.timerInterrupt.interrupt();
+            ISRTimer.run();
         });
 #elif defined(ARDUINO_ARCH_RP2040)
-        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER, [](repeating_timer *t) -> bool {
-            openknx.timerInterrupt.interrupt();
+        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 1000, [](repeating_timer *t) -> bool {
+            // openknx.timerInterrupt.interrupt();
+            ISRTimer.run();
             return true;
         });
 #endif
 
-        // Alternative: Use ISR_Timer_Generic
-        // Collect Runtime
-        // ISRTimer.setInterval((float)(OPENKNX_COLLECT_MEMORY_INTERVAL/1000), []() -> void {
-        //     openknx.collectMemoryStats();
-        // });
+        ISRTimer.setInterval(1, []() -> void {
+            openknx.collectMemoryStats();
+        });
+
+        ISRTimer.setInterval(5, []() -> void {
+            openknx.hardware.progLed.loop();
+            openknx.hardware.infoLed.loop();
+        });
     }
 
+    // Alternative for ISR_Timer
     void TimerInterrupt::interrupt()
     {
-        // virtual micros() in interrupt
-        _micros += OPENKNX_INTERRUPT_TIMER;
-
-        // ISRTimer.run();
+        
+        // collect memory usage
         openknx.collectMemoryStats();
 
         // loop prog & info led
-        openknx.hardware.progLed.loop(_micros);
-        // openknx.hardware.infoLed.loop(_micros);
+        openknx.hardware.progLed.loop();
+        openknx.hardware.infoLed.loop();
     }
 
 } // namespace OpenKNX

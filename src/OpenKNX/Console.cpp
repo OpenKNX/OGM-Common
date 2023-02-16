@@ -33,7 +33,7 @@ namespace OpenKNX
                 openknx.flash.save(true);
                 break;
             case 0x45: // E
-                fatalError(1, "Test fatal error");
+                fatalError(5, "Test with 5x blinking");
                 break;
             case 0x68: // h
                 showHelp();

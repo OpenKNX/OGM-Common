@@ -41,17 +41,24 @@ OpenKNX Common is configured by following defines:
 # should be configured in plattformio.ini
 WATCHDOG
 DEBUG_DELAY
+DEBUG_WAIT_FOR_SERIAL
+DEBUG_WAIT_FOR_SERIAL_TIMEOUT
+DEBUG_LOOP_TIME
+DEBUG_HEARTBEAT
 
 # optional (pre defined)
+OPENKNX_MAX_LOOPTIME
 WATCHDOG_MAX_PERIOD_MS
 OPENKNX_MAX_MODULES
-DEBUG_LOOP_TIME
+OPENKNX_LEDEFFECT_PULSE_FREQ
+OPENKNX_LEDEFFECT_BLINK_FREQ
 
 # defines in hardware.h
 SAVE_INTERRUPT_PIN
 INFO_LED_PIN
 PROG_BUTTON_PIN
 PROG_LED_PIN_ACTIVE_ON
+PROG_LED_SUPPORT_PWM
 PROG_LED_PIN
 KNX_UART_RX_PIN
 KNX_UART_TX_PIN
@@ -74,3 +81,16 @@ example: `-D DEBUG_WAIT_FOR_SERIAL`
 `DEBUG_WAIT_FOR_SERIAL_TIMEOUT` - wait at startup until SERIAL_DEBUG is connected or timeout in ms is over. DEBUG_DELAY is ignored. If no value is defined, it works like `DEBUG_WAIT_FOR_SERIAL`
 
 example (20s timeout): `-D DEBUG_WAIT_FOR_SERIAL_TIMEOUT=20000`
+
+### Debug Loops
+
+#### Heartbeat
+You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop2) will blinking if the loop hangs
+
+* `DEBUG_HEARTBEAT` - enable heartbeat mode with default failure time (default is 1000ms)
+* `DEBUG_HEARTBEAT=3000` - enable heartbeat mode with specific failure time.
+
+#### Duration
+You can enable a debug output
+* `DEBUG_LOOP_TIME` - enable log output when loop tooks longer than default allowed (default is 5ms)
+* `DEBUG_LOOP_TIME=6` - enable log output with specific time.

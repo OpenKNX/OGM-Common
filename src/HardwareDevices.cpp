@@ -2,65 +2,36 @@
 #include "EepromManager.h"
 #include "OpenKNX.h"
 #include <Wire.h>
-#ifdef WATCHDOG
-#include <Adafruit_SleepyDog.h>
-#endif
 
 uint8_t boardHardware = 0;
 
 void ledInfo(bool iOn)
 {
-#ifdef INFO_LED_PIN
-    digitalWrite(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON == iOn);
-#endif
+    openknx.log("Deprecated", "use openknx.hardware.infoLed.on(bool)");
+    openknx.hardware.infoLed.on(iOn);
 }
 
 void ledProg(bool iOn)
 {
-#ifdef PROG_LED_PIN
-    digitalWrite(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON == iOn);
-#endif
+    openknx.log("Deprecated", "use openknx.hardware.progLed.on(bool)");
+    openknx.hardware.progLed.on(iOn);
 }
 
 void deactivatePowerRail()
 {
+    openknx.log("Deprecated", "use openknx.hardware.deactivatePowerRail()");
     openknx.hardware.deactivatePowerRail();
 }
 
 void activatePowerRail()
 {
+    openknx.log("Deprecated", "use openknx.hardware.activatePowerRail()");
     openknx.hardware.activatePowerRail();
 }
 
 void fatalError(uint8_t iErrorCode, const char* iErrorText)
 {
-    deactivatePowerRail(); // Disable PowerRail
-
-    const uint16_t lDelay = 200;
-    // #ifdef WATCHDOG
-    //     Watchdog.disable();
-    // #endif
-    for (;;)
-    {
-        // we repeat the message on serial bus, so we can get it even
-        // if we connect USB later
-        openknx.log("fatalError", "%d: %s", iErrorCode, iErrorText);
-        ledInfo(true);
-        delay(lDelay);
-        // number of red blinks during a yellow blink is the error code
-        for (uint8_t i = 0; i < iErrorCode; i++)
-        {
-            ledProg(true);
-            delay(lDelay);
-            ledProg(false);
-            delay(lDelay);
-#ifdef WATCHDOG
-        Watchdog.reset();
-#endif
-        }
-        ledInfo(false);
-        delay(lDelay * 5);
-    }
+    openknx.hardware.fatalError(iErrorCode, iErrorText);
 }
 
 // call this BEFORE Wire.begin()

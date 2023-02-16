@@ -18,7 +18,7 @@ namespace OpenKNX
 #endif
 
 #if defined(PROG_LED_SUPPORT_PWM)
-        hardware.progLed.pulsing(2000);
+        hardware.progLed.pulsing();
 #else
         hardware.progLed.on();
 #endif
@@ -207,7 +207,7 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
-#ifdef OPENKNX_DEBUG_LOOP
+#ifdef DEBUG_HEARTBEAT
         hardware.progLed.debugLoop();
 #endif
 
@@ -231,9 +231,13 @@ namespace OpenKNX
 
 #ifdef DEBUG_LOOP_TIME
         // loop took to long and last out is min 1s ago
+#if DEBUG_LOOP_TIME > 1
         if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, 1000))
+#else
+        if (delayCheck(start, 5000) && delayCheck(lastDebugTime, 1000))
+#endif
         {
-            log("OpenKNX", "loop took too long %i", (millis() - start));
+            log("OpenKNX", "loop took too long %i >= %i", (millis() - start), DEBUG_LOOP_TIME);
             lastDebugTime = millis();
         }
 #endif
@@ -305,7 +309,7 @@ namespace OpenKNX
     {
         while (true)
         {
-#ifdef OPENKNX_DEBUG_LOOP
+#ifdef DEBUG_HEARTBEAT
             openknx.hardware.infoLed.debugLoop();
 #endif
             openknx.appLoop2();
@@ -418,14 +422,13 @@ namespace OpenKNX
         if (!_savePinTriggered)
             return;
 
-        openknx.hardware.progLed.powerSave(false);
-        openknx.hardware.infoLed.powerSave(false);
-
         if (!delayCheck(_savedPinProcessed, 1000))
             return;
 
         log("OpenKNX", "restorePower (after 1s)");
 
+        openknx.hardware.progLed.powerSave(false);
+        openknx.hardware.infoLed.powerSave(false);
         hardware.activatePowerRail();
         hardware.startKnxMode();
 

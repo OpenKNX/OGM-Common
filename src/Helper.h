@@ -18,7 +18,8 @@ void printHEX(const char* iPrefix, const uint8_t *iData, size_t iLength);
 void printResult(bool iResult);
 
 // ensure correct time delta check
-// cannot be used in interrupt handler
+// important by using interrupt handler
+//   The called method millis() are not incremented further in the interrupt!
 bool delayCheck(uint32_t iOldTimer, uint32_t iDuration);
 // init delay timer with millis, ensure that it is not 0
 uint32_t delayTimerInit();

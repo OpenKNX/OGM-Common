@@ -5,24 +5,14 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
-        bool Blink::value(uint32_t micros /* = 0 */)
+        bool Blink::value()
         {
-            // first run start with ON
-            if (_lastMicros == 0)
+            if (delayCheck(_lastMillis, _frequency) || _lastMillis == 0)
             {
-                _lastMicros = micros;
-                _state = true;
-                return true;
+                _state = !_state;
+                _lastMillis = millis();
             }
-
-            // return with current state
-            if (!delayCheck(micros, (_frequency * 1000)))
-                return _state;
-
-            // swtiche led & reset rimer
-            _lastMicros = micros;
-            _state = !_state;
-
+            
             return _state;
         }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "OpenKNX/LedEffects/Blink.h"
+#include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Pulse.h"
 #include "knx.h"
 
@@ -18,25 +19,25 @@ namespace OpenKNX
       private:
         volatile long _pin = 1;
         volatile long _activeOn = HIGH;
-        volatile uint32_t _lastMicros = 0;
+        volatile uint32_t _lastMillis = 0;
         volatile uint8_t _brightness = 255;
         volatile bool _state = false;
         volatile bool _powerSave = false;
         volatile bool _forceOn = false;
-        volatile uint8_t _errorCode = 0;
+        volatile bool _errorCode = false;
         volatile uint8_t _currentLedBrightness = 0;
         volatile LedEffect _effect = LedEffect::Normal;
+        LedEffects::Error _errorEffect;
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
 
-#ifdef OPENKNX_DEBUG_LOOP
+#ifdef DEBUG_HEARTBEAT
         volatile bool _debugMode = false;
-        volatile bool _debugLast = false;
-        volatile uint32_t _debugMicros = 0;
+        volatile uint32_t _debugHeartbeat = 0;
         LedEffects::Blink _debugEffect;
 #endif
         /*
-         * write led state based on boo
+         * write led state based on bool
          */
         void writeLed(bool state);
         /*
@@ -51,11 +52,6 @@ namespace OpenKNX
          * use in normal loop or loop2
          */
         void loop();
-
-        /*
-         * used for progLed and infoLed in interruptTimer
-         */
-        void loop(uint32_t micros);
 
         /*
          * Configure a max brightness
@@ -84,8 +80,8 @@ namespace OpenKNX
          * Normal "On"
          * -> Prio 4
          */
-        void on();
-        
+        void on(bool active = true);
+
         /*
          * Normal "On" with pulse effect
          * -> Prio 4
@@ -104,12 +100,12 @@ namespace OpenKNX
          */
         void off();
 
-#ifdef OPENKNX_DEBUG_LOOP
+#ifdef DEBUG_HEARTBEAT
         /*
          * Special usage to dectect running loop() and loop2().
          * progLed for loop()
          * infoLed for loop()
-         * Only active if OPENKNX_DEBUG_LOOP
+         * Only active if DEBUG_HEARTBEAT
          */
         void debugLoop();
 #endif

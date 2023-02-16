@@ -85,4 +85,24 @@ namespace OpenKNX
         validateResponse(expected, response, 1); // Check first Byte
     }
 
+    void Hardware::fatalError(uint8_t code, const char* message)
+    {
+        openknx.logger.log(LogLevel::Error, "FatalError", "%d: %s", code, message);
+        openknx.hardware.infoLed.on();
+        openknx.hardware.progLed.errorCode(code);
+
+        // stopknx
+        stopKnxMode();
+        // poweroff
+        deactivatePowerRail();
+
+        while (true)
+        {
+#ifdef WATCHDOG
+            Watchdog.reset();
+#endif
+            delay(2000);
+        }
+    }
+
 } // namespace OpenKNX

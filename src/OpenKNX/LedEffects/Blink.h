@@ -14,19 +14,14 @@ namespace OpenKNX
         class Blink : public Base
         {
           protected:
-            uint16_t _frequency = OPENKNX_LEDEFFECT_BLINK_FREQ;
+            volatile uint16_t _frequency = OPENKNX_LEDEFFECT_BLINK_FREQ;
 
             bool _state = false;
-            /*
-             * Return frequency in micros
-             */
-            uint32_t frequencyMicros();
-
           public:
             /*
-             * call value based on micros
+             * call value
              */
-            bool value(uint32_t micros = 0);
+            bool value();
 
             void init();
             void init(uint16_t frequency);

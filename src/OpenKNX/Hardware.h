@@ -88,5 +88,7 @@ namespace OpenKNX
         void stopKnxMode();
         // Start KNX Communication
         void startKnxMode();
+        // Fatal Error
+        void fatalError(uint8_t code, const char *message = 0);
     };
 } // namespace OpenKNX

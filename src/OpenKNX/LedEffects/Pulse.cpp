@@ -6,21 +6,21 @@ namespace OpenKNX
     {
         uint16_t Pulse::curve(uint16_t value)
         {
-            return (value <= _frequencyHalf) ? value : (_frequencyHalf - (value - _frequencyHalf));
+            return (value <= _frequency) ? value : (_frequency - (value - _frequency));
         }
 
         uint8_t Pulse::mapping(uint16_t value)
         {
-            return _table[(value * _tableSize / _frequencyHalf)];
+            return _table[(value * _tableSize / _frequency)];
         }
 
-        uint8_t Pulse::value(uint32_t micros /* = 0 */, uint8_t maxValue /* = 255 */)
+        uint8_t Pulse::value(uint8_t maxValue /* = 255 */)
         {
             // first run
-            if (_lastMicros == 0)
-                _lastMicros = micros;
+            if (_lastMillis == 0)
+                _lastMillis = millis();
 
-            uint16_t value = curve(((micros - _lastMicros) / 1000) % _frequency);
+            uint16_t value = curve((millis() - _lastMillis) % (_frequency * 2));
             uint8_t table = mapping(value);
 
             return (uint8_t)round((float)table * maxValue / 255);
@@ -30,7 +30,6 @@ namespace OpenKNX
         {
             Base::init();
             _frequency = frequency;
-            _frequencyHalf = frequency / 2;
         }
     } // namespace LedEffect
 } // namespace OpenKNX

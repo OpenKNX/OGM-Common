@@ -18,109 +18,116 @@ namespace OpenKNX
 
     void Led::loop()
     {
-        loop(micros());
-    }
-
-    void Led::loop(uint32_t micros)
-    {
+        // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
         if (_pin == -1)
             return;
 
-        _lastMicros = micros;
+        _lastMillis = millis();
 
-        // Prio 1
+        // PowerSave (Prio 1)
         if (_powerSave)
         {
             writeLed(false);
             return;
         }
 
-        // Prio 2
+        // ForceOn (Prio 2)
         if (_forceOn)
         {
             writeLed(true);
             return;
         }
 
-        // Prio 3
-        // FatalError
-
-        // Prio 4 OM with optional Effect
-        if (_state)
+        // FatalError (Prio 3)
+        if (_errorCode)
         {
-            if (_effect == LedEffect::Pulse)
-            {
-                writeLed(_pulseEffect.value(micros, _brightness));
-                return;
-            }
-            else if (_state && _effect == LedEffect::Blink)
-            {
-                writeLed(_blinkEffect.value(micros));
-                return;
-            }
-
-            // No effect
-            writeLed(true);
+            writeLed(_errorEffect.value());
             return;
         }
 
-        // Prio 5 (Debug)
-#ifdef OPENKNX_DEBUG_LOOP
+        // Normal with optional Effect (Prio 4)
+        if (_state)
+        {
+            switch (_effect)
+            {
+                case LedEffect::Pulse:
+                    writeLed(_pulseEffect.value(_brightness));
+                    break;
+                case LedEffect::Blink:
+                    writeLed(_blinkEffect.value());
+                    break;
+
+                default:
+                    writeLed(true);
+                    break;
+            }
+            return;
+        }
+
+        // Debug (Prio 5)
+#ifdef DEBUG_HEARTBEAT
         // debug mode enable
         if (_debugMode)
         {
-            // timer expired - turn off
-            if (!_debugLast && (micros - _debugMicros) >= 10000)
+// heartbeat expire -> blink
+#if DEBUG_HEARTBEAT > 1
+            if (delayCheck(_debugHeartbeat, DEBUG_HEARTBEAT))
+#else
+            if (delayCheck(_debugHeartbeat, 1000))
+#endif
             {
-                writeLed(false);
-                _debugMode = false;
+                writeLed(_debugEffect.value());
                 return;
             }
-
-            // loop called - reset timer
-            if (_debugLast)
-            {
-                _debugMicros = micros;
-                _debugLast = false;
-            }
-
-            writeLed(_debugEffect.value(micros));
-            return;
         }
 #endif
 
-        // Last option if nothing before matched -> off
+        // OFF (Prio 6)
         writeLed(false);
     }
 
     void Led::brightness(uint8_t brightness)
     {
+        openknx.logger.log(LogLevel::Trace, "LED", "brightness %i", _brightness);
         _brightness = brightness;
     }
 
     void Led::powerSave(bool active /* = true */)
     {
+        openknx.logger.log(LogLevel::Trace, "LED", "powerSave %i", active);
         _powerSave = active;
     }
 
     void Led::forceOn(bool active /* = true */)
     {
+        openknx.logger.log(LogLevel::Trace, "LED", "forceOn %i", active);
         _forceOn = active;
     }
 
     void Led::errorCode(uint8_t code /* = 0 */)
     {
-        _errorCode = code;
+        if (code > 0)
+        {
+            openknx.logger.log(LogLevel::Trace, "LED", "errorCode %i", code);
+            _errorCode = true;
+            _errorEffect.init(code);
+        }
+        else
+        {
+            _errorCode = false;
+        }
     }
 
-    void Led::on()
+    void Led::on(bool active /* = true */)
     {
-        _state = true;
+        openknx.logger.log(LogLevel::Trace, "LED", "on");
+        _state = active;
         _effect = LedEffect::Normal;
     }
 
     void Led::pulsing(uint16_t frequency)
     {
+        openknx.logger.log(LogLevel::Trace, "LED", "pulsing (frequency %i)", frequency);
         _state = true;
         _effect = LedEffect::Pulse;
         _pulseEffect.init(frequency);
@@ -128,6 +135,7 @@ namespace OpenKNX
 
     void Led::blinking(uint16_t frequency)
     {
+        openknx.logger.log(LogLevel::Trace, "LED", "blinking (frequency %i)", frequency);
         _state = true;
         _effect = LedEffect::Blink;
         _blinkEffect.init(frequency);
@@ -135,12 +143,13 @@ namespace OpenKNX
 
     void Led::off()
     {
+        openknx.logger.log(LogLevel::Trace, "LED", "off");
         _state = false;
         _effect = LedEffect::Normal;
     }
 
     /*
-     * write led state based on boo
+     * write led state based on bool
      */
     void Led::writeLed(bool state)
     {
@@ -168,16 +177,16 @@ namespace OpenKNX
         _currentLedBrightness = brightness;
     }
 
-#ifdef OPENKNX_DEBUG_LOOP
+#ifdef DEBUG_HEARTBEAT
     void Led::debugLoop()
     {
-        // Enable Debug Mode
+        // Enable Debug Mode on first run
         if (!_debugMode)
         {
+            _debugEffect.init(200);
             _debugMode = true;
-            _debugEffect.init(1000);
         }
-        _debugLast = true;
+        _debugHeartbeat = millis();
     }
 #endif
 
