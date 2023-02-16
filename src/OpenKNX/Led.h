@@ -31,7 +31,7 @@ namespace OpenKNX
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
 
-#ifdef DEBUG_HEARTBEAT
+#if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
         LedEffects::Blink _debugEffect;
@@ -100,7 +100,7 @@ namespace OpenKNX
          */
         void off();
 
-#ifdef DEBUG_HEARTBEAT
+#if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
         /*
          * Special usage to dectect running loop() and loop2().
          * progLed for loop()
