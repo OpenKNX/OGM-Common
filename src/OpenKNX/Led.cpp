@@ -24,6 +24,13 @@ namespace OpenKNX
 
         _lastMillis = millis();
 
+        // PowerSave (Prio 1)
+        if (_powerSave)
+        {
+            writeLed(false);
+            return;
+        }
+
         // Debug (highPrio)
 #if defined(DEBUG_HEARTBEAT_PRIO)
         // debug mode enable
@@ -46,13 +53,6 @@ namespace OpenKNX
             return;
         }
 #endif
-
-        // PowerSave (Prio 1)
-        if (_powerSave)
-        {
-            writeLed(false);
-            return;
-        }
 
         // ForceOn (Prio 2)
         if (_forceOn)
@@ -125,6 +125,9 @@ namespace OpenKNX
     {
         openknx.logger.log(LogLevel::Trace, "LED", "forceOn %i", active);
         _forceOn = active;
+#ifdef DEBUG_HEARTBEAT_PRIO
+        _debugEffect.init(active ? 500 : 1000);
+#endif
     }
 
     void Led::errorCode(uint8_t code /* = 0 */)
@@ -206,7 +209,12 @@ namespace OpenKNX
         // Enable Debug Mode on first run
         if (!_debugMode)
         {
+
+#if defined(DEBUG_HEARTBEAT_PRIO)
+            _debugEffect.init(1000);
+#else
             _debugEffect.init(200);
+#endif
             _debugMode = true;
         }
         _debugHeartbeat = millis();
