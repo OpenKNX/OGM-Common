@@ -94,10 +94,10 @@ namespace OpenKNX
 #endif
         Modules* modules = openknx.getModules();
         char* modulePrefix = new char[12];
-        for (uint8_t i = 1; i <= modules->count; i++)
+        for (uint8_t i = 0; i < modules->count; i++)
         {
-            sprintf(modulePrefix, "Module %i", modules->ids[i - 1]);
-            openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i - 1]->version(), modules->list[i - 1]->name());
+            sprintf(modulePrefix, "Module %i", modules->ids[i]);
+            openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i]->version(), modules->list[i]->name());
         }
         delete[] modulePrefix;
         openknx.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
