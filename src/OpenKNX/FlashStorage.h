@@ -7,6 +7,8 @@
 #define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay
 #endif
 
+#define FLASH_DATA_FILLBYTE 0xFF
+
 #define FLASH_DATA_INIT 1330337281 // 4F 4B 56 01
 #define FLASH_DATA_INIT_LEN 4
 #define FLASH_DATA_MODULE_ID_LEN 1
@@ -54,7 +56,7 @@ namespace OpenKNX
         uint32_t _currentWriteAddress = 0;
         uint8_t *_currentReadAddress = 0;
         uint32_t _maxWriteAddress = 0;
-        void zeroize();
+        void writeFilldata();
         void readData();
         void initUnloadedModules();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);

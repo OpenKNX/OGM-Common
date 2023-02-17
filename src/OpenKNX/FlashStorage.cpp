@@ -27,11 +27,11 @@ namespace OpenKNX
         Module *module = nullptr;
         uint8_t moduleId = 0;
         uint16_t moduleSize = 0;
-        for (uint8_t i = 1; i <= modules->count; i++)
+        for (uint8_t i = 0; i < modules->count; i++)
         {
             // check module expectation and load state
-            module = modules->list[i - 1];
-            moduleId = modules->ids[i - 1];
+            module = modules->list[i];
+            moduleId = modules->ids[i];
             moduleSize = module->flashSize();
 
             if (moduleSize > 0 && !loadedModules[moduleId])
@@ -145,9 +145,9 @@ namespace OpenKNX
         // determine some values
         Modules *modules = openknx.getModules();
         dataSize = 0;
-        for (uint8_t i = 1; i <= modules->count; i++)
+        for (uint8_t i = 0; i < modules->count; i++)
         {
-            moduleSize = modules->list[i - 1]->flashSize();
+            moduleSize = modules->list[i]->flashSize();
             if (moduleSize == 0)
                 continue;
 
@@ -169,12 +169,12 @@ namespace OpenKNX
         openknx.log("FlashStorage", "  startPosition: %i", _currentWriteAddress);
 #endif
 
-        for (uint8_t i = 1; i <= modules->count; i++)
+        for (uint8_t i = 0; i < modules->count; i++)
         {
             // get data
-            module = modules->list[i - 1];
+            module = modules->list[i];
             moduleSize = module->flashSize();
-            moduleId = modules->ids[i - 1];
+            moduleId = modules->ids[i];
 
             if (moduleSize == 0)
                 continue;
@@ -192,7 +192,7 @@ namespace OpenKNX
 
             openknx.log("FlashStorage", "  save module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
             module->writeFlash();
-            zeroize();
+            writeFilldata();
         }
 
         // write magicword
@@ -297,7 +297,7 @@ namespace OpenKNX
         delete buffer;
     }
 
-    void FlashStorage::zeroize()
+    void FlashStorage::writeFilldata()
     {
         uint16_t fillSize = (_maxWriteAddress - _currentWriteAddress);
         if (fillSize == 0)
@@ -306,7 +306,7 @@ namespace OpenKNX
 #ifdef FLASH_DATA_TRACE
         openknx.log("FlashStorage", "    zeroize %i", fillSize);
 #endif
-        write((uint8_t)0xFF, fillSize);
+        write((uint8_t)FLASH_DATA_FILLBYTE, fillSize);
     }
 
     uint8_t *FlashStorage::read(uint16_t size /* = 1 */)
