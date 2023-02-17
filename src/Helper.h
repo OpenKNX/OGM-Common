@@ -13,9 +13,9 @@
  * *******************/
 
 // generic helper for formatted debug output
-int printDebug(const char *format, ...);
-void printHEX(const char* iPrefix, const uint8_t *iData, size_t iLength);
-void printResult(bool iResult);
+// int printDebug(const char *format, ...);
+// void printHEX(const char* iPrefix, const uint8_t *iData, size_t iLength);
+// void printResult(bool iResult);
 
 // ensure correct time delta check
 // important by using interrupt handler
