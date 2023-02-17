@@ -7,12 +7,12 @@ namespace OpenKNX
     {
         bool Blink::value()
         {
-            if (delayCheck(_lastMillis, _frequency) || _lastMillis == 0)
+            if (millis() - _lastMillis >= _frequency || _lastMillis == 0)
             {
                 _state = !_state;
                 _lastMillis = millis();
             }
-            
+
             return _state;
         }
 

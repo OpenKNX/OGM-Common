@@ -29,7 +29,7 @@
 #endif
 
 // include after defines!
-#include "ISR_Timer_Generic.h"
+// #include "ISR_Timer_Generic.h"
 #include "TimerInterrupt_Generic.h"
 
 #if defined(ARDUINO_ARCH_SAMD)
@@ -37,7 +37,7 @@ SAMDTimer ITimer(SELECTED_TIMER);
 #elif defined(ARDUINO_ARCH_RP2040)
 RPI_PICO_Timer ITimer(1);
 #endif
-ISR_Timer ISRTimer;
+// ISR_Timer ISRTimer;
 
 namespace OpenKNX
 {
@@ -46,31 +46,27 @@ namespace OpenKNX
         // Register 1ms
 #if defined(ARDUINO_ARCH_SAMD)
         ITimer.attachInterruptInterval_MS(OPENKNX_INTERRUPT_TIMER_MS, []() -> void {
-            // openknx.timerInterrupt.interrupt();
-            ISRTimer.run();
+            openknx.timerInterrupt.interrupt();
+            // ISRTimer.run();
         });
 #elif defined(ARDUINO_ARCH_RP2040)
-        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 1000, [](repeating_timer *t) -> bool {
-            // openknx.timerInterrupt.interrupt();
-            ISRTimer.run();
+        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 5000, [](repeating_timer *t) -> bool {
+            digitalWrite(PLAYER_BUSY_PIN, HIGH);
+            openknx.timerInterrupt.interrupt();
+            // openknx.collectMemoryStats();
+            // openknx.hardware.progLed.loop();
+            // openknx.hardware.infoLed.loop();
+            // ISRTimer.run();
+            digitalWrite(PLAYER_BUSY_PIN, LOW);
             return true;
         });
+        // ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 5000, __openknx_interrupt);
 #endif
-
-        ISRTimer.setInterval(1, []() -> void {
-            openknx.collectMemoryStats();
-        });
-
-        ISRTimer.setInterval(5, []() -> void {
-            openknx.hardware.progLed.loop();
-            openknx.hardware.infoLed.loop();
-        });
     }
 
     // Alternative for ISR_Timer
     void TimerInterrupt::interrupt()
     {
-        
         // collect memory usage
         openknx.collectMemoryStats();
 

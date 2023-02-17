@@ -17,15 +17,9 @@ namespace OpenKNX
             volatile uint16_t _frequency = OPENKNX_LEDEFFECT_PULSE_FREQ;
 
             // use a table for a consistent pulsing
-            const uint8_t _tableSize PROGMEM = 24;
-            const uint8_t _table[24] PROGMEM = {5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76, 91, 108, 128, 152, 181, 215, 255};
-            // const uint8_t _table[32] PROGMEM =
-            //     {0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23,
-            //      27, 32, 38, 45, 54, 64, 76, 91, 108, 128, 152, 181, 215, 255};
-
-            uint16_t curve(uint16_t value);
-            uint8_t mapping(uint16_t value);
-
+            const uint8_t _table[48] PROGMEM = {
+                5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64, 76, 91, 108, 128, 152, 181, 215, 255,
+                255, 215, 181, 152, 128, 108, 91, 76, 64, 54, 45, 38, 32, 27, 23, 19, 16, 13, 11, 10, 8, 7, 6, 5};
           public:
             /*
              * call value

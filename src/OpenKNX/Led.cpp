@@ -38,9 +38,9 @@ namespace OpenKNX
         {
 // heartbeat expire -> blink
 #if DEBUG_HEARTBEAT_PRIO > 1
-            if (!delayCheck(_debugHeartbeat, DEBUG_HEARTBEAT_PRIO))
+            if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT_PRIO))
 #else
-            if (!delayCheck(_debugHeartbeat, 1000))
+            if (!(millis() - _debugHeartbeat >= 1000))
 #endif
             {
                 writeLed(_debugEffect.value());
@@ -94,9 +94,9 @@ namespace OpenKNX
         {
 // heartbeat expire -> blink
 #if DEBUG_HEARTBEAT > 1
-            if (delayCheck(_debugHeartbeat, DEBUG_HEARTBEAT))
+            if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
 #else
-            if (delayCheck(_debugHeartbeat, 1000))
+            if (!(millis() - _debugHeartbeat >= 1000))
 #endif
             {
                 writeLed(_debugEffect.value());
