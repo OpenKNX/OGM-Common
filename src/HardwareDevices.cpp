@@ -83,7 +83,7 @@ bool boardCheck()
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_EEPROM;
-    printResult(lResult);
+    openknx.log("I2C", "  Result: %i", lResult);
 #endif
 
 #ifdef I2C_1WIRE_DEVICE_ADDRESSS
@@ -95,7 +95,7 @@ bool boardCheck()
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    printResult(lResult);
+    openknx.log("I2C", "  Result: %i", lResult);
 #endif
 #ifdef WIREGATEWAY
     // check for I2C ack
@@ -104,7 +104,7 @@ bool boardCheck()
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    printResult(lResult);
+    openknx.log("I2C", "  Result: %i", lResult);
 #endif
 #endif
 #if COUNT_1WIRE_BUSMASTER >= 2
@@ -114,7 +114,7 @@ bool boardCheck()
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    printResult(lResult);
+    openknx.log("I2C", "  Result: %i", lResult);
 #endif
 #if COUNT_1WIRE_BUSMASTER == 3
     // check for I2C ack
@@ -123,7 +123,7 @@ bool boardCheck()
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    printResult(lResult);
+    openknx.log("I2C", "  Result: %i", lResult);
 #endif
 #endif
 
@@ -134,7 +134,7 @@ bool boardCheck()
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_LED;
-    printResult(lResult);
+    openknx.log("I2C", "  Result: %i", lResult);
 #endif
     // lResult = checkUartExistence();
 #endif // NO_I2C
@@ -149,7 +149,7 @@ bool checkUartExistence()
     // send system state command and interpret answer
     uint8_t lResp = sendUartCommand("SYSTEM_STATE", U_SYSTEM_STATE, U_SYSTEM_STAT_IND, 1);
     lResult = (lResp & 3) == 3;
-    printResult(lResult);
+    openknx.log("Helper", "  Result: %i", lResult);
     if (lResult)
         boardHardware |= BOARD_HW_NCN5130;
     return lResult;
