@@ -35,6 +35,13 @@ namespace OpenKNX
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
         LedEffects::Blink _debugEffect;
+
+        #ifndef DEBUG_HEARTBEAT_PRIO_ON_FREQ
+        #define DEBUG_HEARTBEAT_PRIO_ON_FREQ 200
+        #endif
+        #ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
+        #define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
+        #endif
 #endif
         /*
          * write led state based on bool

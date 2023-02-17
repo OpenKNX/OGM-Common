@@ -126,7 +126,7 @@ namespace OpenKNX
         openknx.logger.log(LogLevel::Trace, "LED", "forceOn %i", active);
         _forceOn = active;
 #ifdef DEBUG_HEARTBEAT_PRIO
-        _debugEffect.init(active ? 500 : 1000);
+        _debugEffect.init(active ? DEBUG_HEARTBEAT_PRIO_ON_FREQ : DEBUG_HEARTBEAT_PRIO_OFF_FREQ);
 #endif
     }
 
