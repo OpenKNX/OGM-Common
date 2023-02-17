@@ -2,7 +2,7 @@
 #include "knx.h"
 
 #ifndef OPENKNX_INTERRUPT_TIMER_MS
-#define OPENKNX_INTERRUPT_TIMER_MS 1
+#define OPENKNX_INTERRUPT_TIMER_MS 5
 #endif
 
 namespace OpenKNX

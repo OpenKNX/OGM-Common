@@ -29,7 +29,6 @@
 #endif
 
 // include after defines!
-// #include "ISR_Timer_Generic.h"
 #include "TimerInterrupt_Generic.h"
 
 #if defined(ARDUINO_ARCH_SAMD)
@@ -37,7 +36,6 @@ SAMDTimer ITimer(SELECTED_TIMER);
 #elif defined(ARDUINO_ARCH_RP2040)
 RPI_PICO_Timer ITimer(1);
 #endif
-// ISR_Timer ISRTimer;
 
 namespace OpenKNX
 {
@@ -47,20 +45,12 @@ namespace OpenKNX
 #if defined(ARDUINO_ARCH_SAMD)
         ITimer.attachInterruptInterval_MS(OPENKNX_INTERRUPT_TIMER_MS, []() -> void {
             openknx.timerInterrupt.interrupt();
-            // ISRTimer.run();
         });
 #elif defined(ARDUINO_ARCH_RP2040)
-        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 5000, [](repeating_timer *t) -> bool {
-            digitalWrite(PLAYER_BUSY_PIN, HIGH);
+        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 1000, [](repeating_timer *t) -> bool {
             openknx.timerInterrupt.interrupt();
-            // openknx.collectMemoryStats();
-            // openknx.hardware.progLed.loop();
-            // openknx.hardware.infoLed.loop();
-            // ISRTimer.run();
-            digitalWrite(PLAYER_BUSY_PIN, LOW);
             return true;
         });
-        // ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 5000, __openknx_interrupt);
 #endif
     }
 
