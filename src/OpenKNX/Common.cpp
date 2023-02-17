@@ -338,7 +338,7 @@ namespace OpenKNX
     {
         for (uint8_t i = 0; i < _modules.count; i++)
         {
-            if (_modules.ids[i - 1] == id)
+            if (_modules.ids[i] == id)
                 return _modules.list[i];
         }
 
