@@ -31,3 +31,18 @@ uint32_t delayTimerInit();
 bool isNum(float iNumber);
 
 int freeMemory();
+
+/*
+ * Nuker
+ */
+#ifdef ARDUINO_ARCH_RP2040
+#include "hardware/flash.h"
+#include "hardware/sync.h"
+
+#ifndef NUKE_FLASH_SIZE_BYTES
+#define NUKE_FLASH_SIZE_BYTES (16 * 1024 * 1024)
+#endif
+
+void nukeFlashKnxOnly();
+void nukeFlash();
+#endif

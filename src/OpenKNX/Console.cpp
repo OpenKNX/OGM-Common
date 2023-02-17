@@ -52,7 +52,11 @@ namespace OpenKNX
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash (knx only)", current, (3 - _consoleCharRepeats));
                     break;
                 }
-                openknx.nukeFlashKnxOnly();
+#ifdef WATCHDOG
+                Watchdog.enable(2147483647);
+#endif
+                openknx.log("Nuker", "nuke flash ( %i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+                nukeFlashKnxOnly();
                 break;
             case 'N':
                 if (_consoleCharRepeats < 3)
@@ -60,7 +64,11 @@ namespace OpenKNX
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash", current, (3 - _consoleCharRepeats));
                     break;
                 }
-                openknx.nukeFlash();
+#ifdef WATCHDOG
+                Watchdog.enable(2147483647);
+#endif
+                openknx.log("Nuker", "nuke flash ( %i -> %i)", 0, NUKE_FLASH_SIZE_BYTES);
+                nukeFlash();
                 break;
 #endif
 #ifdef WATCHDOG

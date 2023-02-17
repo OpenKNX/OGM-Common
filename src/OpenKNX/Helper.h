@@ -18,10 +18,5 @@ namespace OpenKNX
         static void log(const char* prefix, const char* output, ...);
         static void log(LogLevel level, const char* prefix, const char* output, ...);
         static void logHex(const char* prefix, const uint8_t* data, size_t size);
-#ifdef ARDUINO_ARCH_RP2040
-        static void nukeFlashKnxOnly();
-        static void nukeFlash();
-        static void nukeFlash(uint32_t offset, size_t bytes);
-#endif
     };
 } // namespace OpenKNX
