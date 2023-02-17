@@ -4,24 +4,22 @@
 #include "OpenKNX/LedEffects/Pulse.h"
 #include "knx.h"
 
-// Priority Debug Heartbeat
-#if defined(DEBUG_HEARTBEAT_PRIO)
+//
+// Debug Heartbeat
+//
 
-// set default value for DEBUG_HEARTBEAT_PRIO timeout to 1000ms
-#if DEBUG_HEARTBEAT_PRIO <= 1
-#undef DEBUG_HEARTBEAT_PRIO
-#define DEBUG_HEARTBEAT_PRIO 1000
+// Priority active?
+#ifdef DEBUG_HEARTBEAT_PRIO
+
+// Remove double define
+#undef DEBUG_HEARTBEAT
+#ifndef DEBUG_HEARTBEAT
+#define DEBUG_HEARTBEAT DEBUG_HEARTBEAT_PRIO
+#endif
 #endif
 
-#ifndef DEBUG_HEARTBEAT_PRIO_ON_FREQ
-#define DEBUG_HEARTBEAT_PRIO_ON_FREQ 200
-#endif
-#ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
-#define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
-#endif
-
-// normale Debug Heartbeat
-#elif defined(DEBUG_HEARTBEAT)
+// Heartbeat active? (with priority)
+#ifdef DEBUG_HEARTBEAT
 
 // set default value for DEBUG_HEARTBEAT timeout to 1000ms
 #if DEBUG_HEARTBEAT <= 1
@@ -29,11 +27,20 @@
 #define DEBUG_HEARTBEAT 1000
 #endif
 
-// set default frequency
+// set default frequencies (normal)
 #ifndef DEBUG_HEARTBEAT_FREQ
 #define DEBUG_HEARTBEAT_FREQ 200
 #endif
 
+// set default frequencies (prio with active forceOn)
+#ifndef DEBUG_HEARTBEAT_PRIO_ON_FREQ
+#define DEBUG_HEARTBEAT_PRIO_ON_FREQ 200
+#endif
+
+// set default frequencies (prio with inactive forceOn)
+#ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
+#define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
+#endif
 #endif
 
 namespace OpenKNX
@@ -63,7 +70,7 @@ namespace OpenKNX
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
 
-#if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
+#ifdef DEBUG_HEARTBEAT
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
         LedEffects::Blink _debugEffect;
@@ -96,49 +103,53 @@ namespace OpenKNX
          * -> Prio 1
          */
         void powerSave(bool active = true);
-        /*
-         * For progLed called by knx Stack for active Progmode
-         * -> Prio 2
-         */
-        void forceOn(bool active = true);
+
         /*
          * Call by fatalError to proviede error code signal
          * Code > 0: x Blink with long pause
          * Code = 0: Disable
-         * -> Prio 3
+         * -> Prio 2
          */
         void errorCode(uint8_t code = 0);
 
         /*
-         * Normal "On"
+         * For progLed called by knx Stack for active Progmode
          * -> Prio 4
+         */
+        void forceOn(bool active = true);
+
+        /*
+         * Normal "On"
+         * -> Prio 5
          */
         void on(bool active = true);
 
         /*
          * Normal "On" with pulse effect
-         * -> Prio 4
+         * -> Prio 5
          */
         void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ);
 
         /*
          * Normal "On" with blink effect
-         * -> Prio 4
+         * -> Prio 5
          */
         void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ);
 
         /*
          * Normal "Off"
-         * -> Prio 4
+         * -> Prio 7
          */
         void off();
 
-#if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
+#ifdef DEBUG_HEARTBEAT
         /*
-         * Special usage to dectect running loop() and loop2().
+         * Special usage to detect running loop() and loop2().
          * progLed for loop()
          * infoLed for loop()
-         * Only active if DEBUG_HEARTBEAT
+         * Only active if DEBUG_HEARTBEAT or DEBUG_HEARTBEAT_PRIO is defined
+         * DEBUG_HEARTBEAT_PRIO -> Prio 3
+         * DEBUG_HEARTBEAT -> Prio 6
          */
         void debugLoop();
 #endif

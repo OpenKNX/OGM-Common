@@ -212,7 +212,7 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
-#if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
+#ifdef DEBUG_HEARTBEAT
         hardware.progLed.debugLoop();
 #endif
 
@@ -314,7 +314,7 @@ namespace OpenKNX
     {
         while (true)
         {
-#if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
+#ifdef DEBUG_HEARTBEAT
             openknx.hardware.infoLed.debugLoop();
 #endif
             openknx.appLoop2();
