@@ -5,8 +5,8 @@ namespace OpenKNX
 {
     void Led::init(long pin /* = -1 */, long activeOn /* = HIGH */)
     {
-        // not configured
-        if (_pin == -1)
+        // no valid pin
+        if (pin < 0)
             return;
 
         _pin = pin;
@@ -43,7 +43,7 @@ namespace OpenKNX
         // debug mode enable
         if (_debugMode)
         {
-// heartbeat expire -> blink
+            // heartbeat expire -> blink
             if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT_PRIO))
             {
                 writeLed(_debugEffect.value());
@@ -63,8 +63,6 @@ namespace OpenKNX
             writeLed(true);
             return;
         }
-
-
 
         // Normal with optional Effect (Prio 5)
         if (_state)
@@ -90,7 +88,7 @@ namespace OpenKNX
         // debug mode enable
         if (_debugMode)
         {
-// heartbeat expire -> blink
+            // heartbeat expire -> blink
             if ((millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
             {
                 writeLed(_debugEffect.value());

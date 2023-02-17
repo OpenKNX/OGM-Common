@@ -4,6 +4,38 @@
 #include "OpenKNX/LedEffects/Pulse.h"
 #include "knx.h"
 
+// Priority Debug Heartbeat
+#if defined(DEBUG_HEARTBEAT_PRIO)
+
+// set default value for DEBUG_HEARTBEAT_PRIO timeout to 1000ms
+#if DEBUG_HEARTBEAT_PRIO <= 1
+#undef DEBUG_HEARTBEAT_PRIO
+#define DEBUG_HEARTBEAT_PRIO 1000
+#endif
+
+#ifndef DEBUG_HEARTBEAT_PRIO_ON_FREQ
+#define DEBUG_HEARTBEAT_PRIO_ON_FREQ 200
+#endif
+#ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
+#define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
+#endif
+
+// normale Debug Heartbeat
+#elif defined(DEBUG_HEARTBEAT)
+
+// set default value for DEBUG_HEARTBEAT timeout to 1000ms
+#if DEBUG_HEARTBEAT <= 1
+#undef DEBUG_HEARTBEAT
+#define DEBUG_HEARTBEAT 1000
+#endif
+
+// set default frequency
+#ifndef DEBUG_HEARTBEAT_FREQ
+#define DEBUG_HEARTBEAT_FREQ 200
+#endif
+
+#endif
+
 namespace OpenKNX
 {
     enum class LedEffect
@@ -17,7 +49,7 @@ namespace OpenKNX
     class Led
     {
       private:
-        volatile long _pin = 1;
+        volatile long _pin = -1;
         volatile long _activeOn = HIGH;
         volatile uint32_t _lastMillis = 0;
         volatile uint8_t _brightness = 255;
@@ -31,38 +63,11 @@ namespace OpenKNX
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
 
-// set default value for DEBUG_HEARTBEAT timeout to 1000ms
-#ifdef DEBUG_HEARTBEAT
-        #if DEBUG_HEARTBEAT <= 1
-                #undef DEBUG_HEARTBEAT
-                #define DEBUG_HEARTBEAT 1000
-        #endif
-#endif
-
-// set default value for DEBUG_HEARTBEAT_PRIO timeout to 1000ms
-#ifdef DEBUG_HEARTBEAT_PRIO
-        #if DEBUG_HEARTBEAT_PRIO <= 1
-                #undef DEBUG_HEARTBEAT_PRIO
-                #define DEBUG_HEARTBEAT_PRIO 1000
-        #endif
-#endif
-
 #if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
         LedEffects::Blink _debugEffect;
-
-        #ifndef DEBUG_HEARTBEAT_PRIO_ON_FREQ
-        #define DEBUG_HEARTBEAT_PRIO_ON_FREQ 200
-        #endif
-        #ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
-        #define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
-        #endif
-        #ifndef DEBUG_HEARTBEAT_FREQ
-        #define DEBUG_HEARTBEAT_FREQ 200
-        #endif
 #endif
-
 
         /*
          * write led state based on bool
