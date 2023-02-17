@@ -8,8 +8,8 @@ namespace OpenKNX
         bool Error::value()
         {
             if (
-                (millis() - _lastMillis >= 250 && _counter < _code) ||   // Blink
-                (millis() - _lastMillis >= 1500 && _counter >= _code) || // Pasue between sequence
+                (DelayCheck(_lastMillis, 250) && _counter < _code) ||   // Blink
+                (DelayCheck(_lastMillis, 1500) && _counter >= _code) || // Pasue between sequence
                 _lastMillis == 0)
             {
                 // Reset
