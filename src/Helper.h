@@ -1,10 +1,14 @@
 #pragma once
 
-#include <cstdint>
-#include <stdio.h>
-#include <stdarg.h>
 #include <Arduino.h>
+#include <cstdint>
+#include <stdarg.h>
+#include <stdio.h>
 #include <string>
+
+#define DelayCheckMillis(last, duration) (millis() - last >= duration)
+#define DelayCheckMicros(last, duration) (micros() - last >= duration)
+#define DelayCheck(last, duration) DelayCheckMillis(last, duration)
 
 #define NO_NUM -987654321.0F // normal NAN-Handling does not work
 
