@@ -31,17 +31,20 @@ namespace OpenKNX
             return;
         }
 
-        // Debug (highPrio)
+        // FatalError (Prio 2)
+        if (_errorCode)
+        {
+            writeLed(_errorEffect.value());
+            return;
+        }
+
+        // Debug (Prio 3)
 #if defined(DEBUG_HEARTBEAT_PRIO)
         // debug mode enable
         if (_debugMode)
         {
 // heartbeat expire -> blink
-#if DEBUG_HEARTBEAT_PRIO > 1
             if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT_PRIO))
-#else
-            if (!(millis() - _debugHeartbeat >= 1000))
-#endif
             {
                 writeLed(_debugEffect.value());
             }
@@ -54,21 +57,16 @@ namespace OpenKNX
         }
 #endif
 
-        // ForceOn (Prio 2)
+        // ForceOn (Prio 4)
         if (_forceOn)
         {
             writeLed(true);
             return;
         }
 
-        // FatalError (Prio 3)
-        if (_errorCode)
-        {
-            writeLed(_errorEffect.value());
-            return;
-        }
 
-        // Normal with optional Effect (Prio 4)
+
+        // Normal with optional Effect (Prio 5)
         if (_state)
         {
             switch (_effect)
@@ -87,17 +85,13 @@ namespace OpenKNX
             return;
         }
 
-        // Debug (lowPrio)
+        // Debug (Prio 6)
 #if defined(DEBUG_HEARTBEAT) && !defined(DEBUG_HEARTBEAT_PRIO)
         // debug mode enable
         if (_debugMode)
         {
 // heartbeat expire -> blink
-#if DEBUG_HEARTBEAT > 1
-            if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
-#else
-            if (!(millis() - _debugHeartbeat >= 1000))
-#endif
+            if ((millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
             {
                 writeLed(_debugEffect.value());
                 return;
@@ -105,7 +99,7 @@ namespace OpenKNX
         }
 #endif
 
-        // OFF (Prio 6)
+        // OFF (Prio 7)
         writeLed(false);
     }
 
@@ -211,9 +205,9 @@ namespace OpenKNX
         {
 
 #if defined(DEBUG_HEARTBEAT_PRIO)
-            _debugEffect.init(1000);
+            _debugEffect.init(DEBUG_HEARTBEAT_PRIO_OFF_FREQ);
 #else
-            _debugEffect.init(200);
+            _debugEffect.init(DEBUG_HEARTBEAT_FREQ);
 #endif
             _debugMode = true;
         }

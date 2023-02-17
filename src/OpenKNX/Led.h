@@ -31,6 +31,22 @@ namespace OpenKNX
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
 
+// set default value for DEBUG_HEARTBEAT timeout to 1000ms
+#ifdef DEBUG_HEARTBEAT
+        #if DEBUG_HEARTBEAT <= 1
+                #undef DEBUG_HEARTBEAT
+                #define DEBUG_HEARTBEAT 1000
+        #endif
+#endif
+
+// set default value for DEBUG_HEARTBEAT_PRIO timeout to 1000ms
+#ifdef DEBUG_HEARTBEAT_PRIO
+        #if DEBUG_HEARTBEAT_PRIO <= 1
+                #undef DEBUG_HEARTBEAT_PRIO
+                #define DEBUG_HEARTBEAT_PRIO 1000
+        #endif
+#endif
+
 #if defined(DEBUG_HEARTBEAT) || defined(DEBUG_HEARTBEAT_PRIO)
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
@@ -42,7 +58,12 @@ namespace OpenKNX
         #ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
         #define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
         #endif
+        #ifndef DEBUG_HEARTBEAT_FREQ
+        #define DEBUG_HEARTBEAT_FREQ 200
+        #endif
 #endif
+
+
         /*
          * write led state based on bool
          */

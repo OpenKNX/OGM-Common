@@ -90,6 +90,16 @@ You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loo
 * `DEBUG_HEARTBEAT` - enable heartbeat mode with default failure time (default is 1000ms)
 * `DEBUG_HEARTBEAT=3000` - enable heartbeat mode with specific failure time.
 
+#### Heartbeat Prio
+You can enable a debug heartbeat to see if the device is stuck. The progLed (for loop) and infoLed (for loop2) are always blinking (`DEBUG_HEARTBEAT_PRIO_OFF_FREQ` default is 1000)
+
+If programing mode is active, the progLed will blink faster (`DEBUG_HEARTBEAT_PRIO_ON_FREQ` default is200)
+
+So, if the device is NOT blinking, anything is wrong.
+
+* `DEBUG_HEARTBEAT_PRIO` - enable heartbeat mode with default failure time (default is 1000ms)
+* `DEBUG_HEARTBEAT_PRIO=3000` - enable heartbeat mode with specific failure time.
+
 #### Duration
 You can enable a debug output
 * `DEBUG_LOOP_TIME` - enable log output when loop tooks longer than default allowed (default is 5ms)
