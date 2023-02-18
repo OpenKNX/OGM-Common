@@ -58,6 +58,13 @@ namespace OpenKNX
             return std::string(buffer);
         }
 
+        /**
+         * Get firmware version, shown in ETS as '[revision] major.minor'
+         * @result a 2 byte value with bits 'rrrr_rMMM MMmm_mmmm' of
+         * - r: 5 bit revision
+         * - M: 5 bit major
+         * - m: 6 bit minor
+         */
         uint16_t firmwareVersion()
         {
             return ((_firmwareRevision & 0x1F) << 11) | ((MAIN_ApplicationVersion & 0xF0) << 2) | (MAIN_ApplicationVersion & 0x0F);
