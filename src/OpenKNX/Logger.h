@@ -1,5 +1,6 @@
 #pragma once
 #include "knx.h"
+#include <string>
 #ifdef ARDUINO_ARCH_RP2040
 #include "pico/sync.h"
 #endif
@@ -36,6 +37,10 @@ namespace OpenKNX
 
       public:
         Logger();
+        
+        std::string logPrefix(const char* prefix, const char* id);
+        std::string logPrefix(const char* prefix, const int id);
+
         void log(LogLevel level, const char* prefix, const char* message, va_list args);
         void log(LogLevel level, const char* prefix, const char* message, ...);
         void log(LogLevel level, const char* message);

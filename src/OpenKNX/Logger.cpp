@@ -32,6 +32,20 @@ namespace OpenKNX
         #endif
     }
 
+    std::string Logger::logPrefix(const char* prefix, const char* id)
+    {
+        char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
+        sprintf(buffer, "%s<%s>", prefix, id);
+        return std::string(buffer);
+    }
+
+    std::string Logger::logPrefix(const char* prefix, const int id)
+    {
+        char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
+        sprintf(buffer, "%s<%i>", prefix, id);
+        return std::string(buffer);
+    }
+
     void Logger::log(LogLevel level, const char* message)
     {
         mutex_block();
