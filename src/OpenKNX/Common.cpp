@@ -169,7 +169,7 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         if (usesSecCore())
         {
-            //multicore_launch_core1(Common::loop2);
+            multicore_launch_core1(Common::loop2);
         }
 #endif
     }
