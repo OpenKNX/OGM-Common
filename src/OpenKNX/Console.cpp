@@ -138,6 +138,7 @@ namespace OpenKNX
         openknx.log("h - Show this help");
         openknx.log("i - Show device information");
         openknx.log("p - Toggle ProgMode");
+        openknx.log("r - Restart device");
 #ifdef ARDUINO_ARCH_RP2040
         openknx.log("n - Delete (nuke) Userflash");
         openknx.log("N - Delete (nuke) complete device flash");
