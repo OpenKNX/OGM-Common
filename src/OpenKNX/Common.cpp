@@ -155,7 +155,7 @@ namespace OpenKNX
         {
             _modules.list[i]->setup();
             if (_modules.list[i]->usesSecCore())
-                _useSecondCore = true;
+                _usesSecCore = true;
         }
 
         flash.load();
@@ -164,17 +164,17 @@ namespace OpenKNX
         registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
-        if (useSecondCore())
+        if (usesSecCore())
         {
             multicore_launch_core1(Common::loop2);
         }
 #endif
     }
 
-    bool Common::useSecondCore()
+    bool Common::usesSecCore()
     {
 #if defined(ARDUINO_ARCH_RP2040)
-        return _useSecondCore;
+        return _usesSecCore;
 #else
         return false;
 #endif

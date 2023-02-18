@@ -58,7 +58,7 @@ namespace OpenKNX
 #endif
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
-        bool _useSecondCore = false;
+        bool _usesSecCore = false;
         Modules _modules;
 
         uint32_t _savedPinProcessed = 0;
@@ -99,7 +99,7 @@ namespace OpenKNX
         void setup();
         void loop();
         static void loop2();
-        bool useSecondCore();
+        bool usesSecCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif
