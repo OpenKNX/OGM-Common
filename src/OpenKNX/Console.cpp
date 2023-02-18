@@ -86,6 +86,15 @@ namespace OpenKNX
                 delay(WATCHDOG_MAX_PERIOD_MS + 1);
                 break;
 #endif
+            case 'R':
+                if (_consoleCharRepeats < 3)
+                {
+                    openknx.log("Restart", "repeat \"%c\" %ix to restart device", current, (3 - _consoleCharRepeats));
+                    break;
+                }
+
+                knx.platform().restart();
+                break;
         }
     }
 
