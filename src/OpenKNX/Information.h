@@ -24,12 +24,9 @@ namespace OpenKNX
 
         std::string humanApplicationNumber()
         {
-            char* buffer = new char[10];
+            char buffer[10];
             sprintf(buffer, "0x%04X", applicationNumber());
-
-            std::string returnValue(buffer);
-            delete[] buffer;
-            return returnValue;
+            return std::string(buffer);
         }
 
         uint16_t applicationVersion()
@@ -44,12 +41,9 @@ namespace OpenKNX
 
         std::string humanApplicationVersion()
         {
-            char* buffer = new char[10];
+            char buffer[10];
             sprintf(buffer, "%i.%i", ((applicationVersion() & 0xF0) >> 4), (applicationVersion() & 0x0F));
-
-            std::string returnValue(buffer);
-            delete[] buffer;
-            return returnValue;
+            return std::string(buffer);
         }
 
         uint16_t firmwareNumber()
@@ -59,12 +53,9 @@ namespace OpenKNX
 
         std::string humanFirmwareNumber()
         {
-            char* buffer = new char[10];
+            char buffer[10];
             sprintf(buffer, "0x%04X", firmwareNumber());
-
-            std::string returnValue(buffer);
-            delete[] buffer;
-            return returnValue;
+            return std::string(buffer);
         }
 
         uint16_t firmwareVersion()
@@ -79,12 +70,9 @@ namespace OpenKNX
 
         std::string humanFirmwareVersion()
         {
-            char* buffer = new char[14];
+            char buffer[14];
             sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11));
-
-            std::string returnValue(buffer);
-            delete[] buffer;
-            return returnValue;
+            return std::string(buffer);
         }
 
         uint16_t individualAddress()
@@ -94,12 +82,9 @@ namespace OpenKNX
 
         std::string humanIndividualAddress()
         {
-            char* buffer = new char[14];
+            char buffer[14];
             sprintf(buffer, "%i.%i.%i", ((knx.individualAddress() & 0xF000) >> 12), ((knx.individualAddress() & 0x0F00) >> 8), (knx.individualAddress() & 0x00FF));
-
-            std::string returnValue(buffer);
-            delete[] buffer;
-            return returnValue;
+            return std::string(buffer);
         }
     };
 
