@@ -77,7 +77,7 @@ namespace OpenKNX
         knx.readMemory();
         // set hardware type again, in case an other hardware type was deserialized from flash
         knx.bau().deviceObject().hardwareType(hardwareType);
-        // set firmware version als user info (PID_VERSION)
+        // set firmware version as user info (PID_VERSION)
         // 5 bit revision, 5 bit major, 6 bit minor
         // output in ETS as [revision] major.minor
         knx.bau().deviceObject().version(openknx.info.firmwareVersion());
