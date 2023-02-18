@@ -270,8 +270,11 @@ namespace OpenKNX
     {
         return ((micros() - _loopMicros) < OPENKNX_MAX_LOOPTIME);
     }
-
+#ifdef __time_critical_func
+    void __time_critical_func(Common::collectMemoryStats)()
+#else
     void Common::collectMemoryStats()
+#endif
     {
         int current = freeMemory();
 

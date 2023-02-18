@@ -4,7 +4,11 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
+#ifdef __time_critical_func
+        uint8_t __time_critical_func(Pulse::value)(uint8_t maxValue /* = 255 */)
+#else
         uint8_t Pulse::value(uint8_t maxValue /* = 255 */)
+#endif
         {
             // first run
             if (_lastMillis == 0)

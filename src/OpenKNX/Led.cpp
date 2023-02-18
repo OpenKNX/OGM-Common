@@ -16,7 +16,11 @@ namespace OpenKNX
         digitalWrite(_pin, LOW);
     }
 
+#ifdef __time_critical_func
+    void __time_critical_func(Led::loop)()
+#else
     void Led::loop()
+#endif
     {
         // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
         if (_pin == -1)

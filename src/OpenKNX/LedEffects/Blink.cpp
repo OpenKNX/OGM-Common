@@ -5,7 +5,11 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
+#ifdef __time_critical_func
+        bool __time_critical_func(Blink::value)()
+#else
         bool Blink::value()
+#endif
         {
             if (DelayCheck(_lastMillis, _frequency) || _lastMillis == 0)
             {

@@ -48,14 +48,19 @@ namespace OpenKNX
         });
 #elif defined(ARDUINO_ARCH_RP2040)
         ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 1000, [](repeating_timer *t) -> bool {
+            // digitalWrite(3, HIGH);
             openknx.timerInterrupt.interrupt();
+            // digitalWrite(3, LOW);
             return true;
         });
 #endif
     }
 
-    // Alternative for ISR_Timer
+#ifdef __time_critical_func
+    void __isr __time_critical_func(TimerInterrupt::interrupt)()
+#else
     void TimerInterrupt::interrupt()
+#endif
     {
         // collect memory usage
         openknx.collectMemoryStats();
