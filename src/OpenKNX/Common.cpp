@@ -25,9 +25,12 @@ namespace OpenKNX
 
 #if defined(DEBUG_WAIT_FOR_SERIAL) || defined(DEBUG_WAIT_FOR_SERIAL_TIMEOUT)
         uint32_t timeout_base = millis();
+        bool toggleled = false;
         while (!SERIAL_DEBUG)
         {
-            delay(10); // will until serial console opens
+            delay(100); // will until serial console opens
+            hardware.progLed.on(toggleled);
+            toggleled = !toggleled;
 #if DEBUG_WAIT_FOR_SERIAL_TIMEOUT > 0
             if (delayCheck(timeout_base, DEBUG_WAIT_FOR_SERIAL_TIMEOUT))
                 break;
@@ -166,7 +169,7 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         if (useSecondCore())
         {
-            multicore_launch_core1(Common::loop2);
+            //multicore_launch_core1(Common::loop2);
         }
 #endif
     }
