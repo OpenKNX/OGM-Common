@@ -29,7 +29,7 @@ namespace OpenKNX
             case 'P':
                 openknx.triggerSavePin();
                 break;
-            case 'W':
+            case 'w':
                 openknx.flash.save(true);
                 break;
             case 'E':
@@ -72,7 +72,7 @@ namespace OpenKNX
                 break;
 #endif
 #ifdef WATCHDOG
-            case 'w':
+            case 'W':
                 if (!ParamLOG_Watchdog)
                     break;
 
@@ -125,16 +125,17 @@ namespace OpenKNX
         openknx.log("");
         openknx.log("= OpenKNX Device Console help =");
         openknx.log("P - Trigger Reaction to Save Pin");
-        openknx.log("W - Write Userflash");
+        openknx.log("w - Write Userflash");
         openknx.log("E - Test Fatal Error");
         openknx.log("h - Show this help");
         openknx.log("i - Show device information");
+        openknx.log("p - Toggle ProgMode");
 #ifdef ARDUINO_ARCH_RP2040
         openknx.log("n - Delete (nuke) Userflash");
         openknx.log("N - Delete (nuke) complete device flash");
 #endif
 #ifdef WATCHDOG
-        openknx.log("w - Trigger Watchdog");
+        openknx.log("W - Trigger Watchdog");
 #endif
     }
 } // namespace OpenKNX
