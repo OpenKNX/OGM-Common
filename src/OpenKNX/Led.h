@@ -3,6 +3,7 @@
 #include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Pulse.h"
 #include "knx.h"
+#include <string>
 
 //
 // Debug Heartbeat
@@ -152,5 +153,10 @@ namespace OpenKNX
          * -> Prio 5
          */
         void off();
+
+        /*
+         * Get a logPrefix as string
+         */
+        std::string logPrefix();
     };
 } // namespace OpenKNX

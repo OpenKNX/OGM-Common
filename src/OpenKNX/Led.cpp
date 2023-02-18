@@ -23,7 +23,8 @@ namespace OpenKNX
 #endif
     {
         // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
-        if (_pin == -1)
+        // no valid pin
+        if (_pin < 0)
             return;
 
         _lastMillis = millis();
@@ -100,19 +101,31 @@ namespace OpenKNX
 
     void Led::brightness(uint8_t brightness)
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "brightness %i", _brightness);
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "brightness %i", _brightness);
         _brightness = brightness;
     }
 
     void Led::powerSave(bool active /* = true */)
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "powerSave %i", active);
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "powerSave %i", active);
         _powerSave = active;
     }
 
     void Led::forceOn(bool active /* = true */)
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "forceOn %i", active);
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "forceOn %i", active);
         _forceOn = active;
 #ifdef DEBUG_HEARTBEAT_PRIO
         _debugEffect.init(active ? DEBUG_HEARTBEAT_PRIO_ON_FREQ : DEBUG_HEARTBEAT_PRIO_OFF_FREQ);
@@ -121,9 +134,13 @@ namespace OpenKNX
 
     void Led::errorCode(uint8_t code /* = 0 */)
     {
+        // no valid pin
+        if (_pin < 0)
+            return;
+
         if (code > 0)
         {
-            openknx.logger.log(LogLevel::Trace, "LED", "errorCode %i", code);
+            openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "errorCode %i", code);
             _errorCode = true;
             _errorEffect.init(code);
         }
@@ -135,14 +152,22 @@ namespace OpenKNX
 
     void Led::on(bool active /* = true */)
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "on");
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "on");
         _state = active;
         _effect = LedEffect::Normal;
     }
 
     void Led::pulsing(uint16_t frequency)
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "pulsing (frequency %i)", frequency);
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "pulsing (frequency %i)", frequency);
         _state = true;
         _effect = LedEffect::Pulse;
         _pulseEffect.init(frequency);
@@ -150,7 +175,11 @@ namespace OpenKNX
 
     void Led::blinking(uint16_t frequency)
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "blinking (frequency %i)", frequency);
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "blinking (frequency %i)", frequency);
         _state = true;
         _effect = LedEffect::Blink;
         _blinkEffect.init(frequency);
@@ -158,7 +187,11 @@ namespace OpenKNX
 
     void Led::off()
     {
-        openknx.logger.log(LogLevel::Trace, "LED", "off");
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        openknx.logger.log(LogLevel::Trace, logPrefix().c_str(), "off");
         _state = false;
         _effect = LedEffect::Normal;
     }
@@ -176,6 +209,10 @@ namespace OpenKNX
      */
     void Led::writeLed(uint8_t brightness)
     {
+        // no valid pin
+        if (_pin < 0)
+            return;
+
         if (brightness == _currentLedBrightness)
             return;
 
@@ -209,5 +246,12 @@ namespace OpenKNX
         _debugHeartbeat = millis();
     }
 #endif
+
+    std::string Led::logPrefix()
+    {
+        char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
+        sprintf(buffer, "LED<%i>", _pin);
+        return std::string(buffer);
+    }
 
 } // namespace OpenKNX
