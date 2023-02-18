@@ -43,21 +43,29 @@ namespace OpenKNX
         }
 
         // Debug (Prio 3)
-#ifdef DEBUG_HEARTBEAT_PRIO
+#ifdef DEBUG_HEARTBEAT
         // debug mode enable
         if (_debugMode)
         {
-            // heartbeat expire -> blink
+#ifdef DEBUG_HEARTBEAT_PRIO
+            // Blinking until the heartbeat signal stops.
             if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
             {
                 writeLed(_debugEffect.value());
             }
             else
             {
-
                 writeLed(false);
             }
             return;
+#else
+            // Blinks as soon as the heartbeat signal stops.
+            if ((millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
+            {
+                writeLed(_debugEffect.value());
+                return;
+            }
+#endif
         }
 #endif
 
@@ -87,21 +95,6 @@ namespace OpenKNX
             return;
         }
 
-        // Debug (Prio 6)
-#if defined(DEBUG_HEARTBEAT) && !defined(DEBUG_HEARTBEAT_PRIO)
-        // debug mode enable
-        if (_debugMode)
-        {
-            // heartbeat expire -> blink
-            if ((millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
-            {
-                writeLed(_debugEffect.value());
-                return;
-            }
-        }
-#endif
-
-        // OFF (Prio 7)
         writeLed(false);
     }
 

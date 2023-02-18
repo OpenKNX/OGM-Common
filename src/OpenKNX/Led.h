@@ -112,6 +112,17 @@ namespace OpenKNX
          */
         void errorCode(uint8_t code = 0);
 
+#ifdef DEBUG_HEARTBEAT
+        /*
+         * Special usage to detect running loop() and loop2().
+         * progLed for loop()
+         * infoLed for loop()
+         * Only active if DEBUG_HEARTBEAT or DEBUG_HEARTBEAT_PRIO is defined
+         *  -> Prio 3
+         */
+        void debugLoop();
+#endif
+
         /*
          * For progLed called by knx Stack for active Progmode
          * -> Prio 4
@@ -138,20 +149,8 @@ namespace OpenKNX
 
         /*
          * Normal "Off"
-         * -> Prio 7
+         * -> Prio 5
          */
         void off();
-
-#ifdef DEBUG_HEARTBEAT
-        /*
-         * Special usage to detect running loop() and loop2().
-         * progLed for loop()
-         * infoLed for loop()
-         * Only active if DEBUG_HEARTBEAT or DEBUG_HEARTBEAT_PRIO is defined
-         * DEBUG_HEARTBEAT_PRIO -> Prio 3
-         * DEBUG_HEARTBEAT -> Prio 6
-         */
-        void debugLoop();
-#endif
     };
 } // namespace OpenKNX
