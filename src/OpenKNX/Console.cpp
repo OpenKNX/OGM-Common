@@ -32,6 +32,9 @@ namespace OpenKNX
             case 'w':
                 openknx.flash.save(true);
                 break;
+            case 'p':
+                knx.toggleProgMode();
+                break;
             case 'E':
                 fatalError(5, "Test with 5x blinking");
                 break;
