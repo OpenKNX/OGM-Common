@@ -112,6 +112,11 @@ namespace OpenKNX
 #ifdef HARDWARE_NAME
         openknx.log("Board", "%s", HARDWARE_NAME);
 #endif
+#ifdef ARDUINO_ARCH_RP2040
+        const char* cpuMode = openknx.useSecondCore() ? "Dual-Core" : "Single-Core";
+
+        openknx.log("CPU-Mode", "%s  (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
+#endif
         Modules* modules = openknx.getModules();
         char* modulePrefix = new char[12];
         for (uint8_t i = 0; i < modules->count; i++)
