@@ -38,6 +38,8 @@ namespace OpenKNX
 #endif
 
         log("OpenKNX", "init");
+        hardware.init();
+
         openknx.info.firmwareRevision(firmwareRevision);
 
         hardware.infoLed.on();

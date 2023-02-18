@@ -2,6 +2,14 @@
 
 namespace OpenKNX
 {
+    void Hardware::init()
+    {
+#ifdef ARDUINO_ARCH_RP2040
+        adc_init();
+        adc_set_temp_sensor_enabled(true);
+#endif
+    }
+
     void Hardware::sendCommandToBcu(const uint8_t* command, const uint8_t length, const char* debug)
     {
         if (!knx.platform().knxUart())
@@ -103,6 +111,18 @@ namespace OpenKNX
 #endif
             delay(2000);
         }
+    }
+
+    float Hardware::cpuTemperature()
+    {
+#ifdef ARDUINO_ARCH_RP2040
+        adc_select_input(4);
+        const float conversionFactor = 3.3f / (1 << 12);
+        float adc = (float)adc_read() * conversionFactor;
+        return 27.0f - (adc - 0.706f) / 0.001721f; // Conversion from Datasheet
+#else
+        return 0.0f;
+#endif
     }
 
 } // namespace OpenKNX

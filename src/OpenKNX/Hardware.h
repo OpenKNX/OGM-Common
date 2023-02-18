@@ -3,6 +3,12 @@
 #include "OpenKNX/Led.h"
 #include "knx.h"
 
+#ifdef ARDUINO_ARCH_RP2040
+#include <hardware.h>
+#include <hardware/adc.h>
+#include <pico/stdlib.h>
+#endif
+
 // NCN5130: internal commands
 #define U_RESET_REQ 0x01
 #define U_STATE_REQ 0x02
@@ -74,6 +80,8 @@ namespace OpenKNX
         Led progLed;
         Led infoLed;
 
+        // Initialize or HW detection
+        void init();
         // Send Command to BCU
         void sendCommandToBcu(const uint8_t* command, const uint8_t length, const char* debug);
         // Receive Response from BCU
@@ -89,6 +97,8 @@ namespace OpenKNX
         // Start KNX Communication
         void startKnxMode();
         // Fatal Error
-        void fatalError(uint8_t code, const char *message = 0);
+        void fatalError(uint8_t code, const char* message = 0);
+        // CPU Temperatur
+        float cpuTemperature();
     };
 } // namespace OpenKNX
