@@ -113,7 +113,7 @@ namespace OpenKNX
         openknx.log("Board", "%s", HARDWARE_NAME);
 #endif
 #ifdef ARDUINO_ARCH_RP2040
-        const char* cpuMode = openknx.useSecondCore() ? "Dual-Core" : "Single-Core";
+        const char* cpuMode = openknx.usesSecCore() ? "Dual-Core" : "Single-Core";
 
         openknx.log("CPU-Mode", "%s  (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
@@ -138,6 +138,7 @@ namespace OpenKNX
         openknx.log("h - Show this help");
         openknx.log("i - Show device information");
         openknx.log("p - Toggle ProgMode");
+        openknx.log("r - Restart device");
 #ifdef ARDUINO_ARCH_RP2040
         openknx.log("n - Delete (nuke) Userflash");
         openknx.log("N - Delete (nuke) complete device flash");

@@ -249,9 +249,7 @@ namespace OpenKNX
 
     std::string Led::logPrefix()
     {
-        char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
-        sprintf(buffer, "LED<%i>", _pin);
-        return std::string(buffer);
+        return openknx.logger.logPrefix("LED", _pin);
     }
 
 } // namespace OpenKNX

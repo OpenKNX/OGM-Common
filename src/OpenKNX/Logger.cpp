@@ -6,7 +6,7 @@ namespace OpenKNX
     Logger::Logger()
     {
         #ifdef ARDUINO_ARCH_RP2040
-                if (openknx.useSecondCore())
+                if (openknx.usesSecCore())
                 {
                     mutex_init(&_mutex);
                 }
@@ -15,7 +15,7 @@ namespace OpenKNX
     void Logger::mutex_block()
     {
         #ifdef ARDUINO_ARCH_RP2040
-                if (openknx.useSecondCore())
+                if (openknx.usesSecCore())
                 {
                     mutex_enter_blocking(&_mutex);
                 }
@@ -25,11 +25,25 @@ namespace OpenKNX
     void Logger::mutex_unblock()
     {
         #ifdef ARDUINO_ARCH_RP2040
-                if (openknx.useSecondCore())
+                if (openknx.usesSecCore())
                 {
                     mutex_exit(&_mutex);
                 }
         #endif
+    }
+
+    std::string Logger::logPrefix(const char* prefix, const char* id)
+    {
+        char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
+        sprintf(buffer, "%s<%s>", prefix, id);
+        return std::string(buffer);
+    }
+
+    std::string Logger::logPrefix(const char* prefix, const int id)
+    {
+        char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
+        sprintf(buffer, "%s<%i>", prefix, id);
+        return std::string(buffer);
     }
 
     void Logger::log(LogLevel level, const char* message)
