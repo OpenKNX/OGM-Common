@@ -6,10 +6,9 @@ namespace OpenKNX
     Logger::Logger()
     {
         #ifdef ARDUINO_ARCH_RP2040
-                if (openknx.usesSecCore())
-                {
-                    mutex_init(&_mutex);
-                }
+                // Always init _mutex, as openknx.usesSecCore()==false at Construction Time
+                // Note: Logger is already used in Common::init(), before there is any module...
+                mutex_init(&_mutex);
         #endif
     }
     void Logger::mutex_block()
