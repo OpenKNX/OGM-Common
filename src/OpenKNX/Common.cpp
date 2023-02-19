@@ -281,13 +281,8 @@ namespace OpenKNX
     void Common::collectMemoryStats()
 #endif
     {
-        int current = freeMemory();
-
-        if (current < 0)
-            return;
-
-        if ((uint)current < _freeMemoryMin)
-            _freeMemoryMin = current;
+        // int current = freeMemory();
+        _freeMemoryMin = MIN(_freeMemoryMin, freeMemory());
     }
 
     /**
