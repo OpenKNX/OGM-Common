@@ -73,22 +73,6 @@ namespace OpenKNX
 
                 fatalError(5, "Test with 5x blinking");
                 break;
-
-#ifdef WATCHDOG
-            case 'W':
-                if (!ParamLOG_Watchdog)
-                    break;
-
-                if (_consoleCharRepeats < 3)
-                {
-                    openknx.log("", "repeat \"%c\" %ix to trigger watchdog", current, (3 - _consoleCharRepeats));
-                    break;
-                }
-
-                openknx.log("", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
-                delay(WATCHDOG_MAX_PERIOD_MS + 1);
-                break;
-#endif
         }
     }
 
