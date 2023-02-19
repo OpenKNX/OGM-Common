@@ -55,6 +55,9 @@ namespace OpenKNX
                     openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash (knx only)", current, (3 - _consoleCharRepeats));
                     break;
                 }
+            case 'b':
+                resetToBootloader();
+                break;
 #ifdef WATCHDOG
                 Watchdog.enable(2147483647);
 #endif
@@ -137,13 +140,21 @@ namespace OpenKNX
         openknx.log("h - Show this help");
         openknx.log("i - Show device information");
         openknx.log("p - Toggle ProgMode");
-        openknx.log("r - Restart device");
 #ifdef ARDUINO_ARCH_RP2040
+        openknx.log("b - Reset into Bootloader Mode");
         openknx.log("n - Delete (nuke) Userflash");
         openknx.log("N - Delete (nuke) complete device flash");
 #endif
+        openknx.log("R - Restart device");
 #ifdef WATCHDOG
         openknx.log("W - Trigger Watchdog");
 #endif
     }
+
+#ifdef ARDUINO_ARCH_RP2040
+        void Console::resetToBootloader()
+        {
+            reset_usb_boot(0, 0);
+        }
+#endif
 } // namespace OpenKNX

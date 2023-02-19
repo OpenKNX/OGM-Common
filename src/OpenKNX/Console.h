@@ -3,6 +3,11 @@
 #ifdef WATCHDOG
 #include <Adafruit_SleepyDog.h>
 #endif
+#ifdef ARDUINO_ARCH_RP2040
+extern "C" {
+#include "pico/bootrom.h"
+}
+#endif
 
 namespace OpenKNX
 {
@@ -15,6 +20,9 @@ namespace OpenKNX
         void processSerialInput();
         void showInformations();
         void showHelp();
+#ifdef ARDUINO_ARCH_RP2040
+        void resetToBootloader();
+#endif
 
       public:
         void loop();
