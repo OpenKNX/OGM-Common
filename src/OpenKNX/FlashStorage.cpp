@@ -299,7 +299,7 @@ namespace OpenKNX
             return;
 
 #ifdef FLASH_DATA_TRACE
-        openknx.log("FlashStorage", "    zeroize %i", fillSize);
+        openknx.log("FlashStorage", "    writeFilldata %i", fillSize);
 #endif
         write((uint8_t)FLASH_DATA_FILLBYTE, fillSize);
     }
