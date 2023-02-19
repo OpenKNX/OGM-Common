@@ -174,8 +174,8 @@ namespace OpenKNX
         for (uint8_t i = 0; i < _modules.count; i++)
         {
             _modules.list[i]->setup();
-            if (_modules.list[i]->usesSecCore())
-                _usesSecCore = true;
+            if (_modules.list[i]->usesDualCore())
+                _usesDualCore = true;
         }
 
         flash.load();
@@ -184,17 +184,17 @@ namespace OpenKNX
         registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
-        if (usesSecCore())
+        if (usesDualCore())
         {
             multicore_launch_core1(Common::loop2);
         }
 #endif
     }
 
-    bool Common::usesSecCore()
+    bool Common::usesDualCore()
     {
 #if defined(ARDUINO_ARCH_RP2040)
-        return _usesSecCore;
+        return _usesDualCore;
 #else
         return false;
 #endif

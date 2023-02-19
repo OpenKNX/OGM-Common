@@ -37,7 +37,7 @@ namespace OpenKNX
         return true;
     }
 
-    bool Module::usesSecCore()
+    bool Module::usesDualCore()
     {
         return false;
     }

@@ -78,6 +78,6 @@ namespace OpenKNX
         /**
          * @return true, if this module has a loop2 for secondary core, false, otherwise
          */
-        virtual bool usesSecCore();
+        virtual bool usesDualCore();
     };
 } // namespace OpenKNX

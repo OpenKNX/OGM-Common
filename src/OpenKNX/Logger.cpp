@@ -17,7 +17,7 @@ namespace OpenKNX
     void Logger::mutex_block()
     {
 #ifdef ARDUINO_ARCH_RP2040
-        if (openknx.usesSecCore())
+        if (openknx.usesDualCore())
         {
             mutex_enter_blocking(&_mutex);
         }
@@ -27,7 +27,7 @@ namespace OpenKNX
     void Logger::mutex_unblock()
     {
 #ifdef ARDUINO_ARCH_RP2040
-        if (openknx.usesSecCore())
+        if (openknx.usesDualCore())
         {
             mutex_exit(&_mutex);
         }
