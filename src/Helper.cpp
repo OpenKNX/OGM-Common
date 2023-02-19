@@ -26,18 +26,10 @@ int freeMemory()
  * Nuker
  */
 #ifdef ARDUINO_ARCH_RP2040
-void nukeFlashKnxOnly()
+void __nukeFlash(uint32_t offset, size_t count)
 {
     uint32_t ints = save_and_disable_interrupts();
-    flash_range_erase(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-    restore_interrupts(ints);
-    watchdog_reboot(0, 0, 0);
-}
-
-void nukeFlash()
-{
-    uint32_t ints = save_and_disable_interrupts();
-    flash_range_erase(0, NUKE_FLASH_SIZE_BYTES);
+    flash_range_erase(offset, count);
     restore_interrupts(ints);
     watchdog_reboot(0, 0, 0);
 }

@@ -26,17 +26,8 @@ namespace OpenKNX
 
         switch (current)
         {
-            case 'P':
-                openknx.triggerSavePin();
-                break;
-            case 'w':
-                openknx.flash.save(true);
-                break;
-            case 'p':
-                knx.toggleProgMode();
-                break;
-            case 'E':
-                fatalError(5, "Test with 5x blinking");
+            case 0x0D: // Enter
+                openknx.log("");
                 break;
             case 'h':
                 showHelp();
@@ -44,39 +35,45 @@ namespace OpenKNX
             case 'i':
                 showInformations();
                 break;
-            case 0x0D: // Enter
-                openknx.log("");
+            case 'r':
+                knx.platform().restart();
                 break;
-
+            case 'p':
+                knx.toggleProgMode();
+                break;
+            case 'w':
+                openknx.flash.save(true);
+                break;
+            case 's':
+                sleep();
+                break;
 #ifdef ARDUINO_ARCH_RP2040
-            case 'n':
-                if (_consoleCharRepeats < 3)
-                {
-                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash (knx only)", current, (3 - _consoleCharRepeats));
-                    break;
-                }
             case 'b':
                 resetToBootloader();
                 break;
-#ifdef WATCHDOG
-                Watchdog.enable(2147483647);
-#endif
-                openknx.log("Nuker", "nuke flash ( %i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-                nukeFlashKnxOnly();
-                break;
             case 'N':
-                if (_consoleCharRepeats < 3)
-                {
-                    openknx.log("Nuker", "repeat \"%c\" %ix to nuke flash", current, (3 - _consoleCharRepeats));
+                if (confirmation(current, 3, "Nuke knwhole flash"))
                     break;
-                }
-#ifdef WATCHDOG
-                Watchdog.enable(2147483647);
-#endif
-                openknx.log("Nuker", "nuke flash ( %i -> %i)", 0, NUKE_FLASH_SIZE_BYTES);
+
                 nukeFlash();
                 break;
 #endif
+            case 'n':
+                if (confirmation(current, 3, "Nuke KNX settings"))
+                    break;
+
+                nukeFlashKnxOnly();
+                break;
+            case 'P':
+                openknx.triggerSavePin();
+                break;
+            case 'E':
+                if (confirmation(current, 1, "FatalError"))
+                    break;
+
+                fatalError(5, "Test with 5x blinking");
+                break;
+
 #ifdef WATCHDOG
             case 'W':
                 if (!ParamLOG_Watchdog)
@@ -84,30 +81,21 @@ namespace OpenKNX
 
                 if (_consoleCharRepeats < 3)
                 {
-                    openknx.log("Watchdog", "repeat \"%c\" %ix to trigger watchdog", current, (3 - _consoleCharRepeats));
+                    openknx.log("", "repeat \"%c\" %ix to trigger watchdog", current, (3 - _consoleCharRepeats));
                     break;
                 }
 
-                openknx.log("Watchdog", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
+                openknx.log("", "wait for %is to trigger watchdog", WATCHDOG_MAX_PERIOD_MS / 1000);
                 delay(WATCHDOG_MAX_PERIOD_MS + 1);
                 break;
 #endif
-            case 'R':
-                if (_consoleCharRepeats < 3)
-                {
-                    openknx.log("Restart", "repeat \"%c\" %ix to restart device", current, (3 - _consoleCharRepeats));
-                    break;
-                }
-
-                knx.platform().restart();
-                break;
         }
     }
 
     void Console::showInformations()
     {
         openknx.log("");
-        openknx.log("= OpenKNX Device Information =");
+        openknx.log("Device Console", "===== Information =====");
         openknx.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
         openknx.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
         openknx.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
@@ -120,6 +108,9 @@ namespace OpenKNX
 
         openknx.log("CPU-Mode", "%s  (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
+        openknx.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
+
+        openknx.log("", "Modules");
         Modules* modules = openknx.getModules();
         char modulePrefix[12];
         for (uint8_t i = 0; i < modules->count; i++)
@@ -127,34 +118,78 @@ namespace OpenKNX
             sprintf(modulePrefix, "Module %i", modules->ids[i]);
             openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i]->version().c_str(), modules->list[i]->name().c_str());
         }
-        openknx.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
+        openknx.log("");
     }
 
     void Console::showHelp()
     {
         openknx.log("");
-        openknx.log("= OpenKNX Device Console help =");
-        openknx.log("P - Trigger Reaction to Save Pin");
-        openknx.log("w - Write Userflash");
-        openknx.log("E - Test Fatal Error");
-        openknx.log("h - Show this help");
-        openknx.log("i - Show device information");
-        openknx.log("p - Toggle ProgMode");
+        openknx.log("Device Console", "===== Help =====");
+        openknx.log("", ">  h  <  Show this help");
+        openknx.log("", ">  i  <  Show device information");
+        openknx.log("", ">  r  <  Restart the device");
+        openknx.log("", ">  p  <  Toggle the ProgMode");
+        openknx.log("", ">  w  <  Write data to Flash");
+        openknx.log("", ">  s  <  Sleep for %ims time", sleepTime());
 #ifdef ARDUINO_ARCH_RP2040
-        openknx.log("b - Reset into Bootloader Mode");
-        openknx.log("n - Delete (nuke) Userflash");
-        openknx.log("N - Delete (nuke) complete device flash");
+        openknx.log("", ">  b  <  Reset into Bootloader Mode");
+        openknx.log("", ">  N  <  Delete (nuke) complete device flash");
+        openknx.log("", ">  n  <  Delete (nuke) Userflash");
 #endif
-        openknx.log("R - Restart device");
+        openknx.log("", ">  E  <  Trigger a FatalError");
+        openknx.log("", ">  P  <  Trigger a powerloss (SavePin)");
+        openknx.log("");
+    }
+
+    void Console::sleep()
+    {
+        delay(sleepTime());
+    }
+
+    uint32_t Console::sleepTime()
+    {
 #ifdef WATCHDOG
-        openknx.log("W - Trigger Watchdog");
+        return MAX(WATCHDOG_MAX_PERIOD_MS + 1, 20000);
+#else
+        return 20;
 #endif
     }
 
-#ifdef ARDUINO_ARCH_RP2040
-        void Console::resetToBootloader()
+    bool Console::confirmation(char key, uint8_t repeats, const char* action)
+    {
+        if (_consoleCharRepeats < repeats)
         {
-            reset_usb_boot(0, 0);
+            openknx.log("", "repeat \"%c\" %ix to trigger \"%s\"", key, (repeats - _consoleCharRepeats), action);
+            return true;
         }
+        else
+        {
+            return false;
+        }
+    }
+
+#ifdef ARDUINO_ARCH_RP2040
+    void Console::nukeFlash()
+    {
+#ifdef WATCHDOG
+        Watchdog.enable(2147483647);
+#endif
+        openknx.log("", "Delete (nuke) complete device flash (%i -> %i)", 0, NUKE_FLASH_SIZE_BYTES);
+        __nukeFlash(0, NUKE_FLASH_SIZE_BYTES);
+    }
+
+    void Console::nukeFlashKnxOnly()
+    {
+#ifdef WATCHDOG
+        Watchdog.enable(2147483647);
+#endif
+        openknx.log("", "Delete (nuke) Userflash (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+    }
+
+    void Console::resetToBootloader()
+    {
+        reset_usb_boot(0, 0);
+    }
 #endif
 } // namespace OpenKNX

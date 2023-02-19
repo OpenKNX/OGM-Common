@@ -31,12 +31,7 @@ int freeMemory();
 #endif
 
 /*
- * Erase whole flash from knx stack (pa, parameters, ... flash storage)
+ * Erase flash
  */
-void nukeFlashKnxOnly();
-
-/*
- * Erase whole flash (also firmware, too)
- */
-void nukeFlash();
+void __nukeFlash(uint32_t offset, size_t count);
 #endif

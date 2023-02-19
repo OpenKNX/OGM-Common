@@ -80,7 +80,7 @@ namespace OpenKNX
             {
                 SERIAL_DEBUG.print(prefix.c_str()[i]);
             }
-            else if (i == prefixLen)
+            else if (i == prefixLen && prefixLen > 0)
             {
                 SERIAL_DEBUG.print(":");
             }

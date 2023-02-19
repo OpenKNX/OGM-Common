@@ -19,7 +19,13 @@ namespace OpenKNX
 
         void processSerialInput();
         void showInformations();
+
+        bool confirmation(char key, uint8_t repeats, const char* message);
         void showHelp();
+        void sleep();
+        uint32_t sleepTime();
+        void nukeFlash();
+        void nukeFlashKnxOnly();
 #ifdef ARDUINO_ARCH_RP2040
         void resetToBootloader();
 #endif
