@@ -105,7 +105,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "brightness %i", _brightness);
+        logTraceP("brightness %i", _brightness);
         _brightness = brightness;
     }
 
@@ -115,7 +115,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "powerSave %i", active);
+        logTraceP("powerSave %i", active);
         _powerSave = active;
     }
 
@@ -125,7 +125,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "forceOn %i", active);
+        logTraceP("forceOn %i", active);
         _forceOn = active;
 #ifdef DEBUG_HEARTBEAT_PRIO
         _debugEffect.init(active ? DEBUG_HEARTBEAT_PRIO_ON_FREQ : DEBUG_HEARTBEAT_PRIO_OFF_FREQ);
@@ -140,7 +140,7 @@ namespace OpenKNX
 
         if (code > 0)
         {
-            openknx.log(logPrefix(), "errorCode %i", code);
+            logTraceP("errorCode %i", code);
             _errorCode = true;
             _errorEffect.init(code);
         }
@@ -156,7 +156,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "on");
+        logTraceP("on");
         _state = active;
         _effect = LedEffect::Normal;
     }
@@ -167,7 +167,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "pulsing (frequency %i)", frequency);
+        logTraceP("pulsing (frequency %i)", frequency);
         _state = true;
         _effect = LedEffect::Pulse;
         _pulseEffect.init(frequency);
@@ -179,7 +179,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "blinking (frequency %i)", frequency);
+        logTraceP("blinking (frequency %i)", frequency);
         _state = true;
         _effect = LedEffect::Blink;
         _blinkEffect.init(frequency);
@@ -191,7 +191,7 @@ namespace OpenKNX
         if (_pin < 0)
             return;
 
-        openknx.log(logPrefix(), "off");
+        logTraceP("off");
         _state = false;
         _effect = LedEffect::Normal;
     }
