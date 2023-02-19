@@ -57,13 +57,13 @@ namespace OpenKNX
 
                 nukeFlash();
                 break;
-#endif
             case 'n':
                 if (confirmation(current, 3, "Nuke KNX settings"))
                     break;
 
                 nukeFlashKnxOnly();
                 break;
+#endif
             case 'P':
                 openknx.triggerSavePin();
                 break;
