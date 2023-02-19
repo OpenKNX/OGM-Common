@@ -1,11 +1,6 @@
 #include "OpenKNX/Logger.h"
 #include "OpenKNX/Common.h"
 
-// void logError()
-// {
-//     openknx.log("afsdsdfs", "sdfsdfsdds");
-// }
-
 namespace OpenKNX
 {
     Logger::Logger()
@@ -100,5 +95,31 @@ namespace OpenKNX
         char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
         vsnprintf(buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), args);
         SERIAL_DEBUG.println(buffer);
+    }
+
+    bool Logger::checkTrace(std::string prefix)
+    {
+#ifdef TRACE_LOG1
+        if (TRACE_STRINGIFY(TRACE_LOG1) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG1), 0) == 0)
+            return true;
+#endif
+#ifdef TRACE_LOG2
+        if (TRACE_STRINGIFY(TRACE_LOG2) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG2), 0) == 0)
+            return true;
+#endif
+#ifdef TRACE_LOG3
+        if (TRACE_STRINGIFY(TRACE_LOG3) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG3), 0) == 0)
+            return true;
+#endif
+#ifdef TRACE_LOG4
+        if (TRACE_STRINGIFY(TRACE_LOG4) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG4), 0) == 0)
+            return true;
+#endif
+#ifdef TRACE_LOG5
+        if (TRACE_STRINGIFY(TRACE_LOG5) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG5), 0) == 0)
+            return true;
+#endif
+
+        return false;
     }
 } // namespace OpenKNX

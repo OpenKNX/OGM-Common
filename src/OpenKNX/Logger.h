@@ -13,19 +13,52 @@
 #define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
 #endif
 
-// #if > 3
-// #define logInfo() openknx.....
-// #else
-// #define logInfo()
-// #endif
+#define logError(...) openknx.logger.log(__VA_ARGS__)
+#define logErrorM(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
+#define logInfo(...) openknx.logger.log(__VA_ARGS__)
+#define logInfoM(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
 
-// #define logError(args1 a2 a3)
-// #define logError1(message)
-// #define logError2(prefix, message, ...)
-// #define logInfo(prefix, message, ...)
-// #define logDebug(prefix, message, ...)
-// #define logTrace(traceName, prefix, message, ...)
+#if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
 
+#ifndef TRACE_LOG1
+#define TRACE_LOG1
+#endif
+#ifndef TRACE_LOG2
+#define TRACE_LOG2
+#endif
+#ifndef TRACE_LOG3
+#define TRACE_LOG3
+#endif
+#ifndef TRACE_LOG4
+#define TRACE_LOG4
+#endif
+#ifndef TRACE_LOG5
+#define TRACE_LOG5
+#endif
+
+#define TRACE_STRINGIFY2(X) #X
+#define TRACE_STRINGIFY(X) TRACE_STRINGIFY2(X)
+// Force Debug Mode during Trace
+#undef DEBUG_LOG
+#define DEBUG_LOG
+#define logTrace(prefix, ...)              \
+    if (openknx.logger.checkTrace(prefix)) \
+        openknx.logger.log(prefix, __VA_ARGS__);
+#define logTraceM(...)                          \
+    if (openknx.logger.checkTrace(logPrefix())) \
+        openknx.logger.log(logPrefix(), __VA_ARGS__);
+#else
+#define logTrace(tracer, ...)
+#define logTrace(logPrefix(), tracer, ...)
+#endif
+
+#ifdef DEBUG_LOG
+#define logDebug(...) openknx.log(__VA_ARGS__)
+#define logDebugM(...) openknx.log(logPrefix(), __VA_ARGS__)
+#else
+#define logDebug(...)
+#define logDebugM(...)
+#endif
 
 namespace OpenKNX
 {
@@ -50,5 +83,7 @@ namespace OpenKNX
         void log(const std::string prefix, const std::string message, va_list args);
         void log(const std::string prefix, const std::string message, ...);
         void log(const std::string message);
+
+        bool checkTrace(const std::string prefix);
     };
 } // namespace OpenKNX
