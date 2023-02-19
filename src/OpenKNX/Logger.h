@@ -14,9 +14,9 @@
 #endif
 
 #define logError(...) openknx.logger.log(__VA_ARGS__)
-#define logErrorM(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
+#define logErrorP(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
 #define logInfo(...) openknx.logger.log(__VA_ARGS__)
-#define logInfoM(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
+#define logInfoP(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
 
 #if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
 
@@ -44,20 +44,20 @@
 #define logTrace(prefix, ...)              \
     if (openknx.logger.checkTrace(prefix)) \
         openknx.logger.log(prefix, __VA_ARGS__);
-#define logTraceM(...)                          \
+#define logTraceP(...)                          \
     if (openknx.logger.checkTrace(logPrefix())) \
         openknx.logger.log(logPrefix(), __VA_ARGS__);
 #else
-#define logTrace(tracer, ...)
-#define logTrace(logPrefix(), tracer, ...)
+#define logTrace(...)
+#define logTraceP(...)
 #endif
 
 #ifdef DEBUG_LOG
 #define logDebug(...) openknx.log(__VA_ARGS__)
-#define logDebugM(...) openknx.log(logPrefix(), __VA_ARGS__)
+#define logDebugP(...) openknx.log(logPrefix(), __VA_ARGS__)
 #else
 #define logDebug(...)
-#define logDebugM(...)
+#define logDebugP(...)
 #endif
 
 namespace OpenKNX
