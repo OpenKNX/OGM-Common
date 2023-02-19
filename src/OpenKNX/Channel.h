@@ -12,7 +12,7 @@ namespace OpenKNX
          * Get a Pointer to a name for Log
          * THe point need to be delete[] after usage!
          */
-        virtual char *logPrefix() override;
+        virtual const std::string logPrefix() override;
 
       public:
         /*

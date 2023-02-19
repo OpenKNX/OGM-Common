@@ -3,41 +3,22 @@
 
 namespace OpenKNX
 {
-    void Helper::log(const char* message)
+    void Helper::log(const std::string message)
     {
-        openknx.logger.log(LogLevel::Info, message);
+        openknx.logger.log(message);
     }
 
-    void Helper::log(LogLevel loglevel, const char* message)
-    {
-        openknx.logger.log(loglevel, message);
-    }
-
-    void Helper::log(const char* prefix, const char* message, ...)
+    void Helper::log(const std::string prefix, const std::string message, ...)
     {
         va_list args;
         va_start(args, message);
-        openknx.logger.log(LogLevel::Info, prefix, message, args);
+        openknx.logger.log(prefix, message, args);
         va_end(args);
     }
 
-    void Helper::log(LogLevel loglevel, const char* prefix, const char* message, ...)
+    void Helper::logHex(const std::string prefix, const uint8_t* data, size_t size)
     {
-        va_list args;
-        va_start(args, message);
-        openknx.logger.log(loglevel, prefix, message, args);
-        va_end(args);
-    }
-
-    void Helper::logHex(const char* prefix, const uint8_t* data, size_t size)
-    {
-        SERIAL_DEBUG.print(prefix);
-        SERIAL_DEBUG.print(": ");
-        size_t prefixLen = strlen(prefix);
-        for (size_t i = 0; i < (MAX_LOG_PREFIX - prefixLen); i++)
-        {
-            SERIAL_DEBUG.print(" ");
-        }
+        openknx.logger.printPrefix(prefix);
         for (size_t i = 0; i < size; i++)
         {
             if (data[i] < 0x10)

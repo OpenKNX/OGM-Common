@@ -13,16 +13,22 @@
 #define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
 #endif
 
+// #if > 3
+// #define logInfo() openknx.....
+// #else
+// #define logInfo()
+// #endif
+
+// #define logError(args1 a2 a3)
+// #define logError1(message)
+// #define logError2(prefix, message, ...)
+// #define logInfo(prefix, message, ...)
+// #define logDebug(prefix, message, ...)
+// #define logTrace(traceName, prefix, message, ...)
+
+
 namespace OpenKNX
 {
-    enum class LogLevel
-    {
-        Error,
-        Info,
-        Debug,
-        Trace
-    };
-
     class Logger
     {
       private:
@@ -31,18 +37,18 @@ namespace OpenKNX
 #endif
         void mutex_block();
         void mutex_unblock();
-        void printMessage(const char* message, va_list args);
-        void printMessage(const char* message);
-        void printPrefix(const char* prefix);
+        void printMessage(const std::string message, va_list args);
+        void printMessage(const std::string message);
 
       public:
         Logger();
-        
-        std::string logPrefix(const char* prefix, const char* id);
-        std::string logPrefix(const char* prefix, const int id);
+        void printPrefix(const std::string prefix);
 
-        void log(LogLevel level, const char* prefix, const char* message, va_list args);
-        void log(LogLevel level, const char* prefix, const char* message, ...);
-        void log(LogLevel level, const char* message);
+        std::string logPrefix(const std::string prefix, const std::string id);
+        std::string logPrefix(const std::string prefix, const int id);
+
+        void log(const std::string prefix, const std::string message, va_list args);
+        void log(const std::string prefix, const std::string message, ...);
+        void log(const std::string message);
     };
 } // namespace OpenKNX

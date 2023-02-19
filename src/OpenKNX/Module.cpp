@@ -4,7 +4,7 @@
 
 namespace OpenKNX
 {
-    const char *Module::version()
+    const std::string Module::version()
     {
         return "0.0";
     }

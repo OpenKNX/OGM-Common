@@ -1,6 +1,6 @@
 #pragma once
-#include <knx.h>
 #include "OpenKNX/logger.h"
+#include <knx.h>
 
 namespace OpenKNX
 {
@@ -14,10 +14,6 @@ namespace OpenKNX
          * Wrapper for openknx.log. The name() will be used as prefix.
          */
         void log(const char* output, ...);
-        /*
-         * Wrapper for openknx.log. The name() will be used as prefix.
-         */
-        void log(LogLevel level, const char* output, ...);
 
         /*
          * Wrapper for openknx.logHex. The name() will be used as prefix.
@@ -28,14 +24,14 @@ namespace OpenKNX
          * Get a Pointer to a prefix for Log
          * THe point need to be delete[] after usage!
          */
-        virtual char *logPrefix();
+        virtual const std::string logPrefix();
 
       public:
         /*
          * The name. Used for "log" methods.
          * @return name
          */
-        virtual const char* name();
+        virtual const std::string name();
 
         /*
          * Called at startup (before startup delay)

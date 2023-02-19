@@ -9,10 +9,8 @@ namespace OpenKNX
         return _channelIndex;
     }
 
-    char *Channel::logPrefix()
+    const std::string Channel::logPrefix()
     {
-        char *buffer = new char[OPENKNX_MAX_LOG_PREFIX_LENGTH];
-        sprintf(buffer, "%s<%i>", name(), _channelIndex + 1);
-        return buffer;
+        return openknx.logger.logPrefix(name(), _channelIndex + 1);
     }
 } // namespace OpenKNX

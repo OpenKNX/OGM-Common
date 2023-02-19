@@ -118,13 +118,12 @@ namespace OpenKNX
         openknx.log("CPU-Mode", "%s  (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
         Modules* modules = openknx.getModules();
-        char* modulePrefix = new char[12];
+        char modulePrefix[12];
         for (uint8_t i = 0; i < modules->count; i++)
         {
             sprintf(modulePrefix, "Module %i", modules->ids[i]);
-            openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i]->version(), modules->list[i]->name());
+            openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i]->version().c_str(), modules->list[i]->name().c_str());
         }
-        delete[] modulePrefix;
         openknx.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
     }
 
