@@ -3,9 +3,6 @@
 
 namespace OpenKNX
 {
-    Common::Common()
-    {}
-
     void Common::init(uint8_t firmwareRevision)
     {
         SERIAL_DEBUG.begin(115200);
@@ -17,37 +14,24 @@ namespace OpenKNX
         hardware.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
 #endif
 
-#if defined(PROG_LED_SUPPORT_PWM)
+#ifdef OPENKNX_PULSATING_BOOT
         hardware.progLed.pulsing();
+        hardware.infoLed.pulsing();
 #else
         hardware.progLed.on();
+        hardware.infoLed.on();
 #endif
 
-#if defined(DEBUG_WAIT_FOR_SERIAL) || defined(DEBUG_WAIT_FOR_SERIAL_TIMEOUT)
-        uint32_t timeout_base = millis();
-        bool toggleled = false;
-        while (!SERIAL_DEBUG)
-        {
-            delay(100); // will until serial console opens
-            hardware.progLed.on(toggleled);
-            toggleled = !toggleled;
-#if DEBUG_WAIT_FOR_SERIAL_TIMEOUT > 0
-            if (delayCheck(timeout_base, DEBUG_WAIT_FOR_SERIAL_TIMEOUT))
-                break;
-#endif
-        }
-#elif defined(DEBUG_DELAY)
-        delay(DEBUG_DELAY);
-#endif
+        debugWait();
+
 
         log("OpenKNX", "init");
-        hardware.init();
 
         openknx.info.firmwareRevision(firmwareRevision);
 
-        hardware.infoLed.on();
-
         initKnx();
+      
+        hardware.init();
     }
 
     void Common::initKnx()
@@ -58,6 +42,11 @@ namespace OpenKNX
         KNX_SERIAL.setRX(KNX_UART_RX_PIN);
         KNX_SERIAL.setTX(KNX_UART_TX_PIN);
 #endif
+
+        // pin or GPIO programming button is connected to. Default is 0
+        knx.buttonPin(PROG_BUTTON_PIN);
+        // Is the interrup created in RISING or FALLING signal? Default is RISING
+        // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
 
         knx.ledPin(0);
         knx.setProgLedOnCallback([]() -> void {
@@ -115,20 +104,48 @@ namespace OpenKNX
         return FlashValid;
     }
 
+    void Common::debugWait()
+    {
+#if defined(DEBUG_WAIT_FOR_SERIAL)
+        uint32_t timeoutBase = millis();
+
+#ifdef OPENKNX_PULSATING_BOOT
+        hardware.progLed.pulsing(500);
+        hardware.infoLed.pulsing(500);
+#else
+        hardware.progLed.blinking();
+        hardware.infoLed.blinking();
+#endif
+
+        while (!SERIAL_DEBUG)
+        {
+#if DEBUG_WAIT_FOR_SERIAL > 1
+            if (delayCheck(timeoutBase, DEBUG_WAIT_FOR_SERIAL))
+                break;
+#endif
+        }
+#elif defined(DEBUG_DELAY)
+        delay(DEBUG_DELAY);
+#endif
+
+#ifdef OPENKNX_PULSATING_BOOT
+        hardware.progLed.pulsing();
+        hardware.infoLed.pulsing();
+#else
+        hardware.progLed.on();
+        hardware.infoLed.on();
+#endif
+    }
+
     void Common::setup()
     {
         log("OpenKNX", "setup");
 
-        // pin or GPIO programming button is connected to. Default is 0
-        knx.buttonPin(PROG_BUTTON_PIN);
-        // Is the interrup created in RISING or FALLING signal? Default is RISING
-        // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
-
+        // setup modules
         appSetup();
 
-        hardware.progLed.off();
-
         // start the framework
+        hardware.progLed.off();
         knx.start();
 
         // when module was restarted during bcu was disabled, reenable
@@ -137,7 +154,7 @@ namespace OpenKNX
 #ifdef WATCHDOG
         watchdogSetup();
 #endif
-
+        // setup complete turn infoLed off
         hardware.infoLed.off();
     }
 

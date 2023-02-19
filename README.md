@@ -54,11 +54,11 @@ OPENKNX_LEDEFFECT_PULSE_FREQ
 OPENKNX_LEDEFFECT_BLINK_FREQ
 
 # defines in hardware.h
+OPENKNX_PULSATING_BOOT
 SAVE_INTERRUPT_PIN
 INFO_LED_PIN
 PROG_BUTTON_PIN
 PROG_LED_PIN_ACTIVE_ON
-PROG_LED_SUPPORT_PWM
 PROG_LED_PIN
 KNX_UART_RX_PIN
 KNX_UART_TX_PIN
@@ -74,13 +74,7 @@ example (wait 5s): `-D DEBUG_DELAY=5000`
 
 
 `DEBUG_WAIT_FOR_SERIAL` - wait at startup until SERIAL_DEBUG is connected. DEBUG_DELAY is ignored
-
-example: `-D DEBUG_WAIT_FOR_SERIAL`
-
-
-`DEBUG_WAIT_FOR_SERIAL_TIMEOUT` - wait at startup until SERIAL_DEBUG is connected or timeout in ms is over. DEBUG_DELAY is ignored. If no value is defined, it works like `DEBUG_WAIT_FOR_SERIAL`
-
-example (20s timeout): `-D DEBUG_WAIT_FOR_SERIAL_TIMEOUT=20000`
+`DEBUG_WAIT_FOR_SERIAL=5000` - wait at startup until SERIAL_DEBUG is connected or timer is expired. DEBUG_DELAY is ignored
 
 ### Debug Loops
 

@@ -74,6 +74,7 @@ namespace OpenKNX
         void registerCallbacks();
         void processRestoreSavePin();
         void initMemoryTimerInterrupt();
+        void debugWait();
 #ifdef WATCHDOG
         void watchdogSetup();
 #endif
@@ -89,8 +90,6 @@ namespace OpenKNX
         Logger logger;
         TimerInterrupt timerInterrupt;
         Hardware hardware;
-
-        Common();
 
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
