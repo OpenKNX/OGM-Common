@@ -36,7 +36,7 @@ namespace OpenKNX
 
             if (moduleSize > 0 && !loadedModules[moduleId])
             {
-                openknx.log("FlashStorage", "  init module %s (%i)", module->name(), moduleId);
+                openknx.log("FlashStorage", "  init module %s (%i)", module->name().c_str(), moduleId);
                 module->readFlash(new uint8_t[0], 0);
             }
         }
@@ -107,7 +107,7 @@ namespace OpenKNX
             }
             else
             {
-                openknx.log("FlashStorage", "  restore module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
+                openknx.log("FlashStorage", "  restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
                 _currentReadAddress = currentPosition;
 #ifdef FLASH_DATA_TRACE
                 openknx.logHex("FlashStorage", currentPosition, moduleSize);
@@ -190,7 +190,7 @@ namespace OpenKNX
 
             _maxWriteAddress = _currentWriteAddress + moduleSize;
 
-            openknx.log("FlashStorage", "  save module %s (%i) with %i bytes", module->name(), moduleId, moduleSize);
+            openknx.log("FlashStorage", "  save module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
             module->writeFlash();
             writeFilldata();
         }
