@@ -6,30 +6,17 @@
 #include <stdio.h>
 #include <string>
 
-#define DelayCheckMillis(last, duration) (millis() - last >= duration)
-#define DelayCheckMicros(last, duration) (micros() - last >= duration)
-#define DelayCheck(last, duration) DelayCheckMillis(last, duration)
+#define delayCheckMillis(last, duration) (millis() - last >= duration)
+#define delayCheckMicros(last, duration) (micros() - last >= duration)
+#define delayCheck(last, duration) delayCheckMillis(last, duration)
+#define delayTimerInit() (millis() == 0 ? 1 : millis())
 
 #define NO_NUM -987654321.0F // normal NAN-Handling does not work
+#define isNum(value) ((value + 10.0) > NO_NUM)
 
-/*********************
- * Helper for any module
- * *******************/
-
-// generic helper for formatted debug output
-// int printDebug(const char *format, ...);
-// void printHEX(const char* iPrefix, const uint8_t *iData, size_t iLength);
-// void printResult(bool iResult);
-
-// ensure correct time delta check
-// important by using interrupt handler
-//   The called method millis() are not incremented further in the interrupt!
-bool delayCheck(uint32_t iOldTimer, uint32_t iDuration);
-// init delay timer with millis, ensure that it is not 0
-uint32_t delayTimerInit();
-// check for float number
-bool isNum(float iNumber);
-
+/*
+ * Free Memory
+ */
 int freeMemory();
 
 /*
@@ -43,6 +30,13 @@ int freeMemory();
 #define NUKE_FLASH_SIZE_BYTES (16 * 1024 * 1024)
 #endif
 
+/*
+ * Erase whole flash from knx stack (pa, parameters, ... flash storage)
+ */
 void nukeFlashKnxOnly();
+
+/*
+ * Erase whole flash (also firmware, too)
+ */
 void nukeFlash();
 #endif
