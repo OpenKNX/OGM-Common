@@ -46,6 +46,11 @@ namespace OpenKNX
             return std::string(buffer);
         }
 
+        /**
+         * Get the firmware number
+         * @result a 2 byte value consisting of MAIN_OpenKnxId (uint8_t) in
+         * higher byte followed ny MAIN_ApplicationNumber (uint8_t) in lower byte.
+         */
         uint16_t firmwareNumber()
         {
             return (MAIN_OpenKnxId << 8) + MAIN_ApplicationNumber;
