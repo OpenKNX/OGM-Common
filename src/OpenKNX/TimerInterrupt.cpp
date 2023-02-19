@@ -105,12 +105,26 @@ namespace OpenKNX
     void TimerInterrupt::interrupt()
 #endif
     {
-        // collect memory usage
-        openknx.collectMemoryStats();
+        switch (_counter % 3)
+        {
+            case 1:
+                // collect memory usage
+                openknx.collectMemoryStats();
+                break;
+            case 2:
+                // loop progLed
+                openknx.hardware.progLed.loop();
+                break;
+            case 3:
+                // loop infoLed
+                openknx.hardware.infoLed.loop();
+                break;
 
-        // loop prog & info led
-        openknx.hardware.progLed.loop();
-        openknx.hardware.infoLed.loop();
+            default:
+                break;
+        }
+
+        _counter++;
     }
 
 } // namespace OpenKNX

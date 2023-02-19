@@ -1,15 +1,15 @@
 #pragma once
 #include "knx.h"
 
-#ifndef OPENKNX_INTERRUPT_TIMER_MS
-#define OPENKNX_INTERRUPT_TIMER_MS 5
-#endif
+#define OPENKNX_INTERRUPT_TIMER_MS 2
 
 namespace OpenKNX
 {
     // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
     class TimerInterrupt
     {
+      private:
+        volatile uint8_t _counter = 0;
       public:
         void init();
         void interrupt();
