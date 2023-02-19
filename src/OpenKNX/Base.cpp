@@ -12,7 +12,7 @@ namespace OpenKNX
     {
         va_list args;
         va_start(args, message);
-        openknx.log(logPrefix(), message, args);
+        openknx.logger.log(logPrefix(), message, args);
         va_end(args);
     }
 
