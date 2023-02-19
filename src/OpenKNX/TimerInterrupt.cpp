@@ -107,15 +107,15 @@ namespace OpenKNX
     {
         switch (_counter % 3)
         {
-            case 1:
+            case 0:
                 // collect memory usage
                 openknx.collectMemoryStats();
                 break;
-            case 2:
+            case 1:
                 // loop progLed
                 openknx.hardware.progLed.loop();
                 break;
-            case 3:
+            case 2:
                 // loop infoLed
                 openknx.hardware.infoLed.loop();
                 break;
