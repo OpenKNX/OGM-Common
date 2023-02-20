@@ -1,6 +1,7 @@
 #pragma once
 #include "knx.h"
 #include "knx/bits.h"
+#include <string>
 // #include <stddef.h>
 
 #ifndef FLASH_DATA_WRITE_LIMIT
@@ -167,8 +168,6 @@ namespace OpenKNX
     class FlashStorage
     {
       public:
-        FlashStorage();
-
         /**
          * TODO extend documentation
          * 
@@ -222,5 +221,6 @@ namespace OpenKNX
         void initUnloadedModules();
         uint16_t calcChecksum(uint8_t *data, uint16_t size);
         bool verifyChecksum(uint8_t *data, uint16_t size);
+        std::string logPrefix();
     };
 } // namespace OpenKNX

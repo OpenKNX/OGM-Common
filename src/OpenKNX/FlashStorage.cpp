@@ -3,8 +3,9 @@
 
 namespace OpenKNX
 {
-    FlashStorage::FlashStorage()
-    {}
+    std::string FlashStorage::logPrefix() {
+        return "FlashStorage";
+    }
 
     void FlashStorage::load()
     {
@@ -12,10 +13,10 @@ namespace OpenKNX
         _flashStart = knx.platform().getNonVolatileMemoryStart();
         uint32_t start = millis();
         loadedModules = new bool[openknx.getModules()->count];
-        openknx.log("FlashStorage", "load");
+        logInfoP("Load data from flash");
         readData();
         initUnloadedModules();
-        openknx.log("FlashStorage", "  complete (%i)", millis() - start);
+        logInfoP("  Loading complete (%ims)", millis() - start);
     }
 
     /**
@@ -36,7 +37,7 @@ namespace OpenKNX
 
             if (moduleSize > 0 && !loadedModules[moduleId])
             {
-                openknx.log("FlashStorage", "  init module %s (%i)", module->name().c_str(), moduleId);
+                logDebugP("  init module %s (%i)", module->name().c_str(), moduleId);
                 module->readFlash(new uint8_t[0], 0);
             }
         }
@@ -58,7 +59,7 @@ namespace OpenKNX
         currentPosition = _flashStart + _flashSize - FLASH_DATA_META_LEN;
         if (FLASH_DATA_INIT != getInt(currentPosition + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN))
         {
-            openknx.log("FlashStorage", "   - Abort: No data found");
+            logInfoP("   - Abort: No data found");
             return;
         }
 
@@ -68,30 +69,28 @@ namespace OpenKNX
         // read FirmwareVersion
         _currentReadAddress = currentPosition;
         _lastFirmwareNumber = readWord();
-        openknx.log("FlashStorage", "  FirmwareNumber: 0x%04X", _lastFirmwareNumber);
+        logDebugP("  FirmwareNumber: 0x%04X", _lastFirmwareNumber);
 
         _lastFirmwareVersion = readWord();
-        openknx.log("FlashStorage", "  FirmwareVersion: %i", _lastFirmwareVersion);
+        logDebugP("  FirmwareVersion: %i", _lastFirmwareVersion);
 
         // validate checksum
         currentPosition = (currentPosition - dataSize);
         if (!verifyChecksum(currentPosition, dataSize + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN))
         {
-            openknx.log("FlashStorage", "   - Abort: Checksum invalid!");
-            openknx.logHex("FlashStorage", currentPosition, dataSize + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN);
+            logErrorP("   - Abort: Checksum invalid!");
+            logHexErrorP(currentPosition, dataSize + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN);
             return;
         }
 
         // check FirmwareNumber
         if (_lastFirmwareNumber != openknx.info.firmwareNumber())
         {
-            openknx.log("FlashStorage", "  - Abort: Data from other application");
+            logErrorP("  - Abort: Data from other application");
             return;
         }
 
-#ifdef FLASH_DATA_TRACE
-        openknx.logHex("FlashStorage", currentPosition, dataSize + FLASH_DATA_META_LEN);
-#endif
+        logHexTraceP(currentPosition, dataSize + FLASH_DATA_META_LEN);
 
         while (dataProcessed < dataSize)
         {
@@ -103,15 +102,13 @@ namespace OpenKNX
             module = openknx.getModule(moduleId);
             if (module == nullptr)
             {
-                openknx.log("FlashStorage", "  skip module with id %i (not found)", moduleId);
+                logDebugP("  skip module with id %i (not found)", moduleId);
             }
             else
             {
-                openknx.log("FlashStorage", "  restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
+                logDebugP("  restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
                 _currentReadAddress = currentPosition;
-#ifdef FLASH_DATA_TRACE
-                openknx.logHex("FlashStorage", currentPosition, moduleSize);
-#endif
+                logHexTraceP(currentPosition, moduleSize);
                 module->readFlash(currentPosition, moduleSize);
                 loadedModules[moduleId] = true;
             }
@@ -140,7 +137,7 @@ namespace OpenKNX
         if (!force && _lastWrite > 0 && !delayCheck(_lastWrite, FLASH_DATA_WRITE_LIMIT))
             return;
 
-        openknx.log("FlashStorage", "save <%i>", force);
+        logInfoP("save%s", force ? " (force)" : "");
 
         // determine some values
         Modules *modules = openknx.getModules();
@@ -156,18 +153,14 @@ namespace OpenKNX
                         FLASH_DATA_SIZE_LEN;
         }
 
-#ifdef FLASH_DATA_TRACE
-        openknx.log("FlashStorage", "  dataSize: %i", dataSize);
-#endif
+        logTraceP("  dataSize: %i", dataSize);
 
         // start point
         _currentWriteAddress = _flashSize -
                                dataSize -
                                FLASH_DATA_META_LEN;
 
-#ifdef FLASH_DATA_TRACE
-        openknx.log("FlashStorage", "  startPosition: %i", _currentWriteAddress);
-#endif
+        logTraceP("  startPosition: %i", _currentWriteAddress);
 
         for (uint8_t i = 0; i < modules->count; i++)
         {
@@ -190,7 +183,7 @@ namespace OpenKNX
 
             _maxWriteAddress = _currentWriteAddress + moduleSize;
 
-            openknx.log("FlashStorage", "  save module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
+            logDebugP("  save module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
             module->writeFlash();
             writeFilldata();
         }
@@ -212,12 +205,10 @@ namespace OpenKNX
         writeInt(FLASH_DATA_INIT);
 
         knx.platform().commitNonVolatileMemory();
-#ifdef FLASH_DATA_TRACE
-        openknx.logHex("FlashStorage", _flashStart + _flashSize - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
-#endif
+        logHexTraceP(_flashStart + _flashSize - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
 
         _lastWrite = millis();
-        openknx.log("FlashStorage", "  complete (%ims)", _lastWrite - start);
+        logInfoP("  complete (%ims)", _lastWrite - start);
     }
 
     uint16_t FlashStorage::calcChecksum(uint8_t *data, uint16_t size)
@@ -232,7 +223,7 @@ namespace OpenKNX
 
     bool FlashStorage::verifyChecksum(uint8_t *data, uint16_t size)
     {
-        // openknx.log("FlashStorage", "verifyChecksum %i == %i", ((data[size - 2] << 8) + data[size - 1]), calcChecksum(data, size - 2));
+        // logInfoP("verifyChecksum %i == %i", ((data[size - 2] << 8) + data[size - 1]), calcChecksum(data, size - 2));
         return ((data[size - 2] << 8) + data[size - 1]) == calcChecksum(data, size - 2);
     }
 
@@ -240,7 +231,7 @@ namespace OpenKNX
     {
         if ((_currentWriteAddress + size) > _maxWriteAddress)
         {
-            openknx.log("FlashStorage", "write not allowed");
+            logErrorP("A module has tried to write more than it was allowed to write");
             return;
         }
 
@@ -254,7 +245,7 @@ namespace OpenKNX
     {
         if ((_currentWriteAddress + size) > _maxWriteAddress)
         {
-            openknx.log("FlashStorage", "write not allowed");
+            logErrorP("A module has tried to write more than it was allowed to write");
             return;
         }
 
@@ -298,9 +289,7 @@ namespace OpenKNX
         if (fillSize == 0)
             return;
 
-#ifdef FLASH_DATA_TRACE
-        openknx.log("FlashStorage", "    writeFilldata %i", fillSize);
-#endif
+        logTraceP("    writeFilldata %i", fillSize);
         write((uint8_t)FLASH_DATA_FILLBYTE, fillSize);
     }
 
