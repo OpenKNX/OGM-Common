@@ -13,6 +13,10 @@
 #define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
 #endif
 
+#define ANSI_CODE "\033"
+#define ANSI_RESET ANSI_CODE "[0m"
+#define ANSI_COLOR(COLOR) ANSI_CODE "[38;5;" #COLOR "m"
+
 #define logError(...)                \
     openknx.logger.color(1);         \
     openknx.logger.log(__VA_ARGS__); \

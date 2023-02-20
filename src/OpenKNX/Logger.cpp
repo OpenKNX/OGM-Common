@@ -90,11 +90,11 @@ namespace OpenKNX
     {
         if (color > 0)
         {
-            SERIAL_DEBUG.printf("\033[38;5;%im", color);
+            SERIAL_DEBUG.printf(ANSI_COLOR(%i), color);
         }
         else
         {
-            SERIAL_DEBUG.print("\033[0m");
+            SERIAL_DEBUG.print(ANSI_RESET);
         }
     }
 
