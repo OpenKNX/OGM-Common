@@ -95,7 +95,7 @@ namespace OpenKNX
 
     void Hardware::fatalError(uint8_t code, const char* message)
     {
-        logError("FatalError", "%d: %s", code, message);
+        logError("FatalError", "Code: %d (%s)", code, message);
         openknx.hardware.infoLed.on();
         openknx.hardware.progLed.errorCode(code);
 
