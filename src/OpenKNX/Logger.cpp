@@ -13,9 +13,7 @@ namespace OpenKNX
     {
 #ifdef ARDUINO_ARCH_RP2040
         if (openknx.usesDualCore())
-        {
             mutex_enter_blocking(&_mutex);
-        }
 #endif
     }
 
@@ -23,10 +21,13 @@ namespace OpenKNX
     {
 #ifdef ARDUINO_ARCH_RP2040
         if (openknx.usesDualCore())
-        {
             mutex_exit(&_mutex);
-        }
 #endif
+    }
+
+    void Logger::color(uint8_t color)
+    {
+        _color = color;
     }
 
     std::string Logger::logPrefix(const std::string prefix, const std::string id)
@@ -46,7 +47,12 @@ namespace OpenKNX
     void Logger::log(const std::string message)
     {
         mutex_block();
+        if (_color > 0)
+            printColorCode(_color);
         printMessage(message);
+        if (_color > 0)
+            printColorCode(0);
+        SERIAL_DEBUG.println();
         mutex_unblock();
     }
 
@@ -61,30 +67,49 @@ namespace OpenKNX
     void Logger::log(const std::string prefix, const std::string message, va_list args)
     {
         mutex_block();
+        if (_color > 0)
+            printColorCode(_color);
         printPrefix(prefix);
         printMessage(message, args);
+        if (_color > 0)
+            printColorCode(0);
+        SERIAL_DEBUG.println();
         mutex_unblock();
     }
 
-    void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size) {
+    void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size)
+    {
         mutex_block();
         printPrefix(prefix);
         printHex(data, size);
+        SERIAL_DEBUG.println();
         mutex_unblock();
     }
 
-    void Logger::printHex(const uint8_t* data, size_t size) {
+    void Logger::printColorCode(uint8_t color)
+    {
+        if (color > 0)
+        {
+            SERIAL_DEBUG.printf("\033[38;5;%im", color);
+        }
+        else
+        {
+            SERIAL_DEBUG.print("\033[0m");
+        }
+    }
+
+    void Logger::printHex(const uint8_t* data, size_t size)
+    {
         for (size_t i = 0; i < size; i++)
         {
             // TODO ????
-            if (data[i] < 0x10)
-            {
-                SERIAL_DEBUG.print("0");
-            }
+            // if (data[i] < 0x10)
+            // {
+            //     SERIAL_DEBUG.print("0");
+            // }
             SERIAL_DEBUG.print(data[i], HEX);
             SERIAL_DEBUG.print(" ");
         }
-        SERIAL_DEBUG.println();
     }
 
     void Logger::printPrefix(const std::string prefix)
@@ -109,13 +134,13 @@ namespace OpenKNX
 
     void Logger::printMessage(const std::string message)
     {
-        SERIAL_DEBUG.println(message.c_str());
+        SERIAL_DEBUG.print(message.c_str());
     }
     void Logger::printMessage(const std::string message, va_list args)
     {
         char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
         vsnprintf(buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), args);
-        SERIAL_DEBUG.println(buffer);
+        SERIAL_DEBUG.print(buffer);
     }
 
     bool Logger::checkTrace(std::string prefix)

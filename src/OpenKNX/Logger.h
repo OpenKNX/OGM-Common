@@ -13,15 +13,26 @@
 #define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
 #endif
 
-#define logError(...) openknx.logger.log(__VA_ARGS__)
-#define logErrorP(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
-#define logHexError(...) openknx.logger.logHex(__VA_ARGS__)
-#define logHexErrorP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
+#define logError(...)                \
+    openknx.logger.color(1);         \
+    openknx.logger.log(__VA_ARGS__); \
+    openknx.logger.color(0)
+#define logErrorP(...)                            \
+    openknx.logger.color(1);                      \
+    openknx.logger.log(logPrefix(), __VA_ARGS__); \
+    openknx.logger.color(0)
+#define logHexError(...)                \
+    openknx.logger.color(1);            \
+    openknx.logger.logHex(__VA_ARGS__); \
+    openknx.logger.color(0)
+#define logHexErrorP(...)                            \
+    openknx.logger.color(1);                         \
+    openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
+    openknx.logger.color(0)
 #define logInfo(...) openknx.logger.log(__VA_ARGS__)
 #define logInfoP(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
 #define logHexInfo(...) openknx.logger.logHex(__VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
-
 #if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
 
 #ifndef TRACE_LOG1
@@ -45,18 +56,34 @@
 // Force Debug Mode during Trace
 #undef DEBUG_LOG
 #define DEBUG_LOG
-#define logTrace(prefix, ...)              \
-    if (openknx.logger.checkTrace(prefix)) \
-        openknx.logger.log(prefix, __VA_ARGS__);
-#define logTraceP(...)                          \
-    if (openknx.logger.checkTrace(logPrefix())) \
-        openknx.logger.log(logPrefix(), __VA_ARGS__);
-#define logHexTrace(prefix, ...)              \
-    if (openknx.logger.checkTrace(prefix)) \
-        openknx.logger.logHex(prefix, __VA_ARGS__);
-#define logHexTraceP(...)                          \
-    if (openknx.logger.checkTrace(logPrefix())) \
-        openknx.logger.logHex(logPrefix(), __VA_ARGS__);
+#define logTrace(prefix, ...)                    \
+    if (openknx.logger.checkTrace(prefix))       \
+    {                                            \
+        openknx.logger.color(8);               \
+        openknx.logger.log(prefix, __VA_ARGS__); \
+        openknx.logger.color(0);                 \
+    }
+#define logTraceP(...)                                \
+    if (openknx.logger.checkTrace(logPrefix()))       \
+    {                                                 \
+        openknx.logger.color(8);                    \
+        openknx.logger.log(logPrefix(), __VA_ARGS__); \
+        openknx.logger.color(0);                      \
+    }
+#define logHexTrace(prefix, ...)                    \
+    if (openknx.logger.checkTrace(prefix))          \
+    {                                               \
+        openknx.logger.color(8);                  \
+        openknx.logger.logHex(prefix, __VA_ARGS__); \
+        openknx.logger.color(0);                    \
+    }
+#define logHexTraceP(...)                                \
+    if (openknx.logger.checkTrace(logPrefix()))          \
+    {                                                    \
+        openknx.logger.color(8);                       \
+        openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
+        openknx.logger.color(0);                         \
+    }
 #else
 #define logTrace(...)
 #define logTraceP(...)
@@ -65,10 +92,22 @@
 #endif
 
 #ifdef DEBUG_LOG
-#define logDebug(...) openknx.log(__VA_ARGS__)
-#define logDebugP(...) openknx.log(logPrefix(), __VA_ARGS__)
-#define logHexDebug(...) openknx.logHex(__VA_ARGS__)
-#define logHexDebugP(...) openknx.logHex(logPrefix(), __VA_ARGS__)
+#define logDebug(...)          \
+    openknx.logger.color(8); \
+    openknx.log(__VA_ARGS__);  \
+    openknx.logger.color(0)
+#define logDebugP(...)                     \
+    openknx.logger.color(8);             \
+    openknx.log(logPrefix(), __VA_ARGS__); \
+    openknx.logger.color(0)
+#define logHexDebug(...)         \
+    openknx.logger.color(8);   \
+    openknx.logHex(__VA_ARGS__); \
+    openknx.logger.color(0)
+#define logHexDebugP(...)                     \
+    openknx.logger.color(8);                \
+    openknx.logHex(logPrefix(), __VA_ARGS__); \
+    openknx.logger.color(0)
 #else
 #define logDebug(...)
 #define logDebugP(...)
@@ -81,6 +120,7 @@ namespace OpenKNX
     class Logger
     {
       private:
+        uint8_t _color = 0;
 #ifdef ARDUINO_ARCH_RP2040
         mutex_t _mutex;
 #endif
@@ -89,6 +129,7 @@ namespace OpenKNX
         void printHex(const uint8_t* data, size_t size);
         void printMessage(const std::string message, va_list args);
         void printMessage(const std::string message);
+        void printColorCode(uint8_t color);
 
       public:
         Logger();
@@ -101,6 +142,7 @@ namespace OpenKNX
         void log(const std::string prefix, const std::string message, ...);
         void log(const std::string message);
         void logHex(const std::string prefix, const uint8_t* data, size_t size);
+        void color(uint8_t color = 0);
 
         bool checkTrace(const std::string prefix);
     };
