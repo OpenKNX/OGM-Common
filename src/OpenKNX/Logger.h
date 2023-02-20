@@ -22,7 +22,6 @@
 #define logHexInfo(...) openknx.logger.logHex(__VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
 
-#define TRACE_LOG2
 #if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
 
 #ifndef TRACE_LOG1
