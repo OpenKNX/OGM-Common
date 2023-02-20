@@ -27,7 +27,7 @@ namespace OpenKNX
         switch (current)
         {
             case 0x0D: // Enter
-                openknx.log("");
+                logInfo("");
                 break;
             case 'h':
                 showHelp();
@@ -78,51 +78,51 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
-        openknx.log("");
-        openknx.log("Device Console", "===== Information =====");
-        openknx.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
-        openknx.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
-        openknx.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
-        openknx.log("Serial number", "00FA:%08X", knx.platform().uniqueSerialNumber());
+        logInfo("");
+        logInfo("Device Console", "===== Information =====");
+        logInfo("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
+        logInfo("Application (ETS)", "Number: %s (%i)  Version: %s (%i)  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
+        logInfo("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
+        logInfo("Serial number", "00FA:%08X", knx.platform().uniqueSerialNumber());
 #ifdef HARDWARE_NAME
-        openknx.log("Board", "%s", HARDWARE_NAME);
+        logInfo("Board", "%s", HARDWARE_NAME);
 #endif
 #ifdef ARDUINO_ARCH_RP2040
         const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
 
-        openknx.log("CPU-Mode", "%s  (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
+        logInfo("CPU-Mode", "%s  (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
-        openknx.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
+        logInfo("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
 
-        openknx.log("", "Modules");
+        logInfo("", "Modules");
         Modules* modules = openknx.getModules();
         char modulePrefix[12];
         for (uint8_t i = 0; i < modules->count; i++)
         {
             sprintf(modulePrefix, "Module %i", modules->ids[i]);
-            openknx.log(modulePrefix, "Version %s  Name: %s", modules->list[i]->version().c_str(), modules->list[i]->name().c_str());
+            logInfo(modulePrefix, "Version %s  Name: %s", modules->list[i]->version().c_str(), modules->list[i]->name().c_str());
         }
-        openknx.log("");
+        logInfo("");
     }
 
     void Console::showHelp()
     {
-        openknx.log("");
-        openknx.log("Device Console", "===== Help =====");
-        openknx.log("", ">  h  <  Show this help");
-        openknx.log("", ">  i  <  Show device information");
-        openknx.log("", ">  r  <  Restart the device");
-        openknx.log("", ">  p  <  Toggle the ProgMode");
-        openknx.log("", ">  w  <  Write data to Flash");
-        openknx.log("", ">  s  <  Sleep for %ims time", sleepTime());
+        logInfo("");
+        logInfo("Device Console", "===== Help =====");
+        logInfo("", ">  h  <  Show this help");
+        logInfo("", ">  i  <  Show device information");
+        logInfo("", ">  r  <  Restart the device");
+        logInfo("", ">  p  <  Toggle the ProgMode");
+        logInfo("", ">  w  <  Write data to Flash");
+        logInfo("", ">  s  <  Sleep for %ims time", sleepTime());
 #ifdef ARDUINO_ARCH_RP2040
-        openknx.log("", ">  b  <  Reset into Bootloader Mode");
-        openknx.log("", ">  N  <  Delete (nuke) complete device flash");
-        openknx.log("", ">  n  <  Delete (nuke) Userflash");
+        logInfo("", ">  b  <  Reset into Bootloader Mode");
+        logInfo("", ">  N  <  Delete (nuke) complete device flash");
+        logInfo("", ">  n  <  Delete (nuke) Userflash");
 #endif
-        openknx.log("", ">  E  <  Trigger a FatalError");
-        openknx.log("", ">  P  <  Trigger a powerloss (SavePin)");
-        openknx.log("");
+        logInfo("", ">  E  <  Trigger a FatalError");
+        logInfo("", ">  P  <  Trigger a powerloss (SavePin)");
+        logInfo("");
     }
 
     void Console::sleep()
@@ -143,7 +143,7 @@ namespace OpenKNX
     {
         if (_consoleCharRepeats < repeats)
         {
-            openknx.log("", "repeat \"%c\" %ix to trigger \"%s\"", key, (repeats - _consoleCharRepeats), action);
+            logInfo("", "repeat \"%c\" %ix to trigger \"%s\"", key, (repeats - _consoleCharRepeats), action);
             return true;
         }
         else
@@ -158,7 +158,7 @@ namespace OpenKNX
 #ifdef WATCHDOG
         Watchdog.enable(2147483647);
 #endif
-        openknx.log("", "Delete (nuke) complete device flash (%i -> %i)", 0, NUKE_FLASH_SIZE_BYTES);
+        logInfo("", "Delete (nuke) complete device flash (%i -> %i)", 0, NUKE_FLASH_SIZE_BYTES);
         __nukeFlash(0, NUKE_FLASH_SIZE_BYTES);
     }
 
@@ -167,7 +167,7 @@ namespace OpenKNX
 #ifdef WATCHDOG
         Watchdog.enable(2147483647);
 #endif
-        openknx.log("", "Delete (nuke) Userflash (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        logInfo("", "Delete (nuke) Userflash (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
         __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
     }
 
