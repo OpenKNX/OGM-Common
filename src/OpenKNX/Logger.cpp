@@ -66,6 +66,27 @@ namespace OpenKNX
         mutex_unblock();
     }
 
+    void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size) {
+        mutex_block();
+        printPrefix(prefix);
+        printHex(data, size);
+        mutex_unblock();
+    }
+
+    void Logger::printHex(const uint8_t* data, size_t size) {
+        for (size_t i = 0; i < size; i++)
+        {
+            // TODO ????
+            if (data[i] < 0x10)
+            {
+                SERIAL_DEBUG.print("0");
+            }
+            SERIAL_DEBUG.print(data[i], HEX);
+            SERIAL_DEBUG.print(" ");
+        }
+        SERIAL_DEBUG.println();
+    }
+
     void Logger::printPrefix(const std::string prefix)
     {
         size_t prefixLen = MIN(strlen(prefix.c_str()), OPENKNX_MAX_LOG_PREFIX_LENGTH);
