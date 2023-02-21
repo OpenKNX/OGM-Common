@@ -83,9 +83,9 @@ namespace OpenKNX
         openknx.logger.color(4);
         openknx.logger.log("Device Console", "===== Information =====");
         openknx.logger.color(0);
-        openknx.logger.log("KNX Address", "%s " ANSI_COLOR(8) "(%i)" ANSI_RESET, openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
-        openknx.logger.log("Application (ETS)", "Number: %s " ANSI_COLOR(8) "(%i)" ANSI_RESET "  Version: %s " ANSI_COLOR(8) "(%i)" ANSI_RESET "  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
-        openknx.logger.log("Firmware", "Number: %s " ANSI_COLOR(8) "(%i)" ANSI_RESET "  Version: %s " ANSI_COLOR(8) "(%i)" ANSI_RESET "  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
+        openknx.logger.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
+        openknx.logger.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
+        openknx.logger.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
         openknx.logger.log("Serial number", "00FA:%08X", knx.platform().uniqueSerialNumber());
 #ifdef HARDWARE_NAME
         openknx.logger.log("Board", "%s", HARDWARE_NAME);
@@ -93,16 +93,16 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
 
-        openknx.logger.log("CPU-Mode", "%s " ANSI_COLOR(8) "(Temperature %.1f °C)" ANSI_RESET, cpuMode, openknx.hardware.cpuTemperature());
+        openknx.logger.log("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
-        openknx.logger.log("Free memory", "%.2f KiB " ANSI_COLOR(8) "(min. %.2f KiB)" ANSI_RESET, ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
+        openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
 
         Modules* modules = openknx.getModules();
         char modulePrefix[12];
         for (uint8_t i = 0; i < modules->count; i++)
         {
             sprintf(modulePrefix, "Module %i", modules->ids[i]);
-            openknx.logger.log(modulePrefix, "%s " ANSI_COLOR(8) "(%s)" ANSI_RESET, modules->list[i]->name().c_str(), modules->list[i]->version().c_str());
+            openknx.logger.log(modulePrefix, "%s (%s)", modules->list[i]->name().c_str(), modules->list[i]->version().c_str());
         }
         openknx.logger.log("");
     }
@@ -113,19 +113,19 @@ namespace OpenKNX
         openknx.logger.color(4);
         openknx.logger.log("Device Console", "===== Help =====");
         openknx.logger.color(0);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "h" ANSI_RESET "  <  " ANSI_COLOR(8) "Show this help" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "i" ANSI_RESET "  <  " ANSI_COLOR(8) "Show device information" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "r" ANSI_RESET "  <  " ANSI_COLOR(8) "Restart the device" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "p" ANSI_RESET "  <  " ANSI_COLOR(8) "Toggle the ProgMode" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "w" ANSI_RESET "  <  " ANSI_COLOR(8) "Write data to Flash" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "s" ANSI_RESET "  <  " ANSI_COLOR(8) "Sleep for %ims time" ANSI_RESET, sleepTime());
+        openknx.logger.log("", ">  h  <  Show this help");
+        openknx.logger.log("", ">  i  <  Show device information");
+        openknx.logger.log("", ">  r  <  Restart the device");
+        openknx.logger.log("", ">  p  <  Toggle the ProgMode");
+        openknx.logger.log("", ">  w  <  Write data to Flash");
+        openknx.logger.log("", ">  s  <  Sleep for %ims time", sleepTime());
 #ifdef ARDUINO_ARCH_RP2040
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "b" ANSI_RESET "  <  " ANSI_COLOR(8) "Reset into Bootloader Mode" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "N" ANSI_RESET "  <  " ANSI_COLOR(8) "Delete (nuke) complete device flash" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "n" ANSI_RESET "  <  " ANSI_COLOR(8) "Delete (nuke) Userflash" ANSI_RESET);
+        openknx.logger.log("", ">  b  <  Reset into Bootloader Mode");
+        openknx.logger.log("", ">  N  <  Delete (nuke) complete device flash");
+        openknx.logger.log("", ">  n  <  Delete (nuke) Userflash");
 #endif
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "E" ANSI_RESET "  <  " ANSI_COLOR(8) "Trigger a FatalError" ANSI_RESET);
-        openknx.logger.log("", ">  " ANSI_COLOR(3) "P" ANSI_RESET "  <  " ANSI_COLOR(8) "Trigger a powerloss (SavePin)" ANSI_RESET);
+        openknx.logger.log("", ">  E  <  Trigger a FatalError");
+        openknx.logger.log("", ">  P  <  Trigger a powerloss (SavePin)");
         openknx.logger.log("");
     }
 
