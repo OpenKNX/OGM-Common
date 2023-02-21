@@ -102,11 +102,9 @@ namespace OpenKNX
     {
         for (size_t i = 0; i < size; i++)
         {
-            // TODO ????
-            // if (data[i] < 0x10)
-            // {
-            //     SERIAL_DEBUG.print("0");
-            // }
+            if (data[i] < 0x10)
+                SERIAL_DEBUG.print("0");
+
             SERIAL_DEBUG.print(data[i], HEX);
             SERIAL_DEBUG.print(" ");
         }

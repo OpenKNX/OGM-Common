@@ -120,6 +120,7 @@ namespace OpenKNX
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
+        std::string logPrefix();
     };
 } // namespace OpenKNX
 

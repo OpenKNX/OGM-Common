@@ -93,9 +93,9 @@ namespace OpenKNX
         // Turn on 5V rail from NCN5130 in case SAVE-Interrupt was false positive
         void activatePowerRail();
         // Stop KNX Communication
-        void stopKnxMode();
+        void stopKnxMode(bool waiting = true);
         // Start KNX Communication
-        void startKnxMode();
+        void startKnxMode(bool waiting = true);
         // Fatal Error
         void fatalError(uint8_t code, const char* message = 0);
         // CPU Temperatur

@@ -67,30 +67,36 @@ namespace OpenKNX
         sendCommandToBcu(command, 2, "U_INT_REG_WR_REQ_ACR0");
     }
 
-    void Hardware::stopKnxMode()
+    void Hardware::stopKnxMode(bool waiting /* = true */)
     {
         logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "  Stop KNX Mode...");
         uint8_t command[] = {U_STOP_MODE_REQ};
         sendCommandToBcu(command, 1, "STOP_MODE");
 
-        uint8_t response[2] = {};
-        receiveResponseFromBcu(response, 2); // Receive 2 bytes
+        if (waiting)
+        {
+            uint8_t response[2] = {};
+            receiveResponseFromBcu(response, 2); // Receive 2 bytes
 
-        uint8_t expected[] = {U_STOP_MODE_IND};
-        validateResponse(expected, response, 1); // Check first Byte
+            uint8_t expected[] = {U_STOP_MODE_IND};
+            validateResponse(expected, response, 1); // Check first Byte
+        }
     }
 
-    void Hardware::startKnxMode()
+    void Hardware::startKnxMode(bool waiting /* = true */)
     {
         logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "  Start KNX Mode...");
         uint8_t command[] = {U_EXIT_STOP_MODE_REQ};
         sendCommandToBcu(command, 1, "EXIT_STOP_MODE"); // U_RESET_IND
 
-        uint8_t response[1] = {};
-        receiveResponseFromBcu(response, 1); // Receive 1 byte
+        if (waiting)
+        {
+            uint8_t response[1] = {};
+            receiveResponseFromBcu(response, 1); // Receive 1 byte
 
-        uint8_t expected[] = {U_RESET_IND};
-        validateResponse(expected, response, 1); // Check first Byte
+            uint8_t expected[] = {U_RESET_IND};
+            validateResponse(expected, response, 1); // Check first Byte
+        }
     }
 
     void Hardware::fatalError(uint8_t code, const char* message)

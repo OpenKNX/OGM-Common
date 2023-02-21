@@ -3,6 +3,11 @@
 
 namespace OpenKNX
 {
+    std::string Common::logPrefix()
+    {
+        return "Common";
+    }
+
     void Common::init(uint8_t firmwareRevision)
     {
         SERIAL_DEBUG.begin(115200);
@@ -24,19 +29,18 @@ namespace OpenKNX
 
         debugWait();
 
-
-        logInfo("OpenKNX", "init");
+        logInfoP("Init firmware");
 
         openknx.info.firmwareRevision(firmwareRevision);
 
         initKnx();
-      
+
         hardware.init();
     }
 
     void Common::initKnx()
     {
-        logInfo("OpenKNX", "init knx");
+        logTraceP("Init knx stack");
 
 #if defined(ARDUINO_ARCH_RP2040) && defined(KNX_SERIAL)
         KNX_SERIAL.setRX(KNX_UART_RX_PIN);
@@ -84,20 +88,20 @@ namespace OpenKNX
 
         if (manufacturerId != 0x00FA)
         {
-            logError("OpenKNX", "This firmware supports only ManufacturerID 0x00FA");
+            logError(openknx.logPrefix(), "This firmware supports only ManufacturerID 0x00FA");
             return FlashAllInvalid;
         }
 
         // hardwareType has the format 0x00 00 Ap nn vv 00
         if (memcmp(knx.bau().deviceObject().hardwareType(), hardwareType, 4) != 0)
         {
-            logError("OpenKNX", "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
+            logError(openknx.logPrefix(), "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
             return FlashAllInvalid;
         }
 
         if (knx.bau().deviceObject().hardwareType()[4] != hardwareType[4])
         {
-            logError("OpenKNX", "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
+            logError(openknx.logPrefix(), "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
             return FlashTablesInvalid;
         }
 
@@ -139,7 +143,7 @@ namespace OpenKNX
 
     void Common::setup()
     {
-        logInfo("OpenKNX", "setup");
+        logTraceP("setup");
 
         // setup modules
         appSetup();
@@ -186,6 +190,7 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         if (usesDualCore())
         {
+            logTraceP("activate loop2");
             multicore_launch_core1(Common::loop2);
         }
 #endif
@@ -264,7 +269,7 @@ namespace OpenKNX
         if (delayCheck(start, 5000) && delayCheck(lastDebugTime, 1000))
 #endif
         {
-            logDebug("OpenKNX", "loop took too long %i >= %i", (millis() - start), DEBUG_LOOP_TIME);
+            logDebugP("Loop took too long %i >= %i", (millis() - start), DEBUG_LOOP_TIME);
             lastDebugTime = millis();
         }
 #endif
@@ -380,6 +385,8 @@ namespace OpenKNX
         if (afterStartupDelay())
             return;
 
+        logTraceP("processAfterStartupDelay");
+
 #ifdef LOG_StartupDelayBase
         if (!delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS))
             return;
@@ -422,11 +429,13 @@ namespace OpenKNX
             return;
 
         uint32_t start = millis();
-        logInfo("OpenKNX", "savePower");
+
+        logErrorP("SavePIN triggered!");
+        logInfoP("Save power");
 
         openknx.hardware.progLed.powerSave();
         openknx.hardware.infoLed.powerSave();
-        hardware.stopKnxMode();
+        hardware.stopKnxMode(false);
 
         // first save all modules to save power before...
         for (uint8_t i = 0; i < _modules.count; i++)
@@ -434,10 +443,14 @@ namespace OpenKNX
 
         hardware.deactivatePowerRail();
 
-        logInfo("OpenKNX", "savePower (%ims)", millis() - start);
+        logInfoP("  completed (%ims)", millis() - start);
 
         // save data
         flash.save();
+
+        // manual recevie stopKnxMode respone
+        uint8_t response[2] = {};
+        hardware.receiveResponseFromBcu(response, 2); // Receive 2 bytes
 
         _savedPinProcessed = millis();
     }
@@ -450,7 +463,7 @@ namespace OpenKNX
         if (!delayCheck(_savedPinProcessed, 1000))
             return;
 
-        logInfo("OpenKNX", "restorePower (after 1s)");
+        logInfoP("Restore power (after 1s)");
 
         openknx.hardware.progLed.powerSave(false);
         openknx.hardware.infoLed.powerSave(false);
@@ -469,11 +482,12 @@ namespace OpenKNX
 
         if (reboot)
         {
-            logInfo("OpenKNX", "  need reboot");
+            logInfoP("  Need reboot");
+            delay(10);
             knx.platform().restart();
         }
 
-        logInfo("OpenKNX", "  restorePower without reboot was successfull");
+        logInfoP("  Restore power without reboot was successfull");
 
         _savePinTriggered = false;
         _savedPinProcessed = 0;
@@ -481,7 +495,7 @@ namespace OpenKNX
 
     void Common::processBeforeRestart()
     {
-        logDebug("OpenKNX", "processBeforeRestart");
+        logTraceP("processBeforeRestart");
         for (uint8_t i = 0; i < _modules.count; i++)
         {
             _modules.list[i]->processBeforeRestart();
@@ -492,7 +506,7 @@ namespace OpenKNX
 
     void Common::processBeforeTablesUnload()
     {
-        logDebug("OpenKNX", "processBeforeTablesUnload");
+        logTraceP("processBeforeTablesUnload");
         for (uint8_t i = 0; i < _modules.count; i++)
         {
             _modules.list[i]->processBeforeTablesUnload();

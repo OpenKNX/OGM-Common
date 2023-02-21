@@ -36,6 +36,7 @@ namespace OpenKNX
                 showInformations();
                 break;
             case 'r':
+                delay(10);
                 knx.platform().restart();
                 break;
             case 'p':

@@ -16,7 +16,7 @@ namespace OpenKNX
         logInfoP("Load data from flash");
         readData();
         initUnloadedModules();
-        logInfoP("  Loading complete (%ims)", millis() - start);
+        logInfoP("  Loading completed (%ims)", millis() - start);
     }
 
     /**
@@ -37,7 +37,7 @@ namespace OpenKNX
 
             if (moduleSize > 0 && !loadedModules[moduleId])
             {
-                logDebugP("  init module %s (%i)", module->name().c_str(), moduleId);
+                logDebugP("  Init module %s (%i)", module->name().c_str(), moduleId);
                 module->readFlash(new uint8_t[0], 0);
             }
         }
@@ -102,11 +102,11 @@ namespace OpenKNX
             module = openknx.getModule(moduleId);
             if (module == nullptr)
             {
-                logDebugP("  skip module with id %i (not found)", moduleId);
+                logDebugP("  Skip module with id %i (not found)", moduleId);
             }
             else
             {
-                logDebugP("  restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
+                logDebugP("  Restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
                 _currentReadAddress = currentPosition;
                 logHexTraceP(currentPosition, moduleSize);
                 module->readFlash(currentPosition, moduleSize);
@@ -137,7 +137,7 @@ namespace OpenKNX
         if (!force && _lastWrite > 0 && !delayCheck(_lastWrite, FLASH_DATA_WRITE_LIMIT))
             return;
 
-        logInfoP("save%s", force ? " (force)" : "");
+        logInfoP("Save data to flash%s", force ? " (force)" : "");
 
         // determine some values
         Modules *modules = openknx.getModules();
@@ -183,7 +183,7 @@ namespace OpenKNX
 
             _maxWriteAddress = _currentWriteAddress + moduleSize;
 
-            logDebugP("  save module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
+            logDebugP("  Save module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
             module->writeFlash();
             writeFilldata();
         }
@@ -208,7 +208,7 @@ namespace OpenKNX
         logHexTraceP(_flashStart + _flashSize - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
 
         _lastWrite = millis();
-        logInfoP("  complete (%ims)", _lastWrite - start);
+        logInfoP("  Save completed (%ims)", _lastWrite - start);
     }
 
     uint16_t FlashStorage::calcChecksum(uint8_t *data, uint16_t size)
@@ -231,7 +231,7 @@ namespace OpenKNX
     {
         if ((_currentWriteAddress + size) > _maxWriteAddress)
         {
-            logErrorP("A module has tried to write more than it was allowed to write");
+            logErrorP("    A module has tried to write more than it was allowed to write");
             return;
         }
 
@@ -245,7 +245,7 @@ namespace OpenKNX
     {
         if ((_currentWriteAddress + size) > _maxWriteAddress)
         {
-            logErrorP("A module has tried to write more than it was allowed to write");
+            logErrorP("    A module has tried to write more than it was allowed to write");
             return;
         }
 
