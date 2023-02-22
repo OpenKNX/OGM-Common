@@ -8,6 +8,25 @@ namespace OpenKNX
         adc_init();
         adc_set_temp_sensor_enabled(true);
 #endif
+        requestBcuSystemState();
+    }
+
+    void Hardware::requestBcuSystemState()
+    {
+        logTrace(openknx.logger.logPrefix("Hardware", "BCU"), "Request system state");
+        logIndentUp();
+        uint8_t command[] = {U_SYSTEM_STATE, U_SYSTEM_STAT_IND};
+        sendCommandToBcu(command, 2, "SYSTEM_STATE");
+
+        uint8_t response[2] = {};
+        receiveResponseFromBcu(response, 2);
+
+        // Check is NCN5130 - untested!
+        if ((response[1] & 3) == 3) // second byte
+            features |= BOARD_HW_NCN5130;
+
+        logHexTrace(openknx.logger.logPrefix("Hardware", "BCU"), response, 2);
+        logIndentDown();
     }
 
     void Hardware::sendCommandToBcu(const uint8_t* command, const uint8_t length, const char* debug)
@@ -43,7 +62,7 @@ namespace OpenKNX
         {
             if (expected[0] != response[0])
             {
-                logError(openknx.logger.logPrefix("Hardware", "BCU"), "FAILED - received unexpected response: ");
+                logError(openknx.logger.logPrefix("Hardware", "BCU"), "FAILED - received unexpected response:");
                 logHexError(openknx.logger.logPrefix("Hardware", "BCU"), response, length);
                 return false;
             }

@@ -69,6 +69,11 @@
 #define ACR0_FLAG_TRIGEN 0x08
 #define ACR0_FLAG_V20VCLIMIT 0x04
 
+#define BOARD_HW_EEPROM  0x01
+#define BOARD_HW_LED     0x02
+#define BOARD_HW_ONEWIRE 0x04
+#define BOARD_HW_NCN5130 0x08
+
 namespace OpenKNX
 {
     class Hardware
@@ -96,6 +101,8 @@ namespace OpenKNX
         void stopKnxMode(bool waiting = true);
         // Start KNX Communication
         void startKnxMode(bool waiting = true);
+        // send system state command and interpret answer
+        void requestBcuSystemState();
         // Fatal Error
         void fatalError(uint8_t code, const char* message = 0);
         // CPU Temperatur
