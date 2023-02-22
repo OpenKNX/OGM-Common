@@ -7,25 +7,25 @@ uint8_t boardHardware = 0;
 
 void ledInfo(bool iOn)
 {
-    openknx.log("Deprecated", "use openknx.hardware.infoLed.on(bool)");
+    openknx.logger.log("Deprecated", "use openknx.hardware.infoLed.on(bool)");
     openknx.hardware.infoLed.on(iOn);
 }
 
 void ledProg(bool iOn)
 {
-    openknx.log("Deprecated", "use openknx.hardware.progLed.on(bool)");
+    openknx.logger.log("Deprecated", "use openknx.hardware.progLed.on(bool)");
     openknx.hardware.progLed.on(iOn);
 }
 
 void deactivatePowerRail()
 {
-    openknx.log("Deprecated", "use openknx.hardware.deactivatePowerRail()");
+    openknx.logger.log("Deprecated", "use openknx.hardware.deactivatePowerRail()");
     openknx.hardware.deactivatePowerRail();
 }
 
 void activatePowerRail()
 {
-    openknx.log("Deprecated", "use openknx.hardware.activatePowerRail()");
+    openknx.logger.log("Deprecated", "use openknx.hardware.activatePowerRail()");
     openknx.hardware.activatePowerRail();
 }
 
@@ -56,16 +56,16 @@ bool boardCheck()
     switch (lI2c)
     {
         case 1:
-            openknx.log("I2C", "SCL clock line held low");
+            openknx.logger.log("I2C", "SCL clock line held low");
             break;
         case 2:
-            openknx.log("I2C", "SCL clock line held low by slave clock stretch");
+            openknx.logger.log("I2C", "SCL clock line held low by slave clock stretch");
             break;
         case 3:
-            openknx.log("I2C", "SDA data line held low");
+            openknx.logger.log("I2C", "SDA data line held low");
             break;
         default:
-            openknx.log("I2C", "I2C bus cleared successfully");
+            openknx.logger.log("I2C", "I2C bus cleared successfully");
             Wire.begin();
             lResult = true;
             break;
@@ -77,64 +77,64 @@ bool boardCheck()
     }
 #ifdef I2C_EEPROM_DEVICE_ADDRESSS
     // we check here Hardware we rely on
-    openknx.log("I2C", "Checking EEPROM existence... ");
+    openknx.logger.log("I2C", "Checking EEPROM existence... ");
     // check for I2C ack
     Wire.beginTransmission(I2C_EEPROM_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_EEPROM;
-    openknx.log("I2C", "  Result: %i", lResult);
+    openknx.logger.log("I2C", "  Result: %i", lResult);
 #endif
 
 #ifdef I2C_1WIRE_DEVICE_ADDRESSS
 #if COUNT_1WIRE_BUSMASTER >= 1
 #ifdef SENSORMODULE
     // check for I2C ack
-    openknx.log("I2C", "Checking 1-Wire existence... ");
+    openknx.logger.log("I2C", "Checking 1-Wire existence... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    openknx.log("I2C", "  Result: %i", lResult);
+    openknx.logger.log("I2C", "  Result: %i", lResult);
 #endif
 #ifdef WIREGATEWAY
     // check for I2C ack
-    openknx.log("I2C", "Checking 1-Wire existence 0x19 ... ");
+    openknx.logger.log("I2C", "Checking 1-Wire existence 0x19 ... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 1);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    openknx.log("I2C", "  Result: %i", lResult);
+    openknx.logger.log("I2C", "  Result: %i", lResult);
 #endif
 #endif
 #if COUNT_1WIRE_BUSMASTER >= 2
     // check for I2C ack
-    openknx.log("I2C", "Checking 1-Wire existence 0x1A... ");
+    openknx.logger.log("I2C", "Checking 1-Wire existence 0x1A... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 2);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    openknx.log("I2C", "  Result: %i", lResult);
+    openknx.logger.log("I2C", "  Result: %i", lResult);
 #endif
 #if COUNT_1WIRE_BUSMASTER == 3
     // check for I2C ack
-    openknx.log("I2C", "Checking 1-Wire existence 0x1B... ");
+    openknx.logger.log("I2C", "Checking 1-Wire existence 0x1B... ");
     Wire.beginTransmission(I2C_1WIRE_DEVICE_ADDRESSS + 3);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_ONEWIRE;
-    openknx.log("I2C", "  Result: %i", lResult);
+    openknx.logger.log("I2C", "  Result: %i", lResult);
 #endif
 #endif
 
 #ifdef I2C_RGBLED_DEVICE_ADDRESS
-    openknx.log("I2C", "Checking LED driver existence... ");
+    openknx.logger.log("I2C", "Checking LED driver existence... ");
     // check for I2C ack
     Wire.beginTransmission(I2C_RGBLED_DEVICE_ADDRESS);
     lResult = (Wire.endTransmission() == 0);
     if (lResult)
         boardHardware |= BOARD_HW_LED;
-    openknx.log("I2C", "  Result: %i", lResult);
+    openknx.logger.log("I2C", "  Result: %i", lResult);
 #endif
     // lResult = checkUartExistence();
 #endif // NO_I2C
@@ -143,13 +143,13 @@ bool boardCheck()
 
 bool checkUartExistence()
 {
-    openknx.log("Helper", "Checking UART existence...");
+    openknx.logger.log("Helper", "Checking UART existence...");
     bool lResult = false;
     initUart();
     // send system state command and interpret answer
     uint8_t lResp = sendUartCommand("SYSTEM_STATE", U_SYSTEM_STATE, U_SYSTEM_STAT_IND, 1);
     lResult = (lResp & 3) == 3;
-    openknx.log("Helper", "  Result: %i", lResult);
+    openknx.logger.log("Helper", "  Result: %i", lResult);
     if (lResult)
         boardHardware |= BOARD_HW_NCN5130;
     return lResult;
@@ -164,7 +164,7 @@ bool initUart()
         ;
     if (!KNX_SERIAL)
     {
-        openknx.log("Helper", "initUart() failed, something is going completely wrong!");
+        openknx.logger.log("Helper", "initUart() failed, something is going completely wrong!");
         return false;
     }
     return true;
@@ -172,7 +172,7 @@ bool initUart()
 
 uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t iLen /* = 0 */)
 {
-    openknx.log("Helper", "    Send command %s (%02X)... ", iInfo, iCmd);
+    openknx.logger.log("Helper", "    Send command %s (%02X)... ", iInfo, iCmd);
     // send system state command and interpret answer
     knx.platform().knxUart()->write(iCmd);
 
@@ -183,7 +183,7 @@ uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t 
         lResp = knx.platform().knxUart()->read();
         if (lResp == iResp)
         {
-            openknx.log("Helper", "OK - received expected response (%02X)", lResp);
+            openknx.logger.log("Helper", "OK - received expected response (%02X)", lResp);
             if (iLen == 1)
                 lResp = knx.platform().knxUart()->read();
             break;
