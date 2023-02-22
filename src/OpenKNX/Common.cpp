@@ -141,6 +141,9 @@ namespace OpenKNX
         hardware.progLed.on();
         hardware.infoLed.on();
 #endif
+
+        // for serial output
+        delay(50);
     }
 
     void Common::setup()
