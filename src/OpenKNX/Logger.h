@@ -101,19 +101,19 @@
 #ifdef DEBUG_LOG
 #define logDebug(...)         \
     openknx.logger.color(8);  \
-    openknx.log(__VA_ARGS__); \
+    openknx.logger.log(__VA_ARGS__); \
     openknx.logger.color(0)
 #define logDebugP(...)                     \
     openknx.logger.color(8);               \
-    openknx.log(logPrefix(), __VA_ARGS__); \
+    openknx.logger.log(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #define logHexDebug(...)         \
     openknx.logger.color(8);     \
-    openknx.logHex(__VA_ARGS__); \
+    openknx.logger.logHex(__VA_ARGS__); \
     openknx.logger.color(0)
 #define logHexDebugP(...)                     \
     openknx.logger.color(8);                  \
-    openknx.logHex(logPrefix(), __VA_ARGS__); \
+    openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #else
 #define logDebug(...)
