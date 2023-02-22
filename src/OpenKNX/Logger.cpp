@@ -70,6 +70,7 @@ namespace OpenKNX
         if (_color > 0)
             printColorCode(_color);
         printPrefix(prefix);
+        printIndent();
         printMessage(message, args);
         if (_color > 0)
             printColorCode(0);
@@ -81,6 +82,7 @@ namespace OpenKNX
     {
         mutex_block();
         printPrefix(prefix);
+        printIndent();
         printHex(data, size);
         SERIAL_DEBUG.println();
         mutex_unblock();
@@ -90,7 +92,7 @@ namespace OpenKNX
     {
         if (color > 0)
         {
-            SERIAL_DEBUG.printf(ANSI_COLOR(%i), color);
+            SERIAL_DEBUG.printf(ANSI_COLOR("%i"), color);
         }
         else
         {
@@ -165,5 +167,36 @@ namespace OpenKNX
 #endif
 
         return false;
+    }
+
+    void Logger::printIndent()
+    {
+        for (size_t i = 0; i < _indent; i++)
+        {
+            SERIAL_DEBUG.print("  ");
+        }
+    }
+
+    void Logger::indentUp()
+    {
+        if (_indent == 10)
+        {
+            logError("Logger", "Indent error!");
+        }
+        else
+        {
+            _indent++;
+        }
+    }
+    void Logger::indentDown()
+    {
+        if (_indent == 0)
+        {
+            logError("Logger", "Indent error!");
+        }
+        else
+        {
+            _indent--;
+        }
     }
 } // namespace OpenKNX

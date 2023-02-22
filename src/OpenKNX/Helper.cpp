@@ -18,16 +18,6 @@ namespace OpenKNX
 
     void Helper::logHex(const std::string prefix, const uint8_t* data, size_t size)
     {
-        openknx.logger.printPrefix(prefix);
-        for (size_t i = 0; i < size; i++)
-        {
-            if (data[i] < 0x10)
-            {
-                SERIAL_DEBUG.print("0");
-            }
-            SERIAL_DEBUG.print(data[i], HEX);
-            SERIAL_DEBUG.print(" ");
-        }
-        SERIAL_DEBUG.println();
+        openknx.logger.logHex(prefix, data, size);
     }
 } // namespace OpenKNX

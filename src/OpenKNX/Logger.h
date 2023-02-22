@@ -15,7 +15,10 @@
 
 #define ANSI_CODE "\033"
 #define ANSI_RESET ANSI_CODE "[0m"
-#define ANSI_COLOR(COLOR) ANSI_CODE "[38;5;" #COLOR "m"
+#define ANSI_COLOR(COLOR) ANSI_CODE "[38;5;" COLOR "m"
+
+#define logIndentUp() openknx.logger.indentUp()
+#define logIndentDown() openknx.logger.indentDown()
 
 #define logError(...)                \
     openknx.logger.color(1);         \
@@ -124,7 +127,8 @@ namespace OpenKNX
     class Logger
     {
       private:
-        uint8_t _color = 0;
+        volatile uint8_t _color = 0;
+        volatile uint8_t _indent = 0;
 #ifdef ARDUINO_ARCH_RP2040
         mutex_t _mutex;
 #endif
@@ -133,11 +137,12 @@ namespace OpenKNX
         void printHex(const uint8_t* data, size_t size);
         void printMessage(const std::string message, va_list args);
         void printMessage(const std::string message);
+        void printPrefix(const std::string prefix);
         void printColorCode(uint8_t color);
+        void printIndent();
 
       public:
         Logger();
-        void printPrefix(const std::string prefix);
 
         std::string logPrefix(const std::string prefix, const std::string id);
         std::string logPrefix(const std::string prefix, const int id);
@@ -147,6 +152,9 @@ namespace OpenKNX
         void log(const std::string message);
         void logHex(const std::string prefix, const uint8_t* data, size_t size);
         void color(uint8_t color = 0);
+
+        void indentUp();
+        void indentDown();
 
         bool checkTrace(const std::string prefix);
     };
