@@ -60,7 +60,7 @@ namespace OpenKNX
     {
         for (uint8_t i = 0; i < length; i++)
         {
-            if (expected[0] != response[0])
+            if (expected[i] != response[i])
             {
                 logError(openknx.logger.logPrefix("Hardware", "BCU"), "FAILED - received unexpected response:");
                 logHexError(openknx.logger.logPrefix("Hardware", "BCU"), response, length);
