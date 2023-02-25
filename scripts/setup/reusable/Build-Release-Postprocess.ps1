@@ -47,6 +47,9 @@ if (Test-Path -Path dependencies.txt -PathType Leaf) {
 lib/OGM-Common/scripts/setup/reusable/Build-Dependencies.ps1
 Get-Content dependencies.txt
 
+# (re-)create restore directory
+lib/OGM-Common/scripts/setup/reusable/Build-Project-Restore.ps1
+
 # create package 
 Compress-Archive -Path release/* -DestinationPath Release.zip
 Remove-Item -Recurse release/*
