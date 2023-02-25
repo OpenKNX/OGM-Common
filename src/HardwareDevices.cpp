@@ -130,10 +130,10 @@ bool boardCheck()
 #ifdef I2C_1WIRE_DEVICE_ADDRESSS
 #ifdef ARDUINO_ARCH_RP2040
     TwoWire &lWire = Wire1;
+    lWire.begin();
 #else
     TwoWire &lWire = Wire;
 #endif
-    lWire.begin();
 #if COUNT_1WIRE_BUSMASTER >= 1
 #ifdef SENSORMODULE
     // check for I2C ack
