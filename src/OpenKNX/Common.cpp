@@ -19,6 +19,11 @@ namespace OpenKNX
         hardware.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
 #endif
 
+#if defined(ARDUINO_ARCH_RP2040)
+        // Recovery
+        processRecovery();
+#endif
+
 #ifdef OPENKNX_PULSATING_BOOT
         hardware.progLed.pulsing();
         hardware.infoLed.pulsing();
@@ -37,6 +42,48 @@ namespace OpenKNX
 
         hardware.init();
     }
+
+#if defined(ARDUINO_ARCH_RP2040)
+    void Common::processRecovery()
+    {
+        uint8_t mode = 0;
+        uint32_t recoveryStart = millis();
+        pinMode(PROG_BUTTON_PIN, INPUT);
+        while (digitalRead(PROG_BUTTON_PIN) == LOW && mode < 3)
+        {
+            if (mode == 0 && delayCheck(recoveryStart, 500))
+            {
+                hardware.progLed.blinking(400);
+                mode++;
+            }
+
+            if (mode == 1 && delayCheck(recoveryStart, 5500))
+            {
+                hardware.progLed.blinking(200);
+                mode++;
+            }
+
+            if (mode == 2 && delayCheck(recoveryStart, 10500))
+            {
+                mode++;
+                hardware.progLed.on();
+            }
+        }
+
+        switch (mode)
+        {
+            case 1: // usbMode
+                reset_usb_boot(0, 0);
+                break;
+            case 2: // nukeFLash KNX
+                __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+                break;
+            case 3: // nukeFLash
+                __nukeFlash(0, NUKE_FLASH_SIZE_BYTES);
+                break;
+        }
+    }
+#endif
 
     void Common::initKnx()
     {
