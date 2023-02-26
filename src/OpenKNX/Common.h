@@ -75,7 +75,7 @@ namespace OpenKNX
         void processRestoreSavePin();
         void initMemoryTimerInterrupt();
         void debugWait();
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
         void processRecovery();
 #endif
 #ifdef WATCHDOG

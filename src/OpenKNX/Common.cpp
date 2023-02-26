@@ -19,7 +19,7 @@ namespace OpenKNX
         hardware.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
 #endif
 
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
         // Recovery
         processRecovery();
 #endif
@@ -43,13 +43,13 @@ namespace OpenKNX
         hardware.init();
     }
 
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
     void Common::processRecovery()
     {
         uint8_t mode = 0;
         uint32_t recoveryStart = millis();
-        pinMode(PROG_BUTTON_PIN, INPUT);
-        while (digitalRead(PROG_BUTTON_PIN) == LOW && mode < 3)
+        pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
+        while (digitalRead(PROG_BUTTON_PIN) == OPENKNX_RECOVERY_ON && mode < 3)
         {
             if (mode == 0 && delayCheck(recoveryStart, 500))
             {
