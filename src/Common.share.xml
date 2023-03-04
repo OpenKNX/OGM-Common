@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KNX>
+  <ManufacturerData>
+    <Manufacturer RefId="M-00FA">
+      <Baggages>
+        <Baggage TargetPath="" Name="..\..\OGM-Common\baggages\logo_280x280.png" Id="%FILE-logo_280x280%">
+          <FileInfo TimeInfo="%DATETIME%" />
+        </Baggage>
+        <Baggage TargetPath="" Name="..\..\OGM-Common\baggages\logo_200x200.png" Id="%FILE-logo_200x200%">
+          <FileInfo TimeInfo="%DATETIME%" />
+        </Baggage>
+      </Baggages>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>
