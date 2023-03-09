@@ -148,23 +148,23 @@ namespace OpenKNX
     bool Logger::checkTrace(std::string prefix)
     {
 #ifdef TRACE_LOG1
-        if (TRACE_STRINGIFY(TRACE_LOG1) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG1), 0) == 0)
+        if (TRACE_STRINGIFY(TRACE_LOG1) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG1))))
             return true;
 #endif
 #ifdef TRACE_LOG2
-        if (TRACE_STRINGIFY(TRACE_LOG2) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG2), 0) == 0)
+        if (TRACE_STRINGIFY(TRACE_LOG2) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG2))))
             return true;
 #endif
 #ifdef TRACE_LOG3
-        if (TRACE_STRINGIFY(TRACE_LOG3) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG3), 0) == 0)
+        if (TRACE_STRINGIFY(TRACE_LOG3) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG3))))
             return true;
 #endif
 #ifdef TRACE_LOG4
-        if (TRACE_STRINGIFY(TRACE_LOG4) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG4), 0) == 0)
+        if (TRACE_STRINGIFY(TRACE_LOG4) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG4))))
             return true;
 #endif
 #ifdef TRACE_LOG5
-        if (TRACE_STRINGIFY(TRACE_LOG5) != "" && prefix.rfind(TRACE_STRINGIFY(TRACE_LOG5), 0) == 0)
+        if (TRACE_STRINGIFY(TRACE_LOG5) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG5))))
             return true;
 #endif
 
@@ -190,6 +190,7 @@ namespace OpenKNX
             _indent++;
         }
     }
+
     void Logger::indentDown()
     {
         if (_indent == 0)
@@ -200,5 +201,10 @@ namespace OpenKNX
         {
             _indent--;
         }
+    }
+
+    void Logger::indent(uint8_t indent)
+    {
+        _indent = indent;
     }
 } // namespace OpenKNX

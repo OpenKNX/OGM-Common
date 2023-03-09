@@ -19,6 +19,7 @@
 
 #define logIndentUp() openknx.logger.indentUp()
 #define logIndentDown() openknx.logger.indentDown()
+#define logIndent(X) openknx.logger.indent(X)
 
 #define logError(...)                \
     openknx.logger.color(1);         \
@@ -41,6 +42,7 @@
 #define logHexInfo(...) openknx.logger.logHex(__VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
 #if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
+#include <regex>
 
 #ifndef TRACE_LOG1
 #define TRACE_LOG1
@@ -155,6 +157,7 @@ namespace OpenKNX
 
         void indentUp();
         void indentDown();
+        void indent(uint8_t indent);
 
         bool checkTrace(const std::string prefix);
     };

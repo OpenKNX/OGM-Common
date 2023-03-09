@@ -75,6 +75,9 @@ namespace OpenKNX
         void processRestoreSavePin();
         void initMemoryTimerInterrupt();
         void debugWait();
+#ifdef DEBUG_LOG
+        void showDebugInfo();
+#endif
 #if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
         void processRecovery();
 #endif

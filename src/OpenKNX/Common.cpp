@@ -36,12 +36,43 @@ namespace OpenKNX
 
         logInfoP("Init firmware");
 
+#ifdef DEBUG_LOG
+        showDebugInfo();
+#endif
+
         openknx.info.firmwareRevision(firmwareRevision);
 
         initKnx();
 
         hardware.init();
     }
+
+#ifdef DEBUG_LOG
+    void Common::showDebugInfo()
+    {
+        logDebugP("Debug logging is enabled!");
+#if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
+        logDebugP("Trace logging is enabled with:");
+        logIndentUp();
+#ifdef TRACE_LOG1
+        logDebugP("Filter 1: %s", TRACE_STRINGIFY(TRACE_LOG1));
+#endif
+#ifdef TRACE_LOG2
+        logDebugP("Filter 2: %s", TRACE_STRINGIFY(TRACE_LOG2));
+#endif
+#ifdef TRACE_LOG3
+        logDebugP("Filter 3: %s", TRACE_STRINGIFY(TRACE_LOG3));
+#endif
+#ifdef TRACE_LOG4
+        logDebugP("Filter 4: %s", TRACE_STRINGIFY(TRACE_LOG4));
+#endif
+#ifdef TRACE_LOG5
+        logDebugP("Filter 5: %s", TRACE_STRINGIFY(TRACE_LOG5));
+#endif
+        logIndentDown();
+#endif
+    }
+#endif
 
 #if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
     void Common::processRecovery()
