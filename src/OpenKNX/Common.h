@@ -63,7 +63,7 @@ namespace OpenKNX
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
-        volatile uint _freeMemoryMin = -1;
+        volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
 
         void initKnx();
         void appSetup();

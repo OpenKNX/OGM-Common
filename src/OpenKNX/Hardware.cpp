@@ -8,7 +8,9 @@ namespace OpenKNX
         adc_init();
         adc_set_temp_sensor_enabled(true);
 #endif
+#ifndef ARDUINO_ARCH_SAMD
         requestBcuSystemState();
+#endif
     }
 
     void Hardware::requestBcuSystemState()
