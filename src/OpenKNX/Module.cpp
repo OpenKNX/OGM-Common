@@ -29,6 +29,13 @@ namespace OpenKNX
     void Module::processBeforeTablesUnload()
     {}
 
+#ifdef USE_FUNCTIONPROPERTYCALLBACK
+    bool Module::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    {
+        return false;
+    }
+#endif
+
     void Module::savePower()
     {}
 

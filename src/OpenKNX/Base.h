@@ -54,5 +54,12 @@ namespace OpenKNX
          * @param GroupObject
          */
         virtual void processInputKo(GroupObject& ko);
+
+#ifdef USE_FUNCTIONPROPERTYCALLBACK
+        /*
+         * Called on incomming function property command
+         */
+        virtual bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
+#endif
     };
 } // namespace OpenKNX
