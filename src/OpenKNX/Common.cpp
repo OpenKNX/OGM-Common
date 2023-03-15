@@ -672,6 +672,8 @@ namespace OpenKNX
             if(_modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 return;
         }
+
+        resultLength = 0;
     }
 #endif
 } // namespace OpenKNX
