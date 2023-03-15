@@ -664,6 +664,7 @@ namespace OpenKNX
             if(_modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return;
         }
+        resultLength = 0;
     }
     void Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
@@ -672,7 +673,6 @@ namespace OpenKNX
             if(_modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 return;
         }
-
         resultLength = 0;
     }
 #endif
