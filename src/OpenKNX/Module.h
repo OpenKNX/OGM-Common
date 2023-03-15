@@ -59,6 +59,11 @@ namespace OpenKNX
          * Can be invoked by script in ETS
          */
         virtual bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
+        /*
+         * Called if knx receives an function property state and no Property is declared in stack.
+         * Can be invoked by script in ETS
+         */
+        virtual bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
 #endif
 
         /**
