@@ -53,7 +53,6 @@ namespace OpenKNX
          */
         virtual void processBeforeTablesUnload();
 
-#ifdef USE_FUNCTIONPROPERTYCALLBACK
         /*
          * Called if knx receives an function property command and no Property is declared in stack.
          * Can be invoked by script in ETS
@@ -64,7 +63,6 @@ namespace OpenKNX
          * Can be invoked by script in ETS
          */
         virtual bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
-#endif
 
         /**
          * This method is called if save/restore will be executed in context of a SAVE-Interrupt (power failure on KNX-Bus)

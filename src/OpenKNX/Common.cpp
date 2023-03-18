@@ -632,14 +632,12 @@ namespace OpenKNX
         TableObject::beforeTablesUnloadCallback([]() -> void {
             openknx.processBeforeTablesUnload();
         });
-#ifdef USE_FUNCTIONPROPERTYCALLBACK
         knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> void {
             openknx.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
         });
         knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> void {
             openknx.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
         });
-#endif
 #ifdef SAVE_INTERRUPT_PIN
         // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
         pinMode(SAVE_INTERRUPT_PIN, INPUT);
@@ -656,7 +654,6 @@ namespace OpenKNX
         return _freeMemoryMin;
     }
 
-#ifdef USE_FUNCTIONPROPERTYCALLBACK
     void Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
         for (uint8_t i = 0; i < _modules.count; i++)
@@ -675,7 +672,6 @@ namespace OpenKNX
         }
         resultLength = 0;
     }
-#endif
 } // namespace OpenKNX
 
 OpenKNX::Common openknx;

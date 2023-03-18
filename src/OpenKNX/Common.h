@@ -88,10 +88,8 @@ namespace OpenKNX
         uint32_t _heartbeatDelay;
         void processHeartbeat();
 #endif
-#ifdef USE_FUNCTIONPROPERTYCALLBACK
         void processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
         void processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
-#endif
 
       public:
         FlashStorage flash;

@@ -40,14 +40,13 @@ namespace OpenKNX
     void Base::processInputKo(GroupObject &ko)
     {}
 
-#ifdef USE_FUNCTIONPROPERTYCALLBACK
-    bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    bool Base::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
         return false;
     }
-    bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    
+    bool Base::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
         return false;
     }
-#endif
 } // namespace OpenKNX
