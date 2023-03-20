@@ -39,4 +39,10 @@ namespace OpenKNX
 
     void Base::processInputKo(GroupObject &ko)
     {}
+
+    bool OpenKNX::Base::processDiagnoseCommand(const char *input, char *output, uint8_t line)
+    {
+        return false;
+    }
+
 } // namespace OpenKNX

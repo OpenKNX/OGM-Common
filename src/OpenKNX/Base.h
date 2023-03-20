@@ -50,9 +50,21 @@ namespace OpenKNX
         virtual void loop2();
 
         /*
-         * Called on incomming/changing GroupObject
+         * Called on incoming/changing GroupObject
          * @param GroupObject
          */
         virtual void processInputKo(GroupObject& ko);
+
+        /*
+         * Called on diagnose request from diagnose KO
+         * New multiline capability: As long as a response is generated, the diagnose
+         * command is called up to 10 times (increasing count) to allow multiline output
+         * Use this carefully to avoid high KNX bus load
+         * @param input  - diagnose command
+         * @param output - diagnose response
+         * @param count  - counter in case of multiline processing
+         * @return true if there is an output in diagnose response 
+         */
+        virtual bool processDiagnoseCommand(const char *input, char *output, uint8_t count);
     };
 } // namespace OpenKNX
