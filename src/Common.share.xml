@@ -3,10 +3,16 @@
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <Baggages>
-        <Baggage TargetPath="" Name="..\..\OGM-Common\baggages\logo_280x280.png" Id="%FILE-logo_280x280%">
+        <Baggage TargetPath="" Name="logo_280x280.png" Id="%FILE-logo_280x280%">
           <FileInfo TimeInfo="%DATETIME%" />
         </Baggage>
-        <Baggage TargetPath="" Name="..\..\OGM-Common\baggages\logo_200x200.png" Id="%FILE-logo_200x200%">
+        <Baggage TargetPath="" Name="logo_200x200.png" Id="%FILE-logo_200x200%">
+          <FileInfo TimeInfo="%DATETIME%" />
+        </Baggage>
+        <Baggage TargetPath="" Name="Help_de.zip" Id="%FILE-HELP-de%">
+          <FileInfo TimeInfo="%DATETIME%" />
+        </Baggage>
+        <Baggage TargetPath="" Name="Icons.zip" Id="%FILE-ICONS%">
           <FileInfo TimeInfo="%DATETIME%" />
         </Baggage>
       </Baggages>
