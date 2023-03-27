@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenKNX/logger.h"
+#include "OpenKNX/Logger.h"
 #include <knx.h>
 
 namespace OpenKNX
