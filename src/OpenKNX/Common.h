@@ -64,6 +64,8 @@ namespace OpenKNX
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
+        char _diagnoseInput[15];
+        char _diagnoseOutput[15] = {0};
 
         void initKnx();
         void appSetup();
@@ -128,6 +130,7 @@ namespace OpenKNX
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
+        void processDiagnoseCommand(GroupObject& iKo);
         std::string logPrefix();
     };
 } // namespace OpenKNX

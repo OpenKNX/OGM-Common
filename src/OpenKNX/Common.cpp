@@ -128,7 +128,7 @@ namespace OpenKNX
 
         // pin or GPIO programming button is connected to. Default is 0
         knx.buttonPin(PROG_BUTTON_PIN);
-        // Is the interrup created in RISING or FALLING signal? Default is RISING
+        // Is the interrupt created in RISING or FALLING signal? Default is RISING
         // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
 
         knx.ledPin(0);
@@ -578,7 +578,7 @@ namespace OpenKNX
             knx.platform().restart();
         }
 
-        logInfoP("Restore power without reboot was successfull");
+        logInfoP("Restore power without reboot was successful");
 
         _savePinTriggered = false;
         _savedPinProcessed = 0;
@@ -615,9 +615,47 @@ namespace OpenKNX
 
     void Common::processInputKo(GroupObject& iKo)
     {
-        for (uint8_t i = 0; i < _modules.count; i++)
+        if (iKo.asap() == LOG_KoDiagnose)
         {
-            _modules.list[i]->processInputKo(iKo);
+            processDiagnoseCommand(iKo);
+        }
+        else
+        {
+            for (uint8_t i = 0; i < _modules.count; i++)
+            {
+                _modules.list[i]->processInputKo(iKo);
+            }
+        }
+    }
+
+    void Common::processDiagnoseCommand(GroupObject& iKo)
+    {
+        static bool processDiagnoseCommandCalled = false;
+
+        if (!processDiagnoseCommandCalled) 
+        {
+            processDiagnoseCommandCalled = true;
+            // we store received diagnose command
+            memcpy(_diagnoseInput, iKo.valueRef(), 14);
+            for (uint8_t i = 0; i < _modules.count; i++)
+            {
+                // init output buffer
+                memset(_diagnoseOutput, 0, 15);
+                bool output = true;
+                // allow multiline output per module, max 10 lines
+                for (uint8_t count = 0; count < 10 && output; count++)
+                {
+                    output = _modules.list[i]->processDiagnoseCommand(_diagnoseInput, _diagnoseOutput, count);
+                    if (output)
+                    {
+                        _diagnoseOutput[15] = 0;
+                        iKo.value(_diagnoseOutput, Dpt(16,1));
+                        logInfoP("Diagnose: %s", _diagnoseOutput);
+                        knx.loop();
+                    }
+                } 
+            }
+            processDiagnoseCommandCalled = false;
         }
     }
 
