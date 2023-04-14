@@ -1,0 +1,19 @@
+{
+    "name": "OGM-Common",
+    "version": "0.0.1",
+    "dependencies": {
+        "khoih-prog/TimerInterrupt_Generic": "*"
+    },
+    "description": "Common routines and helpers, used in OpenKNX projects",
+    "homepage": "https://openknx.de",
+    "authors": {
+        "name": "OpenKNx",
+        "email": "info@openknx.de",
+        "url": "https://openknx.de",
+        "maintainer": true
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OpenKNX/OGM-Common"
+    }
+}
