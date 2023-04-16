@@ -87,7 +87,7 @@ namespace OpenKNX
     void Console::showInformations()
     {
         openknx.logger.log("");
-        openknx.logger.color(4);
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Device Console", "===== Information =====");
         openknx.logger.color(0);
         openknx.logger.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
@@ -146,7 +146,7 @@ namespace OpenKNX
     void Console::showHelp()
     {
         openknx.logger.log("");
-        openknx.logger.color(4);
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Device Console", "===== Help =====");
         openknx.logger.color(0);
         openknx.logger.log("", ">  h  <  Show this help");
