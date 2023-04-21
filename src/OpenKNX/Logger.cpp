@@ -148,23 +148,23 @@ namespace OpenKNX
     bool Logger::checkTrace(std::string prefix)
     {
 #ifdef TRACE_LOG1
-        if (TRACE_STRINGIFY(TRACE_LOG1) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG1))))
+        if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG1))))
             return true;
 #endif
 #ifdef TRACE_LOG2
-        if (TRACE_STRINGIFY(TRACE_LOG2) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG2))))
+        if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG2))))
             return true;
 #endif
 #ifdef TRACE_LOG3
-        if (TRACE_STRINGIFY(TRACE_LOG3) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG3))))
+        if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG3))))
             return true;
 #endif
 #ifdef TRACE_LOG4
-        if (TRACE_STRINGIFY(TRACE_LOG4) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG4))))
+        if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG4))))
             return true;
 #endif
 #ifdef TRACE_LOG5
-        if (TRACE_STRINGIFY(TRACE_LOG5) != "" && std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG5))))
+        if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(TRACE_LOG5))))
             return true;
 #endif
 
