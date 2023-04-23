@@ -39,4 +39,19 @@ namespace OpenKNX
 
     void Base::processInputKo(GroupObject &ko)
     {}
+
+    bool Base::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    {
+        return false;
+    }
+    
+    bool Base::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    {
+        return false;
+    }
+    bool Base::processDiagnoseCommand(const char *input, char *output, uint8_t line)
+    {
+        return false;
+    }
+
 } // namespace OpenKNX

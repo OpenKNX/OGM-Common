@@ -128,7 +128,7 @@ namespace OpenKNX
 
         // pin or GPIO programming button is connected to. Default is 0
         knx.buttonPin(PROG_BUTTON_PIN);
-        // Is the interrup created in RISING or FALLING signal? Default is RISING
+        // Is the interrupt created in RISING or FALLING signal? Default is RISING
         // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
 
         knx.ledPin(0);
@@ -578,7 +578,7 @@ namespace OpenKNX
             knx.platform().restart();
         }
 
-        logInfoP("Restore power without reboot was successfull");
+        logInfoP("Restore power without reboot was successful");
 
         _savePinTriggered = false;
         _savedPinProcessed = 0;
@@ -615,9 +615,47 @@ namespace OpenKNX
 
     void Common::processInputKo(GroupObject& iKo)
     {
-        for (uint8_t i = 0; i < _modules.count; i++)
+        if (iKo.asap() == LOG_KoDiagnose)
         {
-            _modules.list[i]->processInputKo(iKo);
+            processDiagnoseCommand(iKo);
+        }
+        else
+        {
+            for (uint8_t i = 0; i < _modules.count; i++)
+            {
+                _modules.list[i]->processInputKo(iKo);
+            }
+        }
+    }
+
+    void Common::processDiagnoseCommand(GroupObject& iKo)
+    {
+        static bool processDiagnoseCommandCalled = false;
+
+        if (!processDiagnoseCommandCalled) 
+        {
+            processDiagnoseCommandCalled = true;
+            // we store received diagnose command
+            memcpy(_diagnoseInput, iKo.valueRef(), 14);
+            for (uint8_t i = 0; i < _modules.count; i++)
+            {
+                // init output buffer
+                memset(_diagnoseOutput, 0, 15);
+                bool output = true;
+                // allow multiline output per module, max 10 lines
+                for (uint8_t count = 0; count < 10 && output; count++)
+                {
+                    output = _modules.list[i]->processDiagnoseCommand(_diagnoseInput, _diagnoseOutput, count);
+                    if (output)
+                    {
+                        _diagnoseOutput[15] = 0;
+                        iKo.value(_diagnoseOutput, Dpt(16,1));
+                        logInfoP("Diagnose: %s", _diagnoseOutput);
+                        knx.loop();
+                    }
+                } 
+            }
+            processDiagnoseCommandCalled = false;
         }
     }
 
@@ -631,6 +669,12 @@ namespace OpenKNX
         });
         TableObject::beforeTablesUnloadCallback([]() -> void {
             openknx.processBeforeTablesUnload();
+        });
+        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> void {
+            openknx.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
+        });
+        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> void {
+            openknx.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
         });
 #ifdef SAVE_INTERRUPT_PIN
         // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
@@ -646,6 +690,25 @@ namespace OpenKNX
     uint Common::freeMemoryMin()
     {
         return _freeMemoryMin;
+    }
+
+    void Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    {
+        for (uint8_t i = 0; i < _modules.count; i++)
+        {
+            if(_modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
+                return;
+        }
+        resultLength = 0;
+    }
+    void Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    {
+        for (uint8_t i = 0; i < _modules.count; i++)
+        {
+            if(_modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
+                return;
+        }
+        resultLength = 0;
     }
 } // namespace OpenKNX
 

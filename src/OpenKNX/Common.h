@@ -64,6 +64,8 @@ namespace OpenKNX
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
+        char _diagnoseInput[15];
+        char _diagnoseOutput[15] = {0};
 
         void initKnx();
         void appSetup();
@@ -88,6 +90,8 @@ namespace OpenKNX
         uint32_t _heartbeatDelay;
         void processHeartbeat();
 #endif
+        void processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
+        void processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
 
       public:
         FlashStorage flash;
@@ -126,6 +130,7 @@ namespace OpenKNX
         void processBeforeRestart();
         void processBeforeTablesUnload();
         void processInputKo(GroupObject& iKo);
+        void processDiagnoseCommand(GroupObject& iKo);
         std::string logPrefix();
     };
 } // namespace OpenKNX
