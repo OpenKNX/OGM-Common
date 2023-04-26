@@ -2,6 +2,10 @@
 #include "../HardwareDevices.h"
 #include "OpenKNX/Common.h"
 
+#ifdef ARDUINO_ARCH_RP2040
+extern uint32_t _EEPROM_start;
+#endif
+
 namespace OpenKNX
 {
     void Console::loop()
@@ -197,8 +201,9 @@ namespace OpenKNX
 #ifdef WATCHDOG
         Watchdog.enable(2147483647);
 #endif
-        openknx.logger.log("", "Delete (nuke) complete device flash (%i -> %i)", 0, NUKE_FLASH_SIZE_BYTES);
-        __nukeFlash(0, NUKE_FLASH_SIZE_BYTES);
+        uint32_t maxSize = (uint32_t)(&_EEPROM_start) - 0x10000000lu + 4096lu;
+        openknx.logger.log("", "Delete (nuke) complete device flash (%i -> %i)", 0, maxSize);
+        __nukeFlash(0, maxSize);
     }
 
     void Console::nukeFlashKnxOnly()

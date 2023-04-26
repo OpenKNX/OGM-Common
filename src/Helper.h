@@ -26,12 +26,8 @@ int freeMemory();
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 
-#ifndef NUKE_FLASH_SIZE_BYTES
-#define NUKE_FLASH_SIZE_BYTES (16 * 1024 * 1024)
-#endif
-
 /*
  * Erase flash
  */
-void __nukeFlash(uint32_t offset, size_t count);
+void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count);
 #endif

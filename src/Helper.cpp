@@ -26,11 +26,13 @@ int freeMemory()
  * Nuker
  */
 #ifdef ARDUINO_ARCH_RP2040
-void __nukeFlash(uint32_t offset, size_t count)
+void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count)
 {
-    uint32_t ints = save_and_disable_interrupts();
+    noInterrupts();
+    rp2040.idleOtherCore();
     flash_range_erase(offset, count);
-    restore_interrupts(ints);
+    // rp2040.resumeOtherCore();
+    interrupts();
     watchdog_reboot(0, 0, 0);
 }
 #endif
