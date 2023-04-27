@@ -615,24 +615,29 @@ namespace OpenKNX
 
     void Common::processInputKo(GroupObject& iKo)
     {
+#ifdef LOG_KoDiagnose
         if (iKo.asap() == LOG_KoDiagnose)
         {
             processDiagnoseCommand(iKo);
         }
         else
         {
+#endif
             for (uint8_t i = 0; i < _modules.count; i++)
             {
                 _modules.list[i]->processInputKo(iKo);
             }
+#ifdef LOG_KoDiagnose
         }
+#endif
     }
 
-    void Common::processDiagnoseCommand(GroupObject& iKo)
+#ifdef LOG_KoDiagnose
+    void Common::processDiagnoseCommand(GroupObject &iKo)
     {
         static bool processDiagnoseCommandCalled = false;
 
-        if (!processDiagnoseCommandCalled) 
+        if (!processDiagnoseCommandCalled)
         {
             processDiagnoseCommandCalled = true;
             // we store received diagnose command
@@ -653,11 +658,12 @@ namespace OpenKNX
                         logInfoP("Diagnose: %s", _diagnoseOutput);
                         knx.loop();
                     }
-                } 
+                }
             }
             processDiagnoseCommandCalled = false;
         }
     }
+#endif
 
     void Common::registerCallbacks()
     {
