@@ -185,7 +185,7 @@ def show_flash_partitioning(source, target, env):
 
     for name, data in defined_sizes.items():
         if data['offset'] > 0 and data['size'] > 0:
-            flash_elements.append({ 'name': name, 'start': data['offset'], 'end': data['offset'] + data['size'] + 4096, 'container': False })
+            flash_elements.append({ 'name': name, 'start': data['offset'], 'end': data['offset'] + data['size'], 'container': False })
 
 
     sorted_flash_elements = sorted(flash_elements, key=lambda element: (element['start'], -element['end']-element['start']))
