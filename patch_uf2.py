@@ -8,7 +8,7 @@ def post_program_action(source, target, env):
     print("Changing ", source[0].get_path()[0:-4] + ".uf2")
 
     with open("lib/OGM-Common/include/knxprod.h", 'r') as knxprod:
-        content = knxprod.read(1000)
+        content = knxprod.read()
 
     m = re.search("#define MAIN_OpenKnxId 0x([0-9A-Fa-f]{1,2})", content)
     openknxid = int(m.group(1), 16)
