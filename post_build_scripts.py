@@ -124,15 +124,15 @@ def post_progsize(source, target, env):
         openknx_end = openknx_start + openknx_end
 
     print("Flash Usage")
-    print("  - System      0-" + hex(flash_end) + " (" + str(flash_end - flash_start) + " Bytes)")
-    print("    - Firmware  0-" + hex(program_size) + " (" + str(program_size) + " Bytes)")
+    print("  - System      0x0 - " + hex(flash_end) + " (" + str(flash_end - flash_start) + " Bytes)")
+    print("    - Firmware  0x0 - " + hex(program_size) + " (" + str(program_size) + " Bytes)")
 
     if knx_start - (flash_start + program_size) < 0:
         print(bcolors.FAIL + "    - Overlap   " + str(knx_start - (flash_start + program_size)) + " Bytes" + bcolors.ENDC)
     elif knx_start - (flash_start + program_size) > 0:
         print(bcolors.OKGREEN + "    - Free      " + str(knx_start - (flash_start + program_size)) + " Bytes" + bcolors.ENDC)
 
-    print("    - KNX       " + hex(knx_start) + "-" + hex(knx_end) + " (" + str(knx_end - knx_start) + " Bytes)")
+    print("    - KNX       " + hex(knx_start) + " - " + hex(knx_end) + " (" + str(knx_end - knx_start) + " Bytes)")
 
     if openknx_start != -1:
         if openknx_start - knx_end < 0:
@@ -140,7 +140,7 @@ def post_progsize(source, target, env):
         elif openknx_start - knx_end > 0:
             print(bcolors.OKGREEN + "    - Free      " + str(openknx_start - knx_end) + " Bytes" + bcolors.ENDC)
 
-        print("    - OpenKNX   " + hex(openknx_start) + "-" + hex(openknx_end) + " (" + str(openknx_end - openknx_start) + " Bytes)")
+        print("    - OpenKNX   " + hex(openknx_start) + " - " + hex(openknx_end) + " (" + str(openknx_end - openknx_start) + " Bytes)")
 
         if flash_end - openknx_end < 0:
             print(bcolors.FAIL + "    - Overlap   " + str(flash_end - openknx_end) + " Bytes" + bcolors.ENDC)
@@ -157,10 +157,10 @@ def post_progsize(source, target, env):
     if filesys_end - filesys_start == 0:
         print("  - Filesystem  None")
     else:
-        print("  - Filesystem  " + hex(filesys_start) + "-" + hex(filesys_end) + " (" + str(filesys_end - filesys_start) + ")")
+        print("  - Filesystem  " + hex(filesys_start) + " - " + hex(filesys_end) + " (" + str(filesys_end - filesys_start) + ")")
 
     eeprom_start = env["PICO_EEPROM_START"] - 268435456
-    print("  - EEPROM      " + hex(eeprom_start) + "-" + hex(eeprom_start + 4096) + " (4096 Bytes)")
+    print("  - EEPROM      " + hex(eeprom_start) + " - " + hex(eeprom_start + 4096) + " (4096 Bytes)")
 
 
 
