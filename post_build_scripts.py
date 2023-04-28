@@ -104,6 +104,7 @@ def post_progsize(source, target, env):
 
     flash_start = 0 # relative to zero   268435456 #0x10000000 got from uf2
     flash_end = flash_start + int(projenv["PICO_FLASH_LENGTH"])
+    eeprom_start = env["PICO_EEPROM_START"] - 268435456
     openknx_start = -1
 
     for x in projenv["CPPDEFINES"]:
@@ -123,7 +124,7 @@ def post_progsize(source, target, env):
         openknx_start = flash_start + openknx_start   
         openknx_end = openknx_start + openknx_end
 
-    print("Flash Usage")
+    print("Flash Usage     0x0 - " + hex(eeprom_start + 4096) + " (" + str(eeprom_start + 4096) + " Bytes)")
     print("  - System      0x0 - " + hex(flash_end) + " (" + str(flash_end - flash_start) + " Bytes)")
     print("    - Firmware  0x0 - " + hex(program_size) + " (" + str(program_size) + " Bytes)")
 
@@ -159,7 +160,6 @@ def post_progsize(source, target, env):
     else:
         print("  - Filesystem  " + hex(filesys_start) + " - " + hex(filesys_end) + " (" + str(filesys_end - filesys_start) + ")")
 
-    eeprom_start = env["PICO_EEPROM_START"] - 268435456
     print("  - EEPROM      " + hex(eeprom_start) + " - " + hex(eeprom_start + 4096) + " (4096 Bytes)")
 
 
