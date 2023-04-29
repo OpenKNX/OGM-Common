@@ -135,17 +135,15 @@ def show_flash_partitioning(source, target, env):
     flash_elements = []
 
     flash_start = 0
+    system_start = 0
+    firmware_start = 0
     flash_end = 0
-    
-    firmware_start = flash_start
+
     firmware_end = _calculate_size(output, env.get("SIZEPROGREGEXP")) 
 
     if projenv['BOARD'] == 'pico':
         eeprom_start = env["PICO_EEPROM_START"] - 268435456
         flash_end = eeprom_start + 4096
-        eeprom_end = flash_end
-        system_start = flash_start
-        system_end = eeprom_start
 
         if env["FS_START"] > 0:
             filesystem_start = env["FS_START"] - 268435456
@@ -154,14 +152,16 @@ def show_flash_partitioning(source, target, env):
             flash_elements.append({ 'name': 'FILESYSTEM', 'start': filesystem_start, 'end': filesystem_end, 'container': False })
         
     if projenv['PIOPLATFORM'] == 'atmelsam':
-        system_end = flash_end = 0x3FF00
-    
+        flash_end = 0x40000
+        eeprom_start = flash_end - 256
+        system_end = eeprom_start
+
+    eeprom_end = flash_end
+
     flash_elements.append({ 'name': 'FLASH',      'start': flash_start, 'end': flash_end, 'container': True })
     flash_elements.append({ 'name': 'FIRMWARE',   'start': firmware_start, 'end': firmware_end, 'container': False })
-    
-    if projenv['BOARD'] == 'pico':
-        flash_elements.append({ 'name': 'EEPROM',     'start': eeprom_start, 'end': eeprom_end, 'container': False })
-        flash_elements.append({ 'name': 'SYSTEM',     'start': system_start, 'end': system_end, 'container': True })
+    flash_elements.append({ 'name': 'EEPROM',     'start': eeprom_start, 'end': eeprom_end, 'container': projenv['PIOPLATFORM'] == 'atmelsam' }) # Container because, when EEPROM not use you can use by other
+    flash_elements.append({ 'name': 'SYSTEM',     'start': system_start, 'end': system_end, 'container': True })
 
     defined_sizes = {}
     for x in projenv["CPPDEFINES"]:
@@ -181,7 +181,7 @@ def show_flash_partitioning(source, target, env):
 
     # hack for knx stack and samd - https://github.com/thelsing/knx/blob/master/src/samd_platform.cpp#L94
     if projenv['PIOPLATFORM'] == 'atmelsam':
-        defined_sizes['KNX']['offset'] = 0x3BF00
+        defined_sizes['KNX']['offset'] = system_end - defined_sizes['KNX']['size']
 
     for name, data in defined_sizes.items():
         if data['offset'] > 0 and data['size'] > 0:
