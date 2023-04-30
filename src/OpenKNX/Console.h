@@ -7,6 +7,7 @@
 extern "C" {
 #include "pico/bootrom.h"
 }
+#include "LittleFS.h"
 #endif
 
 namespace OpenKNX
@@ -28,6 +29,8 @@ namespace OpenKNX
         void nukeFlashKnxOnly();
 #ifdef ARDUINO_ARCH_RP2040
         void resetToBootloader();
+        void showFilesystem();
+        void showFilesystemDirectory(std::string path);
 #endif
 
       public:

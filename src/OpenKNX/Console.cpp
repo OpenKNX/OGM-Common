@@ -49,6 +49,9 @@ namespace OpenKNX
                 sleep();
                 break;
 #ifdef ARDUINO_ARCH_RP2040
+            case 'f':
+                showFilesystem();
+                break;
             case 'b':
                 resetToBootloader();
                 break;
@@ -107,6 +110,35 @@ namespace OpenKNX
         openknx.logger.log("");
     }
 
+#ifdef ARDUINO_ARCH_RP2040
+    void Console::showFilesystem()
+    {
+        LittleFS.begin();
+        openknx.logger.color(4);
+        openknx.logger.log("Device Console", "===== Filesystem =====");
+        openknx.logger.color(0);
+        showFilesystemDirectory("/");
+    }
+
+    void Console::showFilesystemDirectory(std::string path)
+    {
+        openknx.logger.log("Filesystem", "%s", path.c_str());
+
+        Dir directory = LittleFS.openDir(path.c_str());
+
+        while (directory.next())
+        {
+            std::string full = path + directory.fileName().c_str();
+            if (directory.isDirectory())
+                showFilesystemDirectory(full + "/");
+            else
+            {
+                openknx.logger.log("Filesystem", "%s (%i bytes)", full.c_str(), directory.fileSize());
+            }
+        }
+    }
+#endif
+
     void Console::showHelp()
     {
         openknx.logger.log("");
@@ -115,6 +147,9 @@ namespace OpenKNX
         openknx.logger.color(0);
         openknx.logger.log("", ">  h  <  Show this help");
         openknx.logger.log("", ">  i  <  Show device information");
+#ifdef ARDUINO_ARCH_RP2040
+        openknx.logger.log("", ">  f  <  Show filesystem");
+#endif
         openknx.logger.log("", ">  r  <  Restart the device");
         openknx.logger.log("", ">  p  <  Toggle the ProgMode");
         openknx.logger.log("", ">  w  <  Write data to Flash");
