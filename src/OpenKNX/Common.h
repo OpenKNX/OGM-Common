@@ -1,7 +1,7 @@
 #pragma once
 #include "../Helper.h"
 #include "OpenKNX/Console.h"
-#include "OpenKNX/FlashStorage.h"
+#include "OpenKNX/Flash/Default.h"
 #include "OpenKNX/Hardware.h"
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Information.h"
@@ -94,7 +94,7 @@ namespace OpenKNX
         void processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
 
       public:
-        FlashStorage flash;
+        OpenKNX::Flash::Default flash;
         Information info;
         Console console;
         Logger logger;
