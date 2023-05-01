@@ -4,16 +4,13 @@ import re
 import os
 from platformio.proc import exec_command
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+class console_color:
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    END = '\033[0m'
 
 def show_flash_partitioning(source, target, env):
     def _configure_defaults():
@@ -88,19 +85,19 @@ def show_flash_partitioning(source, target, env):
 
             if (element['start'] >= start and element['start'] < end):
                 if (prev != element['start'] and element['start'] > prev):
-                    print_entry(bcolors.OKGREEN, { 'name': 'FREE', 'start': prev, 'end': element['start']}, indent)
+                    print_entry(console_color.GREEN, { 'name': 'FREE', 'start': prev, 'end': element['start']}, indent)
 
                 stack.append(element)
                 prev = element['end']
                 empty = False
 
-                color = bcolors.OKBLUE
+                color = console_color.CYAN
                 if (element['container']):
-                    color = bcolors.OKCYAN
+                    color = console_color.BLUE
 
                 # Oversize
                 if (oversized(element, flash)):
-                    color = bcolors.FAIL
+                    color = console_color.RED
 
                 print_entry(color, element, indent)
 
@@ -108,7 +105,7 @@ def show_flash_partitioning(source, target, env):
                     buid_tree(element['start'], element['end'], flash, indent+1, stack)
 
         if (not empty and prev < end):
-            print_entry(bcolors.OKGREEN, { 'name': 'FREE', 'start': prev, 'end': end}, indent)
+            print_entry(console_color.GREEN, { 'name': 'FREE', 'start': prev, 'end': end}, indent)
 
     def build_entry(element, indent = 0):
         return (
@@ -122,7 +119,7 @@ def show_flash_partitioning(source, target, env):
         )
 
     def print_entry(color, element, indent = 0):
-        print("{}{}{}".format(color, build_entry(element, indent), bcolors.ENDC))
+        print("{}{}{}".format(color, build_entry(element, indent), console_color.END))
 
 
     if not env.get("SIZECHECKCMD") and not env.get("SIZEPROGREGEXP"):
@@ -191,7 +188,7 @@ def show_flash_partitioning(source, target, env):
     sorted_flash_elements = sorted(flash_elements, key=lambda element: (element['start'], -element['end']-element['start']))
     print("")
     stack = []
-    print("Show flash partitioning:")
+    print("{}Show flash partitioning:{}".format(console_color.YELLOW, console_color.END))
     buid_tree(flash_start, flash_end, sorted_flash_elements, 1, stack)
     print("")
 
