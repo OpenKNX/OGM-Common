@@ -10,10 +10,10 @@ namespace OpenKNX
 {
     namespace Flash
     {
-        RP2040::RP2040(uint32_t startOffset, uint32_t size, std::string id)
+        RP2040::RP2040(uint32_t offset, uint32_t size, std::string id)
         {
             _id = id;
-            _startOffset = startOffset;
+            _offset = offset;
             _size = size;
             _sectorSize = FLASH_SECTOR_SIZE;
             // Full Size
@@ -21,14 +21,14 @@ namespace OpenKNX
             // Size up to EEPROM
             // _maxSize = (uint32_t)(&_EEPROM_start) - 0x10000000lu;
             // Size up to FS (if FS 0 it = _EEPROM_start)
-            _maxSize = (uint32_t)(&_FS_start) - 0x10000000lu;
+            _endFree = (uint32_t)(&_FS_start) - 0x10000000lu;
 
             validateParameters();
         }
 
         uint8_t* RP2040::flash()
         {
-            return (uint8_t*)XIP_BASE + _startOffset;
+            return (uint8_t*)XIP_BASE + _offset;
         }
 
         void RP2040::eraseSector(uint16_t sector)
@@ -42,7 +42,7 @@ namespace OpenKNX
             logTraceP("erase sector %i", sector);
             noInterrupts();
             rp2040.idleOtherCore();
-            flash_range_erase(_startOffset + (sector * _sectorSize), _sectorSize);
+            flash_range_erase(_offset + (sector * _sectorSize), _sectorSize);
             rp2040.resumeOtherCore();
             interrupts();
         }
@@ -82,7 +82,7 @@ namespace OpenKNX
 
                 // Changes Found
                 if (currentSize > 0)
-                    flash_range_program(_startOffset + (_bufferSector * _sectorSize) + currentPosition, _buffer + currentPosition, currentSize);
+                    flash_range_program(_offset + (_bufferSector * _sectorSize) + currentPosition, _buffer + currentPosition, currentSize);
 
                 currentPosition += currentSize + FLASH_PAGE_SIZE;
                 currentSize = 0;

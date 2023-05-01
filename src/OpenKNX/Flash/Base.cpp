@@ -12,29 +12,27 @@ namespace OpenKNX
 
         void Base::printBaseInfo()
         {
-            logInfoP("initalize %i bytes at 0x%X", _size, _startOffset);
+            logInfoP("initalize %i bytes at 0x%X", _size, _offset);
             logIndentUp();
             logDebugP("sectorSize: %i", _sectorSize);
-            logDebugP("maxSize: %i", _maxSize);
+            logDebugP("startFree: %i", _startFree);
+            logDebugP("endFree: %i", _endFree);
             logIndentDown();
         }
 
         void Base::validateParameters()
         {
-            validateSize();
-            validateOffset();
-        }
+            if (_size % _sectorSize)
+                fatalError(1, "Flash: Size unaligned");
+            if (_offset % _sectorSize)
+                fatalError(1, "Flash: Offset unaligned");
+            if (_size > _endFree)
+                fatalError(1, "Flash: End behind free flash");
+            if (_offset < _startFree) {
+                logInfoP("%i < %i", _offset, _startFree);
+                fatalError(1, "Flash: Offset start before free flash begin");
 
-        void Base::validateSize()
-        {
-            if (_size % _sectorSize || _size > _maxSize - _startOffset)
-                fatalError(1, "Flash: Invalid Size");
-        }
-
-        void Base::validateOffset()
-        {
-            if (_startOffset % _sectorSize)
-                fatalError(1, "Flash: Invalid Offset");
+            }
         }
 
         uint32_t Base::sectorSize()
@@ -42,9 +40,14 @@ namespace OpenKNX
             return _sectorSize;
         }
 
-        uint32_t Base::maxSize()
+        uint32_t Base::startFree()
         {
-            return _maxSize;
+            return _startFree;
+        }
+
+        uint32_t Base::endFree()
+        {
+            return _endFree;
         }
 
         uint32_t Base::size()
@@ -54,7 +57,7 @@ namespace OpenKNX
 
         uint32_t Base::startOffset()
         {
-            return _startOffset;
+            return _offset;
         }
 
         uint16_t Base::sectorOfRelativeAddress(uint32_t relativeAddress)

@@ -12,9 +12,10 @@ namespace OpenKNX
           protected:
             std::string _id = "Unnamed";
             
-            uint32_t _startOffset = 0;
+            uint32_t _offset = 0;
             uint32_t _size = 0;
-            uint32_t _maxSize = 0;
+            uint32_t _startFree = 0;
+            uint32_t _endFree = 0;
             uint16_t _sectorSize = 0;
 
             uint8_t *_buffer = nullptr;
@@ -27,8 +28,6 @@ namespace OpenKNX
             uint16_t sectorOfRelativeAddress(uint32_t relativeAddress);
 
             void validateParameters();
-            void validateSize();
-            void validateOffset();
 
             void loadSector(uint16_t sector, bool force = false);
             void loadSectorBufferAndCommit(uint16_t sector);
@@ -42,7 +41,8 @@ namespace OpenKNX
 
             void commit();
             uint32_t size();
-            uint32_t maxSize();
+            uint32_t startFree();
+            uint32_t endFree();
             uint32_t sectorSize();
             uint32_t startOffset();
             void printBaseInfo();

@@ -11,7 +11,7 @@ namespace OpenKNX
         {
           protected:
           public:
-            Samd(uint32_t startOffset, uint32_t size, std::string id);
+            Samd(uint32_t offset, uint32_t size, std::string id);
             void eraseSector(uint16_t sector = 0) override;
             void writeSector() override;
             uint8_t* flash() override;

@@ -13,42 +13,6 @@ class console_color:
     END = '\033[0m'
 
 def show_flash_partitioning(source, target, env):
-    def _configure_defaults():
-        env.Replace(
-            SIZECHECKCMD="$SIZETOOL -B -d $SOURCES",
-            SIZEPROGREGEXP=r"^(\d+)\s+(\d+)\s+\d+\s",
-            SIZEDATAREGEXP=r"^\d+\s+(\d+)\s+(\d+)\s+\d+",
-        )
-
-    def _get_size_output():
-        cmd = env.get("SIZECHECKCMD")
-        if not cmd:
-            return None
-        if not isinstance(cmd, list):
-            cmd = cmd.split()
-        cmd = [arg.replace("$SOURCES", str(source[0])) for arg in cmd if arg]
-        sysenv = os.environ.copy()
-        sysenv["PATH"] = str(env["ENV"]["PATH"])
-        result = exec_command(env.subst(cmd), env=sysenv)
-        if result["returncode"] != 0:
-            return None
-        return result["out"].strip()
-
-    def _calculate_size(output, pattern):
-        if not output or not pattern:
-            return -1
-        size = 0
-        regexp = re.compile(pattern)
-        for line in output.split("\n"):
-            line = line.strip()
-            if not line:
-                continue
-            match = regexp.search(line)
-            if not match:
-                continue
-            size += sum(int(value) for value in match.groups())
-        return size
-
     def oversized(ref_element, flash):
         # Bin ich ein Container
         if (ref_element['container']):
@@ -121,13 +85,35 @@ def show_flash_partitioning(source, target, env):
     def print_entry(color, element, indent = 0):
         print("{}{}{}".format(color, build_entry(element, indent), console_color.END))
 
+    def firmware_size(env):
+        size = 0
+        sizetool = env.get("SIZETOOL")
+        sysenv = os.environ.copy()
+        sysenv["PATH"] = str(env["ENV"]["PATH"])
+        result = exec_command([env.subst(sizetool), '-A', '-d', str(source[0])], env=sysenv)
 
-    if not env.get("SIZECHECKCMD") and not env.get("SIZEPROGREGEXP"):
-        _configure_defaults()
+        m = re.search("\.ARM\.exidx\s+(\d+)\s+(\d+)", str(result))
+        if m is not None:
+            size += int(m.group(1))
+            size += int(m.group(2))
 
-    # print(projenv.Dictionary())
+        m = re.search("\.data\s+(\d+)\s+(\d+)", str(result))
+        if m is not None:
+            size += int(m.group(1))
+        
+        if projenv['BOARD'] == 'pico':
+            size -= 268435456
 
-    output = _get_size_output()
+        return size
+
+
+#    if not env.get("SIZECHECKCMD") and not env.get("SIZEPROGREGEXP"):
+#        _configure_defaults()
+
+    #print(env.Dictionary())
+    #print(projenv.Dictionary())
+
+    #output = _get_size_output()
 
     flash_elements = []
 
@@ -136,8 +122,8 @@ def show_flash_partitioning(source, target, env):
     firmware_start = 0
     flash_end = 0
 
-    firmware_end = _calculate_size(output, env.get("SIZEPROGREGEXP")) 
-
+    firmware_end = firmware_size(env)#_calculate_size(output, env.get("SIZEPROGREGEXP"))
+    #print(str(source[0]))
     if projenv['BOARD'] == 'pico':
         eeprom_start = env["PICO_EEPROM_START"] - 268435456
         flash_end = eeprom_start + 4096
@@ -157,8 +143,9 @@ def show_flash_partitioning(source, target, env):
 
     flash_elements.append({ 'name': 'FLASH',      'start': flash_start, 'end': flash_end, 'container': True })
     flash_elements.append({ 'name': 'FIRMWARE',   'start': firmware_start, 'end': firmware_end, 'container': False })
-    flash_elements.append({ 'name': 'EEPROM',     'start': eeprom_start, 'end': eeprom_end, 'container': projenv['PIOPLATFORM'] == 'atmelsam' }) # Container because, when EEPROM not use you can use by other
-    flash_elements.append({ 'name': 'SYSTEM',     'start': system_start, 'end': system_end, 'container': True })
+    if (projenv['PIOPLATFORM'] != 'atmelsam'):  # exists but not used for us
+        flash_elements.append({ 'name': 'EEPROM',     'start': eeprom_start, 'end': eeprom_end, 'container': False })
+        flash_elements.append({ 'name': 'SYSTEM',     'start': system_start, 'end': system_end, 'container': True })
 
     defined_sizes = {}
     for x in projenv["CPPDEFINES"]:
@@ -177,7 +164,7 @@ def show_flash_partitioning(source, target, env):
                     defined_sizes[name]['size'] = int(x[1], 16)
 
     # hack for knx stack and samd - https://github.com/thelsing/knx/blob/master/src/samd_platform.cpp#L94
-    if projenv['PIOPLATFORM'] == 'atmelsam':
+    if projenv['PIOPLATFORM'] == 'atmelsam' and not defined_sizes['KNX']['offset'] > 0:
         defined_sizes['KNX']['offset'] = system_end - defined_sizes['KNX']['size']
 
     for name, data in defined_sizes.items():

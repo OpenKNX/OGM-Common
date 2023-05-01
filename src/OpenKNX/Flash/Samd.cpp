@@ -3,25 +3,30 @@
 #include "OpenKNX/Flash/Samd.h"
 #include "OpenKNX/Common.h"
 
+extern uint32_t __etext;
+extern uint32_t __data_start__;
+extern uint32_t __data_end__;
+
 namespace OpenKNX
 {
     namespace Flash
     {
-        Samd::Samd(uint32_t startOffset, uint32_t size, std::string id)
+        Samd::Samd(uint32_t offset, uint32_t size, std::string id)
         {
             const uint32_t pageSizes[] = {8, 16, 32, 64, 128, 256, 512, 1024};
             _id = id;
-            _startOffset = startOffset;
+            _offset = offset;
             _size = size;
             _sectorSize = pageSizes[NVMCTRL->PARAM.bit.PSZ] * 4;
-            _maxSize = pageSizes[NVMCTRL->PARAM.bit.PSZ] * NVMCTRL->PARAM.bit.NVMP;
+            _endFree = pageSizes[NVMCTRL->PARAM.bit.PSZ] * NVMCTRL->PARAM.bit.NVMP;
+            _startFree = (uint32_t)(&__etext + (&__data_end__ - &__data_start__)); // text + data MemoryBlock
 
             validateParameters();
         }
 
         uint8_t *Samd::flash()
         {
-            return (uint8_t *)_startOffset;
+            return (uint8_t *)_offset;
         }
 
         void Samd::eraseSector(uint16_t sector)
@@ -33,7 +38,7 @@ namespace OpenKNX
             }
 
             logTraceP("erase sector %i", sector);
-            NVMCTRL->ADDR.reg = ((uint32_t)_startOffset + (sector * _sectorSize)) / 2;
+            NVMCTRL->ADDR.reg = ((uint32_t)_offset + (sector * _sectorSize)) / 2;
             NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_ER;
             while (!NVMCTRL->INTFLAG.bit.READY)
             {}
