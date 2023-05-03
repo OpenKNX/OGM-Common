@@ -75,7 +75,7 @@ def show_flash_partitioning(source, target, env):
         return (
             "{}{}{} - {} ({} Bytes)".format(
                 "".rjust(indent*2, " "),
-                (element['name'] + ":").ljust(20-indent*2, ' '),
+                (element['name'] + ":").ljust(30-indent*2, ' '),
                 format(element['start'], "#010x"),
                 format(element['end'], "#010x"),
                 element['end']-element['start']
@@ -92,28 +92,42 @@ def show_flash_partitioning(source, target, env):
         sysenv["PATH"] = str(env["ENV"]["PATH"])
         result = exec_command([env.subst(sizetool), '-A', '-d', str(source[0])], env=sysenv)
 
-        m = re.search("\.ARM\.exidx\s+(\d+)\s+(\d+)", str(result))
-        if m is not None:
-            size += int(m.group(1))
-            size += int(m.group(2))
+        searches = ["\.ARM\.exidx", "\.ARM\.extab", "\.rodata", "\.text"]
+        for search in searches:
+            m = re.search(search + "\s+(\d+)\s+(\d+)", str(result))
+            if m is not None:
+                size += int(m.group(1))
+                size += int(m.group(2))
+                break
 
         m = re.search("\.data\s+(\d+)\s+(\d+)", str(result))
         if m is not None:
             size += int(m.group(1))
         
         if projenv['BOARD'] == 'pico':
-            size -= 268435456
+            size -= 268435456 # subtract start of flash address pointer
 
         return size
+    
+    def get_knx_parameter_size():
+        content = open("lib/OGM-Common/include/knxprod.h", 'r').read(5000)
+        m = re.search("#define MAIN_ParameterSize ([0-9]+)", content)
+        if m is None:
+            return 0
+        
+        return int(m.group(1))
 
-
-#    if not env.get("SIZECHECKCMD") and not env.get("SIZEPROGREGEXP"):
-#        _configure_defaults()
-
-    #print(env.Dictionary())
-    #print(projenv.Dictionary())
-
-    #output = _get_size_output()
+    def get_knx_max_ko_number():
+        content = open("lib/OGM-Common/include/knxprod.h", 'r').read(5000)
+        m = re.search("#define MAIN_MaxKoNumber ([0-9]+)", content)
+        if m is None:
+            return 0
+        
+        return int(m.group(1))
+    
+    # print(str(source[0]))
+    # print(env.Dictionary())
+    # print(projenv.Dictionary())
 
     flash_elements = []
 
@@ -122,8 +136,7 @@ def show_flash_partitioning(source, target, env):
     firmware_start = 0
     flash_end = 0
 
-    firmware_end = firmware_size(env)#_calculate_size(output, env.get("SIZEPROGREGEXP"))
-    #print(str(source[0]))
+    firmware_end = firmware_size(env)
     if projenv['BOARD'] == 'pico':
         eeprom_start = env["PICO_EEPROM_START"] - 268435456
         flash_end = eeprom_start + 4096
@@ -163,13 +176,30 @@ def show_flash_partitioning(source, target, env):
                 if(x[0].endswith("_FLASH_SIZE")):
                     defined_sizes[name]['size'] = int(x[1], 16)
 
-    # hack for knx stack and samd - https://github.com/thelsing/knx/blob/master/src/samd_platform.cpp#L94
+    # hack/fallback for knx stack and samd - https://github.com/thelsing/knx/blob/master/src/samd_platform.cpp#L94
     if projenv['PIOPLATFORM'] == 'atmelsam' and not defined_sizes['KNX']['offset'] > 0:
         defined_sizes['KNX']['offset'] = system_end - defined_sizes['KNX']['size']
 
+    # Schätzung der nutzung des knx speichers
+    # Größe der Parameter
+    knx_parameter_size = get_knx_parameter_size()
+    # Größe der KO Tabelle
+    knx_ko_table_size = get_knx_max_ko_number() * 2
+    # Größe der GA Tabelle geschätzt
+    # Annahme, dass im Schnitt 2 GA mit einem KO verküft wird = get_knx_max_ko_number * 4 (Eintrag) * 2 (GAs)
+    knx_ga_table_size = knx_ko_table_size * 4
+    # Metadaten & etwas Overhead
+    knx_meta = 100
+    # Zusammen gerechnete Größe
+    knx_used = knx_meta + knx_parameter_size + knx_ko_table_size + knx_ga_table_size
+
     for name, data in defined_sizes.items():
         if data['offset'] > 0 and data['size'] > 0:
-            flash_elements.append({ 'name': name, 'start': data['offset'], 'end': data['offset'] + data['size'], 'container': False })
+            container = False
+            if name == "KNX" and knx_used > 0:
+                container = True
+                flash_elements.append({ 'name': "DATA*", 'start': data['offset'], 'end': data['offset'] + knx_used, 'container': False })
+            flash_elements.append({ 'name': name, 'start': data['offset'], 'end': data['offset'] + data['size'], 'container': container })
 
 
     sorted_flash_elements = sorted(flash_elements, key=lambda element: (element['start'], -element['end']-element['start']))
@@ -177,6 +207,9 @@ def show_flash_partitioning(source, target, env):
     stack = []
     print("{}Show flash partitioning:{}".format(console_color.YELLOW, console_color.END))
     buid_tree(flash_start, flash_end, sorted_flash_elements, 1, stack)
+    if (knx_used > 0):
+        print("")
+        print("* This value is an estimate")
     print("")
 
 env.AddPostAction("checkprogsize", show_flash_partitioning)
