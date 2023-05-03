@@ -85,6 +85,18 @@ def show_flash_partitioning(source, target, env):
     def print_entry(color, element, indent = 0):
         print("{}{}{}".format(color, build_entry(element, indent), console_color.END))
 
+    def find_header_file(file):
+        folders = [
+            "src/",
+            "lib/OGM-Common/include/",
+            projenv["PROJECT_LIBDEPS_DIR"] + "/" + env["PIOENV"] + "/OGM-Common/include/"
+        ]
+        for folder in folders:
+            if os.path.isfile(folder + file):
+                return folder + file
+            
+        return file
+                
     def firmware_size(env):
         size = 0
         sizetool = env.get("SIZETOOL")
@@ -110,7 +122,7 @@ def show_flash_partitioning(source, target, env):
         return size
     
     def get_knx_parameter_size():
-        content = open("lib/OGM-Common/include/knxprod.h", 'r').read(5000)
+        content = open(find_header_file("knxprod.h"), 'r').read()
         m = re.search("#define MAIN_ParameterSize ([0-9]+)", content)
         if m is None:
             return 0
@@ -118,7 +130,7 @@ def show_flash_partitioning(source, target, env):
         return int(m.group(1))
 
     def get_knx_max_ko_number():
-        content = open("lib/OGM-Common/include/knxprod.h", 'r').read(5000)
+        content = open(find_header_file("knxprod.h"), 'r').read()
         m = re.search("#define MAIN_MaxKoNumber ([0-9]+)", content)
         if m is None:
             return 0
