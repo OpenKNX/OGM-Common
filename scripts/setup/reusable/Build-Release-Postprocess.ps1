@@ -9,9 +9,17 @@ $releaseTarget = "release/data/content.xml"
 "    </Products>" >>$releaseTarget
 "</Content>" >>$releaseTarget
 
-# add necessary scripts
-Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
-Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
+# add necessary scripts, but allow project local versions
+if (Test-Path -Path scripts/Readme-Release.txt -PathType Leaf) {
+    Copy-Item scripts/Readme-Release.txt release/
+} else {
+    Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
+}
+if (Test-Path -Path scripts/Build-knxprod.ps1 -PathType Leaf) {
+    Copy-Item scripts/Build-knxprod.ps1 release/
+} else {
+    Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
+}
 # Copy-Item scripts/Upload-Firmware*.ps1 release/
 
 # here we might need a better switch in future
