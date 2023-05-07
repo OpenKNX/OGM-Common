@@ -10,7 +10,7 @@
 #define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay
 #endif
 
-#define FLASH_DATA_FILLBYTE 0xFF
+#define FLASH_DATA_FILLBYTE 0xF0
 
 /*
  * The data-structure is optimized for fast sequential writing, to maximize
@@ -36,6 +36,7 @@
  * - META: fixed-sized to ensure robust restore of module-data
  *   - APP  uint8_t[4]: device/firmware info
  *   - SIZE uint16_t  : size (and indirect position) definition for DATA
+ *   - VERSION uint8_t: save version
  *   - CHK  uint8_t[2]: checksum
  *   - INIT uint8_t[4]: the magic word for format detection
  *
@@ -86,7 +87,7 @@ b) data written with an incompatible structure
        There is the idea to increase version number in last byte in this case,
        but there is no guaranteed or definition yet.
 */
-#define FLASH_DATA_INIT 1330337281
+#define FLASH_DATA_INIT 22432591 /* other endianness 1330337281 */
 
 /**
 Intro for Identification (and possible versioning later).
@@ -94,8 +95,13 @@ Intro for Identification (and possible versioning later).
 */
 #define FLASH_DATA_INIT_LEN 4
 
+/**
+ * A version for dual write support (for RP2040 only)
+ */
+#define FLASH_DATA_VERSION 1
+
 /** Overall fixed-size of the non-module-data part */
-#define FLASH_DATA_META_LEN (FLASH_DATA_APP_LEN + FLASH_DATA_SIZE_LEN + FLASH_DATA_CHK_LEN + FLASH_DATA_INIT_LEN)
+#define FLASH_DATA_META_LEN (FLASH_DATA_APP_LEN + FLASH_DATA_SIZE_LEN + FLASH_DATA_VERSION + FLASH_DATA_CHK_LEN + FLASH_DATA_INIT_LEN)
 
 //
 // ==== FLASH_STORAGE_DATA - DATA ====
@@ -154,6 +160,9 @@ namespace OpenKNX
         class Default
         {
           public:
+            Default();
+            void init();
+
             /**
              * TODO extend documentation
              *
@@ -179,7 +188,6 @@ namespace OpenKNX
              * 7) write INIT
              */
             void save(bool force = false);
-
             void write(uint8_t *buffer, uint16_t size = 1);
             void write(uint8_t value, uint16_t size);
             void writeByte(uint8_t value);
@@ -192,22 +200,21 @@ namespace OpenKNX
             uint16_t firmwareVersion();
 
           private:
-            bool *loadedModules;
-            uint8_t *_flashStart;
-            // Base *_storage = nullptr;
-            uint16_t _flashSize = 0;
+            bool *loadedModules = nullptr;
+            OpenKNX::Flash::Base *_flash = nullptr;
             uint32_t _lastWrite = 0;
             uint16_t _lastFirmwareNumber = 0;
             uint16_t _lastFirmwareVersion = 0;
             uint16_t _checksum = 0;
             uint32_t _currentWriteAddress = 0;
-            uint8_t *_currentReadAddress = 0;
+            uint32_t _currentReadAddress = 0;
             uint32_t _maxWriteAddress = 0;
             void writeFilldata();
             void readData();
             void initUnloadedModules();
+            uint8_t *currentFlash();
             uint16_t calcChecksum(uint8_t *data, uint16_t size);
-            bool verifyChecksum(uint8_t *data, uint16_t size);
+            bool verifyChecksum(uint8_t *data, uint16_t size, uint16_t checksum);
             std::string logPrefix();
         };
     } // namespace Flash

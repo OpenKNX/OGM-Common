@@ -30,7 +30,6 @@ namespace OpenKNX
             void validateParameters();
 
             void loadSector(uint16_t sector, bool force = false);
-            void loadSectorBufferAndCommit(uint16_t sector);
 
           public:
             std::string logPrefix();
@@ -49,27 +48,16 @@ namespace OpenKNX
 
             uint32_t write(uint32_t relativeAddress, uint8_t value, uint32_t size = 1);
             uint32_t write(uint32_t relativeAddress, uint8_t *buffer, uint32_t size = 1);
-            uint32_t write(uint32_t relativeAddress, int8_t value);
-            uint32_t write(uint32_t relativeAddress, uint16_t value);
-            uint32_t write(uint32_t relativeAddress, int16_t value);
-            uint32_t write(uint32_t relativeAddress, uint32_t value);
-            uint32_t write(uint32_t relativeAddress, int32_t value);
 
             uint32_t writeByte(uint32_t relativeAddress, uint8_t value);
             uint32_t writeWord(uint32_t relativeAddress, uint16_t value);
             uint32_t writeInt(uint32_t relativeAddress, uint32_t value);
 
-            uint8_t *read(uint32_t relativeAddress);
-            uint32_t read(uint32_t relativeAddress, uint8_t &output);
-            uint32_t read(uint32_t relativeAddress, int8_t &output);
-            uint32_t read(uint32_t relativeAddress, uint16_t &output);
-            uint32_t read(uint32_t relativeAddress, int16_t &output);
-            uint32_t read(uint32_t relativeAddress, uint32_t &output);
-            uint32_t read(uint32_t relativeAddress, int32_t &output);
+            uint32_t read(uint32_t relativeAddress, uint8_t *output, uint32_t size);
 
             uint8_t readByte(uint32_t relativeAddress);
             uint16_t readWord(uint32_t relativeAddress);
             uint32_t readInt(uint32_t relativeAddress);
         };
-    } // namespace Storage
+    } // namespace Flash
 } // namespace OpenKNX

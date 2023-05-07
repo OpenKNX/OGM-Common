@@ -45,6 +45,7 @@ namespace OpenKNX
         initKnx();
 
         hardware.init();
+        flash.init();
     }
 
 #ifdef DEBUG_LOG

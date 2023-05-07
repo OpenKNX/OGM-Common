@@ -101,26 +101,20 @@ namespace OpenKNX
             if (!force && _buffer != nullptr && sector == _bufferSector)
                 return;
 
+            // load specific sector
+            logTraceP("load buffer for sector %i", sector);
+            logIndentUp();
+
+            // an other sector is loaded - commit before load
+            if (_buffer != nullptr && sector != _bufferSector)
+                commit();
+
             // initalize buffer for first time
             if (_buffer == nullptr)
                 _buffer = new uint8_t[_sectorSize];
 
-            // load specific sector
-            logTraceP("load buffer for sector %i", sector);
             _bufferSector = sector;
             memcpy(_buffer, flash() + _bufferSector * _sectorSize, _sectorSize);
-        }
-
-        void Base::loadSectorBufferAndCommit(uint16_t sector)
-        {
-            logDebugP("load sector %i and commit previous changes", sector);
-            logIndentUp();
-
-            // an other sector is loaded - commit bevor load
-            if (_buffer != nullptr && sector != _bufferSector)
-                commit();
-
-            loadSector(sector);
             logIndentDown();
         }
 
@@ -144,7 +138,7 @@ namespace OpenKNX
             uint16_t sector = sectorOfRelativeAddress(relativeAddress);
 
             // load buffer if needed
-            loadSectorBufferAndCommit(sector);
+            loadSector(sector);
 
             // position in loaded buffer
             uint16_t bufferPosition = relativeAddress % _sectorSize;
@@ -176,7 +170,7 @@ namespace OpenKNX
             uint16_t sector = sectorOfRelativeAddress(relativeAddress);
 
             // load buffer if needed
-            loadSectorBufferAndCommit(sector);
+            loadSector(sector);
 
             // position in loaded buffer
             uint16_t bufferPosition = relativeAddress % _sectorSize;
@@ -200,105 +194,45 @@ namespace OpenKNX
             return relativeAddress + size;
         }
 
-        uint32_t Base::write(uint32_t relativeAddress, int8_t value)
+        uint32_t Base::writeByte(uint32_t relativeAddress, uint8_t value)
         {
             return write(relativeAddress, (uint8_t *)&value, 1);
         }
 
-        uint32_t Base::write(uint32_t relativeAddress, uint16_t value)
-        {
-            return write(relativeAddress, (uint8_t *)&value, 2);
-        }
-
-        uint32_t Base::write(uint32_t relativeAddress, int16_t value)
-        {
-            return write(relativeAddress, (uint8_t *)&value, 2);
-        }
-
-        uint32_t Base::write(uint32_t relativeAddress, uint32_t value)
-        {
-            return write(relativeAddress, (uint8_t *)&value, 4);
-        }
-
-        uint32_t Base::write(uint32_t relativeAddress, int32_t value)
-        {
-            return write(relativeAddress, (uint8_t *)&value, 4);
-        }
-
-        uint32_t Base::writeByte(uint32_t relativeAddress, uint8_t value)
-        {
-            return write(relativeAddress, value);
-        }
-
         uint32_t Base::writeWord(uint32_t relativeAddress, uint16_t value)
         {
-            return write(relativeAddress, value);
+            return write(relativeAddress, (uint8_t *)&value, 2);
         }
 
         uint32_t Base::writeInt(uint32_t relativeAddress, uint32_t value)
         {
-            return write(relativeAddress, value);
+            return write(relativeAddress, (uint8_t *)&value, 4);
         }
 
-        uint8_t *Base::read(uint32_t relativeAddress)
+        uint32_t Base::read(uint32_t relativeAddress, uint8_t *output, uint32_t size)
         {
-            return flash() + relativeAddress;
-        }
-
-        uint32_t Base::read(uint32_t relativeAddress, uint8_t &output)
-        {
-            output = ((uint8_t *)read(relativeAddress))[0];
+            memcpy(output, flash() + relativeAddress, size);
             return relativeAddress + 1;
-        }
-
-        uint32_t Base::read(uint32_t relativeAddress, int8_t &output)
-        {
-            output = ((int8_t *)read(relativeAddress))[0];
-            return relativeAddress + 1;
-        }
-
-        uint32_t Base::read(uint32_t relativeAddress, uint16_t &output)
-        {
-            output = ((uint16_t *)read(relativeAddress))[0];
-            return relativeAddress + 2;
-        }
-
-        uint32_t Base::read(uint32_t relativeAddress, int16_t &output)
-        {
-            output = ((int16_t *)read(relativeAddress))[0];
-            return relativeAddress + 2;
-        }
-
-        uint32_t Base::read(uint32_t relativeAddress, uint32_t &output)
-        {
-            output = ((uint32_t *)read(relativeAddress))[0];
-            return relativeAddress + 4;
-        }
-
-        uint32_t Base::read(uint32_t relativeAddress, int32_t &output)
-        {
-            output = ((int32_t *)read(relativeAddress))[0];
-            return relativeAddress + 4;
         }
 
         uint8_t Base::readByte(uint32_t relativeAddress)
         {
             uint8_t buffer = 0;
-            read(relativeAddress, buffer);
+            read(relativeAddress, &buffer, 1);
             return buffer;
         }
 
         uint16_t Base::readWord(uint32_t relativeAddress)
         {
             uint16_t buffer = 0;
-            read(relativeAddress, buffer);
+            read(relativeAddress, (uint8_t *)&buffer, 2);
             return buffer;
         }
 
         uint32_t Base::readInt(uint32_t relativeAddress)
         {
             uint32_t buffer = 0;
-            read(relativeAddress, buffer);
+            read(relativeAddress, (uint8_t *)&buffer, 4);
             return buffer;
         }
     } // namespace Flash
