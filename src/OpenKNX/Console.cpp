@@ -118,7 +118,7 @@ namespace OpenKNX
     void Console::showFilesystem()
     {
         LittleFS.begin();
-        openknx.logger.color(4);
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Device Console", "===== Filesystem =====");
         openknx.logger.color(0);
         showFilesystemDirectory("/");
