@@ -10,7 +10,7 @@ extern "C" {
 #include "LittleFS.h"
 #endif
 
-#define CONSOLE_HEADLINE_COLOR 2
+#define CONSOLE_HEADLINE_COLOR 11
 
 namespace OpenKNX
 {
