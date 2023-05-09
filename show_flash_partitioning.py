@@ -78,7 +78,7 @@ def show_flash_partitioning(source, target, env):
                 (element['name'] + ":").ljust(30-indent*2, ' '),
                 format(element['start'], "#010x"),
                 format(element['end'], "#010x"),
-                element['end']-element['start']
+                format(element['end']-element['start'], "#10")
             )
         )
 
