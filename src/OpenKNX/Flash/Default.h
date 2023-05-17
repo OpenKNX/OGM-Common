@@ -1,6 +1,5 @@
 #pragma once
-#include "OpenKNX/Flash/RP2040.h"
-#include "OpenKNX/Flash/Samd.h"
+#include "OpenKNX/Flash/Driver.h"
 #include "knx.h"
 #include "knx/bits.h"
 #include <string>
@@ -201,7 +200,7 @@ namespace OpenKNX
 
           private:
             bool *loadedModules = nullptr;
-            OpenKNX::Flash::Base *_flash = nullptr;
+            OpenKNX::Flash::Driver *_flashDriver = nullptr;
             uint32_t _lastWrite = 0;
             uint16_t _lastFirmwareNumber = 0;
             uint16_t _lastFirmwareVersion = 0;

@@ -7,11 +7,7 @@ namespace OpenKNX
     {
         Default::Default()
         {
-#ifdef ARDUINO_ARCH_SAMD
-            _flash = new OpenKNX::Flash::Samd(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "Default");
-#else
-            _flash = new OpenKNX::Flash::RP2040(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "Default");
-#endif
+            _flashDriver = new OpenKNX::Flash::Driver(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "Default");
         }
 
         void Default::init()
@@ -65,7 +61,7 @@ namespace OpenKNX
         void Default::readData()
         {
             // check magicwords exists
-            _currentReadAddress = _flash->size() - FLASH_DATA_INIT_LEN;
+            _currentReadAddress = _flashDriver->size() - FLASH_DATA_INIT_LEN;
             if (FLASH_DATA_INIT != readInt())
             {
                 logInfoP("Abort: No data found");
@@ -73,7 +69,7 @@ namespace OpenKNX
             }
 
             // APP
-            _currentReadAddress = _flash->size() - FLASH_DATA_META_LEN;
+            _currentReadAddress = _flashDriver->size() - FLASH_DATA_META_LEN;
             _lastFirmwareNumber = readWord();
             logDebugP("FirmwareNumber: 0x%04X", _lastFirmwareNumber);
             _lastFirmwareVersion = readWord();
@@ -99,7 +95,7 @@ namespace OpenKNX
             logDebugP("Checksum: %i", checksum);
 
             // validate checksum
-            _currentReadAddress = _flash->size() - FLASH_DATA_META_LEN - dataSize;
+            _currentReadAddress = _flashDriver->size() - FLASH_DATA_META_LEN - dataSize;
             if (!verifyChecksum(currentFlash(), dataSize + FLASH_DATA_APP_LEN + FLASH_DATA_SIZE_LEN + FLASH_DATA_VERSION, checksum))
             {
                 logErrorP("Abort: Checksum invalid!");
@@ -171,7 +167,7 @@ namespace OpenKNX
             logTraceP("dataSize: %i", dataSize);
 
             // start point
-            _currentWriteAddress = _flash->size() -
+            _currentWriteAddress = _flashDriver->size() -
                                    dataSize -
                                    FLASH_DATA_META_LEN;
 
@@ -222,8 +218,8 @@ namespace OpenKNX
             // write init
             writeInt(FLASH_DATA_INIT);
 
-            _flash->commit();
-            logHexTraceP(_flash->flash() + _flash->size() - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
+            _flashDriver->commit();
+            logHexTraceP(_flashDriver->flashAddress() + _flashDriver->size() - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
 
             _lastWrite = millis();
             logInfoP("Save completed (%ims)", _lastWrite - start);
@@ -232,7 +228,7 @@ namespace OpenKNX
 
         uint8_t *Default::currentFlash()
         {
-            return _flash->flash() + _currentReadAddress;
+            return _flashDriver->flashAddress() + _currentReadAddress;
         }
 
         uint16_t Default::calcChecksum(uint8_t *data, uint16_t size)
@@ -262,7 +258,7 @@ namespace OpenKNX
             for (uint16_t i = 0; i < size; i++)
                 _checksum += buffer[i];
 
-            _currentWriteAddress = _flash->write(_currentWriteAddress, buffer, size);
+            _currentWriteAddress = _flashDriver->write(_currentWriteAddress, buffer, size);
         }
 
         void Default::write(uint8_t value, uint16_t size)
@@ -276,7 +272,7 @@ namespace OpenKNX
             for (uint16_t i = 0; i < size; i++)
                 _checksum += value;
 
-            _currentWriteAddress = _flash->write(_currentWriteAddress, value, size);
+            _currentWriteAddress = _flashDriver->write(_currentWriteAddress, value, size);
         }
 
         void Default::writeByte(uint8_t value)
@@ -313,19 +309,19 @@ namespace OpenKNX
         uint8_t Default::readByte()
         {
             _currentReadAddress += 1;
-            return _flash->readByte(_currentReadAddress - 1);
+            return _flashDriver->readByte(_currentReadAddress - 1);
         }
 
         uint16_t Default::readWord()
         {
             _currentReadAddress += 2;
-            return _flash->readWord(_currentReadAddress - 2);
+            return _flashDriver->readWord(_currentReadAddress - 2);
         }
 
         uint32_t Default::readInt()
         {
             _currentReadAddress += 4;
-            return _flash->readInt(_currentReadAddress - 4);
+            return _flashDriver->readInt(_currentReadAddress - 4);
         }
 
         uint16_t Default::firmwareVersion()

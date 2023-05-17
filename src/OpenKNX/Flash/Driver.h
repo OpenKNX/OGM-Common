@@ -7,11 +7,11 @@ namespace OpenKNX
 {
     namespace Flash
     {
-        class Base
+        class Driver
         {
           protected:
             std::string _id = "Unnamed";
-            
+
             uint32_t _offset = 0;
             uint32_t _size = 0;
             uint32_t _startFree = 0;
@@ -21,7 +21,7 @@ namespace OpenKNX
             uint8_t *_buffer = nullptr;
             uint16_t _bufferSector = 0;
 
-            virtual void writeSector(){};
+            void writeSector();
             bool needWriteSector();
             bool needEraseForBuffer();
             bool needEraseSector(uint16_t sector = 0);
@@ -32,11 +32,11 @@ namespace OpenKNX
             void loadSector(uint16_t sector, bool force = false);
 
           public:
+            Driver(uint32_t offset, uint32_t size, std::string id);
             std::string logPrefix();
 
-            // depend on hw
-            virtual void eraseSector(uint16_t sector = 0){};
-            virtual uint8_t *flash() { return nullptr; };
+            void eraseSector(uint16_t sector = 0);
+            uint8_t *flashAddress();
 
             void commit();
             uint32_t size();
