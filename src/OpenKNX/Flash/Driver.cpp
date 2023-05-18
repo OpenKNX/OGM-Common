@@ -323,7 +323,7 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_SAMD
             // logHexTraceP(_buffer, _sectorSize);
             volatile uint32_t *src_addr = (volatile uint32_t *)_buffer;
-            volatile uint32_t *dst_addr = (volatile uint32_t *)(flash() + (_bufferSector * _sectorSize));
+            volatile uint32_t *dst_addr = (volatile uint32_t *)(flashAddress() + (_bufferSector * _sectorSize));
 
             // Disable automatic page write
             NVMCTRL->CTRLB.bit.MANW = 1;

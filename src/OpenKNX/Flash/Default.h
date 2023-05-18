@@ -95,7 +95,7 @@ Intro for Identification (and possible versioning later).
 #define FLASH_DATA_INIT_LEN 4
 
 /**
- * A version for dual write support (for RP2040 only)
+ * A version for dual write support (not for SAMD)
  */
 #define FLASH_DATA_VERSION 1
 
@@ -201,6 +201,7 @@ namespace OpenKNX
           private:
             bool *loadedModules = nullptr;
             OpenKNX::Flash::Driver *_flashDriver = nullptr;
+            bool _activeSlot = false; // false = A & true = B
             uint32_t _lastWrite = 0;
             uint16_t _lastFirmwareNumber = 0;
             uint16_t _lastFirmwareVersion = 0;
@@ -209,8 +210,17 @@ namespace OpenKNX
             uint32_t _currentReadAddress = 0;
             uint32_t _maxWriteAddress = 0;
             void writeFilldata();
-            void readData();
+            void loadModuleData();
             void initUnloadedModules();
+            bool validateSlot(bool slot);
+            void eraseSlot(bool slot);
+            uint8_t nextVersion();
+            uint8_t slotVersion(bool slot);
+            uint16_t slotOffset(bool slot);
+            uint16_t slotSize();
+            bool nextSlot();
+            uint32_t readOffset();
+            uint32_t writeOffset();
             uint8_t *currentFlash();
             uint16_t calcChecksum(uint8_t *data, uint16_t size);
             bool verifyChecksum(uint8_t *data, uint16_t size, uint16_t checksum);
