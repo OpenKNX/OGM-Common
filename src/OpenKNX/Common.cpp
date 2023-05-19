@@ -359,9 +359,9 @@ namespace OpenKNX
 #ifdef DEBUG_LOOP_TIME
         // loop took to long and last out is min 1s ago
 #if DEBUG_LOOP_TIME > 1
-        if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, 1000))
+        if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, DEBUG_LOOP_TIME_LOG_INTERVAL))
 #else
-        if (delayCheck(start, 5000) && delayCheck(lastDebugTime, 1000))
+        if (delayCheck(start, 5000) && delayCheck(lastDebugTime, DEBUG_LOOP_TIME_LOG_INTERVAL))
 #endif
         {
             logDebugP("Loop took too long %i >= %i", (millis() - start), DEBUG_LOOP_TIME);

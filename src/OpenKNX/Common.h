@@ -23,6 +23,10 @@
 #define OPENKNX_MAX_LOOPTIME 4000
 #endif
 
+#ifndef DEBUG_LOOP_TIME_LOG_INTERVAL
+#define DEBUG_LOOP_TIME_LOG_INTERVAL 1000
+#endif
+
 #ifndef KNX_SERIAL
 #define KNX_SERIAL Serial1
 #endif
