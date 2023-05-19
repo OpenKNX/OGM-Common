@@ -107,7 +107,7 @@ namespace OpenKNX
         void triggerSavePin();
         void setup();
         void loop();
-        static void loop2();
+        void loop2();
         bool usesDualCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
