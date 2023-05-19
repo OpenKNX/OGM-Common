@@ -70,7 +70,7 @@ namespace OpenKNX
         void initKnx();
         void appSetup();
         void appLoop();
-        void appLoop2();
+        void appLoop1();
         void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();
@@ -107,7 +107,7 @@ namespace OpenKNX
         void triggerSavePin();
         void setup();
         void loop();
-        void loop2();
+        void loop1();
         bool usesDualCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;

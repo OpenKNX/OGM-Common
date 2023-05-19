@@ -87,7 +87,7 @@ namespace OpenKNX
         virtual bool restorePower();
 
         /**
-         * @return true, if this module has a loop2 for secondary core, false, otherwise
+         * @return true, if this module has a loop1 for secondary core, false, otherwise
          */
         virtual bool usesDualCore();
     };

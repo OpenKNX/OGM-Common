@@ -79,13 +79,13 @@ example (wait 5s): `-D DEBUG_DELAY=5000`
 ### Debug Loops
 
 #### Heartbeat
-You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop2) will blinking if the loop hangs
+You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs
 
 * `DEBUG_HEARTBEAT` - enable heartbeat mode with default failure time (default is 1000ms)
 * `DEBUG_HEARTBEAT=3000` - enable heartbeat mode with specific failure time.
 
 #### Heartbeat Prio
-You can enable a debug heartbeat to see if the device is stuck. The progLed (for loop) and infoLed (for loop2) are always blinking (`DEBUG_HEARTBEAT_PRIO_OFF_FREQ` default is 1000)
+You can enable a debug heartbeat to see if the device is stuck. The progLed (for loop) and infoLed (for loop1) are always blinking (`DEBUG_HEARTBEAT_PRIO_OFF_FREQ` default is 1000)
 
 If programing mode is active, the progLed will blink faster (`DEBUG_HEARTBEAT_PRIO_ON_FREQ` default is200)
 

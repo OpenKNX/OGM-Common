@@ -90,7 +90,7 @@ namespace OpenKNX
         void init(long pin = -1, long activeOn = HIGH);
 
         /*
-         * use in normal loop or loop2
+         * use in normal loop or loop1
          */
         void loop();
 
@@ -115,9 +115,9 @@ namespace OpenKNX
 
 #ifdef DEBUG_HEARTBEAT
         /*
-         * Special usage to detect running loop() and loop2().
+         * Special usage to detect running loop() and loop1().
          * progLed for loop()
-         * infoLed for loop()
+         * infoLed for loop1()
          * Only active if DEBUG_HEARTBEAT or DEBUG_HEARTBEAT_PRIO is defined
          *  -> Prio 3
          */

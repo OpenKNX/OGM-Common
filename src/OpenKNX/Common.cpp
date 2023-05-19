@@ -277,14 +277,14 @@ namespace OpenKNX
         registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
-        // Enable loop2 if needed
+        // Enable loop1 if any module use dual core
         for (uint8_t i = 0; i < _modules.count; i++)
         {
             if (_modules.list[i]->usesDualCore())
                 _usesDualCore = true;
         }
 
-        // no loop2 needed? shutdown core1
+        // when not needed, shutdown core1
         if (!_usesDualCore)
             multicore_reset_core1();
 
@@ -430,7 +430,7 @@ namespace OpenKNX
         _modules.list[index]->loop();
     }
 
-    void Common::loop2()
+    void Common::loop1()
     {
         if (!usesDualCore())
             return;
@@ -438,13 +438,13 @@ namespace OpenKNX
 #ifdef DEBUG_HEARTBEAT
         openknx.hardware.infoLed.debugLoop();
 #endif
-        openknx.appLoop2();
+        openknx.appLoop1();
     }
 
-    void Common::appLoop2()
+    void Common::appLoop1()
     {
         for (uint8_t i = 0; i < _modules.count; i++)
-            _modules.list[i]->loop2();
+            _modules.list[i]->loop1();
     }
 
     void Common::addModule(uint8_t id, Module *module)
