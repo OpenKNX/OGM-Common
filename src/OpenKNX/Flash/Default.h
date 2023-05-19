@@ -9,7 +9,7 @@
 #define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay
 #endif
 
-#define FLASH_DATA_FILLBYTE 0xF0
+#define FLASH_DATA_FILLBYTE 0xFF
 
 /*
  * The data-structure is optimized for fast sequential writing, to maximize
@@ -24,10 +24,10 @@
  *   (as not explicitly defined otherwhise)
  *
  * Global Structure, Sizing and Layout:
- * > ............................................ available flash storage --->| the_end
- * >                      |<- DATA[?] ->|<------------- META[12] ------------>|
+ * > ......................................................... available flash storage --->| the_end
+ * >                      |<- DATA[?] ->|<------------------- META[12] ------------------->|
  * >                      |<------- CHECKSUM_INPUT ------->|
- * > FLASH_STORAGE_DATA :=  DATA[$SIZE] ; APP[4] ; SIZE[2] ; CHK[2] ; INIT[4] |
+ * > FLASH_STORAGE_DATA :=  DATA[$SIZE] ; APP[4] ; SIZE[2] ; VERSION[1] ; CHK[2] ; INIT[4] |
  * Note: Size is defined in [bytes]
  *
  * Overview:
@@ -95,7 +95,7 @@ Intro for Identification (and possible versioning later).
 #define FLASH_DATA_INIT_LEN 4
 
 /**
- * A version for dual write support (not for SAMD)
+ * A version for dual write support (on SAMD disabled)
  */
 #define FLASH_DATA_VERSION 1
 
@@ -166,11 +166,16 @@ namespace OpenKNX
              * TODO extend documentation
              *
              * Steps for reading:
-             * 1) check for expected INIT
-             * 2) check APP for matching version
-             * 3) read the size of data
-             * 4) validate checksum
-             * 5) read data (for all modules)
+             * 1)  Validate Slot(s)
+             * 1a) check for expected INIT per slot
+             * 1b) check APP for matching version
+             * 1c) read the size of data
+             * 1d) read version
+             * 1e) validate checksum
+             * 2)  check is a valid slot available
+             * 3)  select slot with higher version
+             * 4)  load module data
+             * 5)  empty load (init) for the remaining modules
              */
             void load();
 
@@ -183,8 +188,9 @@ namespace OpenKNX
              * 3) write DATA: data and fill unused requested space (for all modules)
              * 4) write APP
              * 5) write SIZE
-             * 6) write CHK
-             * 7) write INIT
+             * 6) write VERSION
+             * 7) write CHK
+             * 8) write INIT
              */
             void save(bool force = false);
             void write(uint8_t *buffer, uint16_t size = 1);
