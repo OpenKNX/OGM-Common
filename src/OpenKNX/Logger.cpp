@@ -27,7 +27,11 @@ namespace OpenKNX
 
     void Logger::color(uint8_t color)
     {
+#ifdef ARDUINO_ARCH_RP2040
+        _color[rp2040.cpuid()] = color;
+#else
         _color = color;
+#endif
     }
 
     std::string Logger::logPrefix(const std::string prefix, const std::string id)
@@ -47,10 +51,10 @@ namespace OpenKNX
     void Logger::log(const std::string message)
     {
         mutex_block();
-        if (_color > 0)
-            printColorCode(_color);
+        if (isColorSet())
+            printColorCode();
         printMessage(message);
-        if (_color > 0)
+        if (isColorSet())
             printColorCode(0);
         SERIAL_DEBUG.println();
         mutex_unblock();
@@ -67,12 +71,12 @@ namespace OpenKNX
     void Logger::log(const std::string prefix, const std::string message, va_list args)
     {
         mutex_block();
-        if (_color > 0)
-            printColorCode(_color);
+        if (isColorSet())
+            printColorCode();
         printPrefix(prefix);
         printIndent();
         printMessage(message, args);
-        if (_color > 0)
+        if (isColorSet())
             printColorCode(0);
         SERIAL_DEBUG.println();
         mutex_unblock();
@@ -88,6 +92,17 @@ namespace OpenKNX
         mutex_unblock();
     }
 
+    bool Logger::isColorSet()
+    {
+#ifdef ARDUINO_ARCH_RP2040
+        // use individual value per core
+        return _color[rp2040.cpuid()] != 0;
+#else
+        return _color != 0;
+#endif 
+    }
+
+
     void Logger::printColorCode(uint8_t color)
     {
         if (color > 0)
@@ -100,6 +115,16 @@ namespace OpenKNX
         {
             SERIAL_DEBUG.print(ANSI_RESET);
         }
+    }
+
+    void Logger::printColorCode()
+    {
+#ifdef ARDUINO_ARCH_RP2040
+        // use individual value per core
+        printColorCode(_color[rp2040.cpuid()]);
+#else
+        printColorCode(_color);
+#endif        
     }
 
     void Logger::printHex(const uint8_t* data, size_t size)
@@ -173,7 +198,7 @@ namespace OpenKNX
 
     void Logger::printIndent()
     {
-        for (size_t i = 0; i < _indent; i++)
+        for (size_t i = 0; i < getIndent(); i++)
         {
             SERIAL_DEBUG.print("  ");
         }
@@ -181,30 +206,45 @@ namespace OpenKNX
 
     void Logger::indentUp()
     {
-        if (_indent == 10)
+        if (getIndent() == 10)
         {
             logError("Logger", "Indent error!");
         }
         else
         {
-            _indent++;
+            indent(getIndent() + 1);
         }
     }
 
     void Logger::indentDown()
     {
-        if (_indent == 0)
+        if (getIndent() == 0)
         {
             logError("Logger", "Indent error!");
         }
         else
         {
-            _indent--;
+            indent(getIndent() - 1);
         }
     }
 
     void Logger::indent(uint8_t indent)
     {
+#ifdef ARDUINO_ARCH_RP2040
+        // use individual value per core
+        _indent[rp2040.cpuid()] = indent;
+#else
         _indent = indent;
+#endif          
+    }
+
+    uint8_t Logger::getIndent()
+    {
+#ifdef ARDUINO_ARCH_RP2040
+        // use individual value per core
+        return _indent[rp2040.cpuid()];
+#else
+        return _indent;
+#endif          
     }
 } // namespace OpenKNX
