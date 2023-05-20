@@ -1,4 +1,4 @@
-$checkVersion = "1.5.8"
+$checkVersion = "2.2.0"
 $toolsExist = Test-Path -PathType Leaf ~/bin/OpenKNXproducer.exe
 if ($toolsExist) {
     $toolsExist = [System.Version]((~/bin/OpenKNXproducer version) -split ' ')[1] -ge [System.Version]$checkVersion
@@ -9,7 +9,7 @@ if ($toolsExist) {
 if (!$toolsExist) {
     Write-Host "
         Fuer das Setup fehlen die notwendigen OpenKNX-Tools oder sie sind veraltet..
-        Bitte das neuste Paket herunterladen
+        Bitte das neuste Paket herunterladen (mindestens Version $checkVersion)
 
             https://github.com/OpenKNX/OpenKNXproducer/releases
         
