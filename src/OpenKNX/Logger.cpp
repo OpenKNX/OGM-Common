@@ -27,11 +27,7 @@ namespace OpenKNX
 
     void Logger::color(uint8_t color)
     {
-#ifdef ARDUINO_ARCH_RP2040
-        _color[rp2040.cpuid()] = color;
-#else
-        _color = color;
-#endif
+        STATE_BY_CORE(_color) = color;
     }
 
     std::string Logger::logPrefix(const std::string prefix, const std::string id)
@@ -94,12 +90,7 @@ namespace OpenKNX
 
     bool Logger::isColorSet()
     {
-#ifdef ARDUINO_ARCH_RP2040
-        // use individual value per core
-        return _color[rp2040.cpuid()] != 0;
-#else
-        return _color != 0;
-#endif 
+        return STATE_BY_CORE(_color) != 0;
     }
 
 
@@ -119,12 +110,7 @@ namespace OpenKNX
 
     void Logger::printColorCode()
     {
-#ifdef ARDUINO_ARCH_RP2040
-        // use individual value per core
-        printColorCode(_color[rp2040.cpuid()]);
-#else
-        printColorCode(_color);
-#endif        
+        printColorCode(STATE_BY_CORE(_color));
     }
 
     void Logger::printHex(const uint8_t* data, size_t size)
@@ -212,7 +198,7 @@ namespace OpenKNX
         }
         else
         {
-            indent(getIndent() + 1);
+            STATE_BY_CORE(_indent)++;
         }
     }
 
@@ -224,27 +210,17 @@ namespace OpenKNX
         }
         else
         {
-            indent(getIndent() - 1);
+            STATE_BY_CORE(_indent)--;
         }
     }
 
     void Logger::indent(uint8_t indent)
     {
-#ifdef ARDUINO_ARCH_RP2040
-        // use individual value per core
-        _indent[rp2040.cpuid()] = indent;
-#else
-        _indent = indent;
-#endif          
+        STATE_BY_CORE(_indent) = indent;
     }
 
     uint8_t Logger::getIndent()
     {
-#ifdef ARDUINO_ARCH_RP2040
-        // use individual value per core
-        return _indent[rp2040.cpuid()];
-#else
-        return _indent;
-#endif          
+        return STATE_BY_CORE(_indent);
     }
 } // namespace OpenKNX

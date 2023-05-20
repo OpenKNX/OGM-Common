@@ -124,6 +124,13 @@
 #define logHexDebugP(...)
 #endif
 
+
+#ifdef ARDUINO_ARCH_RP2040
+#define STATE_BY_CORE(X) X[rp2040.cpuid()]
+#else
+#define STATE_BY_CORE(X) X
+#endif
+
 namespace OpenKNX
 {
     class Logger
