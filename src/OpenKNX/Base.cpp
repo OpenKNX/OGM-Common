@@ -36,10 +36,10 @@ namespace OpenKNX
 
     void Base::setup()
     {}
-
+#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
     void Base::processInputKo(GroupObject &ko)
     {}
-
+#endif
     bool Base::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
         return false;

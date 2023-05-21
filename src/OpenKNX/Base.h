@@ -49,12 +49,13 @@ namespace OpenKNX
          */
         virtual void loop2();
 
+#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
         /*
          * Called on incoming/changing GroupObject
          * @param GroupObject
          */
         virtual void processInputKo(GroupObject& ko);
-
+#endif
         /*
          * Called on incoming function property command
          */
