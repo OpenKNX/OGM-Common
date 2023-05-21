@@ -133,8 +133,10 @@ namespace OpenKNX
         void processSavePin();
         void processBeforeRestart();
         void processBeforeTablesUnload();
+#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
         void processInputKo(GroupObject& iKo);
         void processDiagnoseCommand(GroupObject& iKo);
+#endif
         std::string logPrefix();
     };
 } // namespace OpenKNX

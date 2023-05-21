@@ -624,7 +624,7 @@ namespace OpenKNX
         flash.save();
         logIndentDown();
     }
-
+#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
     void Common::processInputKo(GroupObject &iKo)
     {
 #ifdef LOG_KoDiagnose
@@ -643,6 +643,7 @@ namespace OpenKNX
         }
 #endif
     }
+
 
 #ifdef LOG_KoDiagnose
     void Common::processDiagnoseCommand(GroupObject &iKo)
@@ -677,14 +678,18 @@ namespace OpenKNX
     }
 #endif
 
+#endif
+
     void Common::registerCallbacks()
     {
         knx.beforeRestartCallback([]() -> void {
             openknx.processBeforeRestart();
         });
-        GroupObject::classCallback([](GroupObject &iKo) -> void {
+#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
+        GroupObject::classCallback([](GroupObject& iKo) -> void {
             openknx.processInputKo(iKo);
         });
+#endif
         TableObject::beforeTablesUnloadCallback([]() -> void {
             openknx.processBeforeTablesUnload();
         });
