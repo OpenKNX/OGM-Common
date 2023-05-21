@@ -124,15 +124,26 @@
 #define logHexDebugP(...)
 #endif
 
+
+#ifdef ARDUINO_ARCH_RP2040
+#define STATE_BY_CORE(X) X[rp2040.cpuid()]
+#else
+#define STATE_BY_CORE(X) X
+#endif
+
 namespace OpenKNX
 {
     class Logger
     {
       private:
+#ifdef ARDUINO_ARCH_RP2040
+        // use individual values per core
+        volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
+        volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
+        mutex_t _mutex;
+#else
         volatile uint8_t _color = 0;
         volatile uint8_t _indent = 0;
-#ifdef ARDUINO_ARCH_RP2040
-        mutex_t _mutex;
 #endif
         void mutex_block();
         void mutex_unblock();
@@ -140,8 +151,11 @@ namespace OpenKNX
         void printMessage(const std::string message, va_list args);
         void printMessage(const std::string message);
         void printPrefix(const std::string prefix);
+        bool isColorSet();
         void printColorCode(uint8_t color);
+        void printColorCode();
         void printIndent();
+        uint8_t getIndent();
 
       public:
         Logger();

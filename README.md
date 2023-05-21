@@ -52,6 +52,7 @@ WATCHDOG_MAX_PERIOD_MS
 OPENKNX_MAX_MODULES
 OPENKNX_LEDEFFECT_PULSE_FREQ
 OPENKNX_LEDEFFECT_BLINK_FREQ
+DEBUG_LOOP_TIME_LOG_INTERVAL
 
 # defines in hardware.h
 OPENKNX_PULSATING_BOOT
@@ -79,13 +80,13 @@ example (wait 5s): `-D DEBUG_DELAY=5000`
 ### Debug Loops
 
 #### Heartbeat
-You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop2) will blinking if the loop hangs
+You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs
 
 * `DEBUG_HEARTBEAT` - enable heartbeat mode with default failure time (default is 1000ms)
 * `DEBUG_HEARTBEAT=3000` - enable heartbeat mode with specific failure time.
 
 #### Heartbeat Prio
-You can enable a debug heartbeat to see if the device is stuck. The progLed (for loop) and infoLed (for loop2) are always blinking (`DEBUG_HEARTBEAT_PRIO_OFF_FREQ` default is 1000)
+You can enable a debug heartbeat to see if the device is stuck. The progLed (for loop) and infoLed (for loop1) are always blinking (`DEBUG_HEARTBEAT_PRIO_OFF_FREQ` default is 1000)
 
 If programing mode is active, the progLed will blink faster (`DEBUG_HEARTBEAT_PRIO_ON_FREQ` default is200)
 
@@ -98,3 +99,5 @@ So, if the device is NOT blinking, anything is wrong.
 You can enable a debug output
 * `DEBUG_LOOP_TIME` - enable log output when loop tooks longer than default allowed (default is 5ms)
 * `DEBUG_LOOP_TIME=6` - enable log output with specific time.
+
+* `DEBUG_LOOP_TIME_LOG_INTERVAL=30000` - set individual interval for logging loop took longer (default is 1000ms); could be useful when testing without connection to KNX-bus  

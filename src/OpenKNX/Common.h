@@ -23,6 +23,10 @@
 #define OPENKNX_MAX_LOOPTIME 4000
 #endif
 
+#ifndef DEBUG_LOOP_TIME_LOG_INTERVAL
+#define DEBUG_LOOP_TIME_LOG_INTERVAL 1000
+#endif
+
 #ifndef KNX_SERIAL
 #define KNX_SERIAL Serial1
 #endif
@@ -70,7 +74,7 @@ namespace OpenKNX
         void initKnx();
         void appSetup();
         void appLoop();
-        void appLoop2();
+        void appLoop1();
         void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();
@@ -107,7 +111,7 @@ namespace OpenKNX
         void triggerSavePin();
         void setup();
         void loop();
-        static void loop2();
+        void loop1();
         bool usesDualCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;

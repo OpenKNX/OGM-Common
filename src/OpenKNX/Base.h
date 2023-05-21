@@ -47,7 +47,7 @@ namespace OpenKNX
         /*
          * Module logic for second core
          */
-        virtual void loop2();
+        virtual void loop1();
 
 #if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
         /*

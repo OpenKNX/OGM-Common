@@ -155,12 +155,12 @@ namespace OpenKNX
         knx.bau().deviceObject().version(openknx.info.firmwareVersion());
 
 #ifdef MAIN_OrderNumber
-        knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
+        knx.orderNumber((const uint8_t *)MAIN_OrderNumber); // set the OrderNumber
 #endif
         logIndentDown();
     }
 
-    VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion)
+    VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t *hardwareType, uint16_t firmwareVersion)
     {
         // save ets app data in information struct
         openknx.info.applicationNumber((hardwareType[2] << 8) | hardwareType[3]);
@@ -247,7 +247,7 @@ namespace OpenKNX
 
     void Common::appSetup()
     {
-        //Register Callbacks for FunctionProperty also if the device is unloaded
+        // Register Callbacks for FunctionProperty also if the device is unloaded
         knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
             return openknx.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
         });
@@ -269,8 +269,6 @@ namespace OpenKNX
         for (uint8_t i = 0; i < _modules.count; i++)
         {
             _modules.list[i]->setup();
-            if (_modules.list[i]->usesDualCore())
-                _usesDualCore = true;
         }
 
         flash.load();
@@ -279,11 +277,17 @@ namespace OpenKNX
         registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
-        if (usesDualCore())
+        // Enable loop1 if any module use dual core
+        for (uint8_t i = 0; i < _modules.count; i++)
         {
-            logTraceP("activate loop2");
-            multicore_launch_core1(Common::loop2);
+            if (_modules.list[i]->usesDualCore())
+                _usesDualCore = true;
         }
+
+        // when not needed, shutdown core1
+        if (!_usesDualCore)
+            multicore_reset_core1();
+
 #endif
     }
 
@@ -355,9 +359,9 @@ namespace OpenKNX
 #ifdef DEBUG_LOOP_TIME
         // loop took to long and last out is min 1s ago
 #if DEBUG_LOOP_TIME > 1
-        if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, 1000))
+        if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, DEBUG_LOOP_TIME_LOG_INTERVAL))
 #else
-        if (delayCheck(start, 5000) && delayCheck(lastDebugTime, 1000))
+        if (delayCheck(start, 5000) && delayCheck(lastDebugTime, DEBUG_LOOP_TIME_LOG_INTERVAL))
 #endif
         {
             logDebugP("Loop took too long %i >= %i", (millis() - start), DEBUG_LOOP_TIME);
@@ -426,31 +430,31 @@ namespace OpenKNX
         _modules.list[index]->loop();
     }
 
-    void Common::loop2()
+    void Common::loop1()
     {
-        while (true)
-        {
+        if (!usesDualCore())
+            return;
+
 #ifdef DEBUG_HEARTBEAT
-            openknx.hardware.infoLed.debugLoop();
+        openknx.hardware.infoLed.debugLoop();
 #endif
-            openknx.appLoop2();
-        }
+        openknx.appLoop1();
     }
 
-    void Common::appLoop2()
+    void Common::appLoop1()
     {
         for (uint8_t i = 0; i < _modules.count; i++)
-            _modules.list[i]->loop2();
+            _modules.list[i]->loop1();
     }
 
-    void Common::addModule(uint8_t id, Module* module)
+    void Common::addModule(uint8_t id, Module *module)
     {
         _modules.count++;
         _modules.list[_modules.count - 1] = module;
         _modules.ids[_modules.count - 1] = id;
     }
 
-    Module* Common::getModule(uint8_t id)
+    Module *Common::getModule(uint8_t id)
     {
         for (uint8_t i = 0; i < _modules.count; i++)
         {
@@ -461,7 +465,7 @@ namespace OpenKNX
         return nullptr;
     }
 
-    Modules* Common::getModules()
+    Modules *Common::getModules()
     {
         return &_modules;
     }
@@ -621,7 +625,7 @@ namespace OpenKNX
         logIndentDown();
     }
 #if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
-    void Common::processInputKo(GroupObject& iKo)
+    void Common::processInputKo(GroupObject &iKo)
     {
 #ifdef LOG_KoDiagnose
         if (iKo.asap() == LOG_KoDiagnose)
@@ -663,7 +667,7 @@ namespace OpenKNX
                     if (output)
                     {
                         _diagnoseOutput[15] = 0;
-                        iKo.value(_diagnoseOutput, Dpt(16,1));
+                        iKo.value(_diagnoseOutput, Dpt(16, 1));
                         logInfoP("Diagnose: %s", _diagnoseOutput);
                         knx.loop();
                     }
@@ -709,17 +713,17 @@ namespace OpenKNX
     {
         for (uint8_t i = 0; i < _modules.count; i++)
         {
-            if(_modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
+            if (_modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
         }
         return false;
     }
-    
+
     bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
         for (uint8_t i = 0; i < _modules.count; i++)
         {
-            if(_modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
+            if (_modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
         }
         return false;
