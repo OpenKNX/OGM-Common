@@ -27,7 +27,7 @@ namespace OpenKNX
 
     void Logger::color(uint8_t color)
     {
-        _color = color;
+        STATE_BY_CORE(_color) = color;
     }
 
     std::string Logger::logPrefix(const std::string prefix, const std::string id)
@@ -47,10 +47,10 @@ namespace OpenKNX
     void Logger::log(const std::string message)
     {
         mutex_block();
-        if (_color > 0)
-            printColorCode(_color);
+        if (isColorSet())
+            printColorCode();
         printMessage(message);
-        if (_color > 0)
+        if (isColorSet())
             printColorCode(0);
         SERIAL_DEBUG.println();
         mutex_unblock();
@@ -67,12 +67,12 @@ namespace OpenKNX
     void Logger::log(const std::string prefix, const std::string message, va_list args)
     {
         mutex_block();
-        if (_color > 0)
-            printColorCode(_color);
+        if (isColorSet())
+            printColorCode();
         printPrefix(prefix);
         printIndent();
         printMessage(message, args);
-        if (_color > 0)
+        if (isColorSet())
             printColorCode(0);
         SERIAL_DEBUG.println();
         mutex_unblock();
@@ -88,6 +88,12 @@ namespace OpenKNX
         mutex_unblock();
     }
 
+    bool Logger::isColorSet()
+    {
+        return STATE_BY_CORE(_color) != 0;
+    }
+
+
     void Logger::printColorCode(uint8_t color)
     {
         if (color > 0)
@@ -100,6 +106,11 @@ namespace OpenKNX
         {
             SERIAL_DEBUG.print(ANSI_RESET);
         }
+    }
+
+    void Logger::printColorCode()
+    {
+        printColorCode(STATE_BY_CORE(_color));
     }
 
     void Logger::printHex(const uint8_t* data, size_t size)
@@ -173,7 +184,7 @@ namespace OpenKNX
 
     void Logger::printIndent()
     {
-        for (size_t i = 0; i < _indent; i++)
+        for (size_t i = 0; i < getIndent(); i++)
         {
             SERIAL_DEBUG.print("  ");
         }
@@ -181,30 +192,35 @@ namespace OpenKNX
 
     void Logger::indentUp()
     {
-        if (_indent == 10)
+        if (getIndent() == 10)
         {
             logError("Logger", "Indent error!");
         }
         else
         {
-            _indent++;
+            STATE_BY_CORE(_indent)++;
         }
     }
 
     void Logger::indentDown()
     {
-        if (_indent == 0)
+        if (getIndent() == 0)
         {
             logError("Logger", "Indent error!");
         }
         else
         {
-            _indent--;
+            STATE_BY_CORE(_indent)--;
         }
     }
 
     void Logger::indent(uint8_t indent)
     {
-        _indent = indent;
+        STATE_BY_CORE(_indent) = indent;
+    }
+
+    uint8_t Logger::getIndent()
+    {
+        return STATE_BY_CORE(_indent);
     }
 } // namespace OpenKNX
