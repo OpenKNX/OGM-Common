@@ -86,13 +86,14 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
+
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("Device Console", "===== Information =====");
+        openknx.logger.log("════════════════════════ Information ═══════════════════════════════════════════");
         openknx.logger.color(0);
-        openknx.logger.log("KNX Address", "%s (%i)", openknx.info.humanIndividualAddress().c_str(), openknx.info.individualAddress());
-        openknx.logger.log("Application (ETS)", "Number: %s (%i)  Version: %s (%i)  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.applicationNumber(), openknx.info.humanApplicationVersion().c_str(), openknx.info.applicationVersion(), knx.configured());
-        openknx.logger.log("Firmware", "Number: %s (%i)  Version: %s (%i)  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.firmwareNumber(), openknx.info.humanFirmwareVersion().c_str(), openknx.info.firmwareVersion(), MAIN_OrderNumber);
+        openknx.logger.log("KNX Address", "%s", openknx.info.humanIndividualAddress().c_str());
+        openknx.logger.log("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
+        openknx.logger.log("Firmware", "Number: %s  Version: %s  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.humanFirmwareVersion().c_str(), MAIN_OrderNumber);
         openknx.logger.log("Serial number", "00FA:%08X", knx.platform().uniqueSerialNumber());
 #ifdef HARDWARE_NAME
         openknx.logger.log("Board", "%s", HARDWARE_NAME);
@@ -119,7 +120,8 @@ namespace OpenKNX
     {
         LittleFS.begin();
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("Device Console", "===== Filesystem =====");
+        openknx.logger.log("════════════════════════ Filesystem ════════════════════════════════════════════");
+
         openknx.logger.color(0);
         showFilesystemDirectory("/");
     }
@@ -147,7 +149,7 @@ namespace OpenKNX
     {
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("Device Console", "===== Help =====");
+        openknx.logger.log("════════════════════════ Help ══════════════════════════════════════════════════");
         openknx.logger.color(0);
         openknx.logger.log("", ">  h  <  Show this help");
         openknx.logger.log("", ">  i  <  Show device information");
