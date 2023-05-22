@@ -13,7 +13,11 @@ namespace OpenKNX
     {
 #ifdef ARDUINO_ARCH_RP2040
         if (openknx.usesDualCore())
-            mutex_enter_blocking(&_mutex);
+        {
+            if (_mutexCounter == 0)
+                mutex_enter_blocking(&_mutex);
+            _mutexCounter++;
+        }
 #endif
     }
 
@@ -21,7 +25,11 @@ namespace OpenKNX
     {
 #ifdef ARDUINO_ARCH_RP2040
         if (openknx.usesDualCore())
-            mutex_exit(&_mutex);
+        {
+            _mutexCounter--;
+            if (_mutexCounter == 0)
+                mutex_exit(&_mutex);
+        }
 #endif
     }
 
@@ -92,7 +100,6 @@ namespace OpenKNX
     {
         return STATE_BY_CORE(_color) != 0;
     }
-
 
     void Logger::printColorCode(uint8_t color)
     {
@@ -198,7 +205,8 @@ namespace OpenKNX
         }
         else
         {
-            STATE_BY_CORE(_indent)++;
+            STATE_BY_CORE(_indent)
+            ++;
         }
     }
 
@@ -210,7 +218,8 @@ namespace OpenKNX
         }
         else
         {
-            STATE_BY_CORE(_indent)--;
+            STATE_BY_CORE(_indent)
+            --;
         }
     }
 

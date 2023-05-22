@@ -142,11 +142,11 @@ namespace OpenKNX
         volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
         mutex_t _mutex;
 #else
-        volatile uint8_t _color = 0;
-        volatile uint8_t _indent = 0;
+        uint8_t _color = 0;
+        uint8_t _indent = 0;
 #endif
-        void mutex_block();
-        void mutex_unblock();
+        volatile uint8_t _mutexCounter = 0;
+        
         void printHex(const uint8_t* data, size_t size);
         void printMessage(const std::string message, va_list args);
         void printMessage(const std::string message);
@@ -159,6 +159,8 @@ namespace OpenKNX
 
       public:
         Logger();
+        void mutex_block();
+        void mutex_unblock();
 
         std::string logPrefix(const std::string prefix, const std::string id);
         std::string logPrefix(const std::string prefix, const int id);

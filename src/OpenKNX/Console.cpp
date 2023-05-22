@@ -86,7 +86,7 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
-
+        openknx.logger.mutex_block();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Information ═══════════════════════════════════════════");
@@ -113,21 +113,26 @@ namespace OpenKNX
             openknx.logger.log(modulePrefix, "%s (%s)", modules->list[i]->name().c_str(), modules->list[i]->version().c_str());
         }
         openknx.logger.log("");
+        openknx.logger.mutex_unblock();
     }
 
 #ifdef ARDUINO_ARCH_RP2040
     void Console::showFilesystem()
     {
+        openknx.logger.mutex_block();
         LittleFS.begin();
+        openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Filesystem ════════════════════════════════════════════");
 
         openknx.logger.color(0);
         showFilesystemDirectory("/");
+        openknx.logger.mutex_unblock();
     }
 
     void Console::showFilesystemDirectory(std::string path)
     {
+        openknx.logger.mutex_block();
         openknx.logger.log("Filesystem", "%s", path.c_str());
 
         Dir directory = LittleFS.openDir(path.c_str());
@@ -142,11 +147,13 @@ namespace OpenKNX
                 openknx.logger.log("Filesystem", "%s (%i bytes)", full.c_str(), directory.fileSize());
             }
         }
+        openknx.logger.mutex_unblock();
     }
 #endif
 
     void Console::showHelp()
     {
+        openknx.logger.mutex_block();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Help ══════════════════════════════════════════════════");
@@ -168,6 +175,7 @@ namespace OpenKNX
         openknx.logger.log("", ">  E  <  Trigger a FatalError");
         openknx.logger.log("", ">  P  <  Trigger a powerloss (SavePin)");
         openknx.logger.log("");
+        openknx.logger.mutex_unblock();
     }
 
     void Console::sleep()
