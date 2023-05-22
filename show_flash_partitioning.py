@@ -161,14 +161,12 @@ def show_flash_partitioning(source, target, env):
         
     if projenv['PIOPLATFORM'] == 'atmelsam':
         flash_end = 0x40000
-        eeprom_start = flash_end - 256
-        system_end = eeprom_start
 
     eeprom_end = flash_end
 
     flash_elements.append({ 'name': 'FLASH',      'start': flash_start, 'end': flash_end, 'container': True })
     flash_elements.append({ 'name': 'FIRMWARE',   'start': firmware_start, 'end': firmware_end, 'container': False })
-    if (projenv['PIOPLATFORM'] != 'atmelsam'):  # exists but not used for us
+    if projenv['PIOPLATFORM'] != 'atmelsam':
         flash_elements.append({ 'name': 'EEPROM',     'start': eeprom_start, 'end': eeprom_end, 'container': False })
         flash_elements.append({ 'name': 'SYSTEM',     'start': system_start, 'end': system_end, 'container': True })
 
@@ -188,7 +186,6 @@ def show_flash_partitioning(source, target, env):
                 if(x[0].endswith("_FLASH_SIZE")):
                     defined_sizes[name]['size'] = int(x[1], 16)
 
-    # hack/fallback for knx stack and samd - https://github.com/thelsing/knx/blob/master/src/samd_platform.cpp#L94
     if projenv['PIOPLATFORM'] == 'atmelsam' and not defined_sizes['KNX']['offset'] > 0:
         defined_sizes['KNX']['offset'] = system_end - defined_sizes['KNX']['size']
 

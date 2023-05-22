@@ -1,6 +1,5 @@
 #pragma once
-#include "OpenKNX/Flash/RP2040.h"
-#include "OpenKNX/Flash/Samd.h"
+#include "OpenKNX/Flash/Driver.h"
 #include "knx.h"
 #include "knx/bits.h"
 #include <string>
@@ -25,10 +24,10 @@
  *   (as not explicitly defined otherwhise)
  *
  * Global Structure, Sizing and Layout:
- * > ............................................ available flash storage --->| the_end
- * >                      |<- DATA[?] ->|<------------- META[12] ------------>|
+ * > ......................................................... available flash storage --->| the_end
+ * >                      |<- DATA[?] ->|<------------------- META[12] ------------------->|
  * >                      |<------- CHECKSUM_INPUT ------->|
- * > FLASH_STORAGE_DATA :=  DATA[$SIZE] ; APP[4] ; SIZE[2] ; CHK[2] ; INIT[4] |
+ * > FLASH_STORAGE_DATA :=  DATA[$SIZE] ; APP[4] ; SIZE[2] ; VERSION[1] ; CHK[2] ; INIT[4] |
  * Note: Size is defined in [bytes]
  *
  * Overview:
@@ -36,6 +35,7 @@
  * - META: fixed-sized to ensure robust restore of module-data
  *   - APP  uint8_t[4]: device/firmware info
  *   - SIZE uint16_t  : size (and indirect position) definition for DATA
+ *   - VERSION uint8_t: save version
  *   - CHK  uint8_t[2]: checksum
  *   - INIT uint8_t[4]: the magic word for format detection
  *
@@ -86,7 +86,7 @@ b) data written with an incompatible structure
        There is the idea to increase version number in last byte in this case,
        but there is no guaranteed or definition yet.
 */
-#define FLASH_DATA_INIT 1330337281
+#define FLASH_DATA_INIT 22432591 /* other endianness 1330337281 */
 
 /**
 Intro for Identification (and possible versioning later).
@@ -94,8 +94,13 @@ Intro for Identification (and possible versioning later).
 */
 #define FLASH_DATA_INIT_LEN 4
 
+/**
+ * A version for dual write support (on SAMD disabled)
+ */
+#define FLASH_DATA_VERSION 1
+
 /** Overall fixed-size of the non-module-data part */
-#define FLASH_DATA_META_LEN (FLASH_DATA_APP_LEN + FLASH_DATA_SIZE_LEN + FLASH_DATA_CHK_LEN + FLASH_DATA_INIT_LEN)
+#define FLASH_DATA_META_LEN (FLASH_DATA_APP_LEN + FLASH_DATA_SIZE_LEN + FLASH_DATA_VERSION + FLASH_DATA_CHK_LEN + FLASH_DATA_INIT_LEN)
 
 //
 // ==== FLASH_STORAGE_DATA - DATA ====
@@ -139,6 +144,24 @@ Intro for Identification (and possible versioning later).
 
 // TODO check using #define FLASH_DATA_MODULE_SIZE_LEN FLASH_DATA_SIZE_LEN
 
+#ifndef OPENKNX_FLASH_OFFSET
+#error "OPENKNX_FLASH_OFFSET is not defined"
+#endif
+
+#ifndef OPENKNX_FLASH_SIZE
+#error "OPENKNX_FLASH_SIZE is not defined"
+#endif
+
+#ifdef ARDUINO_ARCH_RP2040
+#if OPENKNX_FLASH_SIZE % 2
+#error "OPENKNX_FLASH_SIZE cannot be divided by 2"
+#endif
+
+#if OPENKNX_FLASH_SIZE % 4096
+#error "OPENKNX_FLASH_SIZE must be multiple of 4096"
+#endif
+#endif
+
 namespace OpenKNX
 {
     namespace Flash
@@ -154,15 +177,23 @@ namespace OpenKNX
         class Default
         {
           public:
+            Default();
+            void init();
+
             /**
              * TODO extend documentation
              *
              * Steps for reading:
-             * 1) check for expected INIT
-             * 2) check APP for matching version
-             * 3) read the size of data
-             * 4) validate checksum
-             * 5) read data (for all modules)
+             * 1)  Validate Slot(s)
+             * 1a) check for expected INIT per slot
+             * 1b) check APP for matching version
+             * 1c) read the size of data
+             * 1d) read version
+             * 1e) validate checksum
+             * 2)  check is a valid slot available
+             * 3)  select slot with higher version
+             * 4)  load module data
+             * 5)  empty load (init) for the remaining modules
              */
             void load();
 
@@ -175,11 +206,11 @@ namespace OpenKNX
              * 3) write DATA: data and fill unused requested space (for all modules)
              * 4) write APP
              * 5) write SIZE
-             * 6) write CHK
-             * 7) write INIT
+             * 6) write VERSION
+             * 7) write CHK
+             * 8) write INIT
              */
             void save(bool force = false);
-
             void write(uint8_t *buffer, uint16_t size = 1);
             void write(uint8_t value, uint16_t size);
             void writeByte(uint8_t value);
@@ -192,22 +223,31 @@ namespace OpenKNX
             uint16_t firmwareVersion();
 
           private:
-            bool *loadedModules;
-            uint8_t *_flashStart;
-            // Base *_storage = nullptr;
-            uint16_t _flashSize = 0;
+            bool *loadedModules = nullptr;
+            OpenKNX::Flash::Driver *_flashDriver = nullptr;
+            bool _activeSlot = false; // false = A & true = B
             uint32_t _lastWrite = 0;
             uint16_t _lastFirmwareNumber = 0;
             uint16_t _lastFirmwareVersion = 0;
             uint16_t _checksum = 0;
             uint32_t _currentWriteAddress = 0;
-            uint8_t *_currentReadAddress = 0;
+            uint32_t _currentReadAddress = 0;
             uint32_t _maxWriteAddress = 0;
             void writeFilldata();
-            void readData();
+            void loadModuleData();
             void initUnloadedModules();
+            bool validateSlot(bool slot);
+            void eraseSlot(bool slot);
+            uint8_t nextVersion();
+            uint8_t slotVersion(bool slot);
+            uint16_t slotOffset(bool slot);
+            uint16_t slotSize();
+            bool nextSlot();
+            uint32_t readOffset();
+            uint32_t writeOffset();
+            uint8_t *currentFlash();
             uint16_t calcChecksum(uint8_t *data, uint16_t size);
-            bool verifyChecksum(uint8_t *data, uint16_t size);
+            bool verifyChecksum(uint8_t *data, uint16_t size, uint16_t checksum);
             std::string logPrefix();
         };
     } // namespace Flash

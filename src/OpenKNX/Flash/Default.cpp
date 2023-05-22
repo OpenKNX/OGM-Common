@@ -5,6 +5,16 @@ namespace OpenKNX
 {
     namespace Flash
     {
+        Default::Default()
+        {
+            _flashDriver = new OpenKNX::Flash::Driver(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "Default");
+        }
+
+        uint8_t Default::nextVersion()
+        {
+            return slotVersion(_activeSlot) + 1;
+        }
+
         std::string Default::logPrefix()
         {
             return "Flash<Default>";
@@ -12,16 +22,155 @@ namespace OpenKNX
 
         void Default::load()
         {
-            _flashSize = knx.platform().getNonVolatileMemorySize();
-            _flashStart = knx.platform().getNonVolatileMemoryStart();
-            uint32_t start = millis();
+            const uint32_t start = millis();
             loadedModules = new bool[openknx.getModules()->count];
             logInfoP("Load data from flash");
             logIndentUp();
-            readData();
+            bool found = false;
+            const bool slotValidA = validateSlot(false);
+            if (slotValidA)
+                found = true;
+
+#ifndef ARDUINO_ARCH_SAMD
+            const bool slotValidB = validateSlot(true);
+            const uint8_t slotVersionA = slotVersion(false);
+            const uint8_t slotVersionB = slotVersion(true);
+            if (slotValidB)
+            {
+                found = true;
+
+                if (
+                    // when slot b valid und slot a not
+                    !slotValidA ||
+                    // when slot b newer than slot a
+                    (slotVersionB != 0xFF && slotVersionA < slotVersionB || (slotVersionA == 0xFF && slotVersionB == 0x0)))
+                {
+                    _activeSlot = true;
+                }
+            }
+#endif
+
+            if (!found)
+            {
+                logInfoP("Abort: No valid data found");
+                logIndentDown();
+                return;
+            }
+
+            loadModuleData();
             initUnloadedModules();
+
+            // erase next slot
+            eraseSlot(nextSlot());
+
             logInfoP("Loading completed (%ims)", millis() - start);
             logIndentDown();
+        }
+
+        uint16_t Default::slotOffset(bool slot)
+        {
+#ifdef ARDUINO_ARCH_SAMD
+            return slotSize();
+#else
+            return slotSize() + (slot ? slotSize() : 0);
+#endif
+        }
+
+        uint16_t Default::slotSize()
+        {
+#ifdef ARDUINO_ARCH_SAMD
+            return _flashDriver->size();
+#else
+            return _flashDriver->size() / 2;
+#endif
+        }
+
+        uint32_t Default::readOffset()
+        {
+            return slotOffset(_activeSlot);
+        }
+
+        uint32_t Default::writeOffset()
+        {
+            return slotOffset(nextSlot());
+        }
+
+        bool Default::nextSlot()
+        {
+#ifdef ARDUINO_ARCH_SAMD
+            return false;
+#else
+            return !_activeSlot;
+#endif
+        }
+
+        bool Default::validateSlot(bool slot)
+        {
+
+#ifdef ARDUINO_ARCH_SAMD
+            if (slot)
+                return false;
+#endif
+            logDebugP("Validate slot %i", slot);
+            logIndentUp();
+            logHexTraceP(_flashDriver->flashAddress() + slotOffset(slot) - FLASH_DATA_META_LEN, FLASH_DATA_META_LEN);
+
+            // validate magicwords exists (at last position)
+            _currentReadAddress = slotOffset(slot) - FLASH_DATA_INIT_LEN;
+            if (FLASH_DATA_INIT != readInt())
+            {
+                logDebugP("No data found");
+                logIndentDown();
+                return false;
+            }
+
+            // validate FirmwareVersion/Number
+            _currentReadAddress = slotOffset(slot) - FLASH_DATA_META_LEN;
+            _lastFirmwareNumber = readWord();
+            logDebugP("Firmware number: 0x%04X", _lastFirmwareNumber);
+            _lastFirmwareVersion = readWord();
+            logDebugP("Firmware version: %i", _lastFirmwareVersion);
+
+            // validate checksum
+            if (_lastFirmwareNumber != openknx.info.firmwareNumber())
+            {
+                logErrorP("Data from other application");
+                logIndentDown();
+                return false;
+            }
+
+            const uint16_t dataSize = readWord();
+            logDebugP("Data size: %i", dataSize);
+
+            const uint8_t version = readByte();
+            logDebugP("Version: %i", version);
+
+            const uint16_t checksum = readWord();
+            logDebugP("Checksum: %i", checksum);
+
+            // validate checksum
+            _currentReadAddress = slotOffset(slot) - FLASH_DATA_META_LEN - dataSize;
+            const uint16_t checksumSize = dataSize + FLASH_DATA_APP_LEN + FLASH_DATA_SIZE_LEN + FLASH_DATA_VERSION;
+            if (!verifyChecksum(currentFlash(), checksumSize, checksum))
+            {
+                logErrorP("Checksum invalid!");
+                logHexErrorP(_flashDriver->flashAddress() + slotOffset(slot) - FLASH_DATA_META_LEN - dataSize, checksumSize);
+                logIndentDown();
+                return false;
+            }
+
+            logIndentDown();
+            return true;
+        }
+
+        uint8_t Default::slotVersion(bool slot)
+        {
+#ifdef ARDUINO_ARCH_SAMD
+            if (slot)
+                return false;
+#endif
+            _currentReadAddress = slotOffset(slot) - FLASH_DATA_INIT_LEN - FLASH_DATA_CHK_LEN - FLASH_DATA_VERSION;
+            return readByte();
         }
 
         /**
@@ -30,81 +179,54 @@ namespace OpenKNX
         void Default::initUnloadedModules()
         {
             Modules *modules = openknx.getModules();
-            Module *module = nullptr;
-            uint8_t moduleId = 0;
-            uint16_t moduleSize = 0;
             for (uint8_t i = 0; i < modules->count; i++)
             {
                 // check module expectation and load state
-                module = modules->list[i];
-                moduleId = modules->ids[i];
-                moduleSize = module->flashSize();
+                Module *module = modules->list[i];
+                const uint8_t moduleId = modules->ids[i];
+                const uint16_t moduleSize = module->flashSize();
 
                 if (moduleSize > 0 && !loadedModules[moduleId])
                 {
-                    logDebugP("Init module %s (%i)", module->name().c_str(), moduleId);
+                    logDebugP("Init unloaded module %s (%i)", module->name().c_str(), moduleId);
                     module->readFlash(new uint8_t[0], 0);
                 }
             }
         }
 
-        /**
-         * Check version/format/checksum and let matching modules read their data from flash-Flash
-         */
-        void Default::readData()
+        void Default::eraseSlot(bool slot)
         {
-            uint8_t *currentPosition;
-            uint8_t moduleId = 0;
-            uint16_t moduleSize = 0;
-            uint16_t dataSize = 0;
-            uint16_t dataProcessed = 0;
-            Module *module = nullptr;
+#ifdef ARDUINO_ARCH_RP2040
+            // On RP2020 we need to erase next slot for fast writing on powerloss
+            const uint32_t start = millis();
+            logDebugP("Erase slot %i", slot);
+            logIndentUp();
+            _flashDriver->write(slotOffset(slot) - slotSize(), 0xFF, slotSize());
+            _flashDriver->commit();
+            logDebugP("Erase completed (%ims)", millis() - start);
+            logIndentDown();
+#endif
+        }
 
-            // check magicwords exists
-            currentPosition = _flashStart + _flashSize - FLASH_DATA_META_LEN;
-            if (FLASH_DATA_INIT != getInt(currentPosition + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN))
-            {
-                logInfoP("Abort: No data found");
-                return;
-            }
+        void Default::loadModuleData()
+        {
+            logInfoP("Load module data (from slot %i)", _activeSlot);
+            logIndentUp();
 
-            // read size
-            dataSize = (currentPosition[FLASH_DATA_META_LEN - 8] << 8) + currentPosition[FLASH_DATA_META_LEN - 7];
+            // reread data size for calc
+            _currentReadAddress = readOffset() - FLASH_DATA_INIT_LEN - FLASH_DATA_CHK_LEN - FLASH_DATA_VERSION - FLASH_DATA_SIZE_LEN;
+            const uint16_t dataSize = readWord();
 
-            // read FirmwareVersion
-            _currentReadAddress = currentPosition;
-            _lastFirmwareNumber = readWord();
-            logDebugP("FirmwareNumber: 0x%04X", _lastFirmwareNumber);
+            // process data
+            _currentReadAddress = readOffset() - FLASH_DATA_META_LEN - dataSize;
 
-            _lastFirmwareVersion = readWord();
-            logDebugP("FirmwareVersion: %i", _lastFirmwareVersion);
-
-            // validate checksum
-            currentPosition = (currentPosition - dataSize);
-            if (!verifyChecksum(currentPosition, dataSize + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN))
-            {
-                logErrorP("Abort: Checksum invalid!");
-                logHexErrorP(currentPosition, dataSize + FLASH_DATA_META_LEN - FLASH_DATA_INIT_LEN);
-                return;
-            }
-
-            // check FirmwareNumber
-            if (_lastFirmwareNumber != openknx.info.firmwareNumber())
-            {
-                logErrorP("Abort: Data from other application");
-                return;
-            }
-
-            logHexTraceP(currentPosition, dataSize + FLASH_DATA_META_LEN);
-
+            uint32_t dataProcessed = 0;
             while (dataProcessed < dataSize)
             {
-                _currentReadAddress = currentPosition;
-                moduleId = readByte();
-                moduleSize = readWord();
-                currentPosition = (currentPosition + FLASH_DATA_MODULE_ID_LEN + FLASH_DATA_SIZE_LEN);
+                uint8_t moduleId = readByte();
+                uint16_t moduleSize = readWord();
+                Module *module = openknx.getModule(moduleId);
                 dataProcessed += FLASH_DATA_MODULE_ID_LEN + FLASH_DATA_SIZE_LEN + moduleSize;
-                module = openknx.getModule(moduleId);
                 if (module == nullptr)
                 {
                     logDebugP("Skip module with id %i (not found)", moduleId);
@@ -113,27 +235,20 @@ namespace OpenKNX
                 {
                     logDebugP("Restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
                     logIndentUp();
-                    _currentReadAddress = currentPosition;
-                    logHexTraceP(currentPosition, moduleSize);
-                    module->readFlash(currentPosition, moduleSize);
+                    logHexTraceP(currentFlash(), moduleSize);
+                    module->readFlash(currentFlash(), moduleSize);
                     loadedModules[moduleId] = true;
                     logIndentDown();
                 }
-                currentPosition = (currentPosition + moduleSize);
+                _currentReadAddress = (_currentReadAddress + moduleSize);
             }
+            logIndentDown();
         }
 
         void Default::save(bool force /* = false */)
         {
             _checksum = 0;
-            _flashSize = knx.platform().getNonVolatileMemorySize();
-            _flashStart = knx.platform().getNonVolatileMemoryStart();
-
             uint32_t start = millis();
-            uint8_t moduleId = 0;
-            uint16_t dataSize = 0;
-            uint16_t moduleSize = 0;
-            Module *module = nullptr;
 
             // table is not loaded (ets prog running) and save is not possible
             if (!knx.configured())
@@ -146,13 +261,14 @@ namespace OpenKNX
 
             logInfoP("Save data to flash%s", force ? " (force)" : "");
             logIndentUp();
+            logDebugP("Slot %i", nextSlot());
 
             // determine some values
             Modules *modules = openknx.getModules();
-            dataSize = 0;
+            uint16_t dataSize = 0;
             for (uint8_t i = 0; i < modules->count; i++)
             {
-                moduleSize = modules->list[i]->flashSize();
+                const uint16_t moduleSize = modules->list[i]->flashSize();
                 if (moduleSize == 0)
                     continue;
 
@@ -164,7 +280,7 @@ namespace OpenKNX
             logTraceP("dataSize: %i", dataSize);
 
             // start point
-            _currentWriteAddress = _flashSize -
+            _currentWriteAddress = writeOffset() -
                                    dataSize -
                                    FLASH_DATA_META_LEN;
 
@@ -173,22 +289,22 @@ namespace OpenKNX
             for (uint8_t i = 0; i < modules->count; i++)
             {
                 // get data
-                module = modules->list[i];
-                moduleSize = module->flashSize();
-                moduleId = modules->ids[i];
+                Module *module = modules->list[i];
+                uint16_t moduleSize = module->flashSize();
+                uint8_t moduleId = modules->ids[i];
 
                 if (moduleSize == 0)
                     continue;
 
-                // write data
                 _maxWriteAddress = _currentWriteAddress +
                                    FLASH_DATA_MODULE_ID_LEN +
                                    FLASH_DATA_SIZE_LEN;
 
+                // write header for module data
                 writeByte(moduleId);
-
                 writeWord(moduleSize);
 
+                // write the module data
                 _maxWriteAddress = _currentWriteAddress + moduleSize;
 
                 logDebugP("Save module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
@@ -206,18 +322,35 @@ namespace OpenKNX
             // write size
             writeWord(dataSize);
 
+            // write version
+            logDebugP("Version %i", nextVersion());
+            writeByte(nextVersion());
+
             // write checksum
             writeWord(_checksum);
 
-            // write init
+            // block of metadata
             writeInt(FLASH_DATA_INIT);
 
-            knx.platform().commitNonVolatileMemory();
-            logHexTraceP(_flashStart + _flashSize - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
+            _flashDriver->commit();
+            logHexTraceP(_flashDriver->flashAddress() + writeOffset() - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
 
-            _lastWrite = millis();
-            logInfoP("Save completed (%ims)", _lastWrite - start);
+            logInfoP("Save completed (%ims)", millis() - start);
+
+#ifndef ARDUINO_ARCH_SAMD
+            // new active slot
+            _activeSlot = !_activeSlot;
+
+            // erase next slot
+            eraseSlot(nextSlot());
+#endif
+
             logIndentDown();
+        }
+
+        uint8_t *Default::currentFlash()
+        {
+            return _flashDriver->flashAddress() + _currentReadAddress;
         }
 
         uint16_t Default::calcChecksum(uint8_t *data, uint16_t size)
@@ -230,10 +363,10 @@ namespace OpenKNX
             return sum;
         }
 
-        bool Default::verifyChecksum(uint8_t *data, uint16_t size)
+        bool Default::verifyChecksum(uint8_t *data, uint16_t size, uint16_t checksum)
         {
-            // logInfoP("verifyChecksum %i == %i", ((data[size - 2] << 8) + data[size - 1]), calcChecksum(data, size - 2));
-            return ((data[size - 2] << 8) + data[size - 1]) == calcChecksum(data, size - 2);
+            // logInfoP("verifyChecksum %i == %i", checksum, calcChecksum(data, size));
+            return checksum == calcChecksum(data, size);
         }
 
         void Default::write(uint8_t *buffer, uint16_t size)
@@ -247,7 +380,7 @@ namespace OpenKNX
             for (uint16_t i = 0; i < size; i++)
                 _checksum += buffer[i];
 
-            _currentWriteAddress = knx.platform().writeNonVolatileMemory(_currentWriteAddress, buffer, size);
+            _currentWriteAddress = _flashDriver->write(_currentWriteAddress, buffer, size);
         }
 
         void Default::write(uint8_t value, uint16_t size)
@@ -261,32 +394,22 @@ namespace OpenKNX
             for (uint16_t i = 0; i < size; i++)
                 _checksum += value;
 
-            _currentWriteAddress = knx.platform().writeNonVolatileMemory(_currentWriteAddress, value, size);
+            _currentWriteAddress = _flashDriver->write(_currentWriteAddress, value, size);
         }
 
         void Default::writeByte(uint8_t value)
         {
-            uint8_t buffer[1];
-            buffer[0] = value;
-            write(buffer);
+            write((uint8_t *)&value);
         }
 
         void Default::writeWord(uint16_t value)
         {
-            uint8_t buffer[2];
-            buffer[0] = ((value >> 8) & 0xff);
-            buffer[1] = (value & 0xff);
-            write(buffer, 2);
+            write((uint8_t *)&value, 2);
         }
 
         void Default::writeInt(uint32_t value)
         {
-            uint8_t buffer[4];
-            buffer[0] = ((value >> 24) & 0xff);
-            buffer[1] = ((value >> 16) & 0xff);
-            buffer[2] = ((value >> 8) & 0xff);
-            buffer[3] = (value & 0xff);
-            write(buffer, 4);
+            write((uint8_t *)&value, 4);
         }
 
         void Default::writeFilldata()
@@ -301,24 +424,26 @@ namespace OpenKNX
 
         uint8_t *Default::read(uint16_t size /* = 1 */)
         {
-            uint8_t *address = _currentReadAddress;
             _currentReadAddress += size;
-            return address;
+            return currentFlash() - size;
         }
 
         uint8_t Default::readByte()
         {
-            return read(1)[0];
+            _currentReadAddress += 1;
+            return _flashDriver->readByte(_currentReadAddress - 1);
         }
 
         uint16_t Default::readWord()
         {
-            return (readByte() << 8) + readByte();
+            _currentReadAddress += 2;
+            return _flashDriver->readWord(_currentReadAddress - 2);
         }
 
         uint32_t Default::readInt()
         {
-            return (readByte() << 24) + (readByte() << 16) + (readByte() << 8) + readByte();
+            _currentReadAddress += 4;
+            return _flashDriver->readInt(_currentReadAddress - 4);
         }
 
         uint16_t Default::firmwareVersion()
