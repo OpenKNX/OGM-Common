@@ -152,8 +152,9 @@ def show_flash_partitioning(source, target, env):
     if projenv['BOARD'] == 'pico':
         eeprom_start = env["PICO_EEPROM_START"] - 268435456
         flash_end = eeprom_start + 4096
+        system_end = eeprom_start
 
-        if env["FS_START"] > 0:
+        if env["FS_START"] > 0 and not env["FS_START"] == env["FS_END"]:
             filesystem_start = env["FS_START"] - 268435456
             filesystem_end = env["FS_END"] - 268435456
             system_end = filesystem_start # overwrite new system end
