@@ -140,12 +140,12 @@ namespace OpenKNX
         // use individual values per core
         volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
         volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
+        volatile uint8_t _mutexCounter[2] = {(uint8_t)0, (uint8_t)0};
         mutex_t _mutex;
 #else
         uint8_t _color = 0;
         uint8_t _indent = 0;
 #endif
-        volatile uint8_t _mutexCounter = 0;
         
         void printHex(const uint8_t* data, size_t size);
         void printMessage(const std::string message, va_list args);

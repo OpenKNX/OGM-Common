@@ -14,9 +14,11 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         if (openknx.usesDualCore())
         {
-            if (_mutexCounter == 0)
+            if (STATE_BY_CORE(_mutexCounter) == 0)
                 mutex_enter_blocking(&_mutex);
-            _mutexCounter++;
+
+            STATE_BY_CORE(_mutexCounter)
+            ++;
         }
 #endif
     }
@@ -26,8 +28,10 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         if (openknx.usesDualCore())
         {
-            _mutexCounter--;
-            if (_mutexCounter == 0)
+            STATE_BY_CORE(_mutexCounter)
+            --;
+
+            if (STATE_BY_CORE(_mutexCounter) == 0)
                 mutex_exit(&_mutex);
         }
 #endif
