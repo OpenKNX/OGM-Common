@@ -1,8 +1,6 @@
 #include "OpenKNX/TimerInterrupt.h"
 #include "OpenKNX/Common.h"
 
-#define OPENKNX_TIMER_INTERRUPT 0
-
 /*
  * Select a Interrupt for global TimerInterrupt
  * OPENKNX_TIMER_INTERRUPT
