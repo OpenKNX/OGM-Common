@@ -34,6 +34,9 @@ namespace OpenKNX
     void Base::loop1()
     {}
 
+    void Base::init()
+    {}
+
     void Base::setup()
     {}
 #if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects

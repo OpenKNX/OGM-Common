@@ -255,6 +255,12 @@ namespace OpenKNX
             return openknx.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
         });
 
+        // Handle loop of modules
+        for (uint8_t i = 0; i < _modules.count; i++)
+        {
+            _modules.list[i]->init();
+        }
+
         if (!knx.configured())
             return;
 
