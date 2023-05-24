@@ -34,6 +34,12 @@ namespace OpenKNX
         virtual const std::string name();
 
         /*
+        * Called at startup (before startup delay), after knx.init
+        * will be executed regardless of knx.configured state
+        */
+        virtual void init();
+
+        /*
          * Called at startup (before startup delay)
          * Useful for init hardware
          */
