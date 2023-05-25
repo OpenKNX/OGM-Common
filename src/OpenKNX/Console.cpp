@@ -60,7 +60,7 @@ namespace OpenKNX
                 resetToBootloader();
                 break;
             case 'N':
-                if (confirmation(current, 3, "Nuke knwhole flash"))
+                if (confirmation(current, 3, "Nuke whole flash"))
                     break;
 
                 nukeFlash();
