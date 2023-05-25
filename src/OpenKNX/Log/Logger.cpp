@@ -127,6 +127,9 @@ namespace OpenKNX
 
         void Logger::printPrefix(const std::string prefix)
         {
+#ifdef ARDUINO_ARCH_RP2040
+            SERIAL_DEBUG.print(rp2040.cpuid() ? "_1> " : "0_> ");
+#endif 
             size_t prefixLen = MIN(strlen(prefix.c_str()), OPENKNX_MAX_LOG_PREFIX_LENGTH);
             for (size_t i = 0; i < (OPENKNX_MAX_LOG_PREFIX_LENGTH + 2); i++)
             {
