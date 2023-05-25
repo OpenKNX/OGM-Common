@@ -450,7 +450,8 @@ namespace OpenKNX
     void Common::appLoop1()
     {
         for (uint8_t i = 0; i < _modules.count; i++)
-            _modules.list[i]->loop1();
+            if (_modules.list[i]->usesDualCore())
+                _modules.list[i]->loop1();
     }
 
     void Common::addModule(uint8_t id, Module *module)
