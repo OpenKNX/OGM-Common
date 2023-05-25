@@ -449,6 +449,10 @@ namespace OpenKNX
 
     void Common::appLoop1()
     {
+        // knx is not configured
+        if (!knx.configured())
+            return;
+
         for (uint8_t i = 0; i < _modules.count; i++)
             if (_modules.list[i]->usesDualCore())
                 _modules.list[i]->loop1();
@@ -625,9 +629,7 @@ namespace OpenKNX
         {
             _modules.list[i]->processBeforeTablesUnload();
         }
-#ifdef ARDUINO_ARCH_RP2040
-        multicore_reset_core1();
-#endif
+
         flash.save();
         logIndentDown();
     }
