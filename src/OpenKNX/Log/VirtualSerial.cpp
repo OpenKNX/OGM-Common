@@ -24,11 +24,11 @@ namespace OpenKNX
         };
         size_t VirtualSerial::write(uint8_t byte)
         {
-            if (byte == 10) // skip \r
+            if (byte == '\r') // skip \r
             {
                 return 1;
             }
-            else if (byte == 13) // \n print line
+            else if (byte == '\n') // print the completed line
             {
                 openknx.logger.log(_prefix, _buffer);
                 _buffer.erase();
