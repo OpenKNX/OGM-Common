@@ -40,10 +40,9 @@ OpenKNX Common is configured by following defines:
 ```
 # should be configured in plattformio.ini
 WATCHDOG
-DEBUG_DELAY
+WARN_LOOP_TIME
 DEBUG_WAIT_FOR_SERIAL
 DEBUG_WAIT_FOR_SERIAL_TIMEOUT
-DEBUG_LOOP_TIME
 DEBUG_HEARTBEAT
 
 # optional (pre defined)
@@ -52,7 +51,7 @@ WATCHDOG_MAX_PERIOD_MS
 OPENKNX_MAX_MODULES
 OPENKNX_LEDEFFECT_PULSE_FREQ
 OPENKNX_LEDEFFECT_BLINK_FREQ
-DEBUG_LOOP_TIME_LOG_INTERVAL
+WARN_LOOP_TIME_LOG_INTERVAL
 
 # defines in hardware.h
 OPENKNX_PULSATING_BOOT
@@ -65,17 +64,12 @@ KNX_UART_RX_PIN
 KNX_UART_TX_PIN
 ```
 
-### Delays at startup (for debugging)
+### Wait for console
 
-There are three defines that control optional functionality regarding delay at startup - mainly to make sure all output on the serial debug console can be read. They are meant to be used in the plattformio.ini
+There are two defines that control optional functionality regarding delay at startup - mainly to make sure all output on the serial debug console can be read. They are meant to be used in the plattformio.ini
 
-`DEBUG_DELAY` - static delay in ms at startup
-
-example (wait 5s): `-D DEBUG_DELAY=5000`
-
-
-`DEBUG_WAIT_FOR_SERIAL` - wait at startup until SERIAL_DEBUG is connected. DEBUG_DELAY is ignored
-`DEBUG_WAIT_FOR_SERIAL=5000` - wait at startup until SERIAL_DEBUG is connected or timer is expired. DEBUG_DELAY is ignored
+`DEBUG_WAIT_FOR_SERIAL` - wait at startup until SERIAL_DEBUG is connected.
+`DEBUG_WAIT_FOR_SERIAL=5000` - wait at startup until SERIAL_DEBUG is connected or timer is expired.
 
 ### Debug Loops
 

@@ -208,8 +208,6 @@ namespace OpenKNX
                 break;
 #endif
         }
-#elif defined(DEBUG_DELAY)
-        delay(DEBUG_DELAY);
 #endif
 
 #ifdef OPENKNX_PULSATING_BOOT
