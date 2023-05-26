@@ -344,7 +344,7 @@ namespace OpenKNX
         hardware.progLed.debugLoop();
 #endif
 
-#ifdef DEBUG_LOOP_TIME
+#ifdef WARN_LOOP_TIME
         uint32_t start = millis();
 #endif
 
@@ -362,19 +362,22 @@ namespace OpenKNX
         watchdogLoop();
 #endif
 
-#ifdef DEBUG_LOOP_TIME
-        // loop took to long and last out is min 1s ago
-#if DEBUG_LOOP_TIME > 1
-        if (delayCheck(start, DEBUG_LOOP_TIME) && delayCheck(lastDebugTime, DEBUG_LOOP_TIME_LOG_INTERVAL))
-#else
-        if (delayCheck(start, 5000) && delayCheck(lastDebugTime, DEBUG_LOOP_TIME_LOG_INTERVAL))
-#endif
+#if WARN_LOOP_TIME > 1
+        // loop took to long and last out is min 1ms ago
+        if (delayCheck(start, WARN_LOOP_TIME) && delayCheck(_lastLoopOutput, WARN_LOOP_TIME_LOG_INTERVAL))
         {
-            logDebugP("Loop took too long %i >= %i", (millis() - start), DEBUG_LOOP_TIME);
-            lastDebugTime = millis();
+            logErrorP("Loop took too long %i >= %i", (millis() - start), WARN_LOOP_TIME);
+            resetLastLoopOutput();
         }
 #endif
     }
+
+#if WARN_LOOP_TIME > 1
+    void Common::resetLastLoopOutput()
+    {
+        _lastLoopOutput = millis();
+    }
+#endif
 
     // loop with abort conditions
     void Common::appLoop()

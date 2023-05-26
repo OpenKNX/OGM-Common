@@ -24,8 +24,12 @@
 #define OPENKNX_MAX_LOOPTIME 4000
 #endif
 
-#ifndef DEBUG_LOOP_TIME_LOG_INTERVAL
-#define DEBUG_LOOP_TIME_LOG_INTERVAL 1000
+#ifndef WARN_LOOP_TIME
+#define WARN_LOOP_TIME 5
+#endif
+
+#ifndef WARN_LOOP_TIME_LOG_INTERVAL
+#define WARN_LOOP_TIME_LOG_INTERVAL 1000
 #endif
 
 #ifndef KNX_SERIAL
@@ -52,8 +56,8 @@ namespace OpenKNX
     class Common : public Helper
     {
       private:
-#ifdef DEBUG_LOOP_TIME
-        uint32_t lastDebugTime = 0;
+#if WARN_LOOP_TIME > 1
+        uint32_t _lastLoopOutput = 0;
 #endif
 #ifdef WATCHDOG
 #ifndef WATCHDOG_MAX_PERIOD_MS
@@ -113,6 +117,9 @@ namespace OpenKNX
         void setup();
         void loop();
         void loop1();
+#if WARN_LOOP_TIME > 1
+        void resetLastLoopOutput();
+#endif
         bool usesDualCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;

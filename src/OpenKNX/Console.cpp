@@ -82,6 +82,9 @@ namespace OpenKNX
                 fatalError(5, "Test with 5x blinking");
                 break;
         }
+
+        // prevent loop warning
+        openknx.resetLastLoopOutput();
     }
 
     void Console::showInformations()

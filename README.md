@@ -95,9 +95,8 @@ So, if the device is NOT blinking, anything is wrong.
 * `DEBUG_HEARTBEAT_PRIO` - enable heartbeat mode with default failure time (default is 1000ms)
 * `DEBUG_HEARTBEAT_PRIO=3000` - enable heartbeat mode with specific failure time.
 
-#### Duration
-You can enable a debug output
-* `DEBUG_LOOP_TIME` - enable log output when loop tooks longer than default allowed (default is 5ms)
-* `DEBUG_LOOP_TIME=6` - enable log output with specific time.
+#### Duration of loop
+To ensure proper operation, the loop runtime needs to be short. If the runtime is too long, KNX telegrams may be lost. The framework will generate an error message if the time is exceeded, so the runtime should remain below 5 ms.
 
-* `DEBUG_LOOP_TIME_LOG_INTERVAL=30000` - set individual interval for logging loop took longer (default is 1000ms); could be useful when testing without connection to KNX-bus  
+* `WARN_LOOP_TIME=6` - set individual maximum loop time. Default time is 5ms.
+* `WARN_LOOP_TIME_LOG_INTERVAL=30000` - Suppress repetitions for a specified duration. Default time is 1000ms.
