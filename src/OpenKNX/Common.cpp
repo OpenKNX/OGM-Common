@@ -11,7 +11,7 @@ namespace OpenKNX
     void Common::init(uint8_t firmwareRevision)
     {
         SERIAL_DEBUG.begin(115200);
-        ArduinoPlatform::SerialDebug = &SERIAL_DEBUG;
+        ArduinoPlatform::SerialDebug = new Log::VirtualSerial("KNX");
 
         timerInterrupt.init();
         hardware.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
@@ -118,7 +118,7 @@ namespace OpenKNX
 
     void Common::initKnx()
     {
-        logTraceP("Init knx stack");
+        logInfoP("Init knx stack");
         logIndentUp();
 
 #if defined(ARDUINO_ARCH_RP2040) && defined(KNX_SERIAL)
@@ -633,7 +633,7 @@ namespace OpenKNX
         flash.save();
         logIndentDown();
     }
-#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
+#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
     void Common::processInputKo(GroupObject &iKo)
     {
 #ifdef LOG_KoDiagnose
@@ -652,7 +652,6 @@ namespace OpenKNX
         }
 #endif
     }
-
 
 #ifdef LOG_KoDiagnose
     void Common::processDiagnoseCommand(GroupObject &iKo)
@@ -694,8 +693,8 @@ namespace OpenKNX
         knx.beforeRestartCallback([]() -> void {
             openknx.processBeforeRestart();
         });
-#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
-        GroupObject::classCallback([](GroupObject& iKo) -> void {
+#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
+        GroupObject::classCallback([](GroupObject &iKo) -> void {
             openknx.processInputKo(iKo);
         });
 #endif

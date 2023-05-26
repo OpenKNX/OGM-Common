@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef SMALL_GROUPOBJECT
-    #error OGM-Common needs build-flag "-D SMALL_GROUPOBJECT"
+#error OGM-Common needs build-flag "-D SMALL_GROUPOBJECT"
 #endif
 
 #include "Helper.h"

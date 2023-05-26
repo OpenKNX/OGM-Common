@@ -5,7 +5,8 @@
 #include "OpenKNX/Hardware.h"
 #include "OpenKNX/Helper.h"
 #include "OpenKNX/Information.h"
-#include "OpenKNX/Logger.h"
+#include "OpenKNX/Log/Logger.h"
+#include "OpenKNX/Log/VirtualSerial.h"
 #include "OpenKNX/Module.h"
 #include "OpenKNX/TimerInterrupt.h"
 #include "hardware.h"
@@ -94,14 +95,14 @@ namespace OpenKNX
         uint32_t _heartbeatDelay;
         void processHeartbeat();
 #endif
-        bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
-        bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
+        bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
+        bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 
       public:
         OpenKNX::Flash::Default flash;
         Information info;
         Console console;
-        Logger logger;
+        Log::Logger logger;
         TimerInterrupt timerInterrupt;
         Hardware hardware;
 
@@ -133,7 +134,7 @@ namespace OpenKNX
         void processSavePin();
         void processBeforeRestart();
         void processBeforeTablesUnload();
-#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
+#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
         void processInputKo(GroupObject& iKo);
         void processDiagnoseCommand(GroupObject& iKo);
 #endif

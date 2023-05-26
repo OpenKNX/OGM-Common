@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenKNX/Logger.h"
+#include "OpenKNX/Log/Logger.h"
 #include "knx.h"
 #include <Arduino.h>
 #include <cstdint>

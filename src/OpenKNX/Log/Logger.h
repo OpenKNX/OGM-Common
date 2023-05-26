@@ -101,20 +101,20 @@
 #endif
 
 #ifdef DEBUG_LOG
-#define logDebug(...)         \
-    openknx.logger.color(8);  \
+#define logDebug(...)                \
+    openknx.logger.color(8);         \
     openknx.logger.log(__VA_ARGS__); \
     openknx.logger.color(0)
-#define logDebugP(...)                     \
-    openknx.logger.color(8);               \
+#define logDebugP(...)                            \
+    openknx.logger.color(8);                      \
     openknx.logger.log(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
-#define logHexDebug(...)         \
-    openknx.logger.color(8);     \
+#define logHexDebug(...)                \
+    openknx.logger.color(8);            \
     openknx.logger.logHex(__VA_ARGS__); \
     openknx.logger.color(0)
-#define logHexDebugP(...)                     \
-    openknx.logger.color(8);                  \
+#define logHexDebugP(...)                            \
+    openknx.logger.color(8);                         \
     openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #else
@@ -124,7 +124,6 @@
 #define logHexDebugP(...)
 #endif
 
-
 #ifdef ARDUINO_ARCH_RP2040
 #define STATE_BY_CORE(X) X[rp2040.cpuid()]
 #else
@@ -133,48 +132,52 @@
 
 namespace OpenKNX
 {
-    class Logger
+
+    namespace Log
     {
-      private:
+        class Logger
+        {
+          private:
 #ifdef ARDUINO_ARCH_RP2040
-        // use individual values per core
-        volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
-        volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
-        volatile uint8_t _mutexCounter[2] = {(uint8_t)0, (uint8_t)0};
-        mutex_t _mutex;
+            // use individual values per core
+            volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
+            volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
+            volatile uint8_t _mutexCounter[2] = {(uint8_t)0, (uint8_t)0};
+            mutex_t _mutex;
 #else
-        uint8_t _color = 0;
-        uint8_t _indent = 0;
+            uint8_t _color = 0;
+            uint8_t _indent = 0;
 #endif
-        
-        void printHex(const uint8_t* data, size_t size);
-        void printMessage(const std::string message, va_list args);
-        void printMessage(const std::string message);
-        void printPrefix(const std::string prefix);
-        bool isColorSet();
-        void printColorCode(uint8_t color);
-        void printColorCode();
-        void printIndent();
-        uint8_t getIndent();
 
-      public:
-        Logger();
-        void mutex_block();
-        void mutex_unblock();
+            void printHex(const uint8_t* data, size_t size);
+            void printMessage(const std::string message, va_list args);
+            void printMessage(const std::string message);
+            void printPrefix(const std::string prefix);
+            bool isColorSet();
+            void printColorCode(uint8_t color);
+            void printColorCode();
+            void printIndent();
+            uint8_t getIndent();
 
-        std::string logPrefix(const std::string prefix, const std::string id);
-        std::string logPrefix(const std::string prefix, const int id);
+          public:
+            Logger();
+            void mutex_block();
+            void mutex_unblock();
 
-        void log(const std::string prefix, const std::string message, va_list args);
-        void log(const std::string prefix, const std::string message, ...);
-        void log(const std::string message);
-        void logHex(const std::string prefix, const uint8_t* data, size_t size);
-        void color(uint8_t color = 0);
+            std::string logPrefix(const std::string prefix, const std::string id);
+            std::string logPrefix(const std::string prefix, const int id);
 
-        void indentUp();
-        void indentDown();
-        void indent(uint8_t indent);
+            void log(const std::string prefix, const std::string message, va_list args);
+            void log(const std::string prefix, const std::string message, ...);
+            void log(const std::string message);
+            void logHex(const std::string prefix, const uint8_t* data, size_t size);
+            void color(uint8_t color = 0);
 
-        bool checkTrace(const std::string prefix);
-    };
+            void indentUp();
+            void indentDown();
+            void indent(uint8_t indent);
+
+            bool checkTrace(const std::string prefix);
+        };
+    } // namespace Log
 } // namespace OpenKNX

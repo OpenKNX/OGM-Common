@@ -15,7 +15,7 @@ namespace OpenKNX
 
     void Hardware::requestBcuSystemState()
     {
-        logTrace(openknx.logger.logPrefix("Hardware", "BCU"), "Request system state");
+        logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Request system state");
         logIndentUp();
         uint8_t command[] = {U_SYSTEM_STATE, U_SYSTEM_STAT_IND};
         sendCommandToBcu(command, 2, "SYSTEM_STATE");
@@ -37,7 +37,7 @@ namespace OpenKNX
             return;
 
         if (debug != nullptr)
-            logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Send command %s to BCU", debug);
+            logTrace(openknx.logger.logPrefix("Hardware", "BCU"), "Send command %s to BCU", debug);
 
         // send system state command and interpret answer
         knx.platform().knxUart()->flush();
