@@ -8,28 +8,21 @@ namespace OpenKNX
         Logger::Logger()
         {
 #ifdef ARDUINO_ARCH_RP2040
-            mutex_init(&_mutex);
+            recursive_mutex_init(&_mutex);
 #endif
         }
+
         void Logger::mutex_block()
         {
 #ifdef ARDUINO_ARCH_RP2040
-            if (STATE_BY_CORE(_mutexCounter) == 0)
-                mutex_enter_blocking(&_mutex);
-
-            STATE_BY_CORE(_mutexCounter)
-            ++;
+            recursive_mutex_enter_blocking(&_mutex);
 #endif
         }
 
         void Logger::mutex_unblock()
         {
 #ifdef ARDUINO_ARCH_RP2040
-            STATE_BY_CORE(_mutexCounter)
-            --;
-
-            if (STATE_BY_CORE(_mutexCounter) == 0)
-                mutex_exit(&_mutex);
+            recursive_mutex_exit(&_mutex);
 #endif
         }
 

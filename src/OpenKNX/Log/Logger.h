@@ -142,8 +142,7 @@ namespace OpenKNX
             // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
             volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
-            volatile uint8_t _mutexCounter[2] = {(uint8_t)0, (uint8_t)0};
-            mutex_t _mutex;
+            recursive_mutex_t _mutex;
 #else
             uint8_t _color = 0;
             uint8_t _indent = 0;
