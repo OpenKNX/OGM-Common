@@ -1,5 +1,5 @@
-#include "OpenKNX/Common.h"
 #include "OpenKNX/Flash/Driver.h"
+#include "OpenKNX/Common.h"
 
 #ifdef ARDUINO_ARCH_SAMD
 extern uint32_t __etext;
@@ -57,15 +57,15 @@ namespace OpenKNX
         void Driver::validateParameters()
         {
             if (_size % _sectorSize)
-                fatalError(1, "Flash: Size unaligned");
+                openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Size unaligned");
             if (_offset % _sectorSize)
-                fatalError(1, "Flash: Offset unaligned");
+                openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Offset unaligned");
             if (_size > _endFree)
-                fatalError(1, "Flash: End behind free flash");
+                openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: End behind free flash");
             if (_offset < _startFree)
             {
                 logInfoP("%i < %i", _offset, _startFree);
-                fatalError(1, "Flash: Offset start before free flash begin");
+                openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Offset start before free flash begin");
             }
         }
 

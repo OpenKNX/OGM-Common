@@ -53,7 +53,7 @@ namespace OpenKNX
         Module* list[OPENKNX_MAX_MODULES];
     };
 
-    class Common : public Helper
+    class Common
     {
       private:
 #if WARN_LOOP_TIME > 1

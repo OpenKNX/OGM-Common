@@ -9,6 +9,13 @@
 #include <pico/stdlib.h>
 #endif
 
+// fatal error codes
+#define FATAL_FLASH_PARAMETERS 2        // I2C busy during startup
+#define FATAL_I2C_BUSY 3                // I2C busy during startup
+#define FATAL_LOG_WRONG_CHANNEL_COUNT 4 // knxprod contains more channels than logic supports
+#define FATAL_SENS_UNKNOWN 5            // unknown or unsupported sensor
+#define FATAL_SCHEDULE_MAX_CALLBACKS 6  // Too many callbacks in scheduler
+
 // NCN5130: internal commands
 #define U_RESET_REQ 0x01
 #define U_STATE_REQ 0x02
@@ -69,8 +76,8 @@
 #define ACR0_FLAG_TRIGEN 0x08
 #define ACR0_FLAG_V20VCLIMIT 0x04
 
-#define BOARD_HW_EEPROM  0x01
-#define BOARD_HW_LED     0x02
+#define BOARD_HW_EEPROM 0x01
+#define BOARD_HW_LED 0x02
 #define BOARD_HW_ONEWIRE 0x04
 #define BOARD_HW_NCN5130 0x08
 

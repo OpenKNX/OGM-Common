@@ -1,8 +1,8 @@
-#pragma once
+// #pragma once
 
-#include <cstdint>
-#include "knx.h"
-#include <hardware.h>
+// #include <cstdint>
+// #include "knx.h"
+// #include <hardware.h>
 
 // #ifndef BOARD_ENDUSER
 // // Board specific definietions
@@ -356,11 +356,6 @@
 // #endif
 // // board independent definitions
 
-// fatal error codes
-#define FATAL_I2C_BUSY                3  // I2C busy during startup
-#define FATAL_LOG_WRONG_CHANNEL_COUNT 4  // knxprod contains more channels than logic supports
-#define FATAL_SENS_UNKNOWN            5  // unknown or unsupported sensor
-#define FATAL_SCHEDULE_MAX_CALLBACKS  6  // Too many callbacks in scheduler
 
 // // EEPROM Support
 // #define I2C_EEPROM_DEVICE_ADDRESSS 0x50 // Address of 24LC256 eeprom chip
@@ -368,53 +363,53 @@
 //                                         // allow 3 pages boundary, so next store should start at page 40
 
 
-#define BOARD_HW_EEPROM  0x01
-#define BOARD_HW_LED     0x02
-#define BOARD_HW_ONEWIRE 0x04
-#define BOARD_HW_NCN5130 0x08
+// #define BOARD_HW_EEPROM  0x01
+// #define BOARD_HW_LED     0x02
+// #define BOARD_HW_ONEWIRE 0x04
+// #define BOARD_HW_NCN5130 0x08
 
-struct sSensorInfo
-{
-    float lastValue;
-    float lastSentValue;
-    uint32_t sendDelay;
-    uint32_t readDelay;
-};
+// struct sSensorInfo
+// {
+//     float lastValue;
+//     float lastSentValue;
+//     uint32_t sendDelay;
+//     uint32_t readDelay;
+// };
 
-struct sActorInfo
-{
-    uint8_t lastOutputValue;
-    uint8_t lastInputValue;
-    uint32_t sendDelay;
-    uint32_t readDelay;
-};
+// struct sActorInfo
+// {
+//     uint8_t lastOutputValue;
+//     uint8_t lastInputValue;
+//     uint32_t sendDelay;
+//     uint32_t readDelay;
+// };
 
-union uData
-{
-    sSensorInfo sensor;
-    sActorInfo actor;
-};
+// union uData
+// {
+//     sSensorInfo sensor;
+//     sActorInfo actor;
+// };
 
 // call this BEFORE Wire.begin()
 // it clears I2C Bus, calls Wire.begin() and checks which board hardware is available
-bool boardCheck();
-bool checkUartExistence();
-bool initUart();
-uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t iLen = 0);
+// bool boardCheck();
+// bool checkUartExistence();
+// bool initUart();
+// uint8_t sendUartCommand(const char* iInfo, uint8_t iCmd, uint8_t iResp, uint8_t iLen = 0);
 
 // just work after boardCheck
-bool boardWithOneWire();
-bool boardWithLed();
-bool boardWithEEPROM();
-bool boardWithNCN5130();
+// bool boardWithOneWire();
+// bool boardWithLed();
+// bool boardWithEEPROM();
+// bool boardWithNCN5130();
 
-void ledInfo(bool iOn);
-void ledProg(bool iOn);
+// void ledInfo(bool iOn);
+// void ledProg(bool iOn);
 // Turn off 5V rail from NCN5130 to save power for EEPROM write during knx save operation
-void deactivatePowerRail();
+// void deactivatePowerRail();
 // Turn on 5V rail from NCN5130 in case SAVE-Interrupt was false positive
-void activatePowerRail();
+// void activatePowerRail();
 
-void fatalError(uint8_t iErrorCode, const char *iErrorText = 0);
+// void fatalError(uint8_t iErrorCode, const char *iErrorText = 0);
 
-uint8_t clearI2cBus();
+// uint8_t clearI2cBus();

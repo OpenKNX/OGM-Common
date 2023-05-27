@@ -79,7 +79,7 @@ namespace OpenKNX
                 if (confirmation(current, 1, "FatalError"))
                     break;
 
-                fatalError(5, "Test with 5x blinking");
+                openknx.hardware.fatalError(5, "Test with 5x blinking");
                 break;
         }
 
