@@ -12,7 +12,8 @@
 #include "hardware.h"
 #include "knxprod.h"
 #include <knx.h>
-#ifdef WATCHDOG
+
+#ifdef OPENKNX_WATCHDOG
 #include <Adafruit_SleepyDog.h>
 #endif
 
@@ -24,12 +25,16 @@
 #define OPENKNX_MAX_LOOPTIME 4000
 #endif
 
-#ifndef WARN_LOOP_TIME
-#define WARN_LOOP_TIME 5
+#ifndef OPENKNX_LOOPTIME_WARNING
+#define OPENKNX_LOOPTIME_WARNING 5
 #endif
 
-#ifndef WARN_LOOP_TIME_LOG_INTERVAL
-#define WARN_LOOP_TIME_LOG_INTERVAL 1000
+#ifndef OPENKNX_LOOPTIME_WARNING_INTERVAL
+#define OPENKNX_LOOPTIME_WARNING_INTERVAL 1000
+#endif
+
+#ifndef OPENKNX_WAIT_FOR_SERIAL
+#define OPENKNX_WAIT_FOR_SERIAL 2000
 #endif
 
 #ifndef KNX_SERIAL
@@ -38,7 +43,7 @@
 
 namespace OpenKNX
 {
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
     struct WatchdogData
     {
         uint32_t timer = 0;
@@ -56,12 +61,12 @@ namespace OpenKNX
     class Common
     {
       private:
-#if WARN_LOOP_TIME > 1
+#if OPENKNX_LOOPTIME_WARNING > 1
         uint32_t _lastLoopOutput = 0;
 #endif
-#ifdef WATCHDOG
-#ifndef WATCHDOG_MAX_PERIOD_MS
-#define WATCHDOG_MAX_PERIOD_MS 16384
+#ifdef OPENKNX_WATCHDOG
+#ifndef OPENKNX_WATCHDOG_MAX_PERIOD
+#define OPENKNX_WATCHDOG_MAX_PERIOD 16384
 #endif
         WatchdogData watchdog;
 #endif
@@ -86,13 +91,13 @@ namespace OpenKNX
         void processRestoreSavePin();
         void initMemoryTimerInterrupt();
         void debugWait();
-#ifdef DEBUG_LOG
+#ifdef OPENKNX_DEBUG
         void showDebugInfo();
 #endif
 #if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
         void processRecovery();
 #endif
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         void watchdogSetup();
 #endif
 #ifdef LOG_HeartbeatDelayBase
@@ -117,14 +122,14 @@ namespace OpenKNX
         void setup();
         void loop();
         void loop1();
-#if WARN_LOOP_TIME > 1
+#if OPENKNX_LOOPTIME_WARNING > 1
         void resetLastLoopOutput();
 #endif
         bool usesDualCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         void watchdogLoop();
 #endif
         bool _afterStartupDelay = false;

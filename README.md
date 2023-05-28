@@ -5,11 +5,7 @@ OpenKNX Common is a library meant to be used once in every OpenKNX Device firmwa
 The main functions are:
 - setup and calling the knx stack
 - setup and calling of the OpenKNX Modules
-- User flash handling for persistent data of the OpenKNX Modules
-
-## Hardware-Support
-
-It is written for use with RP2040 (arduino-pico core) or SAMD21 (arduino core).
+- flash handling for persistent data of the OpenKNX Modules
 
 ## Usage
 
@@ -26,34 +22,11 @@ LOG_HeartbeatDelayBase
 KoLOG_Heartbeat
 ParamLOG_HeartbeatDelayTimeMS
 ```
+## Hardware
 
-there are external requirements. Add this to your plattformio.ini 
-```
-lib_deps = 
-  adafruit/Adafruit SleepyDog Library @ ^1.4.0
-  khoih-prog/TimerInterrupt_Generic @ ^1.13.0
-```
-
-## Configuration
-OpenKNX Common is configured by following defines:
+It is written for use with RP2040 (arduino-pico core) or SAMD21 (arduino core). To configure the Hardware-Setup use the following defines in hardware.h
 
 ```
-# should be configured in plattformio.ini
-WATCHDOG
-WARN_LOOP_TIME
-DEBUG_WAIT_FOR_SERIAL
-DEBUG_WAIT_FOR_SERIAL_TIMEOUT
-DEBUG_HEARTBEAT
-
-# optional (pre defined)
-OPENKNX_MAX_LOOPTIME
-WATCHDOG_MAX_PERIOD_MS
-OPENKNX_MAX_MODULES
-OPENKNX_LEDEFFECT_PULSE_FREQ
-OPENKNX_LEDEFFECT_BLINK_FREQ
-WARN_LOOP_TIME_LOG_INTERVAL
-
-# defines in hardware.h
 OPENKNX_PULSATING_BOOT
 SAVE_INTERRUPT_PIN
 INFO_LED_PIN
@@ -64,33 +37,32 @@ KNX_UART_RX_PIN
 KNX_UART_TX_PIN
 ```
 
-### Wait for console
+## Configuration
 
-There are two defines that control optional functionality regarding delay at startup - mainly to make sure all output on the serial debug console can be read. They are meant to be used in the plattformio.ini
+| define | default | unit | function |
+|---|---:|:---:|---|
+| OPENKNX_WATCHDOG | | | compile with watchdog (use only for releases. debugger not working with active watchdog) |
+| OPENKNX_WATCHDOG_MAX_PERIOD | 16384 | ms | the timeout period of wathcdog |
+| OPENKNX_MAX_MODULES | 9 | | |
+| OPENKNX_LEDEFFECT_PULSE_FREQ | 1000 | ms | |
+| OPENKNX_LEDEFFECT_BLINK_FREQ | 1000 | ms | |
+| OPENKNX_WAIT_FOR_SERIAL | 2000 | ms | wait at startup until SERIAL_DEBUG is connected.<br/>(optional with timeout - in devmode use high values like 20000 - 0 will disable waiting) |
+| OPENKNX_HEARTBEAT | 1000 | ms | enable heartbeat mode (optional with with specific failure time) |
+| OPENKNX_HEARTBEAT_PRIO | 3000 | ms | enable heartbeat prio mode (optional with with specific failure time) |
+| OPENKNX_HEARTBEAT_FREQ | 200 | ms | |
+| OPENKNX_HEARTBEAT_PRIO_ON_FREQ | 200 | ms |  |
+| OPENKNX_HEARTBEAT_PRIO_OFF_FREQ | 1000 | ms |  |
+| OPENKNX_MAX_LOOPTIME | 4000 | µs | how much time is the loop allowed to consume. (soft limit) |
+| OPENKNX_LOOPTIME_WARNING | 6 | ms | print a warning if the loop has lasted longer. |
+| OPENKNX_LOOPTIME_WARNING_INTERVAL | 1000 | ms | how often the warning may be issued in the console |
+| OPENKNX_DEBUG | | | Enable debug mode |
+| OPENKNX_TRACE1..5 | | | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters. |
 
-`DEBUG_WAIT_FOR_SERIAL` - wait at startup until SERIAL_DEBUG is connected.
-`DEBUG_WAIT_FOR_SERIAL=5000` - wait at startup until SERIAL_DEBUG is connected or timer is expired.
+### Heartbeat (Mode: Normal)
+You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs.
 
-### Debug Loops
-
-#### Heartbeat
-You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs
-
-* `DEBUG_HEARTBEAT` - enable heartbeat mode with default failure time (default is 1000ms)
-* `DEBUG_HEARTBEAT=3000` - enable heartbeat mode with specific failure time.
-
-#### Heartbeat Prio
-You can enable a debug heartbeat to see if the device is stuck. The progLed (for loop) and infoLed (for loop1) are always blinking (`DEBUG_HEARTBEAT_PRIO_OFF_FREQ` default is 1000)
-
-If programing mode is active, the progLed will blink faster (`DEBUG_HEARTBEAT_PRIO_ON_FREQ` default is200)
+### Heartbeat (Mode: Prio)
+In the prio mode the leds blinking (`OPENKNX_HEARTBEAT_PRIO_OFF_FREQ`) and stop as soon as the relevant loop hangs.
+If programing mode is active, the progLed will blink faster (`OPENKNX_HEARTBEAT_PRIO_ON_FREQ`).
 
 So, if the device is NOT blinking, anything is wrong.
-
-* `DEBUG_HEARTBEAT_PRIO` - enable heartbeat mode with default failure time (default is 1000ms)
-* `DEBUG_HEARTBEAT_PRIO=3000` - enable heartbeat mode with specific failure time.
-
-#### Duration of loop
-To ensure proper operation, the loop runtime needs to be short. If the runtime is too long, KNX telegrams may be lost. The framework will generate an error message if the time is exceeded, so the runtime should remain below 5 ms.
-
-* `WARN_LOOP_TIME=6` - set individual maximum loop time. Default time is 5ms.
-* `WARN_LOOP_TIME_LOG_INTERVAL=30000` - Suppress repetitions for a specified duration. Default time is 1000ms.

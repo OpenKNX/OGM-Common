@@ -36,7 +36,7 @@ namespace OpenKNX
 
         logInfoP("Init firmware");
 
-#ifdef DEBUG_LOG
+#ifdef OPENKNX_DEBUG
         showDebugInfo();
 #endif
 
@@ -47,27 +47,27 @@ namespace OpenKNX
         hardware.init();
     }
 
-#ifdef DEBUG_LOG
+#ifdef OPENKNX_DEBUG
     void Common::showDebugInfo()
     {
         logDebugP("Debug logging is enabled!");
-#if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
+#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
         logDebugP("Trace logging is enabled with:");
         logIndentUp();
-#ifdef TRACE_LOG1
-        logDebugP("Filter 1: %s", TRACE_STRINGIFY(TRACE_LOG1));
+#ifdef OPENKNX_TRACE1
+        logDebugP("Filter 1: %s", TRACE_STRINGIFY(OPENKNX_TRACE1));
 #endif
-#ifdef TRACE_LOG2
-        logDebugP("Filter 2: %s", TRACE_STRINGIFY(TRACE_LOG2));
+#ifdef OPENKNX_TRACE2
+        logDebugP("Filter 2: %s", TRACE_STRINGIFY(OPENKNX_TRACE2));
 #endif
-#ifdef TRACE_LOG3
-        logDebugP("Filter 3: %s", TRACE_STRINGIFY(TRACE_LOG3));
+#ifdef OPENKNX_TRACE3
+        logDebugP("Filter 3: %s", TRACE_STRINGIFY(OPENKNX_TRACE3));
 #endif
-#ifdef TRACE_LOG4
-        logDebugP("Filter 4: %s", TRACE_STRINGIFY(TRACE_LOG4));
+#ifdef OPENKNX_TRACE4
+        logDebugP("Filter 4: %s", TRACE_STRINGIFY(OPENKNX_TRACE4));
 #endif
-#ifdef TRACE_LOG5
-        logDebugP("Filter 5: %s", TRACE_STRINGIFY(TRACE_LOG5));
+#ifdef OPENKNX_TRACE5
+        logDebugP("Filter 5: %s", TRACE_STRINGIFY(OPENKNX_TRACE5));
 #endif
         logIndentDown();
 #endif
@@ -190,8 +190,9 @@ namespace OpenKNX
 
     void Common::debugWait()
     {
-#if defined(DEBUG_WAIT_FOR_SERIAL)
+#if OPENKNX_WAIT_FOR_SERIAL > 1
         uint32_t timeoutBase = millis();
+#endif
 
 #ifdef OPENKNX_PULSATING_BOOT
         hardware.progLed.pulsing(500);
@@ -201,12 +202,11 @@ namespace OpenKNX
         hardware.infoLed.blinking();
 #endif
 
+#if OPENKNX_WAIT_FOR_SERIAL > 1
         while (!SERIAL_DEBUG)
         {
-#if DEBUG_WAIT_FOR_SERIAL > 1
-            if (delayCheck(timeoutBase, DEBUG_WAIT_FOR_SERIAL))
+            if (delayCheck(timeoutBase, OPENKNX_WAIT_FOR_SERIAL))
                 break;
-#endif
         }
 #endif
 
@@ -219,7 +219,7 @@ namespace OpenKNX
 #endif
 
         // for serial output
-        delay(50);
+        delay(50); // delay in bootup is not critical
     }
 
     void Common::setup()
@@ -236,7 +236,7 @@ namespace OpenKNX
         // when module was restarted during bcu was disabled, reenable
         hardware.activatePowerRail();
 
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         watchdogSetup();
 #endif
         // setup complete turn infoLed off
@@ -304,7 +304,7 @@ namespace OpenKNX
 #endif
     }
 
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
     void Common::watchdogSetup()
     {
         if (!ParamLOG_Watchdog)
@@ -315,16 +315,16 @@ namespace OpenKNX
         watchdog.resetCause = Watchdog.resetCause();
 
         // setup watchdog to prevent endless loops
-        Watchdog.enable(WATCHDOG_MAX_PERIOD_MS, false);
+        Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD, false);
 #elif defined(ARDUINO_ARCH_RP2040)
-        Watchdog.enable(WATCHDOG_MAX_PERIOD_MS);
+        Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD);
 #endif
 
-        logInfo("Watchdog", "Started with a watchtime of %i seconds", WATCHDOG_MAX_PERIOD_MS / 1000);
+        logInfo("Watchdog", "Started with a watchtime of %i seconds", OPENKNX_WATCHDOG_MAX_PERIOD / 1000);
     }
     void Common::watchdogLoop()
     {
-        if (!delayCheck(watchdog.timer, WATCHDOG_MAX_PERIOD_MS / 10))
+        if (!delayCheck(watchdog.timer, OPENKNX_WATCHDOG_MAX_PERIOD / 10))
             return;
 
         if (!ParamLOG_Watchdog)
@@ -338,11 +338,11 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
         hardware.progLed.debugLoop();
 #endif
 
-#ifdef WARN_LOOP_TIME
+#ifdef OPENKNX_LOOPTIME_WARNING
         uint32_t start = millis();
 #endif
 
@@ -356,21 +356,21 @@ namespace OpenKNX
         _loopMicros = micros();
         appLoop();
 
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         watchdogLoop();
 #endif
 
-#if WARN_LOOP_TIME > 1
+#if OPENKNX_LOOPTIME_WARNING > 1
         // loop took to long and last out is min 1ms ago
-        if (delayCheck(start, WARN_LOOP_TIME) && delayCheck(_lastLoopOutput, WARN_LOOP_TIME_LOG_INTERVAL))
+        if (delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLoopOutput, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
-            logErrorP("Loop took too long %i >= %i", (millis() - start), WARN_LOOP_TIME);
+            logErrorP("Loop took too long %i >= %i", (millis() - start), OPENKNX_LOOPTIME_WARNING);
             resetLastLoopOutput();
         }
 #endif
     }
 
-#if WARN_LOOP_TIME > 1
+#if OPENKNX_LOOPTIME_WARNING > 1
     void Common::resetLastLoopOutput()
     {
         _lastLoopOutput = millis();
@@ -442,7 +442,7 @@ namespace OpenKNX
         if (!usesDualCore())
             return;
 
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
         openknx.hardware.infoLed.debugLoop();
 #endif
         openknx.appLoop1();

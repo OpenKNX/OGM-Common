@@ -44,13 +44,13 @@ namespace OpenKNX
         }
 
         // Debug (Prio 3)
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
         // debug mode enable
         if (_debugMode)
         {
-#ifdef DEBUG_HEARTBEAT_PRIO
+#ifdef OPENKNX_HEARTBEAT_PRIO
             // Blinking until the heartbeat signal stops.
-            if (!(millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
+            if (!(millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
             {
                 writeLed(_debugEffect.value());
             }
@@ -61,7 +61,7 @@ namespace OpenKNX
             return;
 #else
             // Blinks as soon as the heartbeat signal stops.
-            if ((millis() - _debugHeartbeat >= DEBUG_HEARTBEAT))
+            if ((millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
             {
                 writeLed(_debugEffect.value());
                 return;
@@ -127,8 +127,8 @@ namespace OpenKNX
 
         logTraceP("forceOn %i", active);
         _forceOn = active;
-#ifdef DEBUG_HEARTBEAT_PRIO
-        _debugEffect.init(active ? DEBUG_HEARTBEAT_PRIO_ON_FREQ : DEBUG_HEARTBEAT_PRIO_OFF_FREQ);
+#ifdef OPENKNX_HEARTBEAT_PRIO
+        _debugEffect.init(active ? OPENKNX_HEARTBEAT_PRIO_ON_FREQ : OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
 #endif
     }
 
@@ -229,17 +229,17 @@ namespace OpenKNX
         _currentLedBrightness = brightness;
     }
 
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
     void Led::debugLoop()
     {
         // Enable Debug Mode on first run
         if (!_debugMode)
         {
 
-#ifdef DEBUG_HEARTBEAT_PRIO
-            _debugEffect.init(DEBUG_HEARTBEAT_PRIO_OFF_FREQ);
+#ifdef OPENKNX_HEARTBEAT_PRIO
+            _debugEffect.init(OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
 #else
-            _debugEffect.init(DEBUG_HEARTBEAT_FREQ);
+            _debugEffect.init(OPENKNX_HEARTBEAT_FREQ);
 #endif
             _debugMode = true;
         }

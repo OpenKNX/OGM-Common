@@ -10,37 +10,37 @@
 //
 
 // Priority active?
-#ifdef DEBUG_HEARTBEAT_PRIO
+#ifdef OPENKNX_HEARTBEAT_PRIO
 
 // Remove double define
-#undef DEBUG_HEARTBEAT
-#ifndef DEBUG_HEARTBEAT
-#define DEBUG_HEARTBEAT DEBUG_HEARTBEAT_PRIO
+#undef OPENKNX_HEARTBEAT
+#ifndef OPENKNX_HEARTBEAT
+#define OPENKNX_HEARTBEAT OPENKNX_HEARTBEAT_PRIO
 #endif
 #endif
 
 // Heartbeat active? (with priority)
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
 
-// set default value for DEBUG_HEARTBEAT timeout to 1000ms
-#if DEBUG_HEARTBEAT <= 1
-#undef DEBUG_HEARTBEAT
-#define DEBUG_HEARTBEAT 1000
+// set default value for OPENKNX_HEARTBEAT timeout to 1000ms
+#if OPENKNX_HEARTBEAT <= 1
+#undef OPENKNX_HEARTBEAT
+#define OPENKNX_HEARTBEAT 1000
 #endif
 
 // set default frequencies (normal)
-#ifndef DEBUG_HEARTBEAT_FREQ
-#define DEBUG_HEARTBEAT_FREQ 200
+#ifndef OPENKNX_HEARTBEAT_FREQ
+#define OPENKNX_HEARTBEAT_FREQ 200
 #endif
 
 // set default frequencies (prio with active forceOn)
-#ifndef DEBUG_HEARTBEAT_PRIO_ON_FREQ
-#define DEBUG_HEARTBEAT_PRIO_ON_FREQ 200
+#ifndef OPENKNX_HEARTBEAT_PRIO_ON_FREQ
+#define OPENKNX_HEARTBEAT_PRIO_ON_FREQ 200
 #endif
 
 // set default frequencies (prio with inactive forceOn)
-#ifndef DEBUG_HEARTBEAT_PRIO_OFF_FREQ
-#define DEBUG_HEARTBEAT_PRIO_OFF_FREQ 1000
+#ifndef OPENKNX_HEARTBEAT_PRIO_OFF_FREQ
+#define OPENKNX_HEARTBEAT_PRIO_OFF_FREQ 1000
 #endif
 #endif
 
@@ -71,7 +71,7 @@ namespace OpenKNX
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
 
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
         LedEffects::Blink _debugEffect;
@@ -113,12 +113,12 @@ namespace OpenKNX
          */
         void errorCode(uint8_t code = 0);
 
-#ifdef DEBUG_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
         /*
          * Special usage to detect running loop() and loop1().
          * progLed for loop()
          * infoLed for loop1()
-         * Only active if DEBUG_HEARTBEAT or DEBUG_HEARTBEAT_PRIO is defined
+         * Only active if OPENKNX_HEARTBEAT or OPENKNX_HEARTBEAT_PRIO is defined
          *  -> Prio 3
          */
         void debugLoop();

@@ -41,30 +41,30 @@
 #define logInfoP(...) openknx.logger.log(logPrefix(), __VA_ARGS__)
 #define logHexInfo(...) openknx.logger.logHex(__VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
-#if defined(TRACE_LOG1) || defined(TRACE_LOG2) || defined(TRACE_LOG3) || defined(TRACE_LOG4) || defined(TRACE_LOG5)
+#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
 #include <regex>
 
-#ifndef TRACE_LOG1
-#define TRACE_LOG1
+#ifndef OPENKNX_TRACE1
+#define OPENKNX_TRACE1
 #endif
-#ifndef TRACE_LOG2
-#define TRACE_LOG2
+#ifndef OPENKNX_TRACE2
+#define OPENKNX_TRACE2
 #endif
-#ifndef TRACE_LOG3
-#define TRACE_LOG3
+#ifndef OPENKNX_TRACE3
+#define OPENKNX_TRACE3
 #endif
-#ifndef TRACE_LOG4
-#define TRACE_LOG4
+#ifndef OPENKNX_TRACE4
+#define OPENKNX_TRACE4
 #endif
-#ifndef TRACE_LOG5
-#define TRACE_LOG5
+#ifndef OPENKNX_TRACE5
+#define OPENKNX_TRACE5
 #endif
 
 #define TRACE_STRINGIFY2(X) #X
 #define TRACE_STRINGIFY(X) TRACE_STRINGIFY2(X)
 // Force Debug Mode during Trace
-#undef DEBUG_LOG
-#define DEBUG_LOG
+#undef OPENKNX_DEBUG
+#define OPENKNX_DEBUG
 #define logTrace(prefix, ...)                    \
     if (openknx.logger.checkTrace(prefix))       \
     {                                            \
@@ -100,7 +100,7 @@
 #define logHexTraceP(...)
 #endif
 
-#ifdef DEBUG_LOG
+#ifdef OPENKNX_DEBUG
 #define logDebug(...)                \
     openknx.logger.color(8);         \
     openknx.logger.log(__VA_ARGS__); \
