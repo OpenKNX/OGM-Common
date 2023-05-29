@@ -184,7 +184,6 @@ namespace OpenKNX
         openknx.logger.log("", ">  P  <  Trigger a powerloss (SavePin)");
         openknx.logger.log("");
 
-        Modules* modules = openknx.getModules();
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
             openknx.modules.list[i]->showHelp();
