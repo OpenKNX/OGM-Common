@@ -7,14 +7,14 @@
 
 // void ledInfo(bool iOn)
 // {
-//     openknx.logger.log("Deprecated", "use openknx.hardware.infoLed.on(bool)");
-//     openknx.hardware.infoLed.on(iOn);
+//     openknx.logger.log("Deprecated", "use openknx.infoLed.on(bool)");
+//     openknx.infoLed.on(iOn);
 // }
 
 // void ledProg(bool iOn)
 // {
-//     openknx.logger.log("Deprecated", "use openknx.hardware.progLed.on(bool)");
-//     openknx.hardware.progLed.on(iOn);
+//     openknx.logger.log("Deprecated", "use openknx.progLed.on(bool)");
+//     openknx.progLed.on(iOn);
 // }
 
 // void deactivatePowerRail()

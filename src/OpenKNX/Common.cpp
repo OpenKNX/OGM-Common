@@ -1,5 +1,5 @@
-#include "Common.h"
-#include "../HardwareDevices.h"
+#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 
 namespace OpenKNX
 {
@@ -11,12 +11,12 @@ namespace OpenKNX
     void Common::init(uint8_t firmwareRevision)
     {
         SERIAL_DEBUG.begin(115200);
-        ArduinoPlatform::SerialDebug = new Log::VirtualSerial("KNX");
+        ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
-        timerInterrupt.init();
-        hardware.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
+        openknx.timerInterrupt.init();
+        openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
 #ifdef INFO_LED_PIN
-        hardware.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
+        openknx.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
 #endif
 
 #if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
@@ -25,11 +25,11 @@ namespace OpenKNX
 #endif
 
 #ifdef OPENKNX_PULSATING_BOOT
-        hardware.progLed.pulsing();
-        hardware.infoLed.pulsing();
+        openknx.progLed.pulsing();
+        openknx.infoLed.pulsing();
 #else
-        hardware.progLed.on();
-        hardware.infoLed.on();
+        openknx.progLed.on();
+        openknx.infoLed.on();
 #endif
 
         debugWait();
@@ -44,7 +44,7 @@ namespace OpenKNX
 
         initKnx();
 
-        hardware.init();
+        openknx.hardware.init();
     }
 
 #ifdef OPENKNX_DEBUG
@@ -133,10 +133,10 @@ namespace OpenKNX
 
         knx.ledPin(0);
         knx.setProgLedOnCallback([]() -> void {
-            openknx.hardware.progLed.forceOn(true);
+            openknx.progLed.forceOn(true);
         });
         knx.setProgLedOffCallback([]() -> void {
-            openknx.hardware.progLed.forceOn(false);
+            openknx.progLed.forceOn(false);
         });
 
         uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, 0x00};
@@ -168,20 +168,20 @@ namespace OpenKNX
 
         if (manufacturerId != 0x00FA)
         {
-            logError(openknx.logPrefix(), "This firmware supports only ManufacturerID 0x00FA");
+            logError(openknx.common.logPrefix(), "This firmware supports only ManufacturerID 0x00FA");
             return FlashAllInvalid;
         }
 
         // hardwareType has the format 0x00 00 Ap nn vv 00
         if (memcmp(knx.bau().deviceObject().hardwareType(), hardwareType, 4) != 0)
         {
-            logError(openknx.logPrefix(), "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
+            logError(openknx.common.logPrefix(), "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
             return FlashAllInvalid;
         }
 
         if (knx.bau().deviceObject().hardwareType()[4] != hardwareType[4])
         {
-            logError(openknx.logPrefix(), "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
+            logError(openknx.common.logPrefix(), "MAIN_ApplicationVersion changed, ETS has to reprogram the application!");
             return FlashTablesInvalid;
         }
 
@@ -195,11 +195,11 @@ namespace OpenKNX
 #endif
 
 #ifdef OPENKNX_PULSATING_BOOT
-        hardware.progLed.pulsing(500);
-        hardware.infoLed.pulsing(500);
+        openknx.progLed.pulsing(500);
+        openknx.infoLed.pulsing(500);
 #else
-        hardware.progLed.blinking();
-        hardware.infoLed.blinking();
+        openknx.progLed.blinking();
+        openknx.infoLed.blinking();
 #endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1
@@ -211,11 +211,11 @@ namespace OpenKNX
 #endif
 
 #ifdef OPENKNX_PULSATING_BOOT
-        hardware.progLed.pulsing();
-        hardware.infoLed.pulsing();
+        openknx.progLed.pulsing();
+        openknx.infoLed.pulsing();
 #else
-        hardware.progLed.on();
-        hardware.infoLed.on();
+        openknx.progLed.on();
+        openknx.infoLed.on();
 #endif
 
         // for serial output
@@ -226,39 +226,39 @@ namespace OpenKNX
     {
         logTraceP("setup");
 
+        // Register Callbacks for FunctionProperty also if the device is unloaded
+        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+            return openknx.common.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
+        });
+        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+            return openknx.common.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
+        });
+
+        // Handle loop of modules
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            openknx.modules.list[i]->init();
+        }
+
         // setup modules
         appSetup();
 
         // start the framework
-        hardware.progLed.off();
+        openknx.progLed.off();
         knx.start();
 
         // when module was restarted during bcu was disabled, reenable
-        hardware.activatePowerRail();
+        openknx.hardware.activatePowerRail();
 
 #ifdef OPENKNX_WATCHDOG
         watchdogSetup();
 #endif
         // setup complete turn infoLed off
-        hardware.infoLed.off();
+        openknx.infoLed.off();
     }
 
     void Common::appSetup()
     {
-        // Register Callbacks for FunctionProperty also if the device is unloaded
-        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
-            return openknx.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
-        });
-        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
-            return openknx.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
-        });
-
-        // Handle loop of modules
-        for (uint8_t i = 0; i < _modules.count; i++)
-        {
-            _modules.list[i]->init();
-        }
-
         if (!knx.configured())
             return;
 
@@ -270,21 +270,21 @@ namespace OpenKNX
 #endif
 
         // Handle loop of modules
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            _modules.list[i]->setup();
+            openknx.modules.list[i]->setup();
         }
 
-        flash.load();
+        openknx.flash.load();
 
         // register callbacks
         registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
         // Enable loop1 if any module use dual core
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            if (_modules.list[i]->usesDualCore())
+            if (openknx.modules.list[i]->usesDualCore())
                 _usesDualCore = true;
         }
 
@@ -339,7 +339,7 @@ namespace OpenKNX
     void Common::loop()
     {
 #ifdef OPENKNX_HEARTBEAT
-        hardware.progLed.debugLoop();
+        openknx.progLed.debugLoop();
 #endif
 
 #ifdef OPENKNX_LOOPTIME_WARNING
@@ -347,7 +347,7 @@ namespace OpenKNX
 #endif
 
         // loop console helper
-        console.loop();
+        openknx.console.loop();
 
         // loop  knx stack
         knx.loop();
@@ -418,9 +418,9 @@ namespace OpenKNX
      */
     void Common::processModulesLoop()
     {
-        for (uint8_t processed = 0; freeLoopTime() && (processed < _modules.count); processed++)
+        for (uint8_t processed = 0; freeLoopTime() && (processed < openknx.modules.count); processed++)
         {
-            if (_currentModule >= _modules.count)
+            if (_currentModule >= openknx.modules.count)
                 _currentModule = 0;
 
             loopModule(_currentModule);
@@ -431,10 +431,10 @@ namespace OpenKNX
 
     void Common::loopModule(uint8_t index)
     {
-        if (index >= _modules.count)
+        if (index >= openknx.modules.count)
             return;
 
-        _modules.list[index]->loop();
+        openknx.modules.list[index]->loop();
     }
 
     void Common::loop1()
@@ -443,9 +443,9 @@ namespace OpenKNX
             return;
 
 #ifdef OPENKNX_HEARTBEAT
-        openknx.hardware.infoLed.debugLoop();
+        openknx.infoLed.debugLoop();
 #endif
-        openknx.appLoop1();
+        appLoop1();
     }
 
     void Common::appLoop1()
@@ -454,32 +454,9 @@ namespace OpenKNX
         if (!knx.configured())
             return;
 
-        for (uint8_t i = 0; i < _modules.count; i++)
-            if (_modules.list[i]->usesDualCore())
-                _modules.list[i]->loop1();
-    }
-
-    void Common::addModule(uint8_t id, Module *module)
-    {
-        _modules.count++;
-        _modules.list[_modules.count - 1] = module;
-        _modules.ids[_modules.count - 1] = id;
-    }
-
-    Module *Common::getModule(uint8_t id)
-    {
-        for (uint8_t i = 0; i < _modules.count; i++)
-        {
-            if (_modules.ids[i] == id)
-                return _modules.list[i];
-        }
-
-        return nullptr;
-    }
-
-    Modules *Common::getModules()
-    {
-        return &_modules;
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+            if (openknx.modules.list[i]->usesDualCore())
+                openknx.modules.list[i]->loop1();
     }
 
     bool Common::afterStartupDelay()
@@ -502,9 +479,9 @@ namespace OpenKNX
 
         _afterStartupDelay = true;
 
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            _modules.list[i]->processAfterStartupDelay();
+            openknx.modules.list[i]->processAfterStartupDelay();
         }
 
         logIndentDown();
@@ -545,25 +522,25 @@ namespace OpenKNX
         logInfoP("Save power");
         logIndentUp();
 
-        openknx.hardware.progLed.powerSave();
-        openknx.hardware.infoLed.powerSave();
-        hardware.stopKnxMode(false);
+        openknx.progLed.powerSave();
+        openknx.infoLed.powerSave();
+        openknx.hardware.stopKnxMode(false);
 
         // first save all modules to save power before...
-        for (uint8_t i = 0; i < _modules.count; i++)
-            _modules.list[i]->savePower();
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+            openknx.modules.list[i]->savePower();
 
-        hardware.deactivatePowerRail();
+        openknx.hardware.deactivatePowerRail();
 
         logInfoP("completed (%ims)", millis() - start);
         logIndentDown();
 
         // save data
-        flash.save();
+        openknx.flash.save();
 
         // manual recevie stopKnxMode respone
         uint8_t response[2] = {};
-        hardware.receiveResponseFromBcu(response, 2); // Receive 2 bytes
+        openknx.hardware.receiveResponseFromBcu(response, 2); // Receive 2 bytes
 
         _savedPinProcessed = millis();
         logIndentDown();
@@ -580,16 +557,16 @@ namespace OpenKNX
         logInfoP("Restore power (after 1s)");
         logIndentUp();
 
-        openknx.hardware.progLed.powerSave(false);
-        openknx.hardware.infoLed.powerSave(false);
-        hardware.activatePowerRail();
-        hardware.startKnxMode();
+        openknx.progLed.powerSave(false);
+        openknx.infoLed.powerSave(false);
+        openknx.hardware.activatePowerRail();
+        openknx.hardware.startKnxMode();
 
         bool reboot = false;
 
         // the inform modules
-        for (uint8_t i = 0; i < _modules.count; i++)
-            if (!_modules.list[i]->restorePower())
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+            if (!openknx.modules.list[i]->restorePower())
             {
                 reboot = true;
                 break;
@@ -613,12 +590,12 @@ namespace OpenKNX
     {
         logTraceP("processBeforeRestart");
         logIndentUp();
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            _modules.list[i]->processBeforeRestart();
+            openknx.modules.list[i]->processBeforeRestart();
         }
 
-        flash.save();
+        openknx.flash.save();
         logIndentDown();
     }
 
@@ -626,12 +603,12 @@ namespace OpenKNX
     {
         logTraceP("processBeforeTablesUnload");
         logIndentUp();
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            _modules.list[i]->processBeforeTablesUnload();
+            openknx.modules.list[i]->processBeforeTablesUnload();
         }
 
-        flash.save();
+        openknx.flash.save();
         logIndentDown();
     }
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
@@ -645,9 +622,9 @@ namespace OpenKNX
         else
         {
 #endif
-            for (uint8_t i = 0; i < _modules.count; i++)
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
-                _modules.list[i]->processInputKo(iKo);
+                openknx.modules.list[i]->processInputKo(iKo);
             }
 #ifdef LOG_KoDiagnose
         }
@@ -664,7 +641,7 @@ namespace OpenKNX
             processDiagnoseCommandCalled = true;
             // we store received diagnose command
             memcpy(_diagnoseInput, iKo.valueRef(), 14);
-            for (uint8_t i = 0; i < _modules.count; i++)
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 // init output buffer
                 memset(_diagnoseOutput, 0, 15);
@@ -672,7 +649,7 @@ namespace OpenKNX
                 // allow multiline output per module, max 10 lines
                 for (uint8_t count = 0; count < 10 && output; count++)
                 {
-                    output = _modules.list[i]->processDiagnoseCommand(_diagnoseInput, _diagnoseOutput, count);
+                    output = openknx.modules.list[i]->processDiagnoseCommand(_diagnoseInput, _diagnoseOutput, count);
                     if (output)
                     {
                         _diagnoseOutput[15] = 0;
@@ -692,22 +669,22 @@ namespace OpenKNX
     void Common::registerCallbacks()
     {
         knx.beforeRestartCallback([]() -> void {
-            openknx.processBeforeRestart();
+            openknx.common.processBeforeRestart();
         });
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
         GroupObject::classCallback([](GroupObject &iKo) -> void {
-            openknx.processInputKo(iKo);
+            openknx.common.processInputKo(iKo);
         });
 #endif
         TableObject::beforeTablesUnloadCallback([]() -> void {
-            openknx.processBeforeTablesUnload();
+            openknx.common.processBeforeTablesUnload();
         });
 #ifdef SAVE_INTERRUPT_PIN
         // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
         pinMode(SAVE_INTERRUPT_PIN, INPUT);
         attachInterrupt(
             digitalPinToInterrupt(SAVE_INTERRUPT_PIN), []() -> void {
-                openknx.triggerSavePin();
+                openknx.common.triggerSavePin();
             },
             FALLING);
 #endif
@@ -720,9 +697,9 @@ namespace OpenKNX
 
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            if (_modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
+            if (openknx.modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
         }
         return false;
@@ -730,13 +707,11 @@ namespace OpenKNX
 
     bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
-        for (uint8_t i = 0; i < _modules.count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            if (_modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
+            if (openknx.modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
         }
         return false;
     }
 } // namespace OpenKNX
-
-OpenKNX::Common openknx;

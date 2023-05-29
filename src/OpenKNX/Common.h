@@ -1,44 +1,19 @@
 #pragma once
-#include "../Helper.h"
-#include "OpenKNX/Console.h"
-#include "OpenKNX/Flash/Default.h"
-#include "OpenKNX/Hardware.h"
-#include "OpenKNX/Helper.h"
-#include "OpenKNX/Information.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
-#include "OpenKNX/Module.h"
-#include "OpenKNX/TimerInterrupt.h"
-#include "hardware.h"
-#include "knxprod.h"
-#include <knx.h>
+#include "OpenKNX/defines.h"
+// #include "../Helper.h"
+// #include "OpenKNX/Console.h"
+// #include "OpenKNX/Flash/Default.h"
+// #include "OpenKNX/Hardware.h"
+// #include "OpenKNX/Helper.h"
+// #include "OpenKNX/Information.h"
+// #include "OpenKNX/Module.h"
+// #include "OpenKNX/TimerInterrupt.h"
+// #include <knx.h>
 
 #ifdef OPENKNX_WATCHDOG
 #include <Adafruit_SleepyDog.h>
-#endif
-
-#ifndef OPENKNX_MAX_MODULES
-#define OPENKNX_MAX_MODULES 9
-#endif
-
-#ifndef OPENKNX_MAX_LOOPTIME
-#define OPENKNX_MAX_LOOPTIME 4000
-#endif
-
-#ifndef OPENKNX_LOOPTIME_WARNING
-#define OPENKNX_LOOPTIME_WARNING 5
-#endif
-
-#ifndef OPENKNX_LOOPTIME_WARNING_INTERVAL
-#define OPENKNX_LOOPTIME_WARNING_INTERVAL 1000
-#endif
-
-#ifndef OPENKNX_WAIT_FOR_SERIAL
-#define OPENKNX_WAIT_FOR_SERIAL 2000
-#endif
-
-#ifndef KNX_SERIAL
-#define KNX_SERIAL Serial1
 #endif
 
 namespace OpenKNX
@@ -50,13 +25,6 @@ namespace OpenKNX
         uint8_t resetCause;
     };
 #endif
-
-    struct Modules
-    {
-        uint8_t count = 0;
-        uint8_t ids[OPENKNX_MAX_MODULES];
-        Module* list[OPENKNX_MAX_MODULES];
-    };
 
     class Common
     {
@@ -73,7 +41,6 @@ namespace OpenKNX
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
         bool _usesDualCore = false;
-        Modules _modules;
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
@@ -108,13 +75,6 @@ namespace OpenKNX
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 
       public:
-        OpenKNX::Flash::Default flash;
-        Information info;
-        Console console;
-        Log::Logger logger;
-        TimerInterrupt timerInterrupt;
-        Hardware hardware;
-
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
         void init(uint8_t firmwareRevision);
@@ -136,12 +96,9 @@ namespace OpenKNX
         bool afterStartupDelay();
         void processAfterStartupDelay();
 
-        void addModule(uint8_t id, Module* module);
         void collectMemoryStats();
         uint freeMemoryMin();
         bool freeLoopTime();
-        Module* getModule(uint8_t id);
-        Modules* getModules();
 
         void processSavePin();
         void processBeforeRestart();
@@ -153,5 +110,3 @@ namespace OpenKNX
         std::string logPrefix();
     };
 } // namespace OpenKNX
-
-extern OpenKNX::Common openknx;

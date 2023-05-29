@@ -1,5 +1,5 @@
 #include "OpenKNX/Flash/Driver.h"
-#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 
 #ifdef ARDUINO_ARCH_SAMD
 extern uint32_t __etext;

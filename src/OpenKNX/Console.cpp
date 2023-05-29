@@ -1,6 +1,5 @@
+#include "OpenKNX/Facade.h"
 #include "OpenKNX/Console.h"
-#include "../HardwareDevices.h"
-#include "OpenKNX/Common.h"
 
 #ifdef ARDUINO_ARCH_RP2040
 extern uint32_t _EEPROM_start;
@@ -73,7 +72,7 @@ namespace OpenKNX
                 break;
 #endif
             case 'P':
-                openknx.triggerSavePin();
+                openknx.common.triggerSavePin();
                 break;
             case 'E':
                 if (confirmation(current, 1, "FatalError"))
@@ -84,7 +83,7 @@ namespace OpenKNX
         }
 
         // prevent loop warning
-        openknx.resetLastLoopOutput();
+        openknx.common.resetLastLoopOutput();
     }
 
     void Console::showInformations()
@@ -102,18 +101,17 @@ namespace OpenKNX
         openknx.logger.log("Board", "%s", HARDWARE_NAME);
 #endif
 #ifdef ARDUINO_ARCH_RP2040
-        const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
+        const char* cpuMode = openknx.common.usesDualCore() ? "Dual-Core" : "Single-Core";
 
         openknx.logger.log("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
-        openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.freeMemoryMin() / 1024));
+        openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
 
-        Modules* modules = openknx.getModules();
         char modulePrefix[12];
-        for (uint8_t i = 0; i < modules->count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            sprintf(modulePrefix, "Module %i", modules->ids[i]);
-            openknx.logger.log(modulePrefix, "%s (%s)", modules->list[i]->name().c_str(), modules->list[i]->version().c_str());
+            sprintf(modulePrefix, "Module %i", openknx.modules.ids[i]);
+            openknx.logger.log(modulePrefix, "%s (%s)", openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
         openknx.logger.log("");
         openknx.logger.mutex_unblock();

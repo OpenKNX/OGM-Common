@@ -1,5 +1,5 @@
 #include "OpenKNX/Log/VirtualSerial.h"
-#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 namespace OpenKNX
 {
     namespace Log

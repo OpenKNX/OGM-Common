@@ -1,4 +1,5 @@
-#include "../Helper.h"
+#pragma once
+// #include "../Helper.h"
 #include "knxprod.h"
 #include <knx.h>
 #include <string>

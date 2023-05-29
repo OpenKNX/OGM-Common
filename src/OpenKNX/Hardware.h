@@ -89,9 +89,6 @@ namespace OpenKNX
         uint8_t features = 0;
 
       public:
-        Led progLed;
-        Led infoLed;
-
         // Initialize or HW detection
         void init();
         // Send Command to BCU

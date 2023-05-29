@@ -1,4 +1,4 @@
-#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 
 namespace OpenKNX
 {
@@ -132,8 +132,8 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
-        openknx.hardware.infoLed.on();
-        openknx.hardware.progLed.errorCode(code);
+        openknx.infoLed.on();
+        openknx.progLed.errorCode(code);
 
         // stopknx
         stopKnxMode();

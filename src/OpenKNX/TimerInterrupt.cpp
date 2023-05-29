@@ -1,5 +1,5 @@
 #include "OpenKNX/TimerInterrupt.h"
-#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 
 /*
  * Select a Interrupt for global TimerInterrupt
@@ -107,15 +107,15 @@ namespace OpenKNX
         {
             case 0:
                 // collect memory usage
-                openknx.collectMemoryStats();
+                openknx.common.collectMemoryStats();
                 break;
             case 1:
                 // loop progLed
-                openknx.hardware.progLed.loop();
+                openknx.progLed.loop();
                 break;
             case 2:
                 // loop infoLed
-                openknx.hardware.infoLed.loop();
+                openknx.infoLed.loop();
                 break;
 
             default:

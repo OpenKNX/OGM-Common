@@ -1,5 +1,5 @@
 #include "OpenKNX/Module.h"
-#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 #include <knx.h>
 
 namespace OpenKNX

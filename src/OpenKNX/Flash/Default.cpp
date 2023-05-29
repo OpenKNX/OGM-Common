@@ -1,5 +1,5 @@
 #include "OpenKNX/Flash/Default.h"
-#include "OpenKNX/Common.h"
+#include "OpenKNX/Facade.h"
 
 namespace OpenKNX
 {
@@ -23,7 +23,7 @@ namespace OpenKNX
         void Default::load()
         {
             const uint32_t start = millis();
-            loadedModules = new bool[openknx.getModules()->count];
+            loadedModules = new bool[openknx.modules.count];
             logInfoP("Load data from flash");
             logIndentUp();
             bool found = false;
@@ -178,12 +178,11 @@ namespace OpenKNX
          */
         void Default::initUnloadedModules()
         {
-            Modules *modules = openknx.getModules();
-            for (uint8_t i = 0; i < modules->count; i++)
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 // check module expectation and load state
-                Module *module = modules->list[i];
-                const uint8_t moduleId = modules->ids[i];
+                Module *module = openknx.modules.list[i];
+                const uint8_t moduleId = openknx.modules.ids[i];
                 const uint16_t moduleSize = module->flashSize();
 
                 if (moduleSize > 0 && !loadedModules[moduleId])
@@ -264,11 +263,10 @@ namespace OpenKNX
             logDebugP("Slot %i", nextSlot());
 
             // determine some values
-            Modules *modules = openknx.getModules();
             uint16_t dataSize = 0;
-            for (uint8_t i = 0; i < modules->count; i++)
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
-                const uint16_t moduleSize = modules->list[i]->flashSize();
+                const uint16_t moduleSize = openknx.modules.list[i]->flashSize();
                 if (moduleSize == 0)
                     continue;
 
@@ -286,12 +284,12 @@ namespace OpenKNX
 
             logTraceP("startPosition: %i", _currentWriteAddress);
 
-            for (uint8_t i = 0; i < modules->count; i++)
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 // get data
-                Module *module = modules->list[i];
+                Module *module = openknx.modules.list[i];
                 uint16_t moduleSize = module->flashSize();
-                uint8_t moduleId = modules->ids[i];
+                uint8_t moduleId = openknx.modules.ids[i];
 
                 if (moduleSize == 0)
                     continue;
