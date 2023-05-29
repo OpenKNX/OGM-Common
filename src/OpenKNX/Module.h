@@ -89,5 +89,30 @@ namespace OpenKNX
          * @return true, if this module has a loop1 for secondary core, false, otherwise
          */
         virtual bool usesDualCore();
+
+        /**
+         * This method is called to determine if a module will dsiplay informations when showInformations is called.
+         * data of all modules was successfully saved to flash.
+         * 
+         * @return true, if the module will dsiplay informations, false otherwise.
+         */
+        virtual bool HasInformations();
+
+        /**
+         * This method prints out relevant informations of the module
+         */
+        virtual void showInformations();
+
+        /**
+         * every keytroke in the console not matching general commands will call this method
+         */
+        virtual void processSerialInput(uint8_t command);
+
+        /**
+         * This method prints out information over the command it can handle
+         */
+        virtual void showHelp();
+
+
     };
 } // namespace OpenKNX

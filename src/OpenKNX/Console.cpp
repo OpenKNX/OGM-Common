@@ -80,6 +80,12 @@ namespace OpenKNX
 
                 openknx.hardware.fatalError(5, "Test with 5x blinking");
                 break;
+            default:
+                Modules* modules = openknx.getModules();
+                for (uint8_t i = 0; i < modules->count; i++)
+                {
+                    modules->list[i]->processSerialInput(current);
+                }
         }
 
         // prevent loop warning
@@ -112,6 +118,18 @@ namespace OpenKNX
         {
             sprintf(modulePrefix, "Module %i", openknx.modules.ids[i]);
             openknx.logger.log(modulePrefix, "%s (%s)", openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
+        }
+        
+        openknx.logger.log("--- Module specific Informations -------------------------------");
+        for (uint8_t i = 0; i < modules->count; i++)
+        {
+            if(modules->list[i]->HasInformations())
+            {
+                sprintf(modulePrefix, "Module %i", modules->ids[i]);
+                openknx.logger.log(modulePrefix, "%s (%s)", modules->list[i]->name().c_str(), modules->list[i]->version().c_str());
+                modules->list[i]->showInformations();
+                openknx.logger.log("----------------------------------------------------------------");
+            }
         }
         openknx.logger.log("");
         openknx.logger.mutex_unblock();
@@ -176,6 +194,14 @@ namespace OpenKNX
         openknx.logger.log("", ">  E  <  Trigger a FatalError");
         openknx.logger.log("", ">  P  <  Trigger a powerloss (SavePin)");
         openknx.logger.log("");
+
+        Modules* modules = openknx.getModules();
+        for (uint8_t i = 0; i < modules->count; i++)
+        {
+            modules->list[i]->showHelp();
+            openknx.logger.log("");
+        }
+
         openknx.logger.mutex_unblock();
     }
 

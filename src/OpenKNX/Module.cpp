@@ -50,4 +50,33 @@ namespace OpenKNX
         return false;
     }
 
+    bool Module::HasInformations()
+    {
+        return false;
+    }
+
+    void Module::showInformations()
+    {
+        // Example usage:
+        //openknx.logger.log("Some-Info:", _myInfo);
+        //openknx.logger.log("Another-Info:", _someOtherInfo);
+    }
+
+    void Module::processSerialInput(uint8_t command)
+    {
+        // Example usage:
+        // switch(command)
+        // {
+        //     case 'x':
+        //         logInfoP("Test123");
+        //     break;
+        // }
+    }
+
+    void Module::showHelp()
+    {
+        // Example usage:
+        //openknx.logger.log("", ">  x  <  Foo [%s]", name().c_str());
+    }
+
 } // namespace OpenKNX
