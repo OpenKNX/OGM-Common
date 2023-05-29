@@ -50,11 +50,6 @@ namespace OpenKNX
         return false;
     }
 
-    bool Module::HasInformations()
-    {
-        return false;
-    }
-
     void Module::showInformations()
     {
         // Example usage:

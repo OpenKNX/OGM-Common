@@ -91,14 +91,6 @@ namespace OpenKNX
         virtual bool usesDualCore();
 
         /**
-         * This method is called to determine if a module will dsiplay informations when showInformations is called.
-         * data of all modules was successfully saved to flash.
-         * 
-         * @return true, if the module will dsiplay informations, false otherwise.
-         */
-        virtual bool HasInformations();
-
-        /**
          * This method prints out relevant informations of the module
          */
         virtual void showInformations();

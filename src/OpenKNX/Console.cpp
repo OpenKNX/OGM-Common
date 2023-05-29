@@ -81,10 +81,9 @@ namespace OpenKNX
                 openknx.hardware.fatalError(5, "Test with 5x blinking");
                 break;
             default:
-                Modules* modules = openknx.getModules();
-                for (uint8_t i = 0; i < modules->count; i++)
+                for (uint8_t i = 0; i < openknx.modules.count; i++)
                 {
-                    modules->list[i]->processSerialInput(current);
+                    openknx.modules.list[i]->processSerialInput(current);
                 }
         }
 
@@ -113,24 +112,14 @@ namespace OpenKNX
 #endif
         openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
 
-        char modulePrefix[12];
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            sprintf(modulePrefix, "Module %i", openknx.modules.ids[i]);
-            openknx.logger.log(modulePrefix, "%s (%s)", openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
+            openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+            openknx.logger.log("Module", "%s", openknx.modules.list[i]->name().c_str());
+            openknx.logger.log("Version", "%s", openknx.modules.list[i]->version().c_str());
+            openknx.modules.list[i]->showInformations();
         }
-        
-        openknx.logger.log("--- Module specific Informations -------------------------------");
-        for (uint8_t i = 0; i < modules->count; i++)
-        {
-            if(modules->list[i]->HasInformations())
-            {
-                sprintf(modulePrefix, "Module %i", modules->ids[i]);
-                openknx.logger.log(modulePrefix, "%s (%s)", modules->list[i]->name().c_str(), modules->list[i]->version().c_str());
-                modules->list[i]->showInformations();
-                openknx.logger.log("----------------------------------------------------------------");
-            }
-        }
+        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
         openknx.logger.log("");
         openknx.logger.mutex_unblock();
     }
@@ -196,9 +185,9 @@ namespace OpenKNX
         openknx.logger.log("");
 
         Modules* modules = openknx.getModules();
-        for (uint8_t i = 0; i < modules->count; i++)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            modules->list[i]->showHelp();
+            openknx.modules.list[i]->showHelp();
             openknx.logger.log("");
         }
 
