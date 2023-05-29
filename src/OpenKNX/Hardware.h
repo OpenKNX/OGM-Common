@@ -1,5 +1,4 @@
 #pragma once
-#include "HardwareDevices.h"
 #include "OpenKNX/Led.h"
 #include "knx.h"
 

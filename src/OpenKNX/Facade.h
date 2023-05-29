@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenKNX/defines.h"
+#include "Helper.h"
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Flash/Default.h"
@@ -8,7 +8,7 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
 #include "OpenKNX/TimerInterrupt.h"
-#include "../Helper.h"
+#include "OpenKNX/defines.h"
 
 namespace OpenKNX
 {

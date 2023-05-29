@@ -1,7 +1,6 @@
 #pragma once
+#include "defines.h"
 #include "knx.h"
-
-#define OPENKNX_INTERRUPT_TIMER_MS 2
 
 namespace OpenKNX
 {

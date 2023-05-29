@@ -2,15 +2,6 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
 #include "OpenKNX/defines.h"
-// #include "../Helper.h"
-// #include "OpenKNX/Console.h"
-// #include "OpenKNX/Flash/Default.h"
-// #include "OpenKNX/Hardware.h"
-// #include "OpenKNX/Helper.h"
-// #include "OpenKNX/Information.h"
-// #include "OpenKNX/Module.h"
-// #include "OpenKNX/TimerInterrupt.h"
-// #include <knx.h>
 
 #ifdef OPENKNX_WATCHDOG
 #include <Adafruit_SleepyDog.h>
