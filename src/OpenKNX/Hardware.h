@@ -1,6 +1,6 @@
 #pragma once
 #include "OpenKNX/Led.h"
-#include "knx.h"
+#include <Arduino.h>
 
 #ifdef ARDUINO_ARCH_RP2040
 #include <hardware.h>

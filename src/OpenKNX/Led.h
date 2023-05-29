@@ -2,7 +2,7 @@
 #include "OpenKNX/LedEffects/Blink.h"
 #include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Pulse.h"
-#include "knx.h"
+#include <Arduino.h>
 #include <string>
 
 namespace OpenKNX

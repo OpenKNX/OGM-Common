@@ -1,6 +1,6 @@
 #pragma once
 #include "defines.h"
-#include "knx.h"
+#include <Arduino.h>
 
 // Interval of interrupt for leds and free memory collector
 #define OPENKNX_INTERRUPT_TIMER_MS 2
@@ -12,6 +12,7 @@ namespace OpenKNX
     {
       private:
         volatile uint8_t _counter = 0;
+
       public:
         void init();
         void interrupt();

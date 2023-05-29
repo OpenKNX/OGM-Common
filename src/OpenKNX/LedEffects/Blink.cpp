@@ -1,5 +1,4 @@
 #include "OpenKNX/LedEffects/Blink.h"
-#include "OpenKNX/Facade.h"
 
 namespace OpenKNX
 {

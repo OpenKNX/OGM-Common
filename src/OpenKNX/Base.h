@@ -62,13 +62,16 @@ namespace OpenKNX
          */
         virtual void processInputKo(GroupObject &ko);
 #endif
+
         /*
          * Called on incoming function property command
          */
+
         virtual bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
         /*
          * Called on incoming function property state command
          */
+
         virtual bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
         /*
          * Called on diagnose request from diagnose KO

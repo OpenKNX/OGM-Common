@@ -1,6 +1,5 @@
 #pragma once
 #include "OpenKNX/Base.h"
-#include <knx.h>
 
 namespace OpenKNX
 {

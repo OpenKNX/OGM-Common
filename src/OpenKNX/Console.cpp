@@ -1,5 +1,5 @@
-#include "OpenKNX/Facade.h"
 #include "OpenKNX/Console.h"
+#include "OpenKNX/Facade.h"
 
 #ifdef ARDUINO_ARCH_RP2040
 extern uint32_t _EEPROM_start;

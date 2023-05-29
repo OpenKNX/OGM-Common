@@ -1,6 +1,5 @@
 #include "OpenKNX/Channel.h"
 #include "OpenKNX/Facade.h"
-#include <knx.h>
 
 namespace OpenKNX
 {

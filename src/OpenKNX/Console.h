@@ -1,5 +1,5 @@
 #pragma once
-#include "knx.h"
+#include <Arduino.h>
 #ifdef WATCHDOG
 #include <Adafruit_SleepyDog.h>
 #endif

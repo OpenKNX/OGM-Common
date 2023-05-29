@@ -1,5 +1,5 @@
 #pragma once
-#include "knx.h"
+#include "Arduino.h"
 #include <string>
 #ifdef ARDUINO_ARCH_RP2040
 #include "pico/sync.h"

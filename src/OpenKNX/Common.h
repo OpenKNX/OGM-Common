@@ -2,6 +2,7 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
 #include "OpenKNX/defines.h"
+#include "knx.h"
 
 #ifdef OPENKNX_WATCHDOG
 #include <Adafruit_SleepyDog.h>
