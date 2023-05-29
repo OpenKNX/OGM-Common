@@ -13,12 +13,12 @@ namespace OpenKNX
         /*
          * Wrapper for openknx.log. The name() will be used as prefix.
          */
-        void log(const char* output, ...);
+        void log(const char *output, ...);
 
         /*
          * Wrapper for openknx.logHex. The name() will be used as prefix.
          */
-        void logHex(const uint8_t* data, size_t size);
+        void logHex(const uint8_t *data, size_t size);
 
         /*
          * Get a Pointer to a prefix for Log
@@ -34,9 +34,9 @@ namespace OpenKNX
         virtual const std::string name();
 
         /*
-        * Called at startup (before startup delay), after knx.init
-        * will be executed regardless of knx.configured state
-        */
+         * Called at startup (before startup delay), after knx.init
+         * will be executed regardless of knx.configured state
+         */
         virtual void init();
 
         /*
@@ -55,12 +55,12 @@ namespace OpenKNX
          */
         virtual void loop1();
 
-#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
+#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
         /*
          * Called on incoming/changing GroupObject
          * @param GroupObject
          */
-        virtual void processInputKo(GroupObject& ko);
+        virtual void processInputKo(GroupObject &ko);
 #endif
         /*
          * Called on incoming function property command
@@ -78,7 +78,7 @@ namespace OpenKNX
          * @param input  - diagnose command
          * @param output - diagnose response
          * @param count  - counter in case of multiline processing
-         * @return true if there is an output in diagnose response 
+         * @return true if there is an output in diagnose response
          */
         virtual bool processDiagnoseCommand(const char *input, char *output, uint8_t count);
     };

@@ -1,6 +1,5 @@
 #pragma once
 #include "OpenKNX/LedEffects/Base.h"
-#include "knx.h"
 
 #ifndef OPENKNX_LEDEFFECT_BLINK_FREQ
 #define OPENKNX_LEDEFFECT_BLINK_FREQ 1000
@@ -17,6 +16,7 @@ namespace OpenKNX
             volatile uint16_t _frequency = OPENKNX_LEDEFFECT_BLINK_FREQ;
 
             bool _state = false;
+
           public:
             /*
              * call value

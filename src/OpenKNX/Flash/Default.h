@@ -1,9 +1,5 @@
 #pragma once
 #include "OpenKNX/Flash/Driver.h"
-#include "knx.h"
-#include "knx/bits.h"
-#include <string>
-// #include <stddef.h>
 
 #ifndef FLASH_DATA_WRITE_LIMIT
 #define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay

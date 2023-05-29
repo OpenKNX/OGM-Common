@@ -59,13 +59,6 @@
 #endif
 #endif
 
-// Interval of interrupt for leds and free memory collector
-#define OPENKNX_INTERRUPT_TIMER_MS 2
-
 #ifndef KNX_SERIAL
 #define KNX_SERIAL Serial1
-#endif
-
-#ifndef SMALL_GROUPOBJECT
-#error OGM-Common needs build-flag "-D SMALL_GROUPOBJECT"
 #endif

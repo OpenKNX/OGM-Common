@@ -1,5 +1,4 @@
 #pragma once
-#include "defines.h"
 #include "OpenKNX/LedEffects/Blink.h"
 #include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Pulse.h"

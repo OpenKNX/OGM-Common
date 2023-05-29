@@ -2,6 +2,9 @@
 #include "defines.h"
 #include "knx.h"
 
+// Interval of interrupt for leds and free memory collector
+#define OPENKNX_INTERRUPT_TIMER_MS 2
+
 namespace OpenKNX
 {
     // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
