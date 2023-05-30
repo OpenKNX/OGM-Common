@@ -112,6 +112,9 @@ namespace OpenKNX
 #endif
         openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
 
+        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+        openknx.logger.log("Module", "%s", "Common");
+        openknx.logger.log("Version", "%s", MODULE_Common_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
             openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
