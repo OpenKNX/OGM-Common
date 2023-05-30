@@ -8,3 +8,4 @@ Restart.txt
 *.cppbak
 **/knxprod.h
 **/hardware.h
+**/versions.h
