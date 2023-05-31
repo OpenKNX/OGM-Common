@@ -1,10 +1,6 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
 
-#ifdef ARDUINO_ARCH_RP2040
-extern uint32_t _EEPROM_start;
-#endif
-
 namespace OpenKNX
 {
     void Console::loop()
@@ -226,21 +222,50 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
     void Console::nukeFlash()
     {
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         Watchdog.enable(2147483647);
 #endif
-        uint32_t maxSize = (uint32_t)(&_EEPROM_start) - 0x10000000lu + 4096lu;
-        openknx.logger.log("", "Delete (nuke) complete device flash (%i -> %i)", 0, maxSize);
-        __nukeFlash(0, maxSize);
+
+        openknx.progLed.blinking();
+        openknx.infoLed.off();
+        openknx.hardware.stopKnxMode();
+
+        openknx.logger.log("", "Delete (nuke) KNX_FLASH (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        openknx.logger.log("", "Delete (nuke) OPENKNX_FLASH (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+        __nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+        openknx.logger.log("", "Format Filesystem");
+        LittleFS.format();
+        openknx.logger.log("", "Delete (nuke) first bytest of Firmware");
+        __nukeFlash(0, 4096);
+
+        openknx.progLed.forceOn();
+        openknx.logger.log("Done");
+        delay(1000);
+        openknx.logger.log("Reboot");
+        delay(100);
+        watchdog_reboot(0, 0, 0);
     }
 
     void Console::nukeFlashKnxOnly()
     {
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         Watchdog.enable(2147483647);
 #endif
-        openknx.logger.log("", "Delete (nuke) Userflash (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+
+        openknx.progLed.blinking();
+        openknx.infoLed.off();
+        openknx.hardware.stopKnxMode();
+
+        openknx.logger.log("", "Delete (nuke) KNX_FLASH (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
         __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+
+        openknx.progLed.forceOn();
+        openknx.logger.log("Done");
+        delay(1000);
+        openknx.logger.log("Reboot");
+        delay(100);
+        watchdog_reboot(0, 0, 0);
     }
 
     void Console::resetToBootloader()
