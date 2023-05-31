@@ -84,7 +84,6 @@ def get_git_version(path):
 
 get_all_library_dependencies(project)
 
-
 print()
 print("{}Read OpenKNX Module version and build defines:{}".format(console_color.YELLOW, console_color.END))
 
@@ -108,19 +107,12 @@ for name, lib_version in openknx_modules.items():
 version_file = open("lib/OGM-Common/include/versions.h", "w")
 version_file.write("#pragma once\n\n")
 version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
+version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_dir / "lib" / "knx")))
 # additional_defines = dict()
 for name, version in openknx_modules.items():
-  try:
-    define_name = "MODULE_" + name.split("-")[1] + "_Version"
-    # additional_defines[define_name] = version
-    version_file.write("#define {} \"{}\"\n".format(define_name, version))
-    # env.Append(CPPDEFINES=[
-    #  (define_name, "\\\"" + version + "\\\"")
-    # ])
-    print("{} - {} = \"{}\" ({}){}".format(console_color.BLUE, define_name, version, name, console_color.END))
-  except:
-    print("{}Error convert module name:{}".format(console_color.RED, console_color.END))
-    pass
+  define_name = "MODULE_" + name.split("-")[1] + "_Version"
+  version_file.write("#define {} \"{}\"\n".format(define_name, version))
+  print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
 print()
 
