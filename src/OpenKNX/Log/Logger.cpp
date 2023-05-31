@@ -50,6 +50,7 @@ namespace OpenKNX
             mutex_block();
             if (isColorSet())
                 printColorCode();
+            printCore();
             printMessage(message);
             if (isColorSet())
                 printColorCode(0);
@@ -70,6 +71,7 @@ namespace OpenKNX
             mutex_block();
             if (isColorSet())
                 printColorCode();
+            printCore();
             printPrefix(prefix);
             printIndent();
             printMessage(message, args);
@@ -82,6 +84,7 @@ namespace OpenKNX
         void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size)
         {
             mutex_block();
+            printCore();
             printPrefix(prefix);
             printIndent();
             printHex(data, size);
@@ -127,9 +130,6 @@ namespace OpenKNX
 
         void Logger::printPrefix(const std::string prefix)
         {
-#ifdef ARDUINO_ARCH_RP2040 && OPENKNX_LOGGER_SHOWCORE
-            SERIAL_DEBUG.print(rp2040.cpuid() ? "_1> " : "0_> ");
-#endif 
             size_t prefixLen = MIN(strlen(prefix.c_str()), OPENKNX_MAX_LOG_PREFIX_LENGTH);
             for (size_t i = 0; i < (OPENKNX_MAX_LOG_PREFIX_LENGTH + 2); i++)
             {
@@ -146,6 +146,14 @@ namespace OpenKNX
                     SERIAL_DEBUG.print(" ");
                 }
             }
+        }
+
+        void Logger::printCore()
+        {
+#if defined(ARDUINO_ARCH_RP2040) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
+            if (openknx.common.usesDualCore())
+                SERIAL_DEBUG.print(rp2040.cpuid() ? "_1> " : "0_> ");
+#endif
         }
 
         void Logger::printMessage(const std::string message)

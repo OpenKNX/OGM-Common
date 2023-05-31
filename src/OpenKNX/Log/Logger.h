@@ -152,6 +152,7 @@ namespace OpenKNX
             void printMessage(const std::string message, va_list args);
             void printMessage(const std::string message);
             void printPrefix(const std::string prefix);
+            void printCore();
             bool isColorSet();
             void printColorCode(uint8_t color);
             void printColorCode();
