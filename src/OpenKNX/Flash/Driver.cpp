@@ -298,7 +298,7 @@ namespace OpenKNX
 #else
             noInterrupts();
             rp2040.idleOtherCore();
-            flash_range_erase(_offset + (sector * _sectorSize), _sectorSize);
+            flash_range_erase((intptr_t)(_offset + (sector * _sectorSize)), _sectorSize);
             rp2040.resumeOtherCore();
             interrupts();
 #endif
@@ -374,7 +374,7 @@ namespace OpenKNX
 
                 // Changes Found
                 if (currentSize > 0)
-                    flash_range_program(_offset + (_bufferSector * _sectorSize) + currentPosition, _buffer + currentPosition, currentSize);
+                    flash_range_program((intptr_t)(_offset + (_bufferSector * _sectorSize) + currentPosition), _buffer + currentPosition, currentSize);
 
                 currentPosition += currentSize + FLASH_PAGE_SIZE;
                 currentSize = 0;
