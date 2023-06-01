@@ -23,6 +23,10 @@ namespace OpenKNX
         {
             showVersions();
         }
+        else if (cmd == "mem")
+        {
+            showMemory();
+        }
         else if (cmd == "prog" || cmd == "p")
         {
             knx.toggleProgMode();
@@ -128,7 +132,7 @@ namespace OpenKNX
 
         openknx.logger.log("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
-        openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+        showMemory();
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showInformations();
@@ -201,6 +205,8 @@ namespace OpenKNX
         openknx.logger.log("Command(s)               Description");
         printHelpLine("help, h", "Show this help");
         printHelpLine("info, i", "Show generel information");
+        printHelpLine("version, v", "Show compiled versions");
+        printHelpLine("mem", "Show memory usage");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("files, fs", "Show files on filesystem");
 #endif
@@ -308,6 +314,10 @@ namespace OpenKNX
     {
         // TODO Beautify
         openknx.logger.log(command, message);
+    }
+
+    void Console::showMemory() {
+        openknx.logger.log("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
     }
 #endif
 } // namespace OpenKNX

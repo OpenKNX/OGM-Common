@@ -34,6 +34,7 @@ namespace OpenKNX
         void processSerialInput();
         void showInformations();
         void showVersions();
+        void showMemory();
 
         bool confirmation(char key, uint8_t repeats, const char* message);
         void showHelp();
