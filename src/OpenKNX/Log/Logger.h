@@ -42,7 +42,6 @@
 #define logHexInfo(...) openknx.logger.logHex(__VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-#include <Regexp.h>
 
 #ifndef OPENKNX_TRACE1
 #define OPENKNX_TRACE1
@@ -138,12 +137,12 @@ namespace OpenKNX
         class Logger
         {
           private:
+            uint8_t _lastConsoleLen = 0;
 #ifdef ARDUINO_ARCH_RP2040
             // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
             volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
             recursive_mutex_t _mutex;
-            uint8_t _lastConsoleLen = 0;
 #else
             uint8_t _color = 0;
             uint8_t _indent = 0;
@@ -178,7 +177,9 @@ namespace OpenKNX
             void indentDown();
             void indent(uint8_t indent);
 
+#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
             bool checkTrace(const std::string prefix);
+#endif
             void printPrompt();
             void clearPreviouseLine();
         };

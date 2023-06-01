@@ -1,6 +1,11 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Facade.h"
 
+
+#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+#include <Regexp.h>
+#endif
+
 namespace OpenKNX
 {
     namespace Log
@@ -190,6 +195,7 @@ namespace OpenKNX
             SERIAL_DEBUG.print(buffer);
         }
 
+#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
         bool Logger::checkTrace(std::string prefix)
         {
             MatchState ms;
@@ -217,6 +223,7 @@ namespace OpenKNX
 
             return false;
         }
+#endif
 
         void Logger::printIndent()
         {
