@@ -42,7 +42,7 @@
 #define logHexInfo(...) openknx.logger.logHex(__VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHex(logPrefix(), __VA_ARGS__)
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-#include <regex>
+#include <Regexp.h>
 
 #ifndef OPENKNX_TRACE1
 #define OPENKNX_TRACE1

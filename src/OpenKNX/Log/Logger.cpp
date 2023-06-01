@@ -192,24 +192,26 @@ namespace OpenKNX
 
         bool Logger::checkTrace(std::string prefix)
         {
+            MatchState ms;
+            ms.Target((char*)prefix.c_str());
 #ifdef OPENKNX_TRACE1
-            if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(OPENKNX_TRACE1))))
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE1))>0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE2
-            if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(OPENKNX_TRACE2))))
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE2))>0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE3
-            if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(OPENKNX_TRACE3))))
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE3))>0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE4
-            if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(OPENKNX_TRACE4))))
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE4))>0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE5
-            if (std::regex_match(prefix, std::regex(TRACE_STRINGIFY(OPENKNX_TRACE5))))
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE5)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE5)))
                 return true;
 #endif
 

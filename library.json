@@ -2,8 +2,9 @@
     "name": "OGM-Common",
     "version": "1.0.0",
     "dependencies": {
-        "khoih-prog/TimerInterrupt_Generic": "^1.13.0",        
-        "adafruit/Adafruit SleepyDog Library": "^1.6.3"
+        "khoih-prog/TimerInterrupt_Generic": "^1.13.0",
+        "adafruit/Adafruit SleepyDog Library": "^1.6.3",
+        "nickgammon/Regexp": "^0.1.0"
     },
     "description": "Common routines and helpers, used in OpenKNX projects",
     "homepage": "https://openknx.de",
