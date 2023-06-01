@@ -14,6 +14,17 @@ extern "C" {
 
 namespace OpenKNX
 {
+
+#ifdef ARDUINO_ARCH_RP2040
+    enum class EraseMode
+    {
+        All,
+        Filesystem,
+        KnxFlash,
+        OpenKnxFlash
+    };
+#endif
+
     class Console
     {
       private:
@@ -27,15 +38,18 @@ namespace OpenKNX
         void showHelp();
         void sleep();
         uint32_t sleepTime();
-        void nukeFlash();
-        void nukeFlashKnxOnly();
+        void processCommand(std::string cmd);
 #ifdef ARDUINO_ARCH_RP2040
         void resetToBootloader();
         void showFilesystem();
         void showFilesystemDirectory(std::string path);
+        void erase(EraseMode mode = EraseMode::All);
 #endif
 
       public:
+        char prompt[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         void loop();
+
+        void printHelpLine(const std::string command, const std::string message);
     };
 } // namespace OpenKNX

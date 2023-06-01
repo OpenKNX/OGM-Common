@@ -9,82 +9,100 @@ namespace OpenKNX
             processSerialInput();
     }
 
-    void Console::processSerialInput()
+    void Console::processCommand(std::string cmd)
     {
-
-        uint8_t current = SERIAL_DEBUG.read();
-        if (_consoleCharLast == current)
+        if (cmd == "info" || cmd == "i")
         {
-            _consoleCharRepeats++;
+            showInformations();
         }
+        else if (cmd == "help" || cmd == "h")
+        {
+            showHelp();
+        }
+        else if (cmd == "prog")
+        {
+            knx.toggleProgMode();
+        }
+        else if (cmd == "sleep")
+        {
+            sleep();
+        }
+        else if (cmd == "restart")
+        {
+            delay(20);
+            knx.platform().restart();
+        }
+        else if (cmd == "fatal")
+        {
+            openknx.hardware.fatalError(5, "Test with 5x blinking");
+        }
+        else if (cmd == "powerloss")
+        {
+            openknx.common.triggerSavePin();
+        }
+        else if (cmd == "save")
+        {
+            openknx.flash.save();
+        }
+        
+#ifdef ARDUINO_ARCH_RP2040
+        else if (cmd == "files")
+        {
+            showFilesystem();
+        }
+        else if (cmd == "bootloader")
+        {
+            resetToBootloader();
+        }
+        else if (cmd == "nuke knx")
+        {
+            erase(EraseMode::KnxFlash);
+        }
+        else if (cmd == "nuke openknx")
+        {
+            erase(EraseMode::OpenKnxFlash);
+        }
+        else if (cmd == "nuke files")
+        {
+            erase(EraseMode::Filesystem);
+        }
+        else if (cmd == "nuke all")
+        {
+            erase(EraseMode::All);
+        }
+#endif
         else
         {
-            _consoleCharLast = current;
-            _consoleCharRepeats = 0;
-        }
+            // check modules for command
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+                if (openknx.modules.list[i]->processCommand(cmd, false))
+                    return;
 
-        switch (current)
+            // Command not found;
+            openknx.logger.log("test", "unknown command %s", cmd);
+        }
+    }
+
+    void Console::processSerialInput()
+    {
+        uint8_t current = SERIAL_DEBUG.read();
+        if (current == '\n')
         {
-            case 0x0D: // Enter
-                openknx.logger.log("");
-                break;
-            case 'h':
-                showHelp();
-                break;
-            case 'i':
-                showInformations();
-                break;
-            case 'r':
-                delay(10);
-                knx.platform().restart();
-                break;
-            case 'p':
-                knx.toggleProgMode();
-                break;
-            case 'w':
-                openknx.flash.save(true);
-                break;
-            case 's':
-                sleep();
-                break;
-#ifdef ARDUINO_ARCH_RP2040
-            case 'f':
-                showFilesystem();
-                break;
-            case 'b':
-                resetToBootloader();
-                break;
-            case 'N':
-                if (confirmation(current, 3, "Nuke whole flash"))
-                    break;
+            openknx.logger.log(prompt);
 
-                nukeFlash();
-                break;
-            case 'n':
-                if (confirmation(current, 3, "Nuke KNX settings"))
-                    break;
+            if (strlen(prompt) > 0)
+                processCommand(prompt);
 
-                nukeFlashKnxOnly();
-                break;
-#endif
-            case 'P':
-                openknx.common.triggerSavePin();
-                break;
-            case 'E':
-                if (confirmation(current, 1, "FatalError"))
-                    break;
-
-                openknx.hardware.fatalError(5, "Test with 5x blinking");
-                break;
-            default:
-                for (uint8_t i = 0; i < openknx.modules.count; i++)
-                {
-                    openknx.modules.list[i]->processSerialInput(current);
-                }
+            memset(prompt, 0, 15); // Reset Promptbuffer
         }
 
-        // prevent loop warning
-        openknx.common.resetLastLoopOutput();
+        if (current == '\b' && strlen(prompt) > 0)
+            prompt[strlen(prompt) - 1] = 0x0;
+
+        if (strlen(prompt) < 14 && current >= 32 && current <= 126) // Max. 14 printables chars allowed
+            prompt[strlen(prompt)] = current;
+
+        openknx.logger.printPrompt();
     }
 
     void Console::showInformations()
@@ -165,22 +183,25 @@ namespace OpenKNX
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Help ══════════════════════════════════════════════════");
         openknx.logger.color(0);
-        openknx.logger.log("", ">  h  <  Show this help");
-        openknx.logger.log("", ">  i  <  Show device information");
+        printHelpLine("help", "Show this help");
+        printHelpLine("info", "Show device information");
 #ifdef ARDUINO_ARCH_RP2040
-        openknx.logger.log("", ">  f  <  Show filesystem");
+        printHelpLine("files", "Show files");
 #endif
-        openknx.logger.log("", ">  r  <  Restart the device");
-        openknx.logger.log("", ">  p  <  Toggle the ProgMode");
-        openknx.logger.log("", ">  w  <  Write data to Flash");
-        openknx.logger.log("", ">  s  <  Sleep for %ims time", sleepTime());
+        printHelpLine("files", "Show files");
+        printHelpLine("restart", "Restart the device");
+        printHelpLine("prog", "Toggle the ProgMode");
+        printHelpLine("save", "Save data in Flash");
+        printHelpLine("sleep", "Sleep for up to 20 seconds");
+        printHelpLine("fatal", "Trigger a FatalError");
+        printHelpLine("powerloss", "Trigger a powerloss (SavePin)");
 #ifdef ARDUINO_ARCH_RP2040
-        openknx.logger.log("", ">  b  <  Reset into Bootloader Mode");
-        openknx.logger.log("", ">  N  <  Delete (nuke) complete device flash");
-        openknx.logger.log("", ">  n  <  Delete (nuke) Userflash");
+        printHelpLine("erase knx", "Erase knx parameters");
+        printHelpLine("erase openknx", "Erase opeknx module data");
+        printHelpLine("erase files", "Erase filesystem");
+        printHelpLine("erase all", "Erase all");
+        printHelpLine("bootloader", "Reset into Bootloader Mode");
 #endif
-        openknx.logger.log("", ">  E  <  Trigger a FatalError");
-        openknx.logger.log("", ">  P  <  Trigger a powerloss (SavePin)");
         openknx.logger.log("");
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
@@ -194,15 +215,16 @@ namespace OpenKNX
 
     void Console::sleep()
     {
+        openknx.logger.log("sleep up to 20 seconds");
         delay(sleepTime());
     }
 
     uint32_t Console::sleepTime()
     {
-#ifdef WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         return MAX(WATCHDOG_MAX_PERIOD_MS + 1, 20000);
 #else
-        return 20;
+        return 20000;
 #endif
     }
 
@@ -220,57 +242,60 @@ namespace OpenKNX
     }
 
 #ifdef ARDUINO_ARCH_RP2040
-    void Console::nukeFlash()
+    void Console::erase(EraseMode mode)
     {
 #ifdef OPENKNX_WATCHDOG
         Watchdog.enable(2147483647);
 #endif
 
-        openknx.progLed.blinking();
-        openknx.infoLed.off();
-        openknx.hardware.stopKnxMode();
-
-        openknx.logger.log("", "Delete (nuke) KNX_FLASH (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-        __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-        openknx.logger.log("", "Delete (nuke) OPENKNX_FLASH (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
-        __nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
-        openknx.logger.log("", "Format Filesystem");
-        LittleFS.format();
-        openknx.logger.log("", "Delete (nuke) first bytest of Firmware");
-        __nukeFlash(0, 4096);
-
-        openknx.progLed.forceOn();
-        openknx.logger.log("Done");
-        delay(1000);
-        openknx.logger.log("Reboot");
-        delay(100);
-        watchdog_reboot(0, 0, 0);
-    }
-
-    void Console::nukeFlashKnxOnly()
-    {
-#ifdef OPENKNX_WATCHDOG
-        Watchdog.enable(2147483647);
-#endif
+        rp2040.idleOtherCore();
 
         openknx.progLed.blinking();
         openknx.infoLed.off();
         openknx.hardware.stopKnxMode();
 
-        openknx.logger.log("", "Delete (nuke) KNX_FLASH (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-        __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
+        {
+            openknx.logger.log("Erase", "KNX_FLASH (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+            __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        }
+
+        if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
+        {
+            openknx.logger.log("Erase", "OPENKNX_FLASH (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+            __nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+        }
+
+        if (mode == EraseMode::All || mode == EraseMode::Filesystem)
+        {
+            openknx.logger.log("Erase", "Format Filesystem");
+            LittleFS.format();
+        }
+
+        if (mode == EraseMode::All)
+        {
+            openknx.logger.log("Erase", "First bytes of Firmware");
+            __nukeFlash(0, 4096);
+        }
 
         openknx.progLed.forceOn();
         openknx.logger.log("Done");
         delay(1000);
-        openknx.logger.log("Reboot");
+        openknx.logger.log("Restart device");
         delay(100);
-        watchdog_reboot(0, 0, 0);
+        knx.platform().restart();
     }
 
     void Console::resetToBootloader()
     {
         reset_usb_boot(0, 0);
+    }
+
+    void Console::printHelpLine(const std::string command, const std::string message)
+    {
+        char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
+        sprintf(buffer, "| %s | %s |", command.c_str(), message.c_str());
+        openknx.logger.log(buffer);
     }
 #endif
 } // namespace OpenKNX

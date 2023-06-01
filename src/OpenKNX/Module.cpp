@@ -57,15 +57,9 @@ namespace OpenKNX
         //openknx.logger.log("Another-Info:", _someOtherInfo);
     }
 
-    void Module::processSerialInput(uint8_t command)
+    bool Module::processCommand(const std::string cmd, bool debugKo)
     {
-        // Example usage:
-        // switch(command)
-        // {
-        //     case 'x':
-        //         logInfoP("Test123");
-        //     break;
-        // }
+        return false;
     }
 
     void Module::showHelp()

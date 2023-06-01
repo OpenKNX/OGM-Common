@@ -45,19 +45,6 @@ namespace OpenKNX
             return std::string(buffer);
         }
 
-        void Logger::log(const std::string message)
-        {
-            mutex_block();
-            if (isColorSet())
-                printColorCode();
-            printCore();
-            printMessage(message);
-            if (isColorSet())
-                printColorCode(0);
-            SERIAL_DEBUG.println();
-            mutex_unblock();
-        }
-
         void Logger::log(const std::string prefix, const std::string message, ...)
         {
             va_list args;
@@ -66,9 +53,25 @@ namespace OpenKNX
             va_end(args);
         }
 
+        void Logger::log(const std::string message)
+        {
+            mutex_block();
+            clearPreviouseLine();
+            if (isColorSet())
+                printColorCode();
+            printCore();
+            printMessage(message);
+            if (isColorSet())
+                printColorCode(0);
+            SERIAL_DEBUG.println();
+            printPrompt();
+            mutex_unblock();
+        }
+
         void Logger::log(const std::string prefix, const std::string message, va_list args)
         {
             mutex_block();
+            clearPreviouseLine();
             if (isColorSet())
                 printColorCode();
             printCore();
@@ -78,17 +81,20 @@ namespace OpenKNX
             if (isColorSet())
                 printColorCode(0);
             SERIAL_DEBUG.println();
+            printPrompt();
             mutex_unblock();
         }
 
         void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size)
         {
             mutex_block();
+            clearPreviouseLine();
             printCore();
             printPrefix(prefix);
             printIndent();
             printHex(data, size);
             SERIAL_DEBUG.println();
+            printPrompt();
             mutex_unblock();
         }
 
@@ -126,6 +132,23 @@ namespace OpenKNX
                 SERIAL_DEBUG.print(data[i], HEX);
                 SERIAL_DEBUG.print(" ");
             }
+        }
+
+        void Logger::clearPreviouseLine()
+        {
+            while (_lastConsoleLen > 0)
+            {
+                _lastConsoleLen--;
+                SERIAL_DEBUG.print("\b");
+            }
+            SERIAL_DEBUG.print("\33[K");
+        }
+
+        void Logger::printPrompt()
+        {
+            clearPreviouseLine();
+            SERIAL_DEBUG.print(openknx.console.prompt);
+            _lastConsoleLen = strlen(openknx.console.prompt);
         }
 
         void Logger::printPrefix(const std::string prefix)

@@ -143,6 +143,7 @@ namespace OpenKNX
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
             volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
             recursive_mutex_t _mutex;
+            uint8_t _lastConsoleLen = 0;
 #else
             uint8_t _color = 0;
             uint8_t _indent = 0;
@@ -178,6 +179,8 @@ namespace OpenKNX
             void indent(uint8_t indent);
 
             bool checkTrace(const std::string prefix);
+            void printPrompt();
+            void clearPreviouseLine();
         };
     } // namespace Log
 } // namespace OpenKNX

@@ -32,6 +32,7 @@ namespace OpenKNX
         Led progLed;
         Led infoLed;
         Modules modules;
+        volatile bool ready = false;
 
         void init(uint8_t firmwareRevision);
         void loop();

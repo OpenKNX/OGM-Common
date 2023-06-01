@@ -91,18 +91,24 @@ namespace OpenKNX
         virtual bool usesDualCore();
 
         /**
-         * This method prints out relevant informations of the module
+         * This method is called when a command is entered in the console or the debugKo.
+         * The first argument is the command, and the second argument indicates whether the call was made via debugKo or the console.
+         * 
+         * If a module feels responsible for this command, it returns true, and the processing will terminated.
+         * 
+         * If a command is entered that requires an output, the module itself is responsible for handling it.
+         * It must then determine based on the arguments whether to display the output on the console or send a message via debugKo.
          */
-        virtual void showInformations();
-
-        /**
-         * every keytroke in the console not matching general commands will call this method
-         */
-        virtual void processSerialInput(uint8_t command);
+        virtual bool processCommand(const std::string cmd, bool debugKo);
 
         /**
          * This method prints out information over the command it can handle
          */
         virtual void showHelp();
+
+        /**
+         * This method prints out relevant informations of the module
+         */
+        virtual void showInformations();
     };
 } // namespace OpenKNX
