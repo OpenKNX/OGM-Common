@@ -239,7 +239,7 @@ namespace OpenKNX
     uint32_t Console::sleepTime()
     {
 #ifdef OPENKNX_WATCHDOG
-        return MAX(WATCHDOG_MAX_PERIOD_MS + 1, 20000);
+        return MAX(OPENKNX_WATCHDOG_MAX_PERIOD + 1, 20000);
 #else
         return 20000;
 #endif
