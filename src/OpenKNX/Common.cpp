@@ -255,6 +255,7 @@ namespace OpenKNX
 #endif
         // setup complete turn infoLed off
         openknx.infoLed.off();
+        _setupReady = true;
     }
 
     void Common::appSetup()
@@ -289,8 +290,8 @@ namespace OpenKNX
         }
 
         // when not needed, shutdown core1
-        if (!_usesDualCore)
-            multicore_reset_core1();
+        // if (!_usesDualCore)
+        //     multicore_reset_core1();
 
 #endif
     }
@@ -439,6 +440,9 @@ namespace OpenKNX
 
     void Common::loop1()
     {
+        if (!_setupReady)
+            return;
+
         if (!usesDualCore())
             return;
 

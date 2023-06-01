@@ -33,6 +33,7 @@ namespace OpenKNX
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
         bool _usesDualCore = false;
+        volatile bool _setupReady = false;
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
