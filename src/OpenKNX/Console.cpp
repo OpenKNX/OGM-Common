@@ -19,7 +19,11 @@ namespace OpenKNX
         {
             showHelp();
         }
-        else if (cmd == "prog")
+        else if (cmd == "versions" || cmd == "v")
+        {
+            showVersions();
+        }
+        else if (cmd == "prog" || cmd == "p")
         {
             knx.toggleProgMode();
         }
@@ -27,7 +31,7 @@ namespace OpenKNX
         {
             sleep();
         }
-        else if (cmd == "restart")
+        else if (cmd == "restart" || cmd == "r")
         {
             delay(20);
             knx.platform().restart();
@@ -40,13 +44,13 @@ namespace OpenKNX
         {
             openknx.common.triggerSavePin();
         }
-        else if (cmd == "save")
+        else if (cmd == "save" || cmd == "s" || cmd == "w")
         {
             openknx.flash.save();
         }
-        
+
 #ifdef ARDUINO_ARCH_RP2040
-        else if (cmd == "files")
+        else if (cmd == "files" || cmd == "fs")
         {
             showFilesystem();
         }
@@ -54,19 +58,19 @@ namespace OpenKNX
         {
             resetToBootloader();
         }
-        else if (cmd == "nuke knx")
+        else if (cmd == "erase knx")
         {
             erase(EraseMode::KnxFlash);
         }
-        else if (cmd == "nuke openknx")
+        else if (cmd == "erase openknx")
         {
             erase(EraseMode::OpenKnxFlash);
         }
-        else if (cmd == "nuke files")
+        else if (cmd == "erase files")
         {
             erase(EraseMode::Filesystem);
         }
-        else if (cmd == "nuke all")
+        else if (cmd == "erase all")
         {
             erase(EraseMode::All);
         }
@@ -79,13 +83,13 @@ namespace OpenKNX
                     return;
 
             // Command not found;
-            openknx.logger.log("test", "unknown command %s", cmd);
+            openknx.logger.log("unknown command");
         }
     }
 
     void Console::processSerialInput()
     {
-        uint8_t current = SERIAL_DEBUG.read();
+        const uint8_t current = SERIAL_DEBUG.read();
         if (current == '\n')
         {
             openknx.logger.log(prompt);
@@ -126,16 +130,9 @@ namespace OpenKNX
 #endif
         openknx.logger.log("Free memory", "%.2f KiB (min. %.2f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
 
-        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
-        openknx.logger.log("Module", "%s", "Common");
-        openknx.logger.log("Version", "%s", MODULE_Common_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
-            openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
-            openknx.logger.log("Module", "%s", openknx.modules.list[i]->name().c_str());
-            openknx.logger.log("Version", "%s", openknx.modules.list[i]->version().c_str());
             openknx.modules.list[i]->showInformations();
-        }
+
         openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
         openknx.logger.log("");
         openknx.logger.mutex_unblock();
@@ -152,6 +149,7 @@ namespace OpenKNX
 
         openknx.logger.color(0);
         showFilesystemDirectory("/");
+        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
         openknx.logger.mutex_unblock();
     }
 
@@ -176,6 +174,23 @@ namespace OpenKNX
     }
 #endif
 
+    void Console::showVersions()
+    {
+        openknx.logger.mutex_block();
+        openknx.logger.log("");
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("════════════════════════ Versions ══════════════════════════════════════════════");
+        openknx.logger.color(0);
+
+        openknx.logger.log("KNX", KNX_Version);
+        openknx.logger.log("Firemware", MAIN_Version);
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+            openknx.logger.log(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
+
+        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+        openknx.logger.mutex_unblock();
+    }
+
     void Console::showHelp()
     {
         openknx.logger.mutex_block();
@@ -183,15 +198,15 @@ namespace OpenKNX
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Help ══════════════════════════════════════════════════");
         openknx.logger.color(0);
-        printHelpLine("help", "Show this help");
-        printHelpLine("info", "Show device information");
+        openknx.logger.log("Command(s)               Description");
+        printHelpLine("help, h", "Show this help");
+        printHelpLine("info, i", "Show generel information");
 #ifdef ARDUINO_ARCH_RP2040
-        printHelpLine("files", "Show files");
+        printHelpLine("files, fs", "Show files on filesystem");
 #endif
-        printHelpLine("files", "Show files");
-        printHelpLine("restart", "Restart the device");
-        printHelpLine("prog", "Toggle the ProgMode");
-        printHelpLine("save", "Save data in Flash");
+        printHelpLine("restart, r", "Restart the device");
+        printHelpLine("prog, p", "Toggle the ProgMode");
+        printHelpLine("save, s, w", "Save data in Flash");
         printHelpLine("sleep", "Sleep for up to 20 seconds");
         printHelpLine("fatal", "Trigger a FatalError");
         printHelpLine("powerloss", "Trigger a powerloss (SavePin)");
@@ -202,14 +217,10 @@ namespace OpenKNX
         printHelpLine("erase all", "Erase all");
         printHelpLine("bootloader", "Reset into Bootloader Mode");
 #endif
-        openknx.logger.log("");
-
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
             openknx.modules.list[i]->showHelp();
-            openknx.logger.log("");
-        }
 
+        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
         openknx.logger.mutex_unblock();
     }
 
@@ -248,28 +259,30 @@ namespace OpenKNX
         Watchdog.enable(2147483647);
 #endif
 
-        rp2040.idleOtherCore();
-
         openknx.progLed.blinking();
         openknx.infoLed.off();
         openknx.hardware.stopKnxMode();
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
-            openknx.logger.log("Erase", "KNX_FLASH (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+            openknx.logger.log("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
             __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
         }
 
         if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
         {
-            openknx.logger.log("Erase", "OPENKNX_FLASH (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+            openknx.logger.log("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
             __nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
         }
 
         if (mode == EraseMode::All || mode == EraseMode::Filesystem)
         {
             openknx.logger.log("Erase", "Format Filesystem");
-            LittleFS.format();
+            LittleFS.begin();
+            if (LittleFS.format())
+            {
+                openknx.logger.log("Erase", "Succesful");
+            }
         }
 
         if (mode == EraseMode::All)
@@ -279,7 +292,7 @@ namespace OpenKNX
         }
 
         openknx.progLed.forceOn();
-        openknx.logger.log("Done");
+        openknx.logger.log("Erase", "Completed");
         delay(1000);
         openknx.logger.log("Restart device");
         delay(100);
@@ -291,11 +304,10 @@ namespace OpenKNX
         reset_usb_boot(0, 0);
     }
 
-    void Console::printHelpLine(const std::string command, const std::string message)
+    void Console::printHelpLine(const char* command, const char* message)
     {
-        char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
-        sprintf(buffer, "| %s | %s |", command.c_str(), message.c_str());
-        openknx.logger.log(buffer);
+        // TODO Beautify
+        openknx.logger.log(command, message);
     }
 #endif
 } // namespace OpenKNX

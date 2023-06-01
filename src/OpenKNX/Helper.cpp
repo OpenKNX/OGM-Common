@@ -1,4 +1,5 @@
 #include "Helper.h"
+#include "OpenKNX/Facade.h"
 
 /*
  * Free Memory
@@ -28,24 +29,17 @@ int freeMemory()
 #ifdef ARDUINO_ARCH_RP2040
 void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
 {
-    volatile uint32_t pos = offset;
-    volatile uint32_t end = offset + size;
     if (offset % 4096 > 0 || size % 4096 > 0)
     {
-        SERIAL_DEBUG.println("Fatal: nuke paramters invalid");
+        openknx.logger.log("Fatal: nuke paramters invalid");
     }
     else
     {
         rp2040.idleOtherCore();
-        while (pos < end)
-        {
-            noInterrupts();
-            flash_range_erase(pos, 4096);
-            interrupts();
-            pos += 4096;
-            SERIAL_DEBUG.printf(".");
-        }
-        SERIAL_DEBUG.println("");
+        noInterrupts();
+        flash_range_erase(offset, offset + size);
+        interrupts();
+        rp2040.resumeOtherCore();
     }
 }
 #endif

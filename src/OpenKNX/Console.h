@@ -33,6 +33,7 @@ namespace OpenKNX
 
         void processSerialInput();
         void showInformations();
+        void showVersions();
 
         bool confirmation(char key, uint8_t repeats, const char* message);
         void showHelp();
@@ -50,6 +51,6 @@ namespace OpenKNX
         char prompt[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         void loop();
 
-        void printHelpLine(const std::string command, const std::string message);
+        void printHelpLine(const char* command, const char* message);
     };
 } // namespace OpenKNX

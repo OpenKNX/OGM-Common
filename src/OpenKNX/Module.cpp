@@ -53,8 +53,8 @@ namespace OpenKNX
     void Module::showInformations()
     {
         // Example usage:
-        //openknx.logger.log("Some-Info:", _myInfo);
-        //openknx.logger.log("Another-Info:", _someOtherInfo);
+        // logInfoP("Some-String: %s", myString);
+        // logInfoP("Some-Integer: %i", myInteger);
     }
 
     bool Module::processCommand(const std::string cmd, bool debugKo)
@@ -65,7 +65,7 @@ namespace OpenKNX
     void Module::showHelp()
     {
         // Example usage:
-        //openknx.logger.log("", ">  x  <  Foo [%s]", name().c_str());
+        //openknx.console.printHelpLine("command 123", "the description");
     }
 
 } // namespace OpenKNX
