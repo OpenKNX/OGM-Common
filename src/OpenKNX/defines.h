@@ -1,7 +1,7 @@
 #pragma once
-#include "hardware.h"
-#include "knxprod.h"
-#include "versions.h"
+#include <hardware.h>
+#include <knxprod.h>
+#include <versions.h>
 
 // see README for available defines
 
