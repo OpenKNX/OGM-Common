@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <string>
 #ifdef WATCHDOG
 #include <Adafruit_SleepyDog.h>
 #endif

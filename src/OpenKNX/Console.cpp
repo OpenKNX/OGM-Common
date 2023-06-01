@@ -258,6 +258,16 @@ namespace OpenKNX
         }
     }
 
+    void Console::showMemory() {
+        openknx.logger.log("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+    }
+
+    void Console::printHelpLine(const char* command, const char* message)
+    {
+        // TODO Beautify
+        openknx.logger.log(command, message);
+    }
+
 #ifdef ARDUINO_ARCH_RP2040
     void Console::erase(EraseMode mode)
     {
@@ -308,16 +318,6 @@ namespace OpenKNX
     void Console::resetToBootloader()
     {
         reset_usb_boot(0, 0);
-    }
-
-    void Console::printHelpLine(const char* command, const char* message)
-    {
-        // TODO Beautify
-        openknx.logger.log(command, message);
-    }
-
-    void Console::showMemory() {
-        openknx.logger.log("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
     }
 #endif
 } // namespace OpenKNX
