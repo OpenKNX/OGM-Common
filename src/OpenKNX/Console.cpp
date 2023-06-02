@@ -146,7 +146,6 @@ namespace OpenKNX
     void Console::showFilesystem()
     {
         logBegin();
-        LittleFS.begin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Filesystem ════════════════════════════════════════════");
@@ -294,7 +293,6 @@ namespace OpenKNX
         if (mode == EraseMode::All || mode == EraseMode::Filesystem)
         {
             openknx.logger.log("Erase", "Format Filesystem");
-            LittleFS.begin();
             if (LittleFS.format())
             {
                 openknx.logger.log("Erase", "Succesful");

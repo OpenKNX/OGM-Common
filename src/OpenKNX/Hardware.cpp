@@ -1,5 +1,9 @@
 #include "OpenKNX/Facade.h"
 
+#ifdef ARDUINO_ARCH_RP2040
+#include "LittleFS.h"
+#endif
+
 namespace OpenKNX
 {
     void Hardware::init()
@@ -7,10 +11,26 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         adc_init();
         adc_set_temp_sensor_enabled(true);
+
+        initFilesystem();
 #endif
 #ifndef ARDUINO_ARCH_SAMD
         requestBcuSystemState();
 #endif
+    }
+
+    void Hardware::initFilesystem()
+    {
+        // normal
+        LittleFSConfig cfg;
+        // Default is already auto format
+        cfg.setAutoFormat(true);
+        LittleFS.setConfig(cfg);
+
+        if (!LittleFS.begin())
+        {
+            fatalError(FATAL_INIT_FILESYSTEM, "Unable to initalize filesystem");
+        }
     }
 
     void Hardware::requestBcuSystemState()

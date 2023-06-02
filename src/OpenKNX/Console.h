@@ -8,7 +8,6 @@
 extern "C" {
 #include "pico/bootrom.h"
 }
-#include "LittleFS.h"
 #endif
 
 #define CONSOLE_HEADLINE_COLOR 11

@@ -14,6 +14,7 @@
 #define FATAL_LOG_WRONG_CHANNEL_COUNT 4 // knxprod contains more channels than logic supports
 #define FATAL_SENS_UNKNOWN 5            // unknown or unsupported sensor
 #define FATAL_SCHEDULE_MAX_CALLBACKS 6  // Too many callbacks in scheduler
+#define FATAL_INIT_FILESYSTEM 10        // LittleFS.begin() failed
 
 // NCN5130: internal commands
 #define U_RESET_REQ 0x01
@@ -110,5 +111,7 @@ namespace OpenKNX
         void fatalError(uint8_t code, const char* message = 0);
         // CPU Temperatur
         float cpuTemperature();
+        // CPU Temperatur
+        void initFilesystem();
     };
 } // namespace OpenKNX
