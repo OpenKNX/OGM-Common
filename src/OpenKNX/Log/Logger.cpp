@@ -17,14 +17,14 @@ namespace OpenKNX
 #endif
         }
 
-        void Logger::mutex_block()
+        void Logger::begin()
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_enter_blocking(&_mutex);
 #endif
         }
 
-        void Logger::mutex_unblock()
+        void Logger::end()
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_exit(&_mutex);
@@ -60,7 +60,7 @@ namespace OpenKNX
 
         void Logger::log(const std::string message)
         {
-            mutex_block();
+            begin();
             clearPreviouseLine();
             if (isColorSet())
                 printColorCode();
@@ -70,12 +70,12 @@ namespace OpenKNX
                 printColorCode(0);
             SERIAL_DEBUG.println();
             printPrompt();
-            mutex_unblock();
+            end();
         }
 
         void Logger::log(const std::string prefix, const std::string message, va_list args)
         {
-            mutex_block();
+            begin();
             clearPreviouseLine();
             if (isColorSet())
                 printColorCode();
@@ -87,12 +87,12 @@ namespace OpenKNX
                 printColorCode(0);
             SERIAL_DEBUG.println();
             printPrompt();
-            mutex_unblock();
+            end();
         }
 
         void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size)
         {
-            mutex_block();
+            begin();
             clearPreviouseLine();
             printCore();
             printPrefix(prefix);
@@ -100,7 +100,7 @@ namespace OpenKNX
             printHex(data, size);
             SERIAL_DEBUG.println();
             printPrompt();
-            mutex_unblock();
+            end();
         }
 
         bool Logger::isColorSet()

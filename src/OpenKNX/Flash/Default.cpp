@@ -258,6 +258,7 @@ namespace OpenKNX
             if (!force && _lastWrite > 0 && !delayCheck(_lastWrite, FLASH_DATA_WRITE_LIMIT))
                 return;
 
+            logBegin();
             logInfoP("Save data to flash%s", force ? " (force)" : "");
             logIndentUp();
             logDebugP("Slot %i", nextSlot());
@@ -344,6 +345,7 @@ namespace OpenKNX
 #endif
 
             logIndentDown();
+            logEnd();
         }
 
         uint8_t *Default::currentFlash()

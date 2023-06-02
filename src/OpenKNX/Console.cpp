@@ -115,7 +115,7 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
-        openknx.logger.mutex_block();
+        logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Information ═══════════════════════════════════════════");
@@ -139,13 +139,13 @@ namespace OpenKNX
 
         openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
         openknx.logger.log("");
-        openknx.logger.mutex_unblock();
+        logEnd();
     }
 
 #ifdef ARDUINO_ARCH_RP2040
     void Console::showFilesystem()
     {
-        openknx.logger.mutex_block();
+        logBegin();
         LittleFS.begin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
@@ -154,12 +154,12 @@ namespace OpenKNX
         openknx.logger.color(0);
         showFilesystemDirectory("/");
         openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
-        openknx.logger.mutex_unblock();
+        logEnd();
     }
 
     void Console::showFilesystemDirectory(std::string path)
     {
-        openknx.logger.mutex_block();
+        logBegin();
         openknx.logger.log("Filesystem", "%s", path.c_str());
 
         Dir directory = LittleFS.openDir(path.c_str());
@@ -174,13 +174,13 @@ namespace OpenKNX
                 openknx.logger.log("Filesystem", "%s (%i bytes)", full.c_str(), directory.fileSize());
             }
         }
-        openknx.logger.mutex_unblock();
+        logEnd();
     }
 #endif
 
     void Console::showVersions()
     {
-        openknx.logger.mutex_block();
+        logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Versions ══════════════════════════════════════════════");
@@ -192,12 +192,12 @@ namespace OpenKNX
             openknx.logger.log(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
 
         openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
-        openknx.logger.mutex_unblock();
+        logEnd();
     }
 
     void Console::showHelp()
     {
-        openknx.logger.mutex_block();
+        logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Help ══════════════════════════════════════════════════");
@@ -227,7 +227,7 @@ namespace OpenKNX
             openknx.modules.list[i]->showHelp();
 
         openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
-        openknx.logger.mutex_unblock();
+        logEnd();
     }
 
     void Console::sleep()

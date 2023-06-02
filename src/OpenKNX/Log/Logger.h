@@ -129,6 +129,19 @@
 #define STATE_BY_CORE(X) X
 #endif
 
+/*
+ * Fetches an exclusive lock to allow contiguous output.
+ * This can be called multiple times per thread.
+ *
+ * Attention: The function blocks the other core if it also wants to output something.
+ * The lock should be active as short as possible. Do not use it if you do not know what you are doing!
+ */
+#define logBegin() openknx.logger.begin();
+/*
+ * Release the exclusive lock.
+ */
+#define logEnd() openknx.logger.end();
+
 namespace OpenKNX
 {
 
@@ -161,8 +174,20 @@ namespace OpenKNX
 
           public:
             Logger();
-            void mutex_block();
-            void mutex_unblock();
+
+            /*
+             * Fetches an exclusive lock to allow contiguous output.
+             * This can be called multiple times per thread.
+             *
+             * Attention: The function blocks the other core if it also wants to output something.
+             * The lock should be active as short as possible. Do not use it if you do not know what you are doing!
+             */
+            void begin();
+
+            /*
+             * Release the exclusive lock.
+             */
+            void end();
 
             std::string logPrefix(const std::string prefix, const std::string id);
             std::string logPrefix(const std::string prefix, const int id);
