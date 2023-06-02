@@ -114,7 +114,7 @@ for name, version in openknx_modules.items():
   version_file.write("#define {} \"{}\"\n".format(define_name, version))
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
-version_file.close
+version_file.close()
 print()
 
 
