@@ -1,5 +1,6 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
+#include "LittleFS.h"
 
 namespace OpenKNX
 {
@@ -56,6 +57,14 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         else if (cmd == "files" || cmd == "fs")
         {
+            showFilesystem();
+        }
+        else if (cmd == "file dummy")
+        {
+            File file = LittleFS.open("dummy.dummy", "a");
+            file.seek(rp2040.hwrand32());
+            file.write("DUMMY");
+            file.close();
             showFilesystem();
         }
         else if (cmd == "bootloader")
