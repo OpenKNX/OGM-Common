@@ -111,7 +111,9 @@ namespace OpenKNX
         void fatalError(uint8_t code, const char* message = 0);
         // CPU Temperatur
         float cpuTemperature();
+#ifdef ARDUINO_ARCH_RP2040
         // CPU Temperatur
         void initFilesystem();
+#endif
     };
 } // namespace OpenKNX

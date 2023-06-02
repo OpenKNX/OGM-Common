@@ -19,6 +19,7 @@ namespace OpenKNX
 #endif
     }
 
+#ifdef ARDUINO_ARCH_RP2040
     void Hardware::initFilesystem()
     {
         // normal
@@ -32,6 +33,7 @@ namespace OpenKNX
             fatalError(FATAL_INIT_FILESYSTEM, "Unable to initalize filesystem");
         }
     }
+#endif
 
     void Hardware::requestBcuSystemState()
     {

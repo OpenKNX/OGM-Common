@@ -1,6 +1,9 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
+
+#ifdef ARDUINO_ARCH_RP2040
 #include "LittleFS.h"
+#endif
 
 namespace OpenKNX
 {
