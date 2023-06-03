@@ -5,6 +5,13 @@
 #include "pico/sync.h"
 #endif
 
+#ifdef OPENKNX_RTT
+#include <RTTStream.h>
+#define OPENKNX_LOGGER_DEVICE openknx.logger.rtt
+#else
+#define OPENKNX_LOGGER_DEVICE SERIAL_DEBUG
+#endif
+
 #ifndef OPENKNX_MAX_LOG_PREFIX_LENGTH
 #define OPENKNX_MAX_LOG_PREFIX_LENGTH 23
 #endif
@@ -173,6 +180,9 @@ namespace OpenKNX
             uint8_t getIndent();
 
           public:
+#ifdef OPENKNX_RTT
+            RTTStream rtt;
+#endif
             Logger();
 
             /*

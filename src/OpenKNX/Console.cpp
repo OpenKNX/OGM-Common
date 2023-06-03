@@ -9,7 +9,7 @@ namespace OpenKNX
 {
     void Console::loop()
     {
-        if (SERIAL_DEBUG.available())
+        if (OPENKNX_LOGGER_DEVICE.available())
             processSerialInput();
     }
 
@@ -105,7 +105,7 @@ namespace OpenKNX
 
     void Console::processSerialInput()
     {
-        const uint8_t current = SERIAL_DEBUG.read();
+        const uint8_t current = OPENKNX_LOGGER_DEVICE.read();
         if (current == '\n')
         {
             openknx.logger.log(prompt);

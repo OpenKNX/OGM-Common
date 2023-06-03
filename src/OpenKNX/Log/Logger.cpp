@@ -68,7 +68,7 @@ namespace OpenKNX
             printMessage(message);
             if (isColorSet())
                 printColorCode(0);
-            SERIAL_DEBUG.println();
+            OPENKNX_LOGGER_DEVICE.println();
             printPrompt();
             end();
         }
@@ -85,7 +85,7 @@ namespace OpenKNX
             printMessage(message, args);
             if (isColorSet())
                 printColorCode(0);
-            SERIAL_DEBUG.println();
+            OPENKNX_LOGGER_DEVICE.println();
             printPrompt();
             end();
         }
@@ -98,7 +98,7 @@ namespace OpenKNX
             printPrefix(prefix);
             printIndent();
             printHex(data, size);
-            SERIAL_DEBUG.println();
+            OPENKNX_LOGGER_DEVICE.println();
             printPrompt();
             end();
         }
@@ -112,13 +112,13 @@ namespace OpenKNX
         {
             if (color > 0)
             {
-                SERIAL_DEBUG.print(ANSI_CODE "[38;5;");
-                SERIAL_DEBUG.print((int)color);
-                SERIAL_DEBUG.print("m");
+                OPENKNX_LOGGER_DEVICE.print(ANSI_CODE "[38;5;");
+                OPENKNX_LOGGER_DEVICE.print((int)color);
+                OPENKNX_LOGGER_DEVICE.print("m");
             }
             else
             {
-                SERIAL_DEBUG.print(ANSI_RESET);
+                OPENKNX_LOGGER_DEVICE.print(ANSI_RESET);
             }
         }
 
@@ -132,28 +132,32 @@ namespace OpenKNX
             for (size_t i = 0; i < size; i++)
             {
                 if (data[i] < 0x10)
-                    SERIAL_DEBUG.print("0");
+                    OPENKNX_LOGGER_DEVICE.print("0");
 
-                SERIAL_DEBUG.print(data[i], HEX);
-                SERIAL_DEBUG.print(" ");
+                OPENKNX_LOGGER_DEVICE.print(data[i], HEX);
+                OPENKNX_LOGGER_DEVICE.print(" ");
             }
         }
 
         void Logger::clearPreviouseLine()
         {
+#ifndef OPENKNX_RTT
             while (_lastConsoleLen > 0)
             {
                 _lastConsoleLen--;
-                SERIAL_DEBUG.print("\b");
+                OPENKNX_LOGGER_DEVICE.print("\b");
             }
-            SERIAL_DEBUG.print("\33[K");
+            OPENKNX_LOGGER_DEVICE.print("\33[K");
+#endif
         }
 
         void Logger::printPrompt()
         {
+#ifndef OPENKNX_RTT
             clearPreviouseLine();
-            SERIAL_DEBUG.print(openknx.console.prompt);
+            OPENKNX_LOGGER_DEVICE.print(openknx.console.prompt);
             _lastConsoleLen = strlen(openknx.console.prompt);
+#endif
         }
 
         void Logger::printPrefix(const std::string prefix)
@@ -163,15 +167,15 @@ namespace OpenKNX
             {
                 if (i < prefixLen)
                 {
-                    SERIAL_DEBUG.print(prefix.c_str()[i]);
+                    OPENKNX_LOGGER_DEVICE.print(prefix.c_str()[i]);
                 }
                 else if (i == prefixLen && prefixLen > 0)
                 {
-                    SERIAL_DEBUG.print(":");
+                    OPENKNX_LOGGER_DEVICE.print(":");
                 }
                 else
                 {
-                    SERIAL_DEBUG.print(" ");
+                    OPENKNX_LOGGER_DEVICE.print(" ");
                 }
             }
         }
@@ -180,19 +184,19 @@ namespace OpenKNX
         {
 #if defined(ARDUINO_ARCH_RP2040) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
             if (openknx.common.usesDualCore())
-                SERIAL_DEBUG.print(rp2040.cpuid() ? "_1> " : "0_> ");
+                OPENKNX_LOGGER_DEVICE.print(rp2040.cpuid() ? "_1> " : "0_> ");
 #endif
         }
 
         void Logger::printMessage(const std::string message)
         {
-            SERIAL_DEBUG.print(message.c_str());
+            OPENKNX_LOGGER_DEVICE.print(message.c_str());
         }
         void Logger::printMessage(const std::string message, va_list args)
         {
             char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
             vsnprintf(buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), args);
-            SERIAL_DEBUG.print(buffer);
+            OPENKNX_LOGGER_DEVICE.print(buffer);
         }
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
@@ -201,19 +205,19 @@ namespace OpenKNX
             MatchState ms;
             ms.Target((char*)prefix.c_str());
 #ifdef OPENKNX_TRACE1
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE1))>0)
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE2
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE2))>0)
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE3
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE3))>0)
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE4
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0 && ms.MatchCount (TRACE_STRINGIFY(OPENKNX_TRACE4))>0)
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0)
                 return true;
 #endif
 #ifdef OPENKNX_TRACE5
@@ -229,7 +233,7 @@ namespace OpenKNX
         {
             for (size_t i = 0; i < getIndent(); i++)
             {
-                SERIAL_DEBUG.print("  ");
+                OPENKNX_LOGGER_DEVICE.print("  ");
             }
         }
 

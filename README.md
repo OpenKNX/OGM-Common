@@ -57,6 +57,8 @@ KNX_UART_TX_PIN
 | OPENKNX_LOOPTIME_WARNING_INTERVAL | 1000 | ms | how often the warning may be issued in the console |
 | OPENKNX_DEBUG | | | Enable debug mode |
 | OPENKNX_TRACE1..5 | | | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters. |
+| OPENKNX_RTT | | | Enable RTT Mode (Disable USB Serial) + Increase BUFFER_SIZE_UP to 10240! |
+| BUFFER_SIZE_UP | 1024 | Bytes | Using by Segger RTT |
 
 ### Heartbeat (Mode: Normal)
 You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs.
