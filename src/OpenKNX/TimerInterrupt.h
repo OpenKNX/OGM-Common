@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 // Interval of interrupt for leds and free memory collector
-#define OPENKNX_INTERRUPT_TIMER_MS 2
+#define OPENKNX_INTERRUPT_TIMER_MS 3
 
 namespace OpenKNX
 {
