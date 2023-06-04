@@ -17,31 +17,27 @@
 #endif
 
 #ifndef OPENKNX_MAX_LOG_MESSAGE_LENGTH
-#define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
+#define OPENKNX_MAX_LOG_MESSAGE_LENGTH 500
 #endif
-
-#define ANSI_CODE "\033"
-#define ANSI_RESET ANSI_CODE "[0m"
-#define ANSI_COLOR(COLOR) ANSI_CODE "[38;5;" COLOR "m"
 
 #define logIndentUp() openknx.logger.indentUp()
 #define logIndentDown() openknx.logger.indentDown()
 #define logIndent(X) openknx.logger.indent(X)
 
 #define logError(...)                \
-    openknx.logger.color(1);         \
+    openknx.logger.color(31);        \
     openknx.logger.log(__VA_ARGS__); \
     openknx.logger.color(0)
 #define logErrorP(...)                            \
-    openknx.logger.color(1);                      \
+    openknx.logger.color(31);                     \
     openknx.logger.log(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #define logHexError(...)                \
-    openknx.logger.color(1);            \
+    openknx.logger.color(31);           \
     openknx.logger.logHex(__VA_ARGS__); \
     openknx.logger.color(0)
 #define logHexErrorP(...)                            \
-    openknx.logger.color(1);                         \
+    openknx.logger.color(31);                        \
     openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #define logInfo(...) openknx.logger.log(__VA_ARGS__)
@@ -74,28 +70,28 @@
 #define logTrace(prefix, ...)                    \
     if (openknx.logger.checkTrace(prefix))       \
     {                                            \
-        openknx.logger.color(8);                 \
+        openknx.logger.color(90);                \
         openknx.logger.log(prefix, __VA_ARGS__); \
         openknx.logger.color(0);                 \
     }
 #define logTraceP(...)                                \
     if (openknx.logger.checkTrace(logPrefix()))       \
     {                                                 \
-        openknx.logger.color(8);                      \
+        openknx.logger.color(90);                     \
         openknx.logger.log(logPrefix(), __VA_ARGS__); \
         openknx.logger.color(0);                      \
     }
 #define logHexTrace(prefix, ...)                    \
     if (openknx.logger.checkTrace(prefix))          \
     {                                               \
-        openknx.logger.color(8);                    \
+        openknx.logger.color(90);                   \
         openknx.logger.logHex(prefix, __VA_ARGS__); \
         openknx.logger.color(0);                    \
     }
 #define logHexTraceP(...)                                \
     if (openknx.logger.checkTrace(logPrefix()))          \
     {                                                    \
-        openknx.logger.color(8);                         \
+        openknx.logger.color(90);                        \
         openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
         openknx.logger.color(0);                         \
     }
@@ -108,19 +104,19 @@
 
 #ifdef OPENKNX_DEBUG
 #define logDebug(...)                \
-    openknx.logger.color(8);         \
+    openknx.logger.color(90);        \
     openknx.logger.log(__VA_ARGS__); \
     openknx.logger.color(0)
 #define logDebugP(...)                            \
-    openknx.logger.color(8);                      \
+    openknx.logger.color(90);                     \
     openknx.logger.log(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #define logHexDebug(...)                \
-    openknx.logger.color(8);            \
+    openknx.logger.color(90);           \
     openknx.logger.logHex(__VA_ARGS__); \
     openknx.logger.color(0)
 #define logHexDebugP(...)                            \
-    openknx.logger.color(8);                         \
+    openknx.logger.color(90);                        \
     openknx.logger.logHex(logPrefix(), __VA_ARGS__); \
     openknx.logger.color(0)
 #else
@@ -158,6 +154,7 @@ namespace OpenKNX
         {
           private:
             uint8_t _lastConsoleLen = 0;
+            char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
 #ifdef ARDUINO_ARCH_RP2040
             // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
@@ -174,6 +171,15 @@ namespace OpenKNX
             void printPrefix(const std::string prefix);
             void printCore();
             bool isColorSet();
+            /*
+             * RED             1
+             * GREEN           2
+             * YELLOW          3
+             * BLUE            4
+             * MAGENTA         5
+             * CYAN            6
+             * WHITE           7
+             */
             void printColorCode(uint8_t color);
             void printColorCode();
             void printIndent();

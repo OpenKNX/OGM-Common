@@ -1,7 +1,6 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Facade.h"
-
-
+#include "SEGGER_RTT.h"
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
 #include <Regexp.h>
 #endif
@@ -110,16 +109,11 @@ namespace OpenKNX
 
         void Logger::printColorCode(uint8_t color)
         {
-            if (color > 0)
-            {
-                OPENKNX_LOGGER_DEVICE.print(ANSI_CODE "[38;5;");
-                OPENKNX_LOGGER_DEVICE.print((int)color);
-                OPENKNX_LOGGER_DEVICE.print("m");
-            }
-            else
-            {
-                OPENKNX_LOGGER_DEVICE.print(ANSI_RESET);
-            }
+            OPENKNX_LOGGER_DEVICE.print("\x1B[");
+            // if (color > 0)
+            //     OPENKNX_LOGGER_DEVICE.print("2;");
+            OPENKNX_LOGGER_DEVICE.print((int)color);
+            OPENKNX_LOGGER_DEVICE.print("m");
         }
 
         void Logger::printColorCode()
@@ -194,9 +188,11 @@ namespace OpenKNX
         }
         void Logger::printMessage(const std::string message, va_list args)
         {
-            char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
-            vsnprintf(buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), args);
-            OPENKNX_LOGGER_DEVICE.print(buffer);
+            memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
+            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), args);
+            OPENKNX_LOGGER_DEVICE.print(_buffer);
+            if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
+                openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
         }
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)

@@ -15,6 +15,7 @@
 #define FATAL_SENS_UNKNOWN 5            // unknown or unsupported sensor
 #define FATAL_SCHEDULE_MAX_CALLBACKS 6  // Too many callbacks in scheduler
 #define FATAL_INIT_FILESYSTEM 10        // LittleFS.begin() failed
+#define FATAL_SYSTEM 20                 // Systemerror (e.g. buffer overrun)
 
 // NCN5130: internal commands
 #define U_RESET_REQ 0x01

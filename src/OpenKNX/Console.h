@@ -10,7 +10,7 @@ extern "C" {
 }
 #endif
 
-#define CONSOLE_HEADLINE_COLOR 11
+#define CONSOLE_HEADLINE_COLOR 33
 
 namespace OpenKNX
 {
