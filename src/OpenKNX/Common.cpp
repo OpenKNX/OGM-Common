@@ -226,14 +226,6 @@ namespace OpenKNX
     {
         logTraceP("setup");
 
-        // Register Callbacks for FunctionProperty also if the device is unloaded
-        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
-            return openknx.common.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
-        });
-        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
-            return openknx.common.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
-        });
-
         // Handle loop of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -253,6 +245,10 @@ namespace OpenKNX
 #ifdef OPENKNX_WATCHDOG
         watchdogSetup();
 #endif
+
+        // register callbacks
+        registerCallbacks();
+
         // setup complete turn infoLed off
         openknx.infoLed.off();
         _setupReady = true;
@@ -277,9 +273,6 @@ namespace OpenKNX
         }
 
         openknx.flash.load();
-
-        // register callbacks
-        registerCallbacks();
 
 #ifdef ARDUINO_ARCH_RP2040
         // Enable loop1 if any module use dual core
@@ -672,6 +665,18 @@ namespace OpenKNX
 
     void Common::registerCallbacks()
     {
+        // Register Callbacks for FunctionProperty also when knx ist not configured
+        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+            return openknx.common.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
+        });
+        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+            return openknx.common.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
+        });
+
+        // abort if knx not configured
+        if (!knx.configured())
+            return;
+
         knx.beforeRestartCallback([]() -> void {
             openknx.common.processBeforeRestart();
         });
