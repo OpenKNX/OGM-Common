@@ -106,8 +106,14 @@ namespace OpenKNX
     void Console::processSerialInput()
     {
         const uint8_t current = OPENKNX_LOGGER_DEVICE.read();
-        if (current == '\n')
+        if (current == '\r' || current == '\n')
         {
+            if (_consoleCharLast == '\r' && current == '\n')
+            {
+                _consoleCharLast = current;
+                return;
+            }
+
             openknx.logger.log(prompt);
 
             if (strlen(prompt) > 0)
@@ -123,6 +129,7 @@ namespace OpenKNX
             prompt[strlen(prompt)] = current;
 
         openknx.logger.printPrompt();
+        _consoleCharLast = current;
     }
 
     void Console::showInformations()
@@ -256,7 +263,8 @@ namespace OpenKNX
 #endif
     }
 
-    void Console::showMemory() {
+    void Console::showMemory()
+    {
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
     }
 
