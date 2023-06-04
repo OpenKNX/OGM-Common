@@ -36,7 +36,6 @@ namespace OpenKNX
         void showVersions();
         void showMemory();
 
-        bool confirmation(char key, uint8_t repeats, const char* message);
         void showHelp();
         void sleep();
         uint32_t sleepTime();

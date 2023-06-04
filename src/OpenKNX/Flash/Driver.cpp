@@ -41,7 +41,7 @@ namespace OpenKNX
 
         std::string Driver::logPrefix()
         {
-            return openknx.logger.logPrefix("FlashDriver", _id);
+            return openknx.logger.buildPrefix("FlashDriver", _id);
         }
 
         void Driver::printBaseInfo()

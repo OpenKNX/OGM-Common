@@ -37,7 +37,7 @@ namespace OpenKNX
 
     void Hardware::requestBcuSystemState()
     {
-        logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Request system state");
+        logDebug(openknx.logger.buildPrefix("Hardware", "BCU"), "Request system state");
         logIndentUp();
         uint8_t command[] = {U_SYSTEM_STATE, U_SYSTEM_STAT_IND};
         sendCommandToBcu(command, 2, "SYSTEM_STATE");
@@ -49,7 +49,7 @@ namespace OpenKNX
         if ((response[1] & 3) == 3) // second byte
             features |= BOARD_HW_NCN5130;
 
-        logHexTrace(openknx.logger.logPrefix("Hardware", "BCU"), response, 2);
+        logHexTrace(openknx.logger.buildPrefix("Hardware", "BCU"), response, 2);
         logIndentDown();
     }
 
@@ -59,7 +59,7 @@ namespace OpenKNX
             return;
 
         if (debug != nullptr)
-            logTrace(openknx.logger.logPrefix("Hardware", "BCU"), "Send command %s to BCU", debug);
+            logTrace(openknx.logger.buildPrefix("Hardware", "BCU"), "Send command %s to BCU", debug);
 
         // send system state command and interpret answer
         knx.platform().knxUart()->flush();
@@ -86,8 +86,8 @@ namespace OpenKNX
         {
             if (expected[i] != response[i])
             {
-                logError(openknx.logger.logPrefix("Hardware", "BCU"), "FAILED - received unexpected response:");
-                logHexError(openknx.logger.logPrefix("Hardware", "BCU"), response, length);
+                logError(openknx.logger.buildPrefix("Hardware", "BCU"), "FAILED - received unexpected response:");
+                logHexError(openknx.logger.buildPrefix("Hardware", "BCU"), response, length);
                 return false;
             }
         }
@@ -97,7 +97,7 @@ namespace OpenKNX
 
     void Hardware::deactivatePowerRail()
     {
-        logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Switching off 5V / 20V rail of BCU");
+        logDebug(openknx.logger.buildPrefix("Hardware", "BCU"), "Switching off 5V / 20V rail of BCU");
         logIndentUp();
         uint8_t command[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
         sendCommandToBcu(command, 2, "U_INT_REG_WR_REQ_ACR0");
@@ -107,7 +107,7 @@ namespace OpenKNX
 
     void Hardware::activatePowerRail()
     {
-        logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Switching on 5V rail of BCU");
+        logDebug(openknx.logger.buildPrefix("Hardware", "BCU"), "Switching on 5V rail of BCU");
         logIndentUp();
         uint8_t command[] = {U_INT_REG_WR_REQ_ACR0, ACR0_FLAG_DC2EN | ACR0_FLAG_V20VEN | ACR0_FLAG_XCLKEN | ACR0_FLAG_V20VCLIMIT};
         sendCommandToBcu(command, 2, "U_INT_REG_WR_REQ_ACR0");
@@ -116,7 +116,7 @@ namespace OpenKNX
 
     void Hardware::stopKnxMode(bool waiting /* = true */)
     {
-        logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Stop KNX Mode");
+        logDebug(openknx.logger.buildPrefix("Hardware", "BCU"), "Stop KNX Mode");
         logIndentUp();
         uint8_t command[] = {U_STOP_MODE_REQ};
         sendCommandToBcu(command, 1, "STOP_MODE");
@@ -134,7 +134,7 @@ namespace OpenKNX
 
     void Hardware::startKnxMode(bool waiting /* = true */)
     {
-        logDebug(openknx.logger.logPrefix("Hardware", "BCU"), "Start KNX Mode");
+        logDebug(openknx.logger.buildPrefix("Hardware", "BCU"), "Start KNX Mode");
         logIndentUp();
         uint8_t command[] = {U_EXIT_STOP_MODE_REQ};
         sendCommandToBcu(command, 1, "EXIT_STOP_MODE"); // U_RESET_IND

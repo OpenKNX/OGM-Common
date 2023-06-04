@@ -10,6 +10,6 @@ namespace OpenKNX
 
     const std::string Channel::logPrefix()
     {
-        return openknx.logger.logPrefix(name(), _channelIndex + 1);
+        return openknx.logger.buildPrefix(name(), _channelIndex + 1);
     }
 } // namespace OpenKNX

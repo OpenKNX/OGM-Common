@@ -30,7 +30,7 @@ namespace OpenKNX
             }
             else if (byte == '\n') // print the completed line
             {
-                openknx.logger.log(_prefix, _buffer);
+                openknx.logger.logWithPrefix(_prefix, _buffer);
                 _buffer.erase();
             }
             else

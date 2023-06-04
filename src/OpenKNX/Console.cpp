@@ -15,23 +15,23 @@ namespace OpenKNX
 
     void Console::processCommand(std::string cmd)
     {
-        if (cmd == "info" || cmd == "i")
+        if (cmd == "i" || cmd == "info")
         {
             showInformations();
         }
-        else if (cmd == "help" || cmd == "h")
+        else if (cmd == "h" || cmd == "help")
         {
             showHelp();
         }
-        else if (cmd == "versions" || cmd == "v")
+        else if (cmd == "v" || cmd == "versions")
         {
             showVersions();
         }
-        else if (cmd == "mem")
+        else if (cmd == "mem" || cmd == "memory")
         {
             showMemory();
         }
-        else if (cmd == "prog" || cmd == "p")
+        else if (cmd == "p" || cmd == "prog")
         {
             knx.toggleProgMode();
         }
@@ -39,7 +39,7 @@ namespace OpenKNX
         {
             sleep();
         }
-        else if (cmd == "restart" || cmd == "r")
+        else if (cmd == "r" || cmd == "restart")
         {
             delay(20);
             knx.platform().restart();
@@ -52,13 +52,13 @@ namespace OpenKNX
         {
             openknx.common.triggerSavePin();
         }
-        else if (cmd == "save" || cmd == "s" || cmd == "w")
+        else if (cmd == "s" || cmd == "w" || cmd == "save")
         {
             openknx.flash.save();
         }
 
 #ifdef ARDUINO_ARCH_RP2040
-        else if (cmd == "files" || cmd == "fs")
+        else if (cmd == "fs" || cmd == "files")
         {
             showFilesystem();
         }
@@ -98,8 +98,8 @@ namespace OpenKNX
                 if (openknx.modules.list[i]->processCommand(cmd, false))
                     return;
 
-            // Command not found;
-            openknx.logger.log("unknown command");
+            // Command not found
+            openknx.logger.logWithValues("%s: command not found", cmd.c_str());
         }
     }
 
@@ -132,17 +132,17 @@ namespace OpenKNX
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("════════════════════════ Information ═══════════════════════════════════════════");
         openknx.logger.color(0);
-        openknx.logger.log("KNX Address", "%s", openknx.info.humanIndividualAddress().c_str());
-        openknx.logger.log("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
-        openknx.logger.log("Firmware", "Number: %s  Version: %s  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.humanFirmwareVersion().c_str(), MAIN_OrderNumber);
-        openknx.logger.log("Serial number", "00FA:%08X", knx.platform().uniqueSerialNumber());
+        openknx.logger.logWithPrefixAndValues("KNX Address", "%s", openknx.info.humanIndividualAddress().c_str());
+        openknx.logger.logWithPrefixAndValues("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
+        openknx.logger.logWithPrefixAndValues("Firmware", "Number: %s  Version: %s  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.humanFirmwareVersion().c_str(), MAIN_OrderNumber);
+        openknx.logger.logWithPrefixAndValues("Serial number", "00FA:%08X", knx.platform().uniqueSerialNumber());
 #ifdef HARDWARE_NAME
-        openknx.logger.log("Board", "%s", HARDWARE_NAME);
+        openknx.logger.logWithPrefixAndValues("Board", "%s", HARDWARE_NAME);
 #endif
 #ifdef ARDUINO_ARCH_RP2040
         const char* cpuMode = openknx.common.usesDualCore() ? "Dual-Core" : "Single-Core";
 
-        openknx.logger.log("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
+        openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
         showMemory();
 
@@ -171,7 +171,7 @@ namespace OpenKNX
     void Console::showFilesystemDirectory(std::string path)
     {
         logBegin();
-        openknx.logger.log("Filesystem", "%s", path.c_str());
+        openknx.logger.logWithPrefixAndValues("Filesystem", "%s", path.c_str());
 
         Dir directory = LittleFS.openDir(path.c_str());
 
@@ -182,7 +182,7 @@ namespace OpenKNX
                 showFilesystemDirectory(full + "/");
             else
             {
-                openknx.logger.log("Filesystem", "%s (%i bytes)", full.c_str(), directory.fileSize());
+                openknx.logger.logWithPrefixAndValues("Filesystem", "%s (%i bytes)", full.c_str(), directory.fileSize());
             }
         }
         logEnd();
@@ -197,10 +197,10 @@ namespace OpenKNX
         openknx.logger.log("════════════════════════ Versions ══════════════════════════════════════════════");
         openknx.logger.color(0);
 
-        openknx.logger.log("KNX", KNX_Version);
-        openknx.logger.log("Firemware", MAIN_Version);
+        openknx.logger.logWithPrefix("KNX", KNX_Version);
+        openknx.logger.logWithPrefix("Firemware", MAIN_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            openknx.logger.log(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
+            openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
 
         openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
         logEnd();
@@ -217,7 +217,7 @@ namespace OpenKNX
         printHelpLine("help, h", "Show this help");
         printHelpLine("info, i", "Show generel information");
         printHelpLine("version, v", "Show compiled versions");
-        printHelpLine("mem", "Show memory usage");
+        printHelpLine("memory, mem", "Show memory usage");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("files, fs", "Show files on filesystem");
 #endif
@@ -256,27 +256,14 @@ namespace OpenKNX
 #endif
     }
 
-    bool Console::confirmation(char key, uint8_t repeats, const char* action)
-    {
-        if (_consoleCharRepeats < repeats)
-        {
-            openknx.logger.log("", "repeat \"%c\" %ix to trigger \"%s\"", key, (repeats - _consoleCharRepeats), action);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     void Console::showMemory() {
-        openknx.logger.log("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+        openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
     }
 
     void Console::printHelpLine(const char* command, const char* message)
     {
         // TODO Beautify
-        openknx.logger.log(command, message);
+        openknx.logger.logWithPrefix(command, message);
     }
 
 #ifdef ARDUINO_ARCH_RP2040
@@ -292,33 +279,33 @@ namespace OpenKNX
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
-            openknx.logger.log("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+            openknx.logger.logWithPrefixAndValues("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
             __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
         }
 
         if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
         {
-            openknx.logger.log("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+            openknx.logger.logWithPrefixAndValues("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
             __nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
         }
 
         if (mode == EraseMode::All || mode == EraseMode::Filesystem)
         {
-            openknx.logger.log("Erase", "Format Filesystem");
+            openknx.logger.logWithPrefix("Erase", "Format Filesystem");
             if (LittleFS.format())
             {
-                openknx.logger.log("Erase", "Succesful");
+                openknx.logger.logWithPrefix("Erase", "Succesful");
             }
         }
 
         if (mode == EraseMode::All)
         {
-            openknx.logger.log("Erase", "First bytes of Firmware");
+            openknx.logger.logWithPrefix("Erase", "First bytes of Firmware");
             __nukeFlash(0, 4096);
         }
 
         openknx.progLed.forceOn();
-        openknx.logger.log("Erase", "Completed");
+        openknx.logger.logWithPrefix("Erase", "Completed");
         delay(1000);
         openknx.logger.log("Restart device");
         delay(100);

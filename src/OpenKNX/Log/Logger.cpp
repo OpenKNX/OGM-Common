@@ -1,6 +1,10 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Facade.h"
+
+#ifdef OPENKNX_RTT
 #include "SEGGER_RTT.h"
+#endif
+
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
 #include <Regexp.h>
 #endif
@@ -35,71 +39,116 @@ namespace OpenKNX
             STATE_BY_CORE(_color) = color;
         }
 
-        std::string Logger::logPrefix(const std::string prefix, const std::string id)
+        std::string Logger::buildPrefix(const std::string prefix, const std::string id)
         {
             char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
             sprintf(buffer, "%s<%s>", prefix.c_str(), id.c_str());
             return std::string(buffer);
         }
 
-        std::string Logger::logPrefix(const std::string prefix, const int id)
+        std::string Logger::buildPrefix(const std::string prefix, const int id)
         {
             char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH];
             sprintf(buffer, "%s<%i>", prefix.c_str(), id);
             return std::string(buffer);
         }
 
-        void Logger::log(const std::string prefix, const std::string message, ...)
+        void Logger::beforeLog()
         {
-            va_list args;
-            va_start(args, message);
-            log(prefix, message, args);
-            va_end(args);
+            begin();
+            clearPreviouseLine();
+            if (isColorSet())
+                printColorCode();
+            printCore();
+        }
+        void Logger::afterLog()
+        {
+            if (isColorSet())
+                printColorCode(0);
+            OPENKNX_LOGGER_DEVICE.println();
+            printPrompt();
+            end();
         }
 
         void Logger::log(const std::string message)
         {
-            begin();
-            clearPreviouseLine();
-            if (isColorSet())
-                printColorCode();
-            printCore();
+            beforeLog();
             printMessage(message);
-            if (isColorSet())
-                printColorCode(0);
-            OPENKNX_LOGGER_DEVICE.println();
-            printPrompt();
-            end();
+            afterLog();
         }
 
-        void Logger::log(const std::string prefix, const std::string message, va_list args)
+        void Logger::logWithPrefix(const std::string prefix, const std::string message)
         {
-            begin();
-            clearPreviouseLine();
-            if (isColorSet())
-                printColorCode();
-            printCore();
+            beforeLog();
             printPrefix(prefix);
             printIndent();
-            printMessage(message, args);
-            if (isColorSet())
-                printColorCode(0);
-            OPENKNX_LOGGER_DEVICE.println();
-            printPrompt();
-            end();
+            printMessage(message);
+            afterLog();
         }
 
-        void Logger::logHex(const std::string prefix, const uint8_t* data, size_t size)
+        void Logger::logWithPrefixAndValues(const std::string prefix, const std::string message, ...)
         {
-            begin();
-            clearPreviouseLine();
-            printCore();
+            va_list values;
+            va_start(values, message);
+            logWithPrefixAndValues(prefix, message, values);
+            va_end(values);
+        }
+
+        void Logger::logWithPrefixAndValues(const std::string prefix, const std::string message, va_list values)
+        {
+            beforeLog();
+            printPrefix(prefix);
+            printIndent();
+            printMessage(message, values);
+            afterLog();
+        }
+
+        void Logger::logWithValues(const std::string message, ...)
+        {
+            va_list values;
+            va_start(values, message);
+            logWithValues(message, values);
+            va_end(values);
+        }
+
+        void Logger::logWithValues(const std::string message, va_list values)
+        {
+            beforeLog();
+            printMessage(message, values);
+            afterLog();
+        }
+
+        void Logger::logHex(const uint8_t* data, size_t size)
+        {
+            beforeLog();
+            printHex(data, size);
+            afterLog();
+        }
+
+        void Logger::logHexWithPrefix(const std::string prefix, const uint8_t* data, size_t size)
+        {
+            beforeLog();
             printPrefix(prefix);
             printIndent();
             printHex(data, size);
-            OPENKNX_LOGGER_DEVICE.println();
-            printPrompt();
-            end();
+            afterLog();
+        }
+
+        void Logger::logMacroWrapper(uint8_t logColor, const std::string prefix, const std::string message, ...)
+        {
+            color(logColor);
+            va_list values;
+            va_start(values, message);
+            logWithPrefixAndValues(prefix, message, values);
+            va_end(values);
+            color(0);
+        }
+
+        void Logger::logHexMacroWrapper(uint8_t logColor, const std::string prefix, const uint8_t* data, size_t size)
+        {
+            color(logColor);
+            logHexWithPrefix(prefix, data, size);
+            color(0);
         }
 
         bool Logger::isColorSet()
@@ -110,8 +159,6 @@ namespace OpenKNX
         void Logger::printColorCode(uint8_t color)
         {
             OPENKNX_LOGGER_DEVICE.print("\x1B[");
-            // if (color > 0)
-            //     OPENKNX_LOGGER_DEVICE.print("2;");
             OPENKNX_LOGGER_DEVICE.print((int)color);
             OPENKNX_LOGGER_DEVICE.print("m");
         }
@@ -186,10 +233,11 @@ namespace OpenKNX
         {
             OPENKNX_LOGGER_DEVICE.print(message.c_str());
         }
-        void Logger::printMessage(const std::string message, va_list args)
+
+        void Logger::printMessage(const std::string message, va_list values)
         {
             memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
-            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), args);
+            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), values);
             OPENKNX_LOGGER_DEVICE.print(_buffer);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
                 openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");

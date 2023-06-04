@@ -249,7 +249,7 @@ namespace OpenKNX
 
     std::string Led::logPrefix()
     {
-        return openknx.logger.logPrefix("LED", _pin);
+        return openknx.logger.buildPrefix("LED", _pin);
     }
 
 } // namespace OpenKNX
