@@ -30,6 +30,15 @@ print("Build Versions")
 
 project = ProjectAsLibBuilder(env, "$PROJECT_DIR")
 
+basepath = ""
+if os.path.exists("lib/"):
+  basepath = "lib"
+else:
+  basepath = ".pio/libdeps/" + env["PIOENV"]
+
+
+
+
 # rescan dependencies just like in py file above. otherwise dependenceis are empty
 ldf_mode = LibBuilderBase.lib_ldf_mode.fget(project)
 lib_builders = env.GetLibBuilders()
@@ -94,7 +103,7 @@ openknx_modules = {k: v for k, v in library_versions.items() if k.startswith("OG
 base_dir = pathlib.Path().resolve()
 for name, lib_version in openknx_modules.items():
   try:
-    git_version = get_git_version(base_dir / "lib" / name)
+    git_version = get_git_version(base_dir / basepath / name)
     if git_version != None:
       if lib_version != None and lib_version != "None":
         openknx_modules[name] = lib_version.split("+")[0] + "+" + git_version
@@ -104,10 +113,10 @@ for name, lib_version in openknx_modules.items():
     pass
 
 # build defines
-version_file = open("lib/OGM-Common/include/versions.h", "w")
+version_file = open(basepath + "/OGM-Common/include/versions.h", "w")
 version_file.write("#pragma once\n\n")
 version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
-version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_dir / "lib" / "knx")))
+version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_dir / basepath / "knx")))
 # additional_defines = dict()
 for name, version in openknx_modules.items():
   define_name = "MODULE_" + name.split("-")[1] + "_Version"
