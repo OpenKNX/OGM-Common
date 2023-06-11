@@ -608,58 +608,23 @@ namespace OpenKNX
         openknx.flash.save();
         logIndentDown();
     }
+
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
-    void Common::processInputKo(GroupObject &iKo)
+    void Common::processInputKo(GroupObject &ko)
     {
 #ifdef LOG_KoDiagnose
-        if (iKo.asap() == LOG_KoDiagnose)
+        if (ko.asap() == LOG_KoDiagnose)
         {
-            processDiagnoseCommand(iKo);
-        }
-        else
-        {
-#endif
-            for (uint8_t i = 0; i < openknx.modules.count; i++)
-            {
-                openknx.modules.list[i]->processInputKo(iKo);
-            }
-#ifdef LOG_KoDiagnose
+            openknx.console.processDiagnoseKo(ko);
+            return;
         }
 #endif
-    }
 
-#ifdef LOG_KoDiagnose
-    void Common::processDiagnoseCommand(GroupObject &iKo)
-    {
-        static bool processDiagnoseCommandCalled = false;
-
-        if (!processDiagnoseCommandCalled)
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            processDiagnoseCommandCalled = true;
-            // we store received diagnose command
-            memcpy(_diagnoseInput, iKo.valueRef(), 14);
-            for (uint8_t i = 0; i < openknx.modules.count; i++)
-            {
-                // init output buffer
-                memset(_diagnoseOutput, 0, 15);
-                bool output = true;
-                // allow multiline output per module, max 10 lines
-                for (uint8_t count = 0; count < 10 && output; count++)
-                {
-                    output = openknx.modules.list[i]->processDiagnoseCommand(_diagnoseInput, _diagnoseOutput, count);
-                    if (output)
-                    {
-                        _diagnoseOutput[15] = 0;
-                        iKo.value(_diagnoseOutput, Dpt(16, 1));
-                        logInfoP("Diagnose: %s", _diagnoseOutput);
-                        knx.loop();
-                    }
-                }
-            }
-            processDiagnoseCommandCalled = false;
+            openknx.modules.list[i]->processInputKo(ko);
         }
     }
-#endif
 
 #endif
 

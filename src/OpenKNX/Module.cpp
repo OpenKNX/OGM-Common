@@ -57,7 +57,7 @@ namespace OpenKNX
         // logInfoP("Some-Integer: %i", myInteger);
     }
 
-    bool Module::processCommand(const std::string cmd, bool debugKo)
+    bool Module::processCommand(const std::string cmd, bool diagnoseKo)
     {
         return false;
     }

@@ -13,13 +13,61 @@ namespace OpenKNX
             processSerialInput();
     }
 
-    void Console::processCommand(std::string cmd)
+#ifdef LOG_KoDiagnose
+    void Console::writeDiagenoseKo(const char* message)
     {
-        if (cmd == "i" || cmd == "info")
+        _diagnoseKoOutput = true;
+        KoLOG_Diagnose.value(message, Dpt(16, 1));
+        knx.loop();
+        _diagnoseKoOutput = false;
+    }
+
+    void Console::writeDiagenoseKo(const char* message, ...)
+    {
+        va_list values;
+        va_start(values, message);
+
+        char buffer[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Last Byte muss Zero!
+        uint8_t len = vsnprintf(buffer, 15, message, values);
+
+        if (len >= 15)
+            openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: writeDiagenoseKo message too long");
+
+        va_end(values);
+
+        _diagnoseKoOutput = true;
+        KoLOG_Diagnose.value(buffer, Dpt(16, 1));
+        knx.loop();
+        _diagnoseKoOutput = false;
+    }
+
+    void Console::processDiagnoseKo(GroupObject& ko)
+    {
+        // prevent the nested call by the output on the diagnose ko
+        if (_diagnoseKoOutput)
+            return;
+
+        // prevent empty command
+        if (ko.valueRef()[0] == '\0')
+            return;
+
+        openknx.logger.logWithPrefixAndValues("DiagnoseKO", "command \"%s\" received", ko.valueRef());
+        logIndentUp();
+
+        if (!processCommand((char*)ko.valueRef(), true))
+            openknx.logger.logWithPrefix("DiagnoseKO", "command not found");
+
+        logIndentDown();
+    }
+#endif
+
+    bool Console::processCommand(std::string cmd, bool diagnoseKo /* = false */)
+    {
+        if (!diagnoseKo && (cmd == "i" || cmd == "info"))
         {
             showInformations();
         }
-        else if (cmd == "h" || cmd == "help")
+        else if (!diagnoseKo && (cmd == "h" || cmd == "help"))
         {
             showHelp();
         }
@@ -27,28 +75,28 @@ namespace OpenKNX
         {
             showVersions();
         }
-        else if (cmd == "mem" || cmd == "memory")
+        else if (cmd == "m" || cmd == "mem" || cmd == "memory")
         {
-            showMemory();
+            showMemory(diagnoseKo);
         }
-        else if (cmd == "p" || cmd == "prog")
+        else if (!diagnoseKo && (cmd == "p" || cmd == "prog"))
         {
             knx.toggleProgMode();
         }
-        else if (cmd == "sleep")
+        else if (!diagnoseKo && (cmd == "sleep"))
         {
             sleep();
         }
-        else if (cmd == "r" || cmd == "restart")
+        else if (!diagnoseKo && (cmd == "r" || cmd == "restart"))
         {
             delay(20);
             knx.platform().restart();
         }
-        else if (cmd == "fatal")
+        else if (!diagnoseKo && (cmd == "fatal"))
         {
             openknx.hardware.fatalError(5, "Test with 5x blinking");
         }
-        else if (cmd == "powerloss")
+        else if (!diagnoseKo && (cmd == "powerloss"))
         {
             openknx.common.triggerSavePin();
         }
@@ -58,11 +106,11 @@ namespace OpenKNX
         }
 
 #ifdef ARDUINO_ARCH_RP2040
-        else if (cmd == "fs" || cmd == "files")
+        else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
         {
             showFilesystem();
         }
-        else if (cmd == "file dummy")
+        else if (!diagnoseKo && (cmd == "file dummy"))
         {
             File file = LittleFS.open("dummy.dummy", "a");
             file.seek(rp2040.hwrand32());
@@ -70,23 +118,23 @@ namespace OpenKNX
             file.close();
             showFilesystem();
         }
-        else if (cmd == "bootloader")
+        else if (!diagnoseKo && (cmd == "bootloader"))
         {
             resetToBootloader();
         }
-        else if (cmd == "erase knx")
+        else if (!diagnoseKo && (cmd == "erase knx"))
         {
             erase(EraseMode::KnxFlash);
         }
-        else if (cmd == "erase openknx")
+        else if (!diagnoseKo && (cmd == "erase openknx"))
         {
             erase(EraseMode::OpenKnxFlash);
         }
-        else if (cmd == "erase files")
+        else if (!diagnoseKo && (cmd == "erase files"))
         {
             erase(EraseMode::Filesystem);
         }
-        else if (cmd == "erase all")
+        else if (!diagnoseKo && (cmd == "erase all"))
         {
             erase(EraseMode::All);
         }
@@ -96,11 +144,10 @@ namespace OpenKNX
             // check modules for command
             for (uint8_t i = 0; i < openknx.modules.count; i++)
                 if (openknx.modules.list[i]->processCommand(cmd, false))
-                    return;
-
-            // Command not found
-            openknx.logger.logWithValues("%s: command not found", cmd.c_str());
+                    return true;
+            return false;
         }
+        return true;
     }
 
     void Console::processSerialInput()
@@ -115,10 +162,14 @@ namespace OpenKNX
             }
 
             openknx.logger.log(prompt);
-
             if (strlen(prompt) > 0)
-                processCommand(prompt);
-
+            {
+                if (!processCommand(prompt))
+                {
+                    // Command not found
+                    openknx.logger.logWithValues("%s: command not found", prompt);
+                }
+            }
             memset(prompt, 0, 15); // Reset Promptbuffer
         }
 
@@ -263,9 +314,17 @@ namespace OpenKNX
 #endif
     }
 
-    void Console::showMemory()
+    void Console::showMemory(bool diagnoseKo /* = false */)
     {
-        openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+        if (diagnoseKo)
+        {
+            openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));
+            openknx.console.writeDiagenoseKo("CUR %.3fKiB", ((float)freeMemory() / 1024));
+        }
+        else
+        {
+            openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+        }
     }
 
     void Console::printHelpLine(const char* command, const char* message)
