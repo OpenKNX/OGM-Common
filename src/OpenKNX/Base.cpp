@@ -37,6 +37,7 @@ namespace OpenKNX
     {
         return false;
     }
+    
     bool Base::processDiagnoseCommand(const char *input, char *output, uint8_t line)
     {
         return false;

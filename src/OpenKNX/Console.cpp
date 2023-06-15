@@ -14,14 +14,6 @@ namespace OpenKNX
     }
 
 #ifdef LOG_KoDiagnose
-    void Console::writeDiagenoseKo(const char* message)
-    {
-        _diagnoseKoOutput = true;
-        KoLOG_Diagnose.value(message, Dpt(16, 1));
-        knx.loop();
-        _diagnoseKoOutput = false;
-    }
-
     void Console::writeDiagenoseKo(const char* message, ...)
     {
         va_list values;
