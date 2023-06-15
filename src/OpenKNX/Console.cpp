@@ -313,10 +313,8 @@ namespace OpenKNX
             openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));
             openknx.console.writeDiagenoseKo("CUR %.3fKiB", ((float)freeMemory() / 1024));
         }
-        else
-        {
-            openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
-        }
+
+        openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
     }
 
     void Console::printHelpLine(const char* command, const char* message)
