@@ -6,7 +6,7 @@ namespace OpenKNX
 {
     namespace Log
     {
-        class VirtualSerial : public arduino::Stream
+        class VirtualSerial : public Stream
         {
           private:
             const char* _prefix;
