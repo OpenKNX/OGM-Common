@@ -73,10 +73,5 @@ namespace OpenKNX
          */
 
         virtual bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength);
-        
-        /*
-         * old
-         */
-        virtual bool processDiagnoseCommand(const char *input, char *output, uint8_t count);
     };
 } // namespace OpenKNX
