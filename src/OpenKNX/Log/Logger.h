@@ -197,6 +197,7 @@ namespace OpenKNX
 #endif
             void printPrompt();
             void clearPreviouseLine();
+            void logOpenKnxHeader();
         };
     } // namespace Log
 } // namespace OpenKNX

@@ -316,5 +316,67 @@ namespace OpenKNX
         {
             return STATE_BY_CORE(_indent);
         }
+
+        // Open #
+        // +----+
+        // # KNX
+        void Logger::logOpenKnxHeader()
+        {
+            const u_int8_t colorLightGray = 90;
+            const u_int8_t colorWhite = 37;
+            const u_int8_t colorGreen = 32;
+
+            begin();
+
+            SERIAL_DEBUG.println();
+            printMessage("+------------+-----------------------------------------------------------------+");
+            SERIAL_DEBUG.println();
+            printMessage("|            |                                                                 |");
+            SERIAL_DEBUG.println();
+
+            // Line 1: "Open #"
+            printMessage("|   ");
+            printColorCode(colorLightGray);
+            printMessage("Open ");
+            printColorCode(colorGreen);
+            printMessage("#");
+            printColorCode(0);
+
+            char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
+            snprintf(buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, "Device: %s (%s) - Address: %s", MAIN_OrderNumber, openknx.info.humanFirmwareVersion().c_str(), openknx.info.humanIndividualAddress().c_str());
+            printMessage("   |   ");
+            printMessage(buffer);
+
+            for (uint8_t i = 0; i < (62 - strlen(buffer)); i++)
+                printMessage(" ");
+            printMessage("|");
+
+            // Line 2: "+----+"
+            SERIAL_DEBUG.println();
+            printMessage("|   ");
+            printColorCode(colorGreen);
+            printMessage("+----+");
+            printColorCode(0);
+            printMessage("   |                                                                 |");
+            SERIAL_DEBUG.println();
+
+            // Line 3: "# KNX "
+            printMessage("|   ");
+            printColorCode(colorGreen);
+            printMessage("#");
+            printColorCode(colorWhite);
+            printMessage(" KNX ");
+            printColorCode(0);
+            printMessage("   |   www.openknx.de - wiki.openknx.de - forum.openknx.de           |");
+
+            SERIAL_DEBUG.println();
+            printMessage("|            |                                                                 |");
+            SERIAL_DEBUG.println();
+            printMessage("+------------+-----------------------------------------------------------------+");
+            SERIAL_DEBUG.println();
+            SERIAL_DEBUG.println();
+
+            end();
+        }
     } // namespace Log
 } // namespace OpenKNX

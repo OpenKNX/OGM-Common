@@ -252,6 +252,8 @@ namespace OpenKNX
         // setup complete turn infoLed off
         openknx.infoLed.off();
         _setupReady = true;
+
+        openknx.logger.logOpenKnxHeader();
     }
 
     void Common::appSetup()
