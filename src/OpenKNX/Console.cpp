@@ -137,7 +137,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("════════════════════════ Information ═══════════════════════════════════════════");
+        openknx.logger.log("======================== Information ===========================================");
         openknx.logger.color(0);
         openknx.logger.logWithPrefixAndValues("KNX Address", "%s", openknx.info.humanIndividualAddress().c_str());
         openknx.logger.logWithPrefixAndValues("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
@@ -156,7 +156,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showInformations();
 
-        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+        openknx.logger.log("--------------------------------------------------------------------------------");
         openknx.logger.log("");
         logEnd();
     }
@@ -167,11 +167,11 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("════════════════════════ Filesystem ════════════════════════════════════════════");
+        openknx.logger.log("======================== Filesystem ============================================");
 
         openknx.logger.color(0);
         showFilesystemDirectory("/");
-        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+        openknx.logger.log("--------------------------------------------------------------------------------");
         logEnd();
     }
 
@@ -201,7 +201,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("════════════════════════ Versions ══════════════════════════════════════════════");
+        openknx.logger.log("======================== Versions ==============================================");
         openknx.logger.color(0);
 
         openknx.logger.logWithPrefix("KNX", KNX_Version);
@@ -209,7 +209,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
 
-        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+        openknx.logger.log("--------------------------------------------------------------------------------");
         logEnd();
     }
 
@@ -218,7 +218,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("════════════════════════ Help ══════════════════════════════════════════════════");
+        openknx.logger.log("======================== Help ==================================================");
         openknx.logger.color(0);
         openknx.logger.log("Command(s)               Description");
         printHelpLine("help, h", "Show this help");
@@ -244,7 +244,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showHelp();
 
-        openknx.logger.log("────────────────────────────────────────────────────────────────────────────────");
+        openknx.logger.log("--------------------------------------------------------------------------------");
         logEnd();
     }
 
