@@ -239,7 +239,7 @@ namespace OpenKNX
                     loadedModules[moduleId] = true;
                     logIndentDown();
                 }
-                _currentReadAddress = (_currentReadAddress + moduleSize);
+                _currentReadAddress = readOffset() - FLASH_DATA_META_LEN - dataSize + dataProcessed;
             }
             logIndentDown();
         }
