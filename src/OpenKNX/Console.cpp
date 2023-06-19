@@ -135,7 +135,7 @@ namespace OpenKNX
         {
             // check modules for command
             for (uint8_t i = 0; i < openknx.modules.count; i++)
-                if (openknx.modules.list[i]->processCommand(cmd, false))
+                if (openknx.modules.list[i]->processCommand(cmd, diagnoseKo))
                     return true;
             return false;
         }
