@@ -38,8 +38,6 @@ namespace OpenKNX
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
-        char _diagnoseInput[15];
-        char _diagnoseOutput[15] = {0};
 
         void initKnx();
         void appSetup();
@@ -97,8 +95,7 @@ namespace OpenKNX
         void processBeforeRestart();
         void processBeforeTablesUnload();
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
-        void processInputKo(GroupObject& iKo);
-        void processDiagnoseCommand(GroupObject& iKo);
+        void processInputKo(GroupObject& ko);
 #endif
         std::string logPrefix();
     };

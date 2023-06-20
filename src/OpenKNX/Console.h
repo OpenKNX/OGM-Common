@@ -1,5 +1,6 @@
 #pragma once
-#include <Arduino.h>
+#include "OpenKNX/defines.h"
+#include "knx.h"
 #include <string>
 #ifdef WATCHDOG
 #include <Adafruit_SleepyDog.h>
@@ -30,16 +31,16 @@ namespace OpenKNX
       private:
         uint8_t _consoleCharRepeats = 0;
         uint8_t _consoleCharLast = 0x0;
+        bool _diagnoseKoOutput = false;
 
         void processSerialInput();
         void showInformations();
         void showVersions();
-        void showMemory();
+        void showMemory(bool diagnoseKo = false);
 
         void showHelp();
         void sleep();
         uint32_t sleepTime();
-        void processCommand(std::string cmd);
 #ifdef ARDUINO_ARCH_RP2040
         void resetToBootloader();
         void showFilesystem();
@@ -52,5 +53,10 @@ namespace OpenKNX
         void loop();
 
         void printHelpLine(const char* command, const char* message);
+        bool processCommand(std::string cmd, bool diagnoseKo = false);
+#ifdef LOG_KoDiagnose
+        void processDiagnoseKo(GroupObject& ko);
+        void writeDiagenoseKo(const char* message, ...);
+#endif
     };
 } // namespace OpenKNX

@@ -10,14 +10,16 @@ namespace OpenKNX
         uint8_t _channelIndex = 0;
 
         /*
-         * Get a Pointer to a name for Log
-         * THe point need to be delete[] after usage!
+         * Build prefix for a Channel. Format is: ChannelName<ChannelIndex>
+         *
+         * @return prefix
          */
         virtual const std::string logPrefix() override;
 
       public:
         /*
          * The channel index
+         *
          * @return channelIndex
          */
         virtual uint8_t channelIndex();
