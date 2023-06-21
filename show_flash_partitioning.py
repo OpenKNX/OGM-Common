@@ -116,7 +116,7 @@ def show_flash_partitioning(source, target, env):
         if m is not None:
             size += int(m.group(1))
         
-        if projenv['BOARD'] == 'pico':
+        if projenv['PIOPLATFORM'] == 'raspberrypi':
             size -= 268435456 # subtract start of flash address pointer
 
         return size
@@ -149,7 +149,7 @@ def show_flash_partitioning(source, target, env):
     flash_end = 0
 
     firmware_end = firmware_size(env)
-    if projenv['BOARD'] == 'pico':
+    if projenv['PIOPLATFORM'] == 'raspberrypi':
         eeprom_start = env["PICO_EEPROM_START"] - 268435456
         flash_end = eeprom_start + 4096
         system_end = eeprom_start
