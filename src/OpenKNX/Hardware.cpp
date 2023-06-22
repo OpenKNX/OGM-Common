@@ -22,15 +22,13 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
     void Hardware::initFilesystem()
     {
-        // normal
-        LittleFSConfig cfg;
-        // Default is already auto format
-        cfg.setAutoFormat(true);
-        LittleFS.setConfig(cfg);
-
         if (!LittleFS.begin())
         {
-            fatalError(FATAL_INIT_FILESYSTEM, "Unable to initalize filesystem");
+            LittleFS.format(); // AutoFormat not working. SO format and try it again.
+            if (!LittleFS.begin())
+            {
+                fatalError(FATAL_INIT_FILESYSTEM, "Unable to initalize filesystem");
+            }
         }
     }
 #endif
