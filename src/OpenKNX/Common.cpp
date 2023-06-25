@@ -202,7 +202,7 @@ namespace OpenKNX
         openknx.infoLed.blinking();
 #endif
 
-#if OPENKNX_WAIT_FOR_SERIAL > 1
+#if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT)
         while (!SERIAL_DEBUG)
         {
             if (delayCheck(timeoutBase, OPENKNX_WAIT_FOR_SERIAL))
@@ -217,9 +217,6 @@ namespace OpenKNX
         openknx.progLed.on();
         openknx.infoLed.on();
 #endif
-
-        // for serial output
-        delay(50); // delay in bootup is not critical
     }
 
     void Common::setup()

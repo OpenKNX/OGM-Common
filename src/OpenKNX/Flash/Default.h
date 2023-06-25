@@ -212,10 +212,12 @@ namespace OpenKNX
             void writeByte(uint8_t value);
             void writeWord(uint16_t value);
             void writeInt(uint32_t value);
+            void writeFloat(float value);
             uint8_t *read(uint16_t size = 1);
             uint8_t readByte();
             uint16_t readWord();
             uint32_t readInt();
+            float readFloat();
             uint16_t firmwareVersion();
 
           private:

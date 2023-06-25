@@ -48,7 +48,7 @@ def post_program_action(source, target, env):
     else:
         application_number = int(m.group(2))
 
-    m = re.search("#define MAIN_ApplicationVersion (0x)?([0-9A-Fa-f]{1,2})", content)
+    m = re.search("#define MAIN_ApplicationVersion (0x)?([0-9A-Fa-f]{1,3})", content)
     if m is None:
         print("{}  {}{}".format(console_color.RED, "Error: ApplicationVersion not readable", console_color.END))
         return

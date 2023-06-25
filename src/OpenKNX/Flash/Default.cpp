@@ -239,7 +239,7 @@ namespace OpenKNX
                     loadedModules[moduleId] = true;
                     logIndentDown();
                 }
-                _currentReadAddress = (_currentReadAddress + moduleSize);
+                _currentReadAddress = readOffset() - FLASH_DATA_META_LEN - dataSize + dataProcessed;
             }
             logIndentDown();
         }
@@ -412,6 +412,11 @@ namespace OpenKNX
             write((uint8_t *)&value, 4);
         }
 
+        void Default::writeFloat(float value)
+        {
+            write((uint8_t *)&value, 4);
+        }
+
         void Default::writeFilldata()
         {
             uint16_t fillSize = (_maxWriteAddress - _currentWriteAddress);
@@ -444,6 +449,12 @@ namespace OpenKNX
         {
             _currentReadAddress += 4;
             return _flashDriver->readInt(_currentReadAddress - 4);
+        }
+
+        float Default::readFloat()
+        {
+            _currentReadAddress += 4;
+            return _flashDriver->readFloat(_currentReadAddress - 4);
         }
 
         uint16_t Default::firmwareVersion()

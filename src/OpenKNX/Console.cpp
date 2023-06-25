@@ -308,12 +308,13 @@ namespace OpenKNX
 
     void Console::showMemory(bool diagnoseKo /* = false */)
     {
+#ifdef LOG_KoDiagnose
         if (diagnoseKo)
         {
             openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));
             openknx.console.writeDiagenoseKo("CUR %.3fKiB", ((float)freeMemory() / 1024));
         }
-
+#endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
     }
 
