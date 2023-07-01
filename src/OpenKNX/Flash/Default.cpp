@@ -143,6 +143,7 @@ namespace OpenKNX
             logDebugP("Data size: %i", dataSize);
 
             const uint8_t version = readByte();
+            if (version >= 0); // do nothing prevents warning for line above
             logDebugP("Version: %i", version);
 
             const uint16_t checksum = readWord();
