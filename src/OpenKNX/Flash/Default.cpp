@@ -198,7 +198,9 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             // On RP2020 we need to erase next slot for fast writing on powerloss
+#ifdef LogDebugP            
             const uint32_t start = millis();
+#endif
             logDebugP("Erase slot %i", slot);
             logIndentUp();
             _flashDriver->write(slotOffset(slot) - slotSize(), 0xFF, slotSize());
