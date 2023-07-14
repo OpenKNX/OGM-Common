@@ -37,6 +37,7 @@ namespace OpenKNX
         void showInformations();
         void showVersions();
         void showMemory(bool diagnoseKo = false);
+        void showMemoryContent(uint8_t* start, uint32_t size);
 
         void showHelp();
         void sleep();

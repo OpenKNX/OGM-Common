@@ -96,6 +96,16 @@ namespace OpenKNX
         {
             openknx.flash.save();
         }
+        else if (cmd == "mem knx")
+        {
+            showMemoryContent((uint8_t*)KNX_FLASH_OFFSET+XIP_BASE, KNX_FLASH_SIZE);
+        }
+        else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
+        {
+            std::string adrstr = cmd.substr(6, cmd.length()-6);
+            uint32_t adr = std::stoi(adrstr, nullptr, 16);
+            showMemoryContent((uint8_t*)adr, 0x1000);
+        }
 
 #ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
@@ -268,6 +278,8 @@ namespace OpenKNX
         printHelpLine("info, i", "Show generel information");
         printHelpLine("version, v", "Show compiled versions");
         printHelpLine("memory, mem", "Show memory usage");
+        printHelpLine("mem knx", "Show knx memory content");
+        printHelpLine("mem 0xXXXXXXXX", "Show memory content (4kbyte) starting at 0xXXXXXXXX");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("files, fs", "Show files on filesystem");
 #endif
@@ -316,6 +328,18 @@ namespace OpenKNX
         }
 #endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+    }
+
+    void Console::showMemoryContent(uint8_t* start, uint32_t size)
+    {
+        logBegin();
+        openknx.logger.logWithValues("Memory Content at 0x%08X. Size: 0x%04X / %dd bytes", start, size, size);
+        for(int i=0;i < size/16;i++)
+        {
+            uint8_t* ptr = (uint8_t*)(start + i*16);
+            openknx.logger.logWithValues("0x%04X:  %02X %02X %02X %02X %02X %02X %02X %02X  %02X %02X %02X %02X %02X %02X %02X %02X", i*16, *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+6), *(ptr+6), *(ptr+7), *(ptr+8), *(ptr+9), *(ptr+10), *(ptr+11), *(ptr+12), *(ptr+13), *(ptr+14), *(ptr+15));
+        }
+        logEnd();
     }
 
     void Console::printHelpLine(const char* command, const char* message)
