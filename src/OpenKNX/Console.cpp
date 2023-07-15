@@ -98,7 +98,7 @@ namespace OpenKNX
         }
         else if (cmd == "mem knx")
         {
-            showMemoryContent((uint8_t*)KNX_FLASH_OFFSET+XIP_BASE, KNX_FLASH_SIZE);
+            showMemoryContent(knx.bau().platform().getNonVolatileMemoryStart(), knx.bau().platform().getNonVolatileMemorySize());
         }
         else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
         {
