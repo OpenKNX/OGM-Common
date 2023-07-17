@@ -9,7 +9,9 @@
 #include <RTTStream.h>
 #define OPENKNX_LOGGER_DEVICE openknx.logger.rtt
 #else
+#ifdef SERIAL_DEBUG
 #define OPENKNX_LOGGER_DEVICE SERIAL_DEBUG
+#endif
 #endif
 
 #ifndef OPENKNX_MAX_LOG_PREFIX_LENGTH
@@ -115,6 +117,7 @@ namespace OpenKNX
         class Logger
         {
           private:
+            HardwareSerial* _serial = nullptr;
             uint8_t _lastConsoleLen = 0;
             char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
 #ifdef ARDUINO_ARCH_RP2040
@@ -126,7 +129,6 @@ namespace OpenKNX
             uint8_t _color = 0;
             uint8_t _indent = 0;
 #endif
-
             void printHex(const uint8_t* data, size_t size);
             void printMessage(const std::string message, va_list values);
             void printMessage(const std::string message);
@@ -154,6 +156,11 @@ namespace OpenKNX
             RTTStream rtt;
 #endif
             Logger();
+            /*
+             * Allow overwrite stream for e.g. softserials
+             */
+            void serial(HardwareSerial* serial);
+            HardwareSerial* serial();
 
             /*
              * Fetches an exclusive lock to allow contiguous output.

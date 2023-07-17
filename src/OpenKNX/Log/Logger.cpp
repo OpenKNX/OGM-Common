@@ -18,6 +18,20 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_init(&_mutex);
 #endif
+
+#ifdef OPENKNX_LOGGER_DEVICE
+            serial(&OPENKNX_LOGGER_DEVICE);
+#endif
+        }
+
+        void Logger::serial(HardwareSerial* serial)
+        {
+            _serial = serial;
+        }
+
+        HardwareSerial* Logger::serial()
+        {
+            return _serial;
         }
 
         void Logger::begin()
@@ -66,7 +80,7 @@ namespace OpenKNX
         {
             if (isColorSet())
                 printColorCode(0);
-            OPENKNX_LOGGER_DEVICE.println();
+            _serial->println();
             printPrompt();
             end();
         }
@@ -159,9 +173,9 @@ namespace OpenKNX
 
         void Logger::printColorCode(uint8_t color)
         {
-            OPENKNX_LOGGER_DEVICE.print("\x1B[");
-            OPENKNX_LOGGER_DEVICE.print((int)color);
-            OPENKNX_LOGGER_DEVICE.print("m");
+            _serial->print("\x1B[");
+            _serial->print((int)color);
+            _serial->print("m");
         }
 
         void Logger::printColorCode()
@@ -174,10 +188,10 @@ namespace OpenKNX
             for (size_t i = 0; i < size; i++)
             {
                 if (data[i] < 0x10)
-                    OPENKNX_LOGGER_DEVICE.print("0");
+                    _serial->print("0");
 
-                OPENKNX_LOGGER_DEVICE.print(data[i], HEX);
-                OPENKNX_LOGGER_DEVICE.print(" ");
+                _serial->print(data[i], HEX);
+                _serial->print(" ");
             }
         }
 
@@ -187,9 +201,9 @@ namespace OpenKNX
             while (_lastConsoleLen > 0)
             {
                 _lastConsoleLen--;
-                OPENKNX_LOGGER_DEVICE.print("\b");
+                _serial->print("\b");
             }
-            OPENKNX_LOGGER_DEVICE.print("\33[K");
+            _serial->print("\33[K");
 #endif
         }
 
@@ -197,7 +211,7 @@ namespace OpenKNX
         {
 #ifndef OPENKNX_RTT
             clearPreviouseLine();
-            OPENKNX_LOGGER_DEVICE.print(openknx.console.prompt);
+            _serial->print(openknx.console.prompt);
             _lastConsoleLen = strlen(openknx.console.prompt);
 #endif
         }
@@ -209,15 +223,15 @@ namespace OpenKNX
             {
                 if (i < prefixLen)
                 {
-                    OPENKNX_LOGGER_DEVICE.print(prefix.c_str()[i]);
+                    _serial->print(prefix.c_str()[i]);
                 }
                 else if (i == prefixLen && prefixLen > 0)
                 {
-                    OPENKNX_LOGGER_DEVICE.print(":");
+                    _serial->print(":");
                 }
                 else
                 {
-                    OPENKNX_LOGGER_DEVICE.print(" ");
+                    _serial->print(" ");
                 }
             }
         }
@@ -226,20 +240,20 @@ namespace OpenKNX
         {
 #if defined(ARDUINO_ARCH_RP2040) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
             if (openknx.common.usesDualCore())
-                OPENKNX_LOGGER_DEVICE.print(rp2040.cpuid() ? "_1> " : "0_> ");
+                _serial->print(rp2040.cpuid() ? "_1> " : "0_> ");
 #endif
         }
 
         void Logger::printMessage(const std::string message)
         {
-            OPENKNX_LOGGER_DEVICE.print(message.c_str());
+            _serial->print(message.c_str());
         }
 
         void Logger::printMessage(const std::string message, va_list values)
         {
             memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
             uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), values);
-            OPENKNX_LOGGER_DEVICE.print(_buffer);
+            _serial->print(_buffer);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
                 openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
         }
@@ -278,7 +292,7 @@ namespace OpenKNX
         {
             for (size_t i = 0; i < getIndent(); i++)
             {
-                OPENKNX_LOGGER_DEVICE.print("  ");
+                _serial->print("  ");
             }
         }
 
@@ -329,11 +343,11 @@ namespace OpenKNX
 
             begin();
 
-            SERIAL_DEBUG.println();
+            _serial->println();
             printMessage("+------------+-----------------------------------------------------------------+");
-            SERIAL_DEBUG.println();
+            _serial->println();
             printMessage("|            |                                                                 |");
-            SERIAL_DEBUG.println();
+            _serial->println();
 
             // Line 1: "Open #"
             printMessage("|   ");
@@ -353,13 +367,13 @@ namespace OpenKNX
             printMessage("|");
 
             // Line 2: "+----+"
-            SERIAL_DEBUG.println();
+            _serial->println();
             printMessage("|   ");
             printColorCode(colorGreen);
             printMessage("+----+");
             printColorCode(0);
             printMessage("   |                                                                 |");
-            SERIAL_DEBUG.println();
+            _serial->println();
 
             // Line 3: "# KNX "
             printMessage("|   ");
@@ -370,12 +384,12 @@ namespace OpenKNX
             printColorCode(0);
             printMessage("   |   www.openknx.de - wiki.openknx.de - forum.openknx.de           |");
 
-            SERIAL_DEBUG.println();
+            _serial->println();
             printMessage("|            |                                                                 |");
-            SERIAL_DEBUG.println();
+            _serial->println();
             printMessage("+------------+-----------------------------------------------------------------+");
-            SERIAL_DEBUG.println();
-            SERIAL_DEBUG.println();
+            _serial->println();
+            _serial->println();
 
             end();
         }

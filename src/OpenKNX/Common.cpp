@@ -10,7 +10,7 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
-        SERIAL_DEBUG.begin(115200);
+        openknx.logger.serial()->begin(115200);
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
@@ -202,7 +202,7 @@ namespace OpenKNX
         openknx.infoLed.pulsing(500);
 #endif
 
-#if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT)
+#if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
         while (!SERIAL_DEBUG)
         {
             if (delayCheck(timeoutBase, OPENKNX_WAIT_FOR_SERIAL))
