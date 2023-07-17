@@ -143,6 +143,7 @@ namespace OpenKNX
             logDebugP("Data size: %i", dataSize);
 
             const uint8_t version = readByte();
+            if (version >= 0); // do nothing prevents warning for line above
             logDebugP("Version: %i", version);
 
             const uint16_t checksum = readWord();
@@ -197,7 +198,9 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             // On RP2020 we need to erase next slot for fast writing on powerloss
+#ifdef OPENKNX_DEBUG            
             const uint32_t start = millis();
+#endif
             logDebugP("Erase slot %i", slot);
             logIndentUp();
             _flashDriver->write(slotOffset(slot) - slotSize(), 0xFF, slotSize());
