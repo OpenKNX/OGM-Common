@@ -46,6 +46,18 @@ namespace OpenKNX
         virtual void setup();
 
         /*
+         * Called at startup for second core (before startup delay), after knx.init
+         * will be executed regardless of knx.configured state
+         */
+        virtual void init1();
+
+        /*
+         * Called at startup for second core (before startup delay)
+         * Useful for init hardware
+         */
+        virtual void setup1();
+
+        /*
          * Module logic
          */
         virtual void loop();

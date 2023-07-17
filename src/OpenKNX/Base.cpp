@@ -24,6 +24,12 @@ namespace OpenKNX
 
     void Base::setup()
     {}
+
+    void Base::init1()
+    {}
+
+    void Base::setup1()
+    {}
 #if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
     void Base::processInputKo(GroupObject &ko)
     {}

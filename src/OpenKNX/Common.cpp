@@ -248,9 +248,42 @@ namespace OpenKNX
 
         // setup complete turn infoLed off
         openknx.infoLed.off();
-        _setupReady = true;
+        _setup0Ready = true;
+        //if we dont have a second core, set it ready
+        if(!usesDualCore())
+            _setup1Ready = true;
 
         openknx.logger.logOpenKnxHeader();
+    }
+
+    void Common::setup1()
+    {
+        if (!usesDualCore())
+        {
+            _setup1Ready = true;
+            return;
+        }
+
+        //wait for setup0
+        while(!_setup0Ready)
+            delay(1);
+
+        // Handle loop of modules
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            openknx.modules.list[i]->init1();
+        }
+
+        if (knx.configured())
+        {
+            // Handle loop of modules
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+            {
+                openknx.modules.list[i]->setup1();
+            }
+        }
+        
+        _setup1Ready = true;
     }
 
     void Common::appSetup()
@@ -331,6 +364,9 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
+        if (!_setup0Ready || !_setup1Ready)
+            return;
+
 #ifdef OPENKNX_HEARTBEAT
         openknx.progLed.debugLoop();
 #endif
@@ -432,7 +468,7 @@ namespace OpenKNX
 
     void Common::loop1()
     {
-        if (!_setupReady)
+        if (!_setup0Ready || !_setup1Ready)
             return;
 
         if (!usesDualCore())

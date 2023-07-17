@@ -33,7 +33,8 @@ namespace OpenKNX
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
         bool _usesDualCore = false;
-        volatile bool _setupReady = false;
+        volatile bool _setup0Ready = false;
+        volatile bool _setup1Ready = false;
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
@@ -71,6 +72,7 @@ namespace OpenKNX
         void init(uint8_t firmwareRevision);
         void triggerSavePin();
         void setup();
+        void setup1();
         void loop();
         void loop1();
 #if OPENKNX_LOOPTIME_WARNING > 1

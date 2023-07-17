@@ -21,6 +21,10 @@ namespace OpenKNX
     {
         common.loop1();
     }
+    void Facade::setup1()
+    {
+        common.setup1();
+    }
 
     bool Facade::afterStartupDelay()
     {

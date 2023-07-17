@@ -38,6 +38,7 @@ namespace OpenKNX
         void loop();
         void setup();
         void loop1();
+        void setup1();
         void addModule(uint8_t id, Module* module);
         Module* getModule(uint8_t id);
         Modules* getModules();
