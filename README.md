@@ -27,7 +27,6 @@ ParamLOG_HeartbeatDelayTimeMS
 It is written for use with RP2040 (arduino-pico core) or SAMD21 (arduino core). To configure the Hardware-Setup use the following defines in hardware.h
 
 ```
-OPENKNX_PULSATING_BOOT
 SAVE_INTERRUPT_PIN
 INFO_LED_PIN
 PROG_BUTTON_PIN
@@ -43,6 +42,7 @@ KNX_UART_TX_PIN
 |---|---:|:---:|---|
 | OPENKNX_WATCHDOG | | | compile with watchdog (use only for releases. debugger not working with active watchdog) |
 | OPENKNX_WATCHDOG_MAX_PERIOD | 16384 | ms | the timeout period of wathcdog |
+| OPENKNX_NO_BOOT_PULSATING | | | Turn off the pulsating LED during the boot phase. (Only necessary for specific hardware where the LED cannot be controlled via PWM). |
 | OPENKNX_MAX_MODULES | 9 | | |
 | OPENKNX_LEDEFFECT_PULSE_FREQ | 1000 | ms | |
 | OPENKNX_LEDEFFECT_BLINK_FREQ | 1000 | ms | |
