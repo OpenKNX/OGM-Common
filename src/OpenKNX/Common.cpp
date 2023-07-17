@@ -24,12 +24,12 @@ namespace OpenKNX
         processRecovery();
 #endif
 
-#ifdef OPENKNX_PULSATING_BOOT
-        openknx.progLed.pulsing();
-        openknx.infoLed.pulsing();
-#else
+#ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
         openknx.infoLed.on();
+#else
+        openknx.progLed.pulsing();
+        openknx.infoLed.pulsing();
 #endif
 
         debugWait();
@@ -194,12 +194,12 @@ namespace OpenKNX
         uint32_t timeoutBase = millis();
 #endif
 
-#ifdef OPENKNX_PULSATING_BOOT
-        openknx.progLed.pulsing(500);
-        openknx.infoLed.pulsing(500);
-#else
+#ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.blinking();
         openknx.infoLed.blinking();
+#else
+        openknx.progLed.pulsing(500);
+        openknx.infoLed.pulsing(500);
 #endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT)
@@ -210,12 +210,12 @@ namespace OpenKNX
         }
 #endif
 
-#ifdef OPENKNX_PULSATING_BOOT
-        openknx.progLed.pulsing();
-        openknx.infoLed.pulsing();
-#else
+#ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
         openknx.infoLed.on();
+#else
+        openknx.progLed.pulsing();
+        openknx.infoLed.pulsing();
 #endif
     }
 
