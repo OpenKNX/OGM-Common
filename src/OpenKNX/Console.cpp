@@ -102,7 +102,7 @@ namespace OpenKNX
         }
         else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
         {
-            std::string adrstr = cmd.substr(6, cmd.length()-6);
+            std::string adrstr = cmd.substr(6, cmd.length() - 6);
             uint32_t adr = std::stoi(adrstr, nullptr, 16);
             showMemoryContent((uint8_t*)adr, 0x1000);
         }
@@ -334,10 +334,10 @@ namespace OpenKNX
     {
         logBegin();
         openknx.logger.logWithValues("Memory Content at 0x%08X. Size: 0x%04X / %dd bytes", start, size, size);
-        for(int i=0;i < size/16;i++)
+        for (uint32_t i = 0; i < size / 16; i++)
         {
-            uint8_t* ptr = (uint8_t*)(start + i*16);
-            openknx.logger.logWithValues("0x%04X:  %02X %02X %02X %02X %02X %02X %02X %02X  %02X %02X %02X %02X %02X %02X %02X %02X", i*16, *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+6), *(ptr+6), *(ptr+7), *(ptr+8), *(ptr+9), *(ptr+10), *(ptr+11), *(ptr+12), *(ptr+13), *(ptr+14), *(ptr+15));
+            uint8_t* ptr = (uint8_t*)(start + i * 16);
+            openknx.logger.logWithValues("0x%04X:  %02X %02X %02X %02X %02X %02X %02X %02X  %02X %02X %02X %02X %02X %02X %02X %02X", i * 16, *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3), *(ptr + 4), *(ptr + 6), *(ptr + 6), *(ptr + 7), *(ptr + 8), *(ptr + 9), *(ptr + 10), *(ptr + 11), *(ptr + 12), *(ptr + 13), *(ptr + 14), *(ptr + 15));
         }
         logEnd();
     }
