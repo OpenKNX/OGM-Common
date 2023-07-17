@@ -1,5 +1,6 @@
 #pragma once
 #include "OpenKNX/Log/Logger.h"
+#include "OpenKNX/defines.h"
 #include <knx.h>
 
 namespace OpenKNX
@@ -34,38 +35,38 @@ namespace OpenKNX
         virtual const std::string name();
 
         /*
-         * Called at startup (before startup delay), after knx.init
-         * will be executed regardless of knx.configured state
+         * Called after knx.init() before setup() called.
+         * Will be executed regardless of knx.configured state
          */
         virtual void init();
 
         /*
-         * Called at startup (before startup delay)
-         * Useful for init hardware
+         * Called during startup after initialization of all modules is completed.
+         * Useful for init interrupts on core0
          */
+        virtual void setup(bool configured);
         virtual void setup();
 
         /*
-         * Called at startup for second core (before startup delay), after knx.init
-         * will be executed regardless of knx.configured state
+         * Module logic for core0
          */
-        virtual void init1();
+        virtual void loop(bool configured);
+        virtual void loop();
 
+#ifdef OPENKNX_DUALCORE
         /*
-         * Called at startup for second core (before startup delay)
-         * Useful for init hardware
+         * Called during startup after setup() completed
+         * Useful for init interrupts on core1
          */
+        virtual void setup1(bool configured);
         virtual void setup1();
 
         /*
-         * Module logic
+         * Module logic for core1
          */
-        virtual void loop();
-
-        /*
-         * Module logic for second core
-         */
+        virtual void loop1(bool configured);
         virtual void loop1();
+#endif
 
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
         /*

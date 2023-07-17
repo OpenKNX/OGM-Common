@@ -45,10 +45,12 @@ namespace OpenKNX
         return true;
     }
 
+#ifdef OPENKNX_DUALCORE
     bool Module::usesDualCore()
     {
         return false;
     }
+#endif
 
     void Module::showInformations()
     {
@@ -65,7 +67,7 @@ namespace OpenKNX
     void Module::showHelp()
     {
         // Example usage:
-        //openknx.console.printHelpLine("command 123", "the description");
+        // openknx.console.printHelpLine("command 123", "the description");
     }
 
 } // namespace OpenKNX

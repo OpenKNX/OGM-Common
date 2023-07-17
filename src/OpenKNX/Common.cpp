@@ -223,14 +223,38 @@ namespace OpenKNX
     {
         logTraceP("setup");
 
-        // Handle loop of modules
+        // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
             openknx.modules.list[i]->init();
         }
 
-        // setup modules
-        appSetup();
+#ifdef LOG_StartupDelayBase
+        _startupDelay = millis();
+#endif
+#ifdef LOG_HeartbeatDelayBase
+        _heartbeatDelay = 0;
+#endif
+
+        // Handle setup of modules
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            openknx.modules.list[i]->setup(knx.configured());
+        }
+
+        if (knx.configured())
+        {
+            openknx.flash.load();
+        }
+
+#ifdef OPENKNX_DUALCORE
+        // Enable loop1 if any module use dual core
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            if (openknx.modules.list[i]->usesDualCore())
+                _usesDualCore = true;
+        }
+#endif
 
         // start the framework
         openknx.progLed.off();
@@ -246,84 +270,53 @@ namespace OpenKNX
         // register callbacks
         registerCallbacks();
 
-        // setup complete turn infoLed off
-        openknx.infoLed.off();
+        // setup0 is done
         _setup0Ready = true;
-        //if we dont have a second core, set it ready
-        if(!usesDualCore())
+
+#ifdef OPENKNX_DUALCORE
+        // if we dont have a second core, set it ready
+        if (!usesDualCore())
             _setup1Ready = true;
+
+        // wait for setup1
+        while (!_setup1Ready)
+            delay(1);
+#endif
+
+        // setup complete: turn infoLed off
+        openknx.infoLed.off();
 
         openknx.logger.logOpenKnxHeader();
     }
 
+#ifdef OPENKNX_DUALCORE
     void Common::setup1()
     {
+        // wait for setup0
+        while (!_setup0Ready)
+            delay(50);
+
+        // skip if no dual core is used
         if (!usesDualCore())
         {
+            logErrorP("setup1 is invoked without utilizing dual-core modules");
             _setup1Ready = true;
             return;
         }
 
-        //wait for setup0
-        while(!_setup0Ready)
-            delay(1);
-
         // Handle loop of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            openknx.modules.list[i]->init1();
+            openknx.modules.list[i]->setup1(knx.configured());
         }
 
-        if (knx.configured())
-        {
-            // Handle loop of modules
-            for (uint8_t i = 0; i < openknx.modules.count; i++)
-            {
-                openknx.modules.list[i]->setup1();
-            }
-        }
-        
         _setup1Ready = true;
     }
-
-    void Common::appSetup()
-    {
-        if (!knx.configured())
-            return;
-
-#ifdef LOG_StartupDelayBase
-        _startupDelay = millis();
 #endif
-#ifdef LOG_HeartbeatDelayBase
-        _heartbeatDelay = 0;
-#endif
-
-        // Handle loop of modules
-        for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
-            openknx.modules.list[i]->setup();
-        }
-
-        openknx.flash.load();
-
-#ifdef ARDUINO_ARCH_RP2040
-        // Enable loop1 if any module use dual core
-        for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
-            if (openknx.modules.list[i]->usesDualCore())
-                _usesDualCore = true;
-        }
-
-        // when not needed, shutdown core1
-        // if (!_usesDualCore)
-        //     multicore_reset_core1();
-
-#endif
-    }
 
     bool Common::usesDualCore()
     {
-#if defined(ARDUINO_ARCH_RP2040)
+#ifdef OPENKNX_DUALCORE
         return _usesDualCore;
 #else
         return false;
@@ -364,8 +357,13 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
-        if (!_setup0Ready || !_setup1Ready)
+        if (!_setup0Ready)
             return;
+
+#ifdef OPENKNX_DUALCORE
+        if (!_setup1Ready)
+            return;
+#endif
 
 #ifdef OPENKNX_HEARTBEAT
         openknx.progLed.debugLoop();
@@ -383,7 +381,21 @@ namespace OpenKNX
 
         // loop  appstack
         _loopMicros = micros();
-        appLoop();
+
+        // knx is not configured
+        if (knx.configured())
+        {
+
+#ifdef LOG_HeartbeatDelayBase
+            // Handle heartbeat delay
+            processHeartbeat();
+#endif
+
+            processSavePin();
+            processRestoreSavePin();
+            processAfterStartupDelay();
+        }
+        processModulesLoop();
 
 #ifdef OPENKNX_WATCHDOG
         watchdogLoop();
@@ -405,24 +417,6 @@ namespace OpenKNX
         _lastLoopOutput = millis();
     }
 #endif
-
-    // loop with abort conditions
-    void Common::appLoop()
-    {
-        // knx is not configured
-        if (!knx.configured())
-            return;
-
-#ifdef LOG_HeartbeatDelayBase
-        // Handle heartbeat delay
-        processHeartbeat();
-#endif
-
-        processSavePin();
-        processRestoreSavePin();
-        processAfterStartupDelay();
-        processModulesLoop();
-    }
 
     bool Common::freeLoopTime()
     {
@@ -463,9 +457,10 @@ namespace OpenKNX
         if (index >= openknx.modules.count)
             return;
 
-        openknx.modules.list[index]->loop();
+        openknx.modules.list[index]->loop(knx.configured());
     }
 
+#ifdef OPENKNX_DUALCORE
     void Common::loop1()
     {
         if (!_setup0Ready || !_setup1Ready)
@@ -477,19 +472,12 @@ namespace OpenKNX
 #ifdef OPENKNX_HEARTBEAT
         openknx.infoLed.debugLoop();
 #endif
-        appLoop1();
-    }
-
-    void Common::appLoop1()
-    {
-        // knx is not configured
-        if (!knx.configured())
-            return;
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             if (openknx.modules.list[i]->usesDualCore())
-                openknx.modules.list[i]->loop1();
+                openknx.modules.list[i]->loop1(knx.configured());
     }
+#endif
 
     bool Common::afterStartupDelay()
     {

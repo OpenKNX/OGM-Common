@@ -33,7 +33,7 @@ namespace OpenKNX
          * @param data pointer to data of module in flash, but the better way is to use read helper of FlashStorage (openknx.flash.readXXX)
          * @param size number of saved bytes in flash. if no data is saved, the size is 0 (e.g. for init)
          */
-        virtual void readFlash(const uint8_t* data, const uint16_t size);
+        virtual void readFlash(const uint8_t *data, const uint16_t size);
 
         /*
          * Called after the startup delay time are expired.
@@ -85,17 +85,19 @@ namespace OpenKNX
          */
         virtual bool restorePower();
 
+#ifdef OPENKNX_DUALCORE
         /**
          * @return true, if this module has a loop1 for secondary core, false, otherwise
          */
         virtual bool usesDualCore();
+#endif
 
         /**
          * This method is called when a command is entered in the console or the diagnoseKo.
          * The first argument is the command, and the second argument indicates whether the call was made via diagnoseKo or the console.
-         * 
+         *
          * If a module feels responsible for this command, it returns true, and the processing will terminated.
-         * 
+         *
          * If a command is entered that requires an output, the module itself is responsible for handling it.
          * It must then determine based on the arguments whether to display the output on the console or send a message via diagnoseKo.
          */

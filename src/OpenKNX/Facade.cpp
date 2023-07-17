@@ -6,25 +6,27 @@ namespace OpenKNX
     {
         common.init(firmwareRevision);
     }
+    void Facade::setup()
+    {
+        common.setup();
+    }
 
     void Facade::loop()
     {
         common.loop();
     }
 
-    void Facade::setup()
-    {
-        common.setup();
-    }
-
+#ifdef OPENKNX_DUALCORE
     void Facade::loop1()
     {
         common.loop1();
     }
+
     void Facade::setup1()
     {
         common.setup1();
     }
+#endif
 
     bool Facade::afterStartupDelay()
     {
@@ -43,7 +45,7 @@ namespace OpenKNX
         openknx.modules.ids[openknx.modules.count - 1] = id;
     }
 
-    Modules* Facade::getModules()
+    Modules *Facade::getModules()
     {
         return &modules;
     }

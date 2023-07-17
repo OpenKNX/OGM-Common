@@ -63,3 +63,7 @@
 #ifndef KNX_SERIAL
 #define KNX_SERIAL Serial1
 #endif
+
+#ifdef ARDUINO_ARCH_RP2040
+#define OPENKNX_DUALCORE
+#endif

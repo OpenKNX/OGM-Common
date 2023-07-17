@@ -13,24 +13,55 @@ namespace OpenKNX
         return "Unnamed";
     }
 
-    void Base::loop()
-    {}
-
-    void Base::loop1()
-    {}
-
     void Base::init()
     {}
+
+    void Base::setup(bool configured)
+    {
+        if (!configured)
+            return;
+
+        setup();
+    }
 
     void Base::setup()
     {}
 
-    void Base::init1()
+    void Base::loop(bool configured)
+    {
+        if (!configured)
+            return;
+
+        loop();
+    }
+    void Base::loop()
     {}
+
+#ifdef OPENKNX_DUALCORE
+    void Base::setup1(bool configured)
+    {
+        if (!configured)
+            return;
+
+        setup1();
+    }
 
     void Base::setup1()
     {}
-#if (MASK_VERSION & 0x0900) != 0x0900   // Coupler do not have GroupObjects
+
+    void Base::loop1(bool configured)
+    {
+        if (!configured)
+            return;
+
+        loop();
+    }
+
+    void Base::loop1()
+    {}
+#endif
+
+#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
     void Base::processInputKo(GroupObject &ko)
     {}
 #endif
@@ -38,7 +69,7 @@ namespace OpenKNX
     {
         return false;
     }
-    
+
     bool Base::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
     {
         return false;

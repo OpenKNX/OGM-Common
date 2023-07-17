@@ -32,18 +32,18 @@ namespace OpenKNX
 #endif
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
-        bool _usesDualCore = false;
         volatile bool _setup0Ready = false;
+#ifdef OPENKNX_DUALCORE
+        bool _usesDualCore = false;
         volatile bool _setup1Ready = false;
+#endif
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
 
         void initKnx();
-        void appSetup();
-        void appLoop();
-        void appLoop1();
+        
         void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();
@@ -72,13 +72,17 @@ namespace OpenKNX
         void init(uint8_t firmwareRevision);
         void triggerSavePin();
         void setup();
-        void setup1();
         void loop();
+
+#ifdef OPENKNX_DUALCORE
+        void setup1();
         void loop1();
+#endif
+        bool usesDualCore();
+
 #if OPENKNX_LOOPTIME_WARNING > 1
         void resetLastLoopOutput();
 #endif
-        bool usesDualCore();
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif

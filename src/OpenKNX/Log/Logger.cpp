@@ -61,6 +61,7 @@ namespace OpenKNX
                 printColorCode();
             printCore();
         }
+
         void Logger::afterLog()
         {
             if (isColorSet())
