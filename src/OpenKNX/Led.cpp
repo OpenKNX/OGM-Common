@@ -48,7 +48,7 @@ namespace OpenKNX
         // debug mode enable
         if (_debugMode)
         {
-#ifdef OPENKNX_HEARTBEAT_PRIO
+    #ifdef OPENKNX_HEARTBEAT_PRIO
             // Blinking until the heartbeat signal stops.
             if (!(millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
             {
@@ -59,14 +59,14 @@ namespace OpenKNX
                 writeLed(false);
             }
             return;
-#else
+    #else
             // Blinks as soon as the heartbeat signal stops.
             if ((millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
             {
                 writeLed(_debugEffect.value());
                 return;
             }
-#endif
+    #endif
         }
 #endif
 
@@ -236,11 +236,11 @@ namespace OpenKNX
         if (!_debugMode)
         {
 
-#ifdef OPENKNX_HEARTBEAT_PRIO
+    #ifdef OPENKNX_HEARTBEAT_PRIO
             _debugEffect.init(OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
-#else
+    #else
             _debugEffect.init(OPENKNX_HEARTBEAT_FREQ);
-#endif
+    #endif
             _debugMode = true;
         }
         _debugHeartbeat = millis();

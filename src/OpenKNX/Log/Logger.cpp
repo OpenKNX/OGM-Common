@@ -2,11 +2,11 @@
 #include "OpenKNX/Facade.h"
 
 #ifdef OPENKNX_RTT
-#include "SEGGER_RTT.h"
+    #include "SEGGER_RTT.h"
 #endif
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-#include <Regexp.h>
+    #include <Regexp.h>
 #endif
 
 namespace OpenKNX
@@ -263,26 +263,26 @@ namespace OpenKNX
         {
             MatchState ms;
             ms.Target((char*)prefix.c_str());
-#ifdef OPENKNX_TRACE1
+    #ifdef OPENKNX_TRACE1
             if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0)
                 return true;
-#endif
-#ifdef OPENKNX_TRACE2
+    #endif
+    #ifdef OPENKNX_TRACE2
             if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0)
                 return true;
-#endif
-#ifdef OPENKNX_TRACE3
+    #endif
+    #ifdef OPENKNX_TRACE3
             if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0)
                 return true;
-#endif
-#ifdef OPENKNX_TRACE4
+    #endif
+    #ifdef OPENKNX_TRACE4
             if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0)
                 return true;
-#endif
-#ifdef OPENKNX_TRACE5
+    #endif
+    #ifdef OPENKNX_TRACE5
             if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE5)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE5)))
                 return true;
-#endif
+    #endif
 
             return false;
         }

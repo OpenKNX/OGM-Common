@@ -2,24 +2,24 @@
 #include "Arduino.h"
 #include <string>
 #ifdef ARDUINO_ARCH_RP2040
-#include "pico/sync.h"
+    #include "pico/sync.h"
 #endif
 
 #ifdef OPENKNX_RTT
-#include <RTTStream.h>
-#define OPENKNX_LOGGER_DEVICE openknx.logger.rtt
+    #include <RTTStream.h>
+    #define OPENKNX_LOGGER_DEVICE openknx.logger.rtt
 #else
-#ifdef SERIAL_DEBUG
-#define OPENKNX_LOGGER_DEVICE SERIAL_DEBUG
-#endif
+    #ifdef SERIAL_DEBUG
+        #define OPENKNX_LOGGER_DEVICE SERIAL_DEBUG
+    #endif
 #endif
 
 #ifndef OPENKNX_MAX_LOG_PREFIX_LENGTH
-#define OPENKNX_MAX_LOG_PREFIX_LENGTH 23
+    #define OPENKNX_MAX_LOG_PREFIX_LENGTH 23
 #endif
 
 #ifndef OPENKNX_MAX_LOG_MESSAGE_LENGTH
-#define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
+    #define OPENKNX_MAX_LOG_MESSAGE_LENGTH 200
 #endif
 
 #define logIndentUp() openknx.logger.indentUp()
@@ -38,62 +38,62 @@
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
 
-#ifndef OPENKNX_TRACE1
-#define OPENKNX_TRACE1
-#endif
-#ifndef OPENKNX_TRACE2
-#define OPENKNX_TRACE2
-#endif
-#ifndef OPENKNX_TRACE3
-#define OPENKNX_TRACE3
-#endif
-#ifndef OPENKNX_TRACE4
-#define OPENKNX_TRACE4
-#endif
-#ifndef OPENKNX_TRACE5
-#define OPENKNX_TRACE5
-#endif
+    #ifndef OPENKNX_TRACE1
+        #define OPENKNX_TRACE1
+    #endif
+    #ifndef OPENKNX_TRACE2
+        #define OPENKNX_TRACE2
+    #endif
+    #ifndef OPENKNX_TRACE3
+        #define OPENKNX_TRACE3
+    #endif
+    #ifndef OPENKNX_TRACE4
+        #define OPENKNX_TRACE4
+    #endif
+    #ifndef OPENKNX_TRACE5
+        #define OPENKNX_TRACE5
+    #endif
 
-#define TRACE_STRINGIFY2(X) #X
-#define TRACE_STRINGIFY(X) TRACE_STRINGIFY2(X)
-// Force Debug Mode during Trace
-#undef OPENKNX_DEBUG
-#define OPENKNX_DEBUG
-#define logTrace(prefix, ...)              \
-    if (openknx.logger.checkTrace(prefix)) \
-    openknx.logger.logMacroWrapper(90, prefix, __VA_ARGS__)
-#define logTraceP(...)                          \
-    if (openknx.logger.checkTrace(logPrefix())) \
-    openknx.logger.logMacroWrapper(90, logPrefix(), __VA_ARGS__)
-#define logHexTrace(prefix, ...)           \
-    if (openknx.logger.checkTrace(prefix)) \
-    openknx.logger.logHexMacroWrapper(90, prefix, __VA_ARGS__)
-#define logHexTraceP(...)                       \
-    if (openknx.logger.checkTrace(logPrefix())) \
-    openknx.logger.logHexMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define TRACE_STRINGIFY2(X) #X
+    #define TRACE_STRINGIFY(X) TRACE_STRINGIFY2(X)
+    // Force Debug Mode during Trace
+    #undef OPENKNX_DEBUG
+    #define OPENKNX_DEBUG
+    #define logTrace(prefix, ...)              \
+        if (openknx.logger.checkTrace(prefix)) \
+        openknx.logger.logMacroWrapper(90, prefix, __VA_ARGS__)
+    #define logTraceP(...)                          \
+        if (openknx.logger.checkTrace(logPrefix())) \
+        openknx.logger.logMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logHexTrace(prefix, ...)           \
+        if (openknx.logger.checkTrace(prefix)) \
+        openknx.logger.logHexMacroWrapper(90, prefix, __VA_ARGS__)
+    #define logHexTraceP(...)                       \
+        if (openknx.logger.checkTrace(logPrefix())) \
+        openknx.logger.logHexMacroWrapper(90, logPrefix(), __VA_ARGS__)
 #else
-#define logTrace(...)
-#define logTraceP(...)
-#define logHexTrace(...)
-#define logHexTraceP(...)
+    #define logTrace(...)
+    #define logTraceP(...)
+    #define logHexTrace(...)
+    #define logHexTraceP(...)
 #endif
 
 #ifdef OPENKNX_DEBUG
-#define logDebug(...) openknx.logger.logMacroWrapper(90, __VA_ARGS__)
-#define logDebugP(...) openknx.logger.logMacroWrapper(90, logPrefix(), __VA_ARGS__)
-#define logHexDebug(...) openknx.logger.logHexMacroWrapper(90, __VA_ARGS__)
-#define logHexDebugP(...) openknx.logger.logHexMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logDebug(...) openknx.logger.logMacroWrapper(90, __VA_ARGS__)
+    #define logDebugP(...) openknx.logger.logMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logHexDebug(...) openknx.logger.logHexMacroWrapper(90, __VA_ARGS__)
+    #define logHexDebugP(...) openknx.logger.logHexMacroWrapper(90, logPrefix(), __VA_ARGS__)
 #else
-#define logDebug(...)
-#define logDebugP(...)
-#define logHexDebug(...)
-#define logHexDebugP(...)
+    #define logDebug(...)
+    #define logDebugP(...)
+    #define logHexDebug(...)
+    #define logHexDebugP(...)
 #endif
 
 #ifdef ARDUINO_ARCH_RP2040
-#define STATE_BY_CORE(X) X[rp2040.cpuid()]
+    #define STATE_BY_CORE(X) X[rp2040.cpuid()]
 #else
-#define STATE_BY_CORE(X) X
+    #define STATE_BY_CORE(X) X
 #endif
 
 /*

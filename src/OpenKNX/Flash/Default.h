@@ -2,7 +2,7 @@
 #include "OpenKNX/Flash/Driver.h"
 
 #ifndef FLASH_DATA_WRITE_LIMIT
-#define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay
+    #define FLASH_DATA_WRITE_LIMIT 180000 // 3 Minutes delay
 #endif
 
 #define FLASH_DATA_FILLBYTE 0xFF
@@ -141,21 +141,21 @@ Intro for Identification (and possible versioning later).
 // TODO check using #define FLASH_DATA_MODULE_SIZE_LEN FLASH_DATA_SIZE_LEN
 
 #ifndef OPENKNX_FLASH_OFFSET
-#error "OPENKNX_FLASH_OFFSET is not defined"
+    #error "OPENKNX_FLASH_OFFSET is not defined"
 #endif
 
 #ifndef OPENKNX_FLASH_SIZE
-#error "OPENKNX_FLASH_SIZE is not defined"
+    #error "OPENKNX_FLASH_SIZE is not defined"
 #endif
 
 #ifdef ARDUINO_ARCH_RP2040
-#if OPENKNX_FLASH_SIZE % 2
-#error "OPENKNX_FLASH_SIZE cannot be divided by 2"
-#endif
+    #if OPENKNX_FLASH_SIZE % 2
+        #error "OPENKNX_FLASH_SIZE cannot be divided by 2"
+    #endif
 
-#if OPENKNX_FLASH_SIZE % 4096
-#error "OPENKNX_FLASH_SIZE must be multiple of 4096"
-#endif
+    #if OPENKNX_FLASH_SIZE % 4096
+        #error "OPENKNX_FLASH_SIZE must be multiple of 4096"
+    #endif
 #endif
 
 namespace OpenKNX
