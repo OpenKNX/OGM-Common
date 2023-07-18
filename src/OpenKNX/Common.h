@@ -42,7 +42,7 @@ namespace OpenKNX
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
 
         void initKnx();
-        
+
         void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();

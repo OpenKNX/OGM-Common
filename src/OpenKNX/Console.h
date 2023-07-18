@@ -6,7 +6,8 @@
 #include <Adafruit_SleepyDog.h>
 #endif
 #ifdef ARDUINO_ARCH_RP2040
-extern "C" {
+extern "C"
+{
 #include "pico/bootrom.h"
 }
 #endif
