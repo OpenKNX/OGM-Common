@@ -247,15 +247,6 @@ namespace OpenKNX
             openknx.flash.load();
         }
 
-#ifdef OPENKNX_DUALCORE
-        // Enable loop1 if any module use dual core
-        for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
-            if (openknx.modules.list[i]->usesDualCore())
-                _usesDualCore = true;
-        }
-#endif
-
         // start the framework
         openknx.progLed.off();
         knx.start();
@@ -274,13 +265,10 @@ namespace OpenKNX
         _setup0Ready = true;
 
 #ifdef OPENKNX_DUALCORE
-        // if we dont have a second core, set it ready
-        if (!usesDualCore())
-            _setup1Ready = true;
-
-        // wait for setup1
-        while (!_setup1Ready)
-            delay(1);
+        // if we have a second core wait for setup1 is done
+        if (openknx.usesDualCore())
+            while (!_setup1Ready)
+                delay(1);
 #endif
 
         // setup complete: turn infoLed off
@@ -297,7 +285,7 @@ namespace OpenKNX
             delay(50);
 
         // skip if no dual core is used
-        if (!usesDualCore())
+        if (!openknx.usesDualCore())
         {
             logErrorP("setup1 is invoked without utilizing dual-core modules");
             _setup1Ready = true;
@@ -313,15 +301,6 @@ namespace OpenKNX
         _setup1Ready = true;
     }
 #endif
-
-    bool Common::usesDualCore()
-    {
-#ifdef OPENKNX_DUALCORE
-        return _usesDualCore;
-#else
-        return false;
-#endif
-    }
 
 #ifdef OPENKNX_WATCHDOG
     void Common::watchdogSetup()
@@ -463,10 +442,7 @@ namespace OpenKNX
 #ifdef OPENKNX_DUALCORE
     void Common::loop1()
     {
-        if (!_setup0Ready || !_setup1Ready)
-            return;
-
-        if (!usesDualCore())
+        if (!_setup1Ready)
             return;
 
 #ifdef OPENKNX_HEARTBEAT
@@ -474,8 +450,7 @@ namespace OpenKNX
 #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            if (openknx.modules.list[i]->usesDualCore())
-                openknx.modules.list[i]->loop1(knx.configured());
+            openknx.modules.list[i]->loop1(true);
     }
 #endif
 

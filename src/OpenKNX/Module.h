@@ -85,13 +85,6 @@ namespace OpenKNX
          */
         virtual bool restorePower();
 
-#ifdef OPENKNX_DUALCORE
-        /**
-         * @return true, if this module has a loop1 for secondary core, false, otherwise
-         */
-        virtual bool usesDualCore();
-#endif
-
         /**
          * This method is called when a command is entered in the console or the diagnoseKo.
          * The first argument is the command, and the second argument indicates whether the call was made via diagnoseKo or the console.

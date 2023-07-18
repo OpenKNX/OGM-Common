@@ -54,7 +54,7 @@ namespace OpenKNX
         if (!configured)
             return;
 
-        loop();
+        loop1();
     }
 
     void Base::loop1()

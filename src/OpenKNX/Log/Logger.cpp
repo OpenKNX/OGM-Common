@@ -239,7 +239,7 @@ namespace OpenKNX
         void Logger::printCore()
         {
 #if defined(ARDUINO_ARCH_RP2040) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
-            if (openknx.common.usesDualCore())
+            if (openknx.usesDualCore())
                 _serial->print(rp2040.cpuid() ? "_1> " : "0_> ");
 #endif
         }

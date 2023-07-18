@@ -37,6 +37,7 @@ namespace OpenKNX
         void init(uint8_t firmwareRevision);
         void loop();
         void setup();
+        bool usesDualCore();
 #ifdef OPENKNX_DUALCORE
         void loop1();
         void setup1();

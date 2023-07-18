@@ -45,13 +45,6 @@ namespace OpenKNX
         return true;
     }
 
-#ifdef OPENKNX_DUALCORE
-    bool Module::usesDualCore()
-    {
-        return false;
-    }
-#endif
-
     void Module::showInformations()
     {
         // Example usage:

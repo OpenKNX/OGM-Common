@@ -34,7 +34,6 @@ namespace OpenKNX
         uint32_t _loopMicros = 0;
         volatile bool _setup0Ready = false;
 #ifdef OPENKNX_DUALCORE
-        bool _usesDualCore = false;
         volatile bool _setup1Ready = false;
 #endif
 
@@ -78,7 +77,6 @@ namespace OpenKNX
         void setup1();
         void loop1();
 #endif
-        bool usesDualCore();
 
 #if OPENKNX_LOOPTIME_WARNING > 1
         void resetLastLoopOutput();

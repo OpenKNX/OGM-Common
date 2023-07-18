@@ -200,7 +200,7 @@ namespace OpenKNX
         openknx.logger.logWithPrefixAndValues("Board", "%s", HARDWARE_NAME);
 #endif
 #ifdef ARDUINO_ARCH_RP2040
-        const char* cpuMode = openknx.common.usesDualCore() ? "Dual-Core" : "Single-Core";
+        const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
 
         openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
 #endif
