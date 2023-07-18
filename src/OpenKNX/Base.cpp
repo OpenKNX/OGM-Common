@@ -18,10 +18,8 @@ namespace OpenKNX
 
     void Base::setup(bool configured)
     {
-        if (!configured)
-            return;
-
-        setup();
+        if (configured)
+            setup();
     }
 
     void Base::setup()
@@ -29,21 +27,18 @@ namespace OpenKNX
 
     void Base::loop(bool configured)
     {
-        if (!configured)
-            return;
-
-        loop();
+        if (configured)
+            loop();
     }
+
     void Base::loop()
     {}
 
 #ifdef OPENKNX_DUALCORE
     void Base::setup1(bool configured)
     {
-        if (!configured)
-            return;
-
-        setup1();
+        if (configured)
+            setup1();
     }
 
     void Base::setup1()
@@ -51,14 +46,13 @@ namespace OpenKNX
 
     void Base::loop1(bool configured)
     {
-        if (!configured)
-            return;
-
-        loop1();
+        if (configured)
+            loop1();
     }
 
     void Base::loop1()
     {}
+    
 #endif
 
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
