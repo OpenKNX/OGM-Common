@@ -1,8 +1,9 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
+#include "OpenKNX/Flash/Driver.h"
 
 #ifdef ARDUINO_ARCH_RP2040
-#include "LittleFS.h"
+    #include "LittleFS.h"
 #endif
 
 namespace OpenKNX
@@ -96,15 +97,19 @@ namespace OpenKNX
         {
             openknx.flash.save();
         }
-        else if (cmd == "mem knx")
+        else if (cmd == "flash knx")
         {
-            showMemoryContent(knx.bau().platform().getNonVolatileMemoryStart(), knx.bau().platform().getNonVolatileMemorySize());
+            showMemoryContent(OpenKNX::Flash::Driver::baseFlashAddress() + KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+        }
+        else if (cmd == "flash openknx")
+        {
+            showMemoryContent(OpenKNX::Flash::Driver::baseFlashAddress() + OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
         }
         else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
         {
-            std::string adrstr = cmd.substr(6, cmd.length() - 6);
-            uint32_t adr = std::stoi(adrstr, nullptr, 16);
-            showMemoryContent((uint8_t*)adr, 0x1000);
+            std::string addrstr = cmd.substr(6, cmd.length() - 6);
+            uint32_t addr = std::stoi(addrstr, nullptr, 16);
+            showMemoryContent((uint8_t*)addr, 0x40);
         }
 
 #ifdef ARDUINO_ARCH_RP2040
@@ -278,8 +283,9 @@ namespace OpenKNX
         printHelpLine("info, i", "Show generel information");
         printHelpLine("version, v", "Show compiled versions");
         printHelpLine("memory, mem", "Show memory usage");
-        printHelpLine("mem knx", "Show knx memory content");
-        printHelpLine("mem 0xXXXXXXXX", "Show memory content (4kbyte) starting at 0xXXXXXXXX");
+        printHelpLine("mem 0xXXXXXXXX", "Show memory content (64byte) starting at 0xXXXXXXXX");
+        printHelpLine("flash knx", "Show knx flash content");
+        printHelpLine("flash openknx", "Show openknx flash content");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("files, fs", "Show files on filesystem");
 #endif
@@ -333,11 +339,13 @@ namespace OpenKNX
     void Console::showMemoryContent(uint8_t* start, uint32_t size)
     {
         logBegin();
-        openknx.logger.logWithValues("Memory Content at 0x%08X. Size: 0x%04X / %dd bytes", start, size, size);
-        for (uint32_t i = 0; i < size / 16; i++)
+        openknx.logger.logWithPrefixAndValues("Memory content", "Address 0x%08X - Size: 0x%04X (%d bytes)", start, size, size);
+        for (uint32_t i = 0; i < floor(size / 16); i++)
         {
-            uint8_t* ptr = (uint8_t*)(start + i * 16);
-            openknx.logger.logWithValues("0x%04X:  %02X %02X %02X %02X %02X %02X %02X %02X  %02X %02X %02X %02X %02X %02X %02X %02X", i * 16, *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3), *(ptr + 4), *(ptr + 6), *(ptr + 6), *(ptr + 7), *(ptr + 8), *(ptr + 9), *(ptr + 10), *(ptr + 11), *(ptr + 12), *(ptr + 13), *(ptr + 14), *(ptr + 15));
+            const uint8_t* ptr = start + (i * 16);
+            char prefix[24] = {};
+            snprintf(prefix, 24, "0x%06X (0x%08X)", (i * 16), ptr);
+            openknx.logger.logHexWithPrefix(prefix, ptr, 16);
         }
         logEnd();
     }
@@ -351,9 +359,9 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
     void Console::erase(EraseMode mode)
     {
-#ifdef OPENKNX_WATCHDOG
+    #ifdef OPENKNX_WATCHDOG
         Watchdog.enable(2147483647);
-#endif
+    #endif
 
         openknx.progLed.blinking();
         openknx.infoLed.off();
