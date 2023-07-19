@@ -31,6 +31,8 @@ namespace OpenKNX
             void loadSector(uint16_t sector, bool force = false);
 
           public:
+            static uint8_t *baseFlashAddress();
+            
             Driver(uint32_t offset, uint32_t size, std::string id);
             std::string logPrefix();
 

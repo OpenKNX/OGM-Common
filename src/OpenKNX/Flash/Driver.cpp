@@ -69,12 +69,21 @@ namespace OpenKNX
             }
         }
 
+        uint8_t *Driver::baseFlashAddress()
+        {
+#ifdef ARDUINO_ARCH_SAMD
+            return (uint8_t *)0;
+#else
+            return (uint8_t *)XIP_BASE;
+#endif
+        }
+
         uint8_t *Driver::flashAddress()
         {
 #ifdef ARDUINO_ARCH_SAMD
-            return (uint8_t *)_offset;
+            return baseFlashAddress() + _offset;
 #else
-            return (uint8_t *)XIP_BASE + _offset;
+            return baseFlashAddress() + _offset;
 #endif
         }
 

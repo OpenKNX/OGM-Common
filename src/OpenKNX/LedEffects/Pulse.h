@@ -2,7 +2,7 @@
 #include "OpenKNX/LedEffects/Base.h"
 
 #ifndef OPENKNX_LEDEFFECT_PULSE_FREQ
-#define OPENKNX_LEDEFFECT_PULSE_FREQ 1000
+    #define OPENKNX_LEDEFFECT_PULSE_FREQ 1000
 #endif
 
 namespace OpenKNX

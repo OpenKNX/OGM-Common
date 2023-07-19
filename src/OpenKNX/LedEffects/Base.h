@@ -1,6 +1,6 @@
 #pragma once
-#include "OpenKNX/Helper.h"
 #include "Arduino.h"
+#include "OpenKNX/Helper.h"
 
 namespace OpenKNX
 {
