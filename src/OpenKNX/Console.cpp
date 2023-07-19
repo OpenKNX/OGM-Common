@@ -294,7 +294,7 @@ namespace OpenKNX
         printHelpLine("save, s, w", "Save data in Flash");
         printHelpLine("sleep", "Sleep for up to 20 seconds");
         printHelpLine("fatal", "Trigger a FatalError");
-        printHelpLine("powerloss", "Trigger a powerloss (SavePin)");
+        printHelpLine("powerloss", "Trigger a PowerLoss (SavePin)");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase knx", "Erase knx parameters");
         printHelpLine("erase openknx", "Erase opeknx module data");
