@@ -450,7 +450,7 @@ namespace OpenKNX
 #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            openknx.modules.list[i]->loop1(true);
+            openknx.modules.list[i]->loop1(knx.configured());
     }
 #endif
 
