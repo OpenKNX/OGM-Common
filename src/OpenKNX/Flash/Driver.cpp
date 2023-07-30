@@ -6,8 +6,8 @@ extern uint32_t __etext;
 extern uint32_t __data_start__;
 extern uint32_t __data_end__;
 #elif defined(ARDUINO_ARCH_ESP32)
-
-#elif
+    // ToDo: Implementation for ESP32
+#else
 extern uint32_t _EEPROM_start;
 extern uint32_t _FS_start;
 extern uint32_t _FS_end;
@@ -330,7 +330,7 @@ namespace OpenKNX
             }
 #elif defined(ARDUINO_ARCH_ESP32)
             // ToDo: ESP32 erase flash
-#elif
+#else
             noInterrupts();
             rp2040.idleOtherCore();
             flash_range_erase((intptr_t)(_offset + (sector * _sectorSize)), _sectorSize);
