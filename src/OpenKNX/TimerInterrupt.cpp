@@ -18,12 +18,25 @@
  * 3 = TIMER_TCC
  * 4 = TIMER_TCC1
  * 5 = TIMER_TCC2
+ * 
+ *  ESP32 4 Timers available
+ * 0 = Timer0
+ * 1 = Timer1 (default)
+ * 2 = Timer2
+ * 3 = Timer3
+ * *
  */
 #ifndef OPENKNX_TIMER_INTERRUPT
 #define OPENKNX_TIMER_INTERRUPT 1
 #endif
 
 #undef SELECTED_TIMER
+
+#ifdef ARDUINO_ARCH_ESP32
+#if OPENKNX_TIMER_INTERRUPT >= 0 && OPENKNX_TIMER_INTERRUPT <= 3
+#define SELECTED_TIMER OPENKNX_TIMER_INTERRUPT
+#endif
+#endif
 
 #ifdef ARDUINO_ARCH_RP2040
 #if OPENKNX_TIMER_INTERRUPT >= 0 && OPENKNX_TIMER_INTERRUPT <= 3
@@ -65,7 +78,7 @@
 #endif
 
 #ifndef SELECTED_TIMER
-#error Invalid OPENKNX_TIMER_INTERRUPT defined
+//#error Invalid OPENKNX_TIMER_INTERRUPT defined
 #endif
 
 // include after defines!
@@ -76,6 +89,8 @@
 SAMDTimer ITimer(SELECTED_TIMER);
 #elif defined(ARDUINO_ARCH_RP2040)
 RPI_PICO_Timer ITimer(SELECTED_TIMER);
+#elif defined(ARDUINO_ARCH_ESP32)
+ESP32Timer ITimer(SELECTED_TIMER);
 #endif
 
 namespace OpenKNX
@@ -92,6 +107,11 @@ namespace OpenKNX
             // digitalWrite(3, HIGH);
             openknx.timerInterrupt.interrupt();
             // digitalWrite(3, LOW);
+            return true;
+        });
+#elif defined(ARDUINO_ARCH_ESP32)
+        ITimer.attachInterrupt(OPENKNX_INTERRUPT_TIMER_MS * 1000, [](void* t) -> bool {
+            openknx.timerInterrupt.interrupt();
             return true;
         });
 #endif
