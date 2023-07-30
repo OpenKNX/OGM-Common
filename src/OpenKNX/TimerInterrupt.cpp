@@ -78,7 +78,7 @@
 #endif
 
 #ifndef SELECTED_TIMER
-//#error Invalid OPENKNX_TIMER_INTERRUPT defined
+#error Invalid OPENKNX_TIMER_INTERRUPT defined
 #endif
 
 // include after defines!
