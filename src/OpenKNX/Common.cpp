@@ -421,7 +421,9 @@ namespace OpenKNX
             if (_currentModule >= openknx.modules.count)
                 _currentModule = 0;
 
+            openknx.modules.runtime[_currentModule]->measureTimeBegin();
             openknx.modules.list[_currentModule]->loop(knx.configured());
+            openknx.modules.runtime[_currentModule]->measureTimeEnd();
 
             _currentModule++;
         }

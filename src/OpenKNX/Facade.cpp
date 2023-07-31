@@ -55,6 +55,7 @@ namespace OpenKNX
         modules.count++;
         modules.list[modules.count - 1] = module;
         modules.ids[modules.count - 1] = id;
+        modules.runtime[modules.count - 1] = new RuntimeStat();
     }
 
     Modules *Facade::getModules()

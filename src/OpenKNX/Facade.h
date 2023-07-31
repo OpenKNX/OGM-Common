@@ -9,6 +9,7 @@
 #include "OpenKNX/Module.h"
 #include "OpenKNX/TimerInterrupt.h"
 #include "OpenKNX/defines.h"
+#include "OpenKNX/RuntimeStat.h"
 
 namespace OpenKNX
 {
@@ -17,6 +18,7 @@ namespace OpenKNX
         uint8_t count = 0;
         uint8_t ids[OPENKNX_MAX_MODULES];
         Module* list[OPENKNX_MAX_MODULES];
+        RuntimeStat* runtime[OPENKNX_MAX_MODULES];
     };
 
     class Facade
