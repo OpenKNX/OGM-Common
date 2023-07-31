@@ -382,6 +382,15 @@ namespace OpenKNX
         {
             logErrorP("Loop took too long %i >= %i", (millis() - start), OPENKNX_LOOPTIME_WARNING);
             resetLastLoopOutput();
+            logInfoP("Runtime Stat:");
+            logIndentUp();
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+            {
+                
+                logInfoP("Stat for %s:", openknx.modules.list[i]->name);
+                openknx.modules.runtime[i]->showStat();
+            }            
+            logIndentDown();
         }
 #endif
     }

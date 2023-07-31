@@ -51,7 +51,7 @@ namespace OpenKNX
     void RuntimeStat::showStat()
     {
         // logInfo("Stat...");
-        openknx.logger.logWithPrefixAndValues("RuntimeStat", "count=%d", _count);
+        openknx.logger.logWithPrefixAndValues("       Stat", "count=%d", _count);
         for (size_t i = 0; i < 16; i++)
         {
             openknx.logger.logWithPrefixAndValues(
