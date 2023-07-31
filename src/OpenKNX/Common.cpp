@@ -425,18 +425,10 @@ namespace OpenKNX
             if (_currentModule >= openknx.modules.count)
                 _currentModule = 0;
 
-            loopModule(_currentModule);
+            openknx.modules.list[_currentModule]->loop(knx.configured());
 
             _currentModule++;
         }
-    }
-
-    void Common::loopModule(uint8_t index)
-    {
-        if (index >= openknx.modules.count)
-            return;
-
-        openknx.modules.list[index]->loop(knx.configured());
     }
 
 #ifdef OPENKNX_DUALCORE
