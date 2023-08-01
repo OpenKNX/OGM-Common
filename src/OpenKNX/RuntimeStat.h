@@ -2,6 +2,9 @@
 
 #include <Arduino.h>
 
+#define RUNTIME_MEASURE_BEGIN(X) (X)->measureTimeBegin();
+#define RUNTIME_MEASURE_END(X) (X)->measureTimeEnd();
+
 namespace OpenKNX
 {
     class RuntimeStat
