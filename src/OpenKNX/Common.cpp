@@ -382,15 +382,6 @@ namespace OpenKNX
         {
             logErrorP("Loop took too long %i >= %i", (millis() - start), OPENKNX_LOOPTIME_WARNING);
             resetLastLoopOutput();
-            logInfoP("Runtime Stat:");
-            logIndentUp();
-            for (uint8_t i = 0; i < openknx.modules.count; i++)
-            {
-                
-                logInfoP("Stat for %s:", openknx.modules.list[i]->name);
-                openknx.modules.runtime[i]->showStat();
-            }            
-            logIndentDown();
         }
 #endif
     }
@@ -685,4 +676,19 @@ namespace OpenKNX
         }
         return false;
     }
+
+
+    void Common::showRuntimeStat()
+    {
+        logInfoP("Runtime Statistics:");
+        logIndentUp();
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            
+            logInfoP("Module[%d] '%s':", i, openknx.modules.list[i]->name().c_str());
+            openknx.modules.runtime[i]->showStat();
+        }            
+        logIndentDown();
+    }
+
 } // namespace OpenKNX

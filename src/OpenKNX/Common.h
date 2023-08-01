@@ -101,5 +101,7 @@ namespace OpenKNX
         void processInputKo(GroupObject& ko);
 #endif
         std::string logPrefix();
+
+        void showRuntimeStat();
     };
 } // namespace OpenKNX
