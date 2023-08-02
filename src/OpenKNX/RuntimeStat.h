@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <string>
 
 #define RUNTIME_MEASURE_BEGIN(X) (X)->measureTimeBegin();
 #define RUNTIME_MEASURE_END(X) (X)->measureTimeEnd();
@@ -37,6 +38,6 @@ namespace OpenKNX
       public:
         void measureTimeBegin();
         void measureTimeEnd();
-        void showStat();
+        void showStat(std::string label);
     };
 } // namespace OpenKNX

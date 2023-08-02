@@ -694,19 +694,13 @@ namespace OpenKNX
         logInfoP("Runtime Statistics:");
         logIndentUp();
         {
-            logInfoP("Loop (overall):");
-            _runtimeLoop->showStat();
-            logInfoP("Console:");
-            _runtimeConsole->showStat();
-            logInfoP("Stack:");
-            _runtimeKnxStack->showStat();
-            logInfoP("All Modules Loop:");
-            _runtimeModuleLoop->showStat();
+            _runtimeLoop->showStat("Loop (overall)");
+            _runtimeConsole->showStat("Console");
+            _runtimeKnxStack->showStat("Stack");
+            _runtimeModuleLoop->showStat("All Modules Loop");
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
-                
-                logInfoP("Module[%d] '%s':", i, openknx.modules.list[i]->name().c_str());
-                openknx.modules.runtime[i]->showStat();
+                openknx.modules.runtime[i]->showStat(openknx.modules.list[i]->name().c_str());
             }            
         }
         logIndentDown();
