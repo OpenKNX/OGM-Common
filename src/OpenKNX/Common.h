@@ -1,6 +1,7 @@
 #pragma once
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
+#include "OpenKNX/RuntimeStat.h"
 #include "OpenKNX/defines.h"
 #include "knx.h"
 
@@ -63,6 +64,11 @@ namespace OpenKNX
 #endif
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
+
+        RuntimeStat *_runtimeLoop = new RuntimeStat();
+        RuntimeStat *_runtimeConsole = new RuntimeStat();
+        RuntimeStat *_runtimeKnxStack = new RuntimeStat();
+        RuntimeStat *_runtimeModuleLoop = new RuntimeStat();
 
       public:
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);

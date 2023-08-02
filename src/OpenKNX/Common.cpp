@@ -340,6 +340,8 @@ namespace OpenKNX
             return;
 #endif
 
+    RUNTIME_MEASURE_BEGIN(_runtimeLoop);
+
 #ifdef OPENKNX_HEARTBEAT
         openknx.progLed.debugLoop();
 #endif
@@ -349,10 +351,14 @@ namespace OpenKNX
 #endif
 
         // loop console helper
+        RUNTIME_MEASURE_BEGIN(_runtimeConsole);
         openknx.console.loop();
+        RUNTIME_MEASURE_END(_runtimeConsole);
 
         // loop  knx stack
+        RUNTIME_MEASURE_BEGIN(_runtimeKnxStack);
         knx.loop();
+        RUNTIME_MEASURE_END(_runtimeKnxStack);
 
         // loop  appstack
         _loopMicros = micros();
@@ -370,11 +376,16 @@ namespace OpenKNX
             processRestoreSavePin();
             processAfterStartupDelay();
         }
+
+        RUNTIME_MEASURE_BEGIN(_runtimeModuleLoop);
         processModulesLoop();
+        RUNTIME_MEASURE_END(_runtimeModuleLoop);
 
 #ifdef OPENKNX_WATCHDOG
         watchdogLoop();
 #endif
+
+        RUNTIME_MEASURE_END(_runtimeLoop);
 
 #if OPENKNX_LOOPTIME_WARNING > 1
         // loop took to long and last out is min 1ms ago
@@ -682,12 +693,22 @@ namespace OpenKNX
     {
         logInfoP("Runtime Statistics:");
         logIndentUp();
-        for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            
-            logInfoP("Module[%d] '%s':", i, openknx.modules.list[i]->name().c_str());
-            openknx.modules.runtime[i]->showStat();
-        }            
+            logInfoP("Loop (overall):");
+            _runtimeLoop->showStat();
+            logInfoP("Console:");
+            _runtimeConsole->showStat();
+            logInfoP("Stack:");
+            _runtimeKnxStack->showStat();
+            logInfoP("All Modules Loop:");
+            _runtimeModuleLoop->showStat();
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+            {
+                
+                logInfoP("Module[%d] '%s':", i, openknx.modules.list[i]->name().c_str());
+                openknx.modules.runtime[i]->showStat();
+            }            
+        }
         logIndentDown();
     }
 
