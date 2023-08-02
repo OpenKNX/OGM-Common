@@ -23,6 +23,12 @@ namespace OpenKNX
         uint32_t _countWaitDuration[sizeof(_timeRangeMax)] = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         };
+
+        // TODO use own structure for this
+        uint32_t _runDurationMin_us = 0xffffffffu;
+        uint32_t _runDurationMax_us = 0;
+        uint32_t _waitDurationMin_us = 0xffffffffu;
+        uint32_t _waitDurationMax_us = 0;
         
         static uint8_t calcBucketIndex(const uint32_t value_us);
 
