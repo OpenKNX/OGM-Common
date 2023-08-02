@@ -361,7 +361,7 @@ namespace OpenKNX
         // loop  appstack
         _loopMicros = micros();
 
-        // knx is not configured
+        // knx is configured
         if (knx.configured())
         {
 
