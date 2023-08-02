@@ -27,37 +27,56 @@ namespace OpenKNX
         0xffffffff, // max value, so we do not need a special case
     };
 
+    uint8_t RuntimeStat::calcBucketIndex(const uint32_t value_us)
+    {
+        uint8_t i = 0;
+        while (_timeRangeMax[i] < value_us)
+        {
+            i++;
+        }
+        return i;
+    }
+
     void RuntimeStat::measureTimeBegin()
     {
         _begin_us = micros();
+
+        // measure waiting-time between two loops
+        if (_end_us > 0)
+        {
+            const uint32_t waiting_duration_us = _begin_us - _end_us;
+            _countWaitDuration[calcBucketIndex(waiting_duration_us)]++;
+
+        }
     }
 
     void RuntimeStat::measureTimeEnd()
     {
-        const uint32_t end_us = micros();
-        const uint32_t duration_us = end_us - _begin_us;
+        // store end only once at the beginning, as getting the time twice might increase error
+        _end_us = micros();
 
-        uint8_t i = 0;
-        while (_timeRangeMax[i] < duration_us)
-        {
-            i++;
-        }
-        _countRange[i]++;
+        const uint32_t duration_us = _end_us - _begin_us;
+        _countRunDuration[calcBucketIndex(duration_us)]++;
 
-        // TODO check removal (is redundant)
+        // TODO check removal (is included in _countRunDuration)
         _count++;
     }
 
     void RuntimeStat::showStat()
     {
         // logInfo("Stat...");
-        openknx.logger.logWithPrefixAndValues("       Stat", "count=%d", _count);
+        openknx.logger.logWithPrefixAndValues(
+            "       Stat", "    count     %10d %10d", 
+            _count,
+            _count-1
+        );
         for (size_t i = 0; i < 16; i++)
         {
             openknx.logger.logWithPrefixAndValues(
-                "       Stat", "<=%dus: %d", 
+                "       Stat", "<= %6d us  %10d %10d", 
                 _timeRangeMax[i],
-                _countRange[i]
+                _countRunDuration[i],
+                _countWaitDuration[i]
             );
         }
         
