@@ -5,6 +5,8 @@
 extern uint32_t __etext;
 extern uint32_t __data_start__;
 extern uint32_t __data_end__;
+#elif defined(ARDUINO_ARCH_ESP32)
+    // ToDo: Implementation for ESP32
 #else
 extern uint32_t _EEPROM_start;
 extern uint32_t _FS_start;
@@ -26,6 +28,8 @@ namespace OpenKNX
             _sectorSize = pageSizes[NVMCTRL->PARAM.bit.PSZ] * 4;
             _endFree = pageSizes[NVMCTRL->PARAM.bit.PSZ] * NVMCTRL->PARAM.bit.NVMP;
             _startFree = (uint32_t)(&__etext + (&__data_end__ - &__data_start__)); // text + data MemoryBlock
+#elif defined(ARDUINO_ARCH_ESP32)
+            // ToDo: ESP32 initialize flash
 #else
             _sectorSize = FLASH_SECTOR_SIZE;
             // Full Size
@@ -56,6 +60,9 @@ namespace OpenKNX
 
         void Driver::validateParameters()
         {
+#ifdef ARDUINO_ARCH_ESP32
+            openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: ESP32 flash not yet implemented");
+#endif
             if (_size % _sectorSize)
                 openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Size unaligned");
             if (_offset % _sectorSize)
@@ -66,12 +73,15 @@ namespace OpenKNX
             {
                 logInfoP("%i < %i", _offset, _startFree);
                 openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Offset start before free flash begin");
-            }
+            }            
         }
 
         uint8_t *Driver::baseFlashAddress()
         {
 #ifdef ARDUINO_ARCH_SAMD
+            return (uint8_t *)0;
+#elif defined(ARDUINO_ARCH_ESP32)
+            // ToDo: ESP32 return base address
             return (uint8_t *)0;
 #else
             return (uint8_t *)XIP_BASE;
@@ -81,6 +91,8 @@ namespace OpenKNX
         uint8_t *Driver::flashAddress()
         {
 #ifdef ARDUINO_ARCH_SAMD
+            return baseFlashAddress() + _offset;
+#elif defined(ARDUINO_ARCH_ESP32)
             return baseFlashAddress() + _offset;
 #else
             return baseFlashAddress() + _offset;
@@ -316,6 +328,8 @@ namespace OpenKNX
             while (!NVMCTRL->INTFLAG.bit.READY)
             {
             }
+#elif defined(ARDUINO_ARCH_ESP32)
+            // ToDo: ESP32 erase flash
 #else
             noInterrupts();
             rp2040.idleOtherCore();
@@ -375,6 +389,8 @@ namespace OpenKNX
                 {
                 }
             }
+#elif defined(ARDUINO_ARCH_ESP32)
+            // ToDo: ESP32 write to flash 
 #else
             noInterrupts();
             rp2040.idleOtherCore();

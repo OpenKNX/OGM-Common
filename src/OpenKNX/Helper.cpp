@@ -1,6 +1,8 @@
 #include "Helper.h"
 #include "OpenKNX/Facade.h"
 
+#ifndef ARDUINO_ARCH_ESP32
+
 /*
  * Free Memory
  */
@@ -11,8 +13,13 @@ extern "C" char* sbrk(int incr);
 extern char* __brkval;
 #endif // __arm__
 
+#endif // !ARDUINO_ARCH_ESP32
+
 int freeMemory()
 {
+#ifdef ARDUINO_ARCH_ESP32
+    return ESP.getFreeHeap();
+#else
     char top;
 #ifdef __arm__
     return &top - reinterpret_cast<char*>(sbrk(0));
@@ -21,6 +28,7 @@ int freeMemory()
 #else  // __arm__
     return __brkval ? &top - __brkval : &top - __malloc_heap_start;
 #endif // __arm__
+#endif // !ARDUINO_ARCH_ESP32
 }
 
 /*
