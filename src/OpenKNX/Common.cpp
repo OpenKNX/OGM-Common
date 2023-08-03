@@ -241,10 +241,10 @@ namespace OpenKNX
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            openknx.modules.list[i]->setup(false);
+            openknx.modules.list[i]->setup(knx.configured());
         }
 
-        if (false)
+        if (knx.configured())
         {
             openknx.flash.load();
         }
@@ -297,7 +297,7 @@ namespace OpenKNX
         // Handle loop of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            openknx.modules.list[i]->setup1(false);
+            openknx.modules.list[i]->setup1(knx.configured());
         }
 
         _setup1Ready = true;
@@ -358,7 +358,7 @@ namespace OpenKNX
         openknx.console.loop();
 
         // loop  knx stack
-        // knx.loop();
+        knx.loop();
 
         // loop  appstack
         _loopMicros = micros();
@@ -427,7 +427,7 @@ namespace OpenKNX
             if (_currentModule >= openknx.modules.count)
                 _currentModule = 0;
 
-            openknx.modules.list[_currentModule]->loop(false);
+            openknx.modules.list[_currentModule]->loop(knx.configured());
 
             _currentModule++;
         }
@@ -444,7 +444,7 @@ namespace OpenKNX
     #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            openknx.modules.list[i]->loop1(false);
+            openknx.modules.list[i]->loop1(knx.configured());
     }
 #endif
 
@@ -631,7 +631,7 @@ namespace OpenKNX
         });
 
         // abort if knx not configured
-        if (!false)
+        if (!knx.configured())
             return;
 
         knx.beforeRestartCallback([]() -> void {
