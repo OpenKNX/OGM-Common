@@ -343,13 +343,17 @@ namespace OpenKNX
 
             begin();
 
+            printCore();
             _serial->println();
+            printCore();
             printMessage("+------------+-----------------------------------------------------------------+");
             _serial->println();
+            printCore();
             printMessage("|            |                                                                 |");
             _serial->println();
 
             // Line 1: "Open #"
+            printCore();
             printMessage("|   ");
             printColorCode(colorLightGray);
             printMessage("Open ");
@@ -368,6 +372,7 @@ namespace OpenKNX
 
             // Line 2: "+----+"
             _serial->println();
+            printCore();
             printMessage("|   ");
             printColorCode(colorGreen);
             printMessage("+----+");
@@ -376,6 +381,7 @@ namespace OpenKNX
             _serial->println();
 
             // Line 3: "# KNX "
+            printCore();
             printMessage("|   ");
             printColorCode(colorGreen);
             printMessage("#");
@@ -385,10 +391,13 @@ namespace OpenKNX
             printMessage("   |   www.openknx.de - wiki.openknx.de - forum.openknx.de           |");
 
             _serial->println();
+            printCore();
             printMessage("|            |                                                                 |");
             _serial->println();
+            printCore();
             printMessage("+------------+-----------------------------------------------------------------+");
             _serial->println();
+            printCore();
             _serial->println();
 
             end();
