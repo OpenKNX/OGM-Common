@@ -58,7 +58,7 @@ def post_program_action(source, target, env):
     else:
         application_version = int(m.group(2))
 
-    content = open(env["PROJECT_SRC_DIR"] + "\\main.cpp", 'r').read()
+    content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()
 
     m = re.search("const uint8_t firmwareRevision = ([0-9]+);", content)
     if m is None:

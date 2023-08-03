@@ -9,9 +9,11 @@ if (Test-Path -Path scripts/OpenKNX-Pre-Build.ps1) {
 if (!$?) { exit 1 }
 
 if ($target) {
-    ~/.platformio/penv/Scripts/pio.exe run -e $env --target $target  
+    if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio run -e $env --target $target } 
+    else { ~/.platformio/penv/Scripts/pio.exe run -e $env --target $target }
 } else {
-    ~/.platformio/penv/Scripts/pio.exe run -e $env
+    if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio run -e $env }
+    else { ~/.platformio/penv/Scripts/pio.exe run -e $env } 
 }
 
 # post build
