@@ -263,7 +263,7 @@ namespace OpenKNX
         openknx.logger.color(0);
 
         openknx.logger.logWithPrefix("KNX", KNX_Version);
-        openknx.logger.logWithPrefix("Firemware", MAIN_Version);
+        openknx.logger.logWithPrefix("Firmware", MAIN_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
 

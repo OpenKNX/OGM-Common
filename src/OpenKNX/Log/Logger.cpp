@@ -24,12 +24,12 @@ namespace OpenKNX
 #endif
         }
 
-        void Logger::serial(HardwareSerial* serial)
+        void Logger::serial(Stream* serial)
         {
             _serial = serial;
         }
 
-        HardwareSerial* Logger::serial()
+        Stream* Logger::serial()
         {
             return _serial;
         }

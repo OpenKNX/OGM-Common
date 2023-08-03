@@ -10,7 +10,9 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
-        openknx.logger.serial()->begin(115200);
+#ifdef OPENKNX_LOGGER_DEVICE
+        OPENKNX_LOGGER_DEVICE.begin(115200);
+#endif
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
@@ -51,26 +53,26 @@ namespace OpenKNX
     void Common::showDebugInfo()
     {
         logDebugP("Debug logging is enabled!");
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+    #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
         logDebugP("Trace logging is enabled with:");
         logIndentUp();
-#ifdef OPENKNX_TRACE1
+        #ifdef OPENKNX_TRACE1
         logDebugP("Filter 1: %s", TRACE_STRINGIFY(OPENKNX_TRACE1));
-#endif
-#ifdef OPENKNX_TRACE2
+        #endif
+        #ifdef OPENKNX_TRACE2
         logDebugP("Filter 2: %s", TRACE_STRINGIFY(OPENKNX_TRACE2));
-#endif
-#ifdef OPENKNX_TRACE3
+        #endif
+        #ifdef OPENKNX_TRACE3
         logDebugP("Filter 3: %s", TRACE_STRINGIFY(OPENKNX_TRACE3));
-#endif
-#ifdef OPENKNX_TRACE4
+        #endif
+        #ifdef OPENKNX_TRACE4
         logDebugP("Filter 4: %s", TRACE_STRINGIFY(OPENKNX_TRACE4));
-#endif
-#ifdef OPENKNX_TRACE5
+        #endif
+        #ifdef OPENKNX_TRACE5
         logDebugP("Filter 5: %s", TRACE_STRINGIFY(OPENKNX_TRACE5));
-#endif
+        #endif
         logIndentDown();
-#endif
+    #endif
     }
 #endif
 
@@ -239,10 +241,10 @@ namespace OpenKNX
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            openknx.modules.list[i]->setup(knx.configured());
+            openknx.modules.list[i]->setup(false);
         }
 
-        if (knx.configured())
+        if (false)
         {
             openknx.flash.load();
         }
@@ -295,7 +297,7 @@ namespace OpenKNX
         // Handle loop of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
-            openknx.modules.list[i]->setup1(knx.configured());
+            openknx.modules.list[i]->setup1(false);
         }
 
         _setup1Ready = true;
@@ -308,15 +310,15 @@ namespace OpenKNX
         if (!ParamLOG_Watchdog)
             return;
 
-#if defined(ARDUINO_ARCH_SAMD)
+    #if defined(ARDUINO_ARCH_SAMD)
         // used for Diagnose command
         watchdog.resetCause = Watchdog.resetCause();
 
         // setup watchdog to prevent endless loops
         Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD, false);
-#elif defined(ARDUINO_ARCH_RP2040)
+    #elif defined(ARDUINO_ARCH_RP2040)
         Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD);
-#endif
+    #endif
 
         logInfo("Watchdog", "Started with a watchtime of %i seconds", OPENKNX_WATCHDOG_MAX_PERIOD / 1000);
     }
@@ -356,13 +358,13 @@ namespace OpenKNX
         openknx.console.loop();
 
         // loop  knx stack
-        knx.loop();
+        // knx.loop();
 
         // loop  appstack
         _loopMicros = micros();
 
         // knx is not configured
-        if (knx.configured())
+        if (false)
         {
 
 #ifdef LOG_HeartbeatDelayBase
@@ -425,7 +427,7 @@ namespace OpenKNX
             if (_currentModule >= openknx.modules.count)
                 _currentModule = 0;
 
-            openknx.modules.list[_currentModule]->loop(knx.configured());
+            openknx.modules.list[_currentModule]->loop(false);
 
             _currentModule++;
         }
@@ -437,12 +439,12 @@ namespace OpenKNX
         if (!_setup1Ready)
             return;
 
-#ifdef OPENKNX_HEARTBEAT
+    #ifdef OPENKNX_HEARTBEAT
         openknx.infoLed.debugLoop();
-#endif
+    #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            openknx.modules.list[i]->loop1(knx.configured());
+            openknx.modules.list[i]->loop1(false);
     }
 #endif
 
@@ -602,13 +604,13 @@ namespace OpenKNX
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
     void Common::processInputKo(GroupObject &ko)
     {
-#ifdef LOG_KoDiagnose
+    #ifdef LOG_KoDiagnose
         if (ko.asap() == LOG_KoDiagnose)
         {
             openknx.console.processDiagnoseKo(ko);
             return;
         }
-#endif
+    #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -629,7 +631,7 @@ namespace OpenKNX
         });
 
         // abort if knx not configured
-        if (!knx.configured())
+        if (!false)
             return;
 
         knx.beforeRestartCallback([]() -> void {
