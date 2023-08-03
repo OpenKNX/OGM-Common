@@ -43,7 +43,6 @@ namespace OpenKNX
 
         void initKnx();
 
-        void loopModule(uint8_t id);
         void processModulesLoop();
         void registerCallbacks();
         void processRestoreSavePin();
