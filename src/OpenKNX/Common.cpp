@@ -363,8 +363,8 @@ namespace OpenKNX
         // loop  appstack
         _loopMicros = micros();
 
-        // knx is not configured
-        if (false)
+        // knx is configured
+        if (knx.configured())
         {
 
 #ifdef LOG_HeartbeatDelayBase
