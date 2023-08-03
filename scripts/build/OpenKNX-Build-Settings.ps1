@@ -12,9 +12,6 @@ if (!$settings.targetName) {
     # if we leave target name empty, source an target name are identical
     $settings.targetName = $settings.sourceName
 }
-$settings.knxprod = "src/{0}.h" -f $settings.sourceName
-# the name of the hardware definition header file 
-$settings.hardware = "src/{0}Hardware.h" -f $settings.sourceName
 $settings.releaseIndication = $args[0]
 if ($settings.releaseIndication) {
     # name of the release (Release, Beta, Big, ...)

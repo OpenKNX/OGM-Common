@@ -113,7 +113,7 @@ for name, lib_version in openknx_modules.items():
     pass
 
 # build defines
-version_file = open(basepath + "/OGM-Common/include/versions.h", "w")
+version_file = open("include/versions.h", "w")
 version_file.write("#pragma once\n\n")
 version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
 version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_dir / basepath / "knx")))

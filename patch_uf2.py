@@ -15,6 +15,7 @@ class console_color:
 def find_header_file(file):
     folders = [
         "src/",
+        "include/",
         "lib/OGM-Common/include/",
         projenv["PROJECT_LIBDEPS_DIR"] + "/" + env["PIOENV"] + "/OGM-Common/include/"
     ]
