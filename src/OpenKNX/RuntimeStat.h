@@ -3,8 +3,13 @@
 #include <Arduino.h>
 #include <string>
 
-#define RUNTIME_MEASURE_BEGIN(X) (X)->measureTimeBegin();
-#define RUNTIME_MEASURE_END(X) (X)->measureTimeEnd();
+#ifdef OPENKNX_RUNTIME_STAT
+  #define RUNTIME_MEASURE_BEGIN(X) (X)->measureTimeBegin();
+  #define RUNTIME_MEASURE_END(X) (X)->measureTimeEnd();
+#else
+  #define RUNTIME_MEASURE_BEGIN(X)
+  #define RUNTIME_MEASURE_END(X)
+#endif
 
 namespace OpenKNX
 {

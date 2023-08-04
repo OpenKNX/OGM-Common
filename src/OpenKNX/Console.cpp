@@ -111,11 +111,12 @@ namespace OpenKNX
             uint32_t addr = std::stoi(addrstr, nullptr, 16);
             showMemoryContent((uint8_t*)addr, 0x40);
         }
+#ifdef OPENKNX_RUNTIME_STAT
         else if (!diagnoseKo && (cmd == "runtime"))
         {
             openknx.common.showRuntimeStat();
         }
-
+#endif
 #ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
         {
@@ -300,7 +301,9 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("files, fs", "Show files on filesystem");
 #endif
+#ifdef OPENKNX_RUNTIME_STAT
         printHelpLine("runtime", "Show runtime statistics");
+#endif
         printHelpLine("restart, r", "Restart the device");
         printHelpLine("prog, p", "Toggle the ProgMode");
         printHelpLine("save, s, w", "Save data in Flash");

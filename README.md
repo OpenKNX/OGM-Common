@@ -62,6 +62,7 @@ KNX_UART_TX_PIN
 | OPENKNX_MAX_LOOPTIME | 4000 | µs | how much time is the loop allowed to consume. (soft limit) |
 | OPENKNX_LOOPTIME_WARNING | 6 | ms | print a warning if the loop has lasted longer. |
 | OPENKNX_LOOPTIME_WARNING_INTERVAL | 1000 | ms | how often the warning may be issued in the console |
+| OPENKNX_RUNTIME_STAT | | | Integrate Collection of Runtime-Statistics  for core0. |
 | OPENKNX_DEBUG | | | Enable debug mode |
 | OPENKNX_TRACE1..5 | | | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters. |
 | OPENKNX_RTT | | | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240! |

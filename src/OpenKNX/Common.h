@@ -65,10 +65,12 @@ namespace OpenKNX
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 
+#ifdef OPENKNX_RUNTIME_STAT
         RuntimeStat *_runtimeLoop = new RuntimeStat();
         RuntimeStat *_runtimeConsole = new RuntimeStat();
         RuntimeStat *_runtimeKnxStack = new RuntimeStat();
         RuntimeStat *_runtimeModuleLoop = new RuntimeStat();
+#endif
 
       public:
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
@@ -108,6 +110,9 @@ namespace OpenKNX
 #endif
         std::string logPrefix();
 
+#ifdef OPENKNX_RUNTIME_STAT
         void showRuntimeStat();
+#endif
+
     };
 } // namespace OpenKNX

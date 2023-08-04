@@ -689,6 +689,7 @@ namespace OpenKNX
     }
 
 
+#ifdef OPENKNX_RUNTIME_STAT
     void Common::showRuntimeStat()
     {
         logInfoP("Runtime Statistics:");
@@ -705,5 +706,6 @@ namespace OpenKNX
         }
         logIndentDown();
     }
+#endif
 
 } // namespace OpenKNX

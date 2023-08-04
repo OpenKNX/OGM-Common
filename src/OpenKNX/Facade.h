@@ -18,7 +18,9 @@ namespace OpenKNX
         uint8_t count = 0;
         uint8_t ids[OPENKNX_MAX_MODULES];
         Module* list[OPENKNX_MAX_MODULES];
+#ifdef OPENKNX_RUNTIME_STAT
         RuntimeStat* runtime[OPENKNX_MAX_MODULES];
+#endif
     };
 
     class Facade
