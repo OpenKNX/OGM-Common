@@ -223,4 +223,6 @@ def show_flash_partitioning(source, target, env):
         print("* This value is an estimate")
     print("")
 
-env.AddPostAction("checkprogsize", show_flash_partitioning)
+
+if projenv['PIOPLATFORM'] != 'espressif32':
+    env.AddPostAction("checkprogsize", show_flash_partitioning)
