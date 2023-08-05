@@ -20,6 +20,7 @@ namespace OpenKNX
 #endif
 
 #ifdef OPENKNX_LOGGER_DEVICE
+            OPENKNX_LOGGER_DEVICE.begin(115200);
             serial(&OPENKNX_LOGGER_DEVICE);
 #endif
         }
