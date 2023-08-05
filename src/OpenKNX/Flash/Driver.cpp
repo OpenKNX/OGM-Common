@@ -6,7 +6,7 @@ extern uint32_t __etext;
 extern uint32_t __data_start__;
 extern uint32_t __data_end__;
 #elif defined(ARDUINO_ARCH_ESP32)
-    // ToDo: Implementation for ESP32
+// ToDo: Implementation for ESP32
 #else
 extern uint32_t _EEPROM_start;
 extern uint32_t _FS_start;
@@ -23,15 +23,24 @@ namespace OpenKNX
             _offset = offset;
             _size = size;
 
-#ifdef ARDUINO_ARCH_SAMD
+#if defined(ARDUINO_ARCH_SAMD)
             const uint32_t pageSizes[] = {8, 16, 32, 64, 128, 256, 512, 1024};
             _sectorSize = pageSizes[NVMCTRL->PARAM.bit.PSZ] * 4;
             _endFree = pageSizes[NVMCTRL->PARAM.bit.PSZ] * NVMCTRL->PARAM.bit.NVMP;
             _startFree = (uint32_t)(&__etext + (&__data_end__ - &__data_start__)); // text + data MemoryBlock
+            _pageSize = FLASH_PAGE_SIZE;
 #elif defined(ARDUINO_ARCH_ESP32)
             // ToDo: ESP32 initialize flash
-#else
+            _sectorSize = SPI_FLASH_SEC_SIZE;
+            _pageSize = 256;
+            _startFree = 0;
+            _endFree = spi_flash_get_chip_size();
+            spi_flash_mmap_handle_t *out_handle;
+            spi_flash_mmap(_offset, SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&_map, (spi_flash_mmap_handle_t *)&out_handle);
+#elif defined(ARDUINO_ARCH_RP2040)
+            // RP2040
             _sectorSize = FLASH_SECTOR_SIZE;
+            _pageSize = FLASH_PAGE_SIZE;
             // Full Size
             // _maxSize = (uint32_t)(&_EEPROM_start) - 0x10000000lu + 4096lu;
             // Size up to EEPROM
@@ -60,9 +69,6 @@ namespace OpenKNX
 
         void Driver::validateParameters()
         {
-#ifdef ARDUINO_ARCH_ESP32
-            openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: ESP32 flash not yet implemented");
-#endif
             if (_size % _sectorSize)
                 openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Size unaligned");
             if (_offset % _sectorSize)
@@ -73,27 +79,26 @@ namespace OpenKNX
             {
                 logInfoP("%i < %i", _offset, _startFree);
                 openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Offset start before free flash begin");
-            }            
+            }
         }
 
         uint8_t *Driver::baseFlashAddress()
         {
-#ifdef ARDUINO_ARCH_SAMD
+#if defined(ARDUINO_ARCH_SAMD)
             return (uint8_t *)0;
-#elif defined(ARDUINO_ARCH_ESP32)
-            // ToDo: ESP32 return base address
-            return (uint8_t *)0;
-#else
+#elif defined(ARDUINO_ARCH_RP2040)
             return (uint8_t *)XIP_BASE;
+#else
+            return (uint8_t *)0;
 #endif
         }
 
         uint8_t *Driver::flashAddress()
         {
-#ifdef ARDUINO_ARCH_SAMD
+#if defined(ARDUINO_ARCH_SAMD)
             return baseFlashAddress() + _offset;
 #elif defined(ARDUINO_ARCH_ESP32)
-            return baseFlashAddress() + _offset;
+            return _map;
 #else
             return baseFlashAddress() + _offset;
 #endif
@@ -322,15 +327,15 @@ namespace OpenKNX
 
             logTraceP("erase sector %i", sector);
 
-#ifdef ARDUINO_ARCH_SAMD
+#if defined(ARDUINO_ARCH_SAMD)
             NVMCTRL->ADDR.reg = ((uint32_t)_offset + (sector * _sectorSize)) / 2;
             NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMDEX_KEY | NVMCTRL_CTRLA_CMD_ER;
             while (!NVMCTRL->INTFLAG.bit.READY)
             {
             }
 #elif defined(ARDUINO_ARCH_ESP32)
-            // ToDo: ESP32 erase flash
-#else
+            spi_flash_erase_range(((size_t)_offset + (sector * _sectorSize)), _sectorSize);
+#elif defined(ARDUINO_ARCH_RP2040)
             noInterrupts();
             rp2040.idleOtherCore();
             flash_range_erase((intptr_t)(_offset + (sector * _sectorSize)), _sectorSize);
@@ -355,7 +360,7 @@ namespace OpenKNX
             logTraceP("write sector %i", _bufferSector);
             // logHexTraceP(_buffer, _sectorSize);
 
-#ifdef ARDUINO_ARCH_SAMD
+#if defined(ARDUINO_ARCH_SAMD)
             // logHexTraceP(_buffer, _sectorSize);
             volatile uint32_t *src_addr = (volatile uint32_t *)_buffer;
             volatile uint32_t *dst_addr = (volatile uint32_t *)(flashAddress() + (_bufferSector * _sectorSize));
@@ -390,19 +395,41 @@ namespace OpenKNX
                 }
             }
 #elif defined(ARDUINO_ARCH_ESP32)
-            // ToDo: ESP32 write to flash 
-#else
-            noInterrupts();
-            rp2040.idleOtherCore();
-
-            // write smaller FLASH_PAGE_SIZE to reduze write time
+            // write smaller _pageSize to reduze write time
             uint32_t currentPosition = 0;
             uint32_t currentSize = 0;
             while (currentPosition < _sectorSize)
             {
-                while (memcmp(_buffer + currentPosition + currentSize, flashAddress() + (_bufferSector * _sectorSize) + currentPosition + currentSize, FLASH_PAGE_SIZE))
+                while (memcmp(_buffer + currentPosition + currentSize, flashAddress() + (_bufferSector * _sectorSize) + currentPosition + currentSize, _pageSize))
                 {
-                    currentSize += FLASH_PAGE_SIZE;
+                    currentSize += _pageSize;
+
+                    // last
+                    if (currentPosition + currentSize == _sectorSize)
+                        break;
+                }
+
+                // Changes Found
+                if (currentSize > 0)
+                    spi_flash_write((size_t)(_offset + (_bufferSector * _sectorSize) + currentPosition), _buffer + currentPosition, currentSize);
+                // flash_range_program((intptr_t)(_offset + (_bufferSector * _sectorSize) + currentPosition), _buffer + currentPosition, currentSize);
+
+                currentPosition += currentSize + _pageSize;
+                currentSize = 0;
+            }
+
+#elif defined(ARDUINO_ARCH_RP2040)
+            noInterrupts();
+            rp2040.idleOtherCore();
+
+            // write smaller _pageSize to reduze write time
+            uint32_t currentPosition = 0;
+            uint32_t currentSize = 0;
+            while (currentPosition < _sectorSize)
+            {
+                while (memcmp(_buffer + currentPosition + currentSize, flashAddress() + (_bufferSector * _sectorSize) + currentPosition + currentSize, _pageSize))
+                {
+                    currentSize += _pageSize;
 
                     // last
                     if (currentPosition + currentSize == _sectorSize)
@@ -413,7 +440,7 @@ namespace OpenKNX
                 if (currentSize > 0)
                     flash_range_program((intptr_t)(_offset + (_bufferSector * _sectorSize) + currentPosition), _buffer + currentPosition, currentSize);
 
-                currentPosition += currentSize + FLASH_PAGE_SIZE;
+                currentPosition += currentSize + _pageSize;
                 currentSize = 0;
             }
             rp2040.resumeOtherCore();

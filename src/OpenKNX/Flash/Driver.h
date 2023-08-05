@@ -16,9 +16,13 @@ namespace OpenKNX
             uint32_t _startFree = 0;
             uint32_t _endFree = 0;
             uint16_t _sectorSize = 0;
+            uint16_t _pageSize = 0;
 
             uint8_t *_buffer = nullptr;
             uint16_t _bufferSector = 0;
+#ifdef ARDUINO_ARCH_ESP32
+            uint8_t *_map = nullptr;
+#endif
 
             void writeSector();
             bool needWriteSector();
@@ -32,7 +36,7 @@ namespace OpenKNX
 
           public:
             static uint8_t *baseFlashAddress();
-            
+
             Driver(uint32_t offset, uint32_t size, std::string id);
             std::string logPrefix();
 

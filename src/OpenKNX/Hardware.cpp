@@ -1,5 +1,9 @@
 #include "OpenKNX/Facade.h"
 
+#ifndef ARDUINO_ARCH_ESP32
+    #include "spi_flash/include/esp_spi_flash.h"
+#endif
+
 #ifdef ARDUINO_ARCH_RP2040
     #include "LittleFS.h"
 #endif
@@ -16,6 +20,9 @@ namespace OpenKNX
 #endif
 #ifndef ARDUINO_ARCH_SAMD
         requestBcuSystemState();
+#endif
+#ifndef ARDUINO_ARCH_ESP32
+        spi_flash_init()
 #endif
     }
 

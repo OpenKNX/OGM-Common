@@ -36,7 +36,9 @@ if os.path.exists("lib/"):
 else:
   basepath = ".pio/libdeps/" + env["PIOENV"]
 
-
+# print(str(source[0]))
+# print(env.Dictionary())
+# print(projenv.Dictionary())
 
 
 # rescan dependencies just like in py file above. otherwise dependenceis are empty
