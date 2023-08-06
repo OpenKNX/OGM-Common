@@ -117,7 +117,7 @@ namespace OpenKNX
         class Logger
         {
           private:
-            Stream* _serial = nullptr;
+            // Stream* _serial = nullptr;
             uint8_t _lastConsoleLen = 0;
             char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
 #ifdef ARDUINO_ARCH_RP2040
@@ -156,12 +156,7 @@ namespace OpenKNX
             RTTStream rtt;
 #endif
             Logger();
-            /*
-             * Allow overwrite stream for e.g. softserials
-             */
-            void serial(Stream* serial);
-            Stream* serial();
-
+            
             /*
              * Fetches an exclusive lock to allow contiguous output.
              * This can be called multiple times per thread.

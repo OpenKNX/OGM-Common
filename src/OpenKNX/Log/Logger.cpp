@@ -21,18 +21,7 @@ namespace OpenKNX
 
 #ifdef OPENKNX_LOGGER_DEVICE
             OPENKNX_LOGGER_DEVICE.begin(115200);
-            serial(&OPENKNX_LOGGER_DEVICE);
 #endif
-        }
-
-        void Logger::serial(Stream* serial)
-        {
-            _serial = serial;
-        }
-
-        Stream* Logger::serial()
-        {
-            return _serial;
         }
 
         void Logger::begin()
@@ -81,7 +70,7 @@ namespace OpenKNX
         {
             if (isColorSet())
                 printColorCode(0);
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printPrompt();
             end();
         }
@@ -174,9 +163,9 @@ namespace OpenKNX
 
         void Logger::printColorCode(uint8_t color)
         {
-            _serial->print("\x1B[");
-            _serial->print((int)color);
-            _serial->print("m");
+            OPENKNX_LOGGER_DEVICE.print("\x1B[");
+            OPENKNX_LOGGER_DEVICE.print((int)color);
+            OPENKNX_LOGGER_DEVICE.print("m");
         }
 
         void Logger::printColorCode()
@@ -189,10 +178,10 @@ namespace OpenKNX
             for (size_t i = 0; i < size; i++)
             {
                 if (data[i] < 0x10)
-                    _serial->print("0");
+                    OPENKNX_LOGGER_DEVICE.print("0");
 
-                _serial->print(data[i], HEX);
-                _serial->print(" ");
+                OPENKNX_LOGGER_DEVICE.print(data[i], HEX);
+                OPENKNX_LOGGER_DEVICE.print(" ");
             }
         }
 
@@ -202,9 +191,9 @@ namespace OpenKNX
             while (_lastConsoleLen > 0)
             {
                 _lastConsoleLen--;
-                _serial->print("\b");
+                OPENKNX_LOGGER_DEVICE.print("\b");
             }
-            _serial->print("\33[K");
+            OPENKNX_LOGGER_DEVICE.print("\33[K");
 #endif
         }
 
@@ -212,7 +201,7 @@ namespace OpenKNX
         {
 #ifndef OPENKNX_RTT
             clearPreviouseLine();
-            _serial->print(openknx.console.prompt);
+            OPENKNX_LOGGER_DEVICE.print(openknx.console.prompt);
             _lastConsoleLen = strlen(openknx.console.prompt);
 #endif
         }
@@ -224,15 +213,15 @@ namespace OpenKNX
             {
                 if (i < prefixLen)
                 {
-                    _serial->print(prefix.c_str()[i]);
+                    OPENKNX_LOGGER_DEVICE.print(prefix.c_str()[i]);
                 }
                 else if (i == prefixLen && prefixLen > 0)
                 {
-                    _serial->print(":");
+                    OPENKNX_LOGGER_DEVICE.print(":");
                 }
                 else
                 {
-                    _serial->print(" ");
+                    OPENKNX_LOGGER_DEVICE.print(" ");
                 }
             }
         }
@@ -241,20 +230,20 @@ namespace OpenKNX
         {
 #if defined(ARDUINO_ARCH_RP2040) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
             if (openknx.usesDualCore())
-                _serial->print(rp2040.cpuid() ? "_1> " : "0_> ");
+                OPENKNX_LOGGER_DEVICE.print(rp2040.cpuid() ? "_1> " : "0_> ");
 #endif
         }
 
         void Logger::printMessage(const std::string message)
         {
-            _serial->print(message.c_str());
+            OPENKNX_LOGGER_DEVICE.print(message.c_str());
         }
 
         void Logger::printMessage(const std::string message, va_list values)
         {
             memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
             uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), values);
-            _serial->print(_buffer);
+            OPENKNX_LOGGER_DEVICE.print(_buffer);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
                 openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
         }
@@ -293,7 +282,7 @@ namespace OpenKNX
         {
             for (size_t i = 0; i < getIndent(); i++)
             {
-                _serial->print("  ");
+                OPENKNX_LOGGER_DEVICE.print("  ");
             }
         }
 
@@ -345,13 +334,13 @@ namespace OpenKNX
             begin();
 
             printCore();
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printCore();
             printMessage("+------------+-----------------------------------------------------------------+");
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printCore();
             printMessage("|            |                                                                 |");
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
 
             // Line 1: "Open #"
             printCore();
@@ -372,14 +361,14 @@ namespace OpenKNX
             printMessage("|");
 
             // Line 2: "+----+"
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printCore();
             printMessage("|   ");
             printColorCode(colorGreen);
             printMessage("+----+");
             printColorCode(0);
             printMessage("   |                                                                 |");
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
 
             // Line 3: "# KNX "
             printCore();
@@ -391,15 +380,15 @@ namespace OpenKNX
             printColorCode(0);
             printMessage("   |   www.openknx.de - wiki.openknx.de - forum.openknx.de           |");
 
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printCore();
             printMessage("|            |                                                                 |");
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printCore();
             printMessage("+------------+-----------------------------------------------------------------+");
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
             printCore();
-            _serial->println();
+            OPENKNX_LOGGER_DEVICE.println();
 
             end();
         }
