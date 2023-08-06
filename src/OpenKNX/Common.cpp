@@ -189,10 +189,6 @@ namespace OpenKNX
 
     void Common::debugWait()
     {
-#if OPENKNX_WAIT_FOR_SERIAL > 1
-        uint32_t timeoutBase = millis();
-#endif
-
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.blinking();
         openknx.infoLed.blinking();
@@ -202,6 +198,7 @@ namespace OpenKNX
 #endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
+        uint32_t timeoutBase = millis();
         while (!SERIAL_DEBUG)
         {
             if (delayCheck(timeoutBase, OPENKNX_WAIT_FOR_SERIAL))
