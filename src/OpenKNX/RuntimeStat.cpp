@@ -3,6 +3,8 @@
 #include "OpenKNX/Facade.h"
 // TODO/FIXME Logger.h is not working without openknx// TODO check 
 
+// TODO/LIMITATION: Counter Overflow ist possible and will result in wrong results (for long? runtimes)!
+
 #include "OpenKNX/Log/Logger.h"
 
 namespace OpenKNX
