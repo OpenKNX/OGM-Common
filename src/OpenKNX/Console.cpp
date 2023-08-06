@@ -344,7 +344,7 @@ namespace OpenKNX
         {
             const uint8_t* ptr = start + (i * 16);
             char prefix[24] = {};
-            snprintf(prefix, 24, "0x%06X (0x%08X)", (i * 16), ptr);
+            snprintf(prefix, 24, "0x%06X (0x%08X)", (uint)(i * 16), (uint)ptr);
             openknx.logger.logHexWithPrefix(prefix, ptr, 16);
         }
         logEnd();
