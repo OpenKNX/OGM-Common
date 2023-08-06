@@ -10,7 +10,7 @@
 namespace OpenKNX
 {
 
-    const uint32_t RuntimeStat::_timeRangeMax[] = {
+    uint32_t RuntimeStat::_timeRangeMax[OPENKNX_RUNTIME_STAT_BUCKETN] = {
         OPENKNX_RUNTIME_STAT_BUCKETS,
         0xffffffff, // max value, so we do not need a special case
     };
@@ -27,13 +27,13 @@ namespace OpenKNX
 
     uint32_t RuntimeStat::calcBucketMax(const uint8_t bucketIndex, const uint32_t overallMax)
     {
-        const uint32_t bucketMax = runtime_stat_timeRangeMax[bucketIndex];
+        const uint32_t bucketMax = _timeRangeMax[bucketIndex];
         return MIN(bucketMax, overallMax);
     }
 
     uint32_t RuntimeStat::calcBucketMin(const uint8_t bucketIndex, const uint32_t overallMin)
     {
-        const uint32_t bucketMin = bucketIndex==0 ? 0 : runtime_stat_timeRangeMax[bucketIndex-1];
+        const uint32_t bucketMin = bucketIndex==0 ? 0 : _timeRangeMax[bucketIndex-1];
         return MAX(bucketMin, overallMin);
     }
 
@@ -53,7 +53,7 @@ namespace OpenKNX
         uint32_t cumulatedCountUpper = 0;
         uint32_t lower = 0;
         uint32_t upper = 0;
-        for (size_t i = 0; i < sizeof(runtime_stat_timeRangeMax)/sizeof(uint32_t); i++)
+        for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
         {
             cumulatedCountUpper += _countRunDuration[i];
             if (cumulatedCountUpper >= medianCount)
@@ -136,7 +136,7 @@ namespace OpenKNX
         openknx.logger.logWithPrefixAndValues(label, "us     max     %10d %10d",
             _runDurationMax_us, _waitDurationMax_us
         );
-        for (size_t i = 0; i < 16; i++)
+        for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
         {
             openknx.logger.logWithPrefixAndValues(label, "#<= %6d us  %10d %10d",
                 _timeRangeMax[i], _countRunDuration[i], _countWaitDuration[i]
