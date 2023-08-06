@@ -36,6 +36,7 @@ namespace OpenKNX
 
             _waitDurationMax_us = MAX(_waitDurationMax_us, waiting_duration_us);
             _waitDurationMin_us = MIN(_waitDurationMin_us, waiting_duration_us);
+            _waitSum_us += waiting_duration_us;
         }
     }
 
@@ -49,6 +50,7 @@ namespace OpenKNX
 
         _runDurationMax_us = MAX(_runDurationMax_us, duration_us);
         _runDurationMin_us = MIN(_runDurationMin_us, duration_us);
+        _runSum_us += duration_us;
 
         // TODO check removal (is included in _countRunDuration)
         _count++;
@@ -62,8 +64,15 @@ namespace OpenKNX
         openknx.logger.logWithPrefixAndValues(label, "#    count     %10d %10d",
             runCount, waitCount
         );
+        openknx.logger.logWithPrefixAndValues(label, "#      sum     %10d %10d",
+            _runSum_us, _waitSum_us
+        );
         openknx.logger.logWithPrefixAndValues(label, "us     min     %10d %10d",
             _runDurationMin_us, _waitDurationMin_us
+        );
+        openknx.logger.logWithPrefixAndValues(label, "us     avg     %10d %10d",
+            _runSum_us / runCount,
+            _waitSum_us / waitCount
         );
         openknx.logger.logWithPrefixAndValues(label, "us     max     %10d %10d",
             _runDurationMax_us, _waitDurationMax_us

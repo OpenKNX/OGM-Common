@@ -42,8 +42,10 @@ namespace OpenKNX
         // TODO use own structure for this
         uint32_t _runDurationMin_us = 0xffffffffu;
         uint32_t _runDurationMax_us = 0;
+        uint64_t _runSum_us = 0;
         uint32_t _waitDurationMin_us = 0xffffffffu;
         uint32_t _waitDurationMax_us = 0;
+        uint64_t _waitSum_us = 0;
         
         static uint8_t calcBucketIndex(const uint32_t value_us);
 
