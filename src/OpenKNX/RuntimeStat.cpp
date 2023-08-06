@@ -25,6 +25,59 @@ namespace OpenKNX
         return i;
     }
 
+    uint32_t RuntimeStat::calcBucketMax(const uint8_t bucketIndex, const uint32_t overallMax)
+    {
+        const uint32_t bucketMax = runtime_stat_timeRangeMax[bucketIndex];
+        return MIN(bucketMax, overallMax);
+    }
+
+    uint32_t RuntimeStat::calcBucketMin(const uint8_t bucketIndex, const uint32_t overallMin)
+    {
+        const uint32_t bucketMin = bucketIndex==0 ? 0 : runtime_stat_timeRangeMax[bucketIndex-1];
+        return MAX(bucketMin, overallMin);
+    }
+
+    uint32_t RuntimeStat::estimateMedian()
+    {
+        // TODO special handling of edge-cases!
+
+        if (_count == 0)
+            return _runDurationMin_us;
+
+        if (_count <= 2)
+            return (_runDurationMin_us + _runDurationMax_us) / 2;
+
+        uint8_t medianIndex = 0;
+        const uint32_t medianCount = _count / 2;
+        uint32_t cumulatedCountLower = 0;
+        uint32_t cumulatedCountUpper = 0;
+        uint32_t lower = 0;
+        uint32_t upper = 0;
+        for (size_t i = 0; i < sizeof(runtime_stat_timeRangeMax)/sizeof(uint32_t); i++)
+        {
+            cumulatedCountUpper += _countRunDuration[i];
+            if (cumulatedCountUpper >= medianCount)
+            {
+                // found the bucket containing the value
+                medianIndex = i;
+                break;
+            }
+            cumulatedCountLower = cumulatedCountUpper;
+        }
+
+        // median must be in the closed interval defined by the intersection of selected bucket and [min;max]
+        const uint32_t medianMin = calcBucketMin(medianIndex, _runDurationMin_us);
+        const uint32_t medianMax = calcBucketMax(medianIndex, _runDurationMax_us);
+
+        // "The ``best'' estimate for the mean [and median] is obtained by assuming the data is uniformly spread within each interval"
+        // [http://www.cs.uni.edu/~campbell/stat/histrev2.html accessed 2023-08-06]
+        // Using information of min- and maximum value can reduce the interval and thereby improve the result.
+        double factor = 1.0d * (medianCount - cumulatedCountLower) / _countRunDuration[medianIndex];
+        return  medianMin + (medianMax - medianMin) * factor;
+
+        // TODO check usage of one side open interval?
+    }
+
     void RuntimeStat::measureTimeBegin()
     {
         _begin_us = micros();
@@ -75,6 +128,10 @@ namespace OpenKNX
         openknx.logger.logWithPrefixAndValues(label, "us     avg     %10d %10d",
             _runSum_us / runCount,
             _waitSum_us / waitCount
+        );
+        openknx.logger.logWithPrefixAndValues(label, "us    ~med     %10d %10d",
+            estimateMedian(),
+            -1
         );
         openknx.logger.logWithPrefixAndValues(label, "us     max     %10d %10d",
             _runDurationMax_us, _waitDurationMax_us

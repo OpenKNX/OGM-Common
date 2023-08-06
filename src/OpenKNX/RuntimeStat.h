@@ -49,6 +49,10 @@ namespace OpenKNX
         
         static uint8_t calcBucketIndex(const uint32_t value_us);
 
+        uint32_t calcBucketMax(const uint8_t bucketIndex, const uint32_t overallMax);
+        uint32_t calcBucketMin(const uint8_t bucketIndex, const uint32_t overallMin);
+        uint32_t estimateMedian();
+
       protected:
 
       public:
