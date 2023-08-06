@@ -8,22 +8,8 @@
 namespace OpenKNX
 {
 
-    const uint32_t RuntimeStat::_timeRangeMax[16] = {
-        50, 
-        100, 
-        200, 
-        400, 
-        600, 
-        800, 
-        1000, 
-        1500, 
-        2000, 
-        3000, 
-        4000, 
-        5000,
-        6000,
-        7000,
-        10000,
+    const uint32_t RuntimeStat::_timeRangeMax[] = {
+        OPENKNX_RUNTIME_STAT_BUCKETS,
         0xffffffff, // max value, so we do not need a special case
     };
 

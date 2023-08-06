@@ -11,13 +11,22 @@
   #define RUNTIME_MEASURE_END(X)
 #endif
 
+#ifndef OPENKNX_RUNTIME_STAT_BUCKETS
+    #define OPENKNX_RUNTIME_STAT_BUCKETS 50, 100, 200, 400, 600, 800, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 10000
+#endif
+
+
 namespace OpenKNX
 {
+    const static uint32_t runtime_stat_timeRangeMax[] = {
+        OPENKNX_RUNTIME_STAT_BUCKETS,
+        0xffffffff, // max value, so we do not need a special case
+    };
+
     class RuntimeStat
     {
       private:
-        // TODO use constant const static size_t _timeN = 7;
-        const static uint32_t _timeRangeMax[16];
+        // const static uint32_t _timeRangeMax[16];
 
         uint32_t _begin_us = 0;
         uint32_t _end_us = 0;
