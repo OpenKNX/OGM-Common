@@ -221,7 +221,6 @@ namespace OpenKNX
 
           private:
             bool *loadedModules = nullptr;
-            OpenKNX::Flash::Driver *_flashDriver = nullptr;
             bool _activeSlot = false; // false = A & true = B
             uint32_t _lastWrite = 0;
             uint16_t _lastFirmwareNumber = 0;

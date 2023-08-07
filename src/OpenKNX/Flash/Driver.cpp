@@ -76,25 +76,14 @@ namespace OpenKNX
             }
         }
 
-        uint8_t *Driver::baseFlashAddress()
-        {
-#if defined(ARDUINO_ARCH_SAMD)
-            return (uint8_t *)0;
-#elif defined(ARDUINO_ARCH_RP2040)
-            return (uint8_t *)XIP_BASE;
-#else
-            return (uint8_t *)0;
-#endif
-        }
-
         uint8_t *Driver::flashAddress()
         {
 #if defined(ARDUINO_ARCH_SAMD)
-            return baseFlashAddress() + _offset;
+            return (uint8_t *)_offset;
 #elif defined(ARDUINO_ARCH_ESP32)
             return _mmap;
 #else
-            return baseFlashAddress() + _offset;
+            return (uint8_t *)XIP_BASE + _offset;
 #endif
         }
 
