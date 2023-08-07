@@ -49,7 +49,6 @@ namespace OpenKNX
             uint32_t endFree();
             uint32_t sectorSize();
             uint32_t startOffset();
-            void printBaseInfo();
 
             uint32_t write(uint32_t relativeAddress, uint8_t value, uint32_t size = 1);
             uint32_t write(uint32_t relativeAddress, uint8_t *buffer, uint32_t size = 1);

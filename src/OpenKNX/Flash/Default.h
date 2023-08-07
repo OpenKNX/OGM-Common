@@ -173,7 +173,6 @@ namespace OpenKNX
         class Default
         {
           public:
-            Default();
             void init();
 
             /**

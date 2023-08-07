@@ -57,16 +57,6 @@ namespace OpenKNX
             return openknx.logger.buildPrefix("FlashDriver", _id);
         }
 
-        void Driver::printBaseInfo()
-        {
-            logInfoP("initalize %i bytes at 0x%X", _size, _offset);
-            logIndentUp();
-            logDebugP("sectorSize: %i", _sectorSize);
-            logDebugP("startFree: %i", _startFree);
-            logDebugP("endFree: %i", _endFree);
-            logIndentDown();
-        }
-
         void Driver::validateParameters()
         {
             if (_size % _sectorSize)

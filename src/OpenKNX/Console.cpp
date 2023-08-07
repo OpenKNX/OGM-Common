@@ -99,11 +99,11 @@ namespace OpenKNX
         }
         else if (cmd == "flash knx")
         {
-            showMemoryContent(OpenKNX::Flash::Driver::baseFlashAddress() + KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+            showMemoryContent(openknx.flashKNX.flashAddress(), KNX_FLASH_SIZE);
         }
         else if (cmd == "flash openknx")
         {
-            showMemoryContent(OpenKNX::Flash::Driver::baseFlashAddress() + OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+            showMemoryContent(openknx.flashOpenKNX.flashAddress(), OPENKNX_FLASH_SIZE);
         }
         else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
         {
