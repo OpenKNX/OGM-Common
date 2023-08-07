@@ -161,6 +161,7 @@ namespace OpenKNX
         stopKnxMode();
         // poweroff
         deactivatePowerRail();
+        logIndentDown();
 
         while (true)
         {
@@ -168,6 +169,8 @@ namespace OpenKNX
             Watchdog.reset();
 #endif
             delay(2000);
+            // Repeat error message
+            logError("FatalError", "Code: %d (%s)", code, message);
         }
     }
 
