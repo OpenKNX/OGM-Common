@@ -43,7 +43,9 @@ namespace OpenKNX
                     // when slot b valid und slot a not
                     !slotValidA ||
                     // when slot b newer than slot a
-                    (slotVersionB != 0xFF && slotVersionA < slotVersionB || (slotVersionA == 0xFF && slotVersionB == 0x0)))
+                    (
+                        (slotVersionB != 0xFF && slotVersionA < slotVersionB) ||
+                        (slotVersionA == 0xFF && slotVersionB == 0x0)))
                 {
                     _activeSlot = true;
                 }
