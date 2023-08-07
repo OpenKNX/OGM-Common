@@ -36,7 +36,8 @@ namespace OpenKNX
             _startFree = 0;
             _endFree = spi_flash_get_chip_size();
             spi_flash_mmap_handle_t *out_handle;
-            spi_flash_mmap(_offset, SPI_FLASH_MMU_PAGE_SIZE, SPI_FLASH_MMAP_DATA, (const void **)&_map, (spi_flash_mmap_handle_t *)&out_handle);
+            const uint32_t mmap_block_size = ceil((float)_size / SPI_FLASH_MMU_PAGE_SIZE) * SPI_FLASH_MMU_PAGE_SIZE;
+            spi_flash_mmap(_offset, mmap_block_size, SPI_FLASH_MMAP_DATA, (const void **)&_map, (spi_flash_mmap_handle_t *)&out_handle);
 #elif defined(ARDUINO_ARCH_RP2040)
             // RP2040
             _sectorSize = FLASH_SECTOR_SIZE;
