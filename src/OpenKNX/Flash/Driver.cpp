@@ -36,8 +36,7 @@ namespace OpenKNX
             _startFree = 0;
             _endFree = spi_flash_get_chip_size();
             spi_flash_mmap_handle_t *out_handle;
-            const uint32_t mmap_block_size = ceil((float)_size / SPI_FLASH_MMU_PAGE_SIZE) * SPI_FLASH_MMU_PAGE_SIZE;
-            spi_flash_mmap(_offset, mmap_block_size, SPI_FLASH_MMAP_DATA, (const void **)&_map, (spi_flash_mmap_handle_t *)&out_handle);
+            spi_flash_mmap(_offset, _size, SPI_FLASH_MMAP_DATA, (const void **)&_mmap, (spi_flash_mmap_handle_t *)&out_handle);
 #elif defined(ARDUINO_ARCH_RP2040)
             // RP2040
             _sectorSize = FLASH_SECTOR_SIZE;
@@ -76,6 +75,10 @@ namespace OpenKNX
                 openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Offset unaligned");
             if (_size > _endFree)
                 openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: End behind free flash");
+#ifdef ARDUINO_ARCH_ESP32
+            if (_offset % SPI_FLASH_MMU_PAGE_SIZE)
+                openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Offset unaligned (SPI_FLASH_MMAP_DATA)");
+#endif
             if (_offset < _startFree)
             {
                 logInfoP("%i < %i", _offset, _startFree);
@@ -99,7 +102,7 @@ namespace OpenKNX
 #if defined(ARDUINO_ARCH_SAMD)
             return baseFlashAddress() + _offset;
 #elif defined(ARDUINO_ARCH_ESP32)
-            return _map;
+            return _mmap;
 #else
             return baseFlashAddress() + _offset;
 #endif

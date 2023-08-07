@@ -21,7 +21,7 @@ namespace OpenKNX
             uint8_t *_buffer = nullptr;
             uint16_t _bufferSector = 0;
 #ifdef ARDUINO_ARCH_ESP32
-            uint8_t *_map = nullptr;
+            uint8_t *_mmap = nullptr;
 #endif
 
             void writeSector();
