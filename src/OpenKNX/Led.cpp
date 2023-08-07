@@ -12,7 +12,7 @@ namespace OpenKNX
         _pin = pin;
         _activeOn = activeOn;
 
-        pinMode(pin, OUTPUT);
+        pinMode(_pin, OUTPUT);
         digitalWrite(_pin, LOW);
     }
 
@@ -216,7 +216,14 @@ namespace OpenKNX
         if (brightness == _currentLedBrightness)
             return;
 
-        // SERIAL_DEBUG.printf("==== > %i -> %i\n", _pin, brightness);
+#ifdef ARDUINO_ARCH_ESP32
+        // Special Hack for ESP32
+        // Need to reset pinMode after using analogWrite
+        if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
+            pinMode(_pin, OUTPUT);
+#endif
+
+        // logTraceP("==== > %i -> %i\n", _pin, brightness);
         if (brightness == 255)
             digitalWrite(_pin, _activeOn == HIGH ? true : false);
 

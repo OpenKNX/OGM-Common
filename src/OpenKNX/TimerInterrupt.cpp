@@ -18,8 +18,8 @@
  * 3 = TIMER_TCC
  * 4 = TIMER_TCC1
  * 5 = TIMER_TCC2
- * 
- *  ESP32 4 Timers available
+ *
+ * ESP32 4 Timers available
  * 0 = Timer0
  * 1 = Timer1 (default)
  * 2 = Timer2
@@ -27,58 +27,58 @@
  * *
  */
 #ifndef OPENKNX_TIMER_INTERRUPT
-#define OPENKNX_TIMER_INTERRUPT 1
+    #define OPENKNX_TIMER_INTERRUPT 1
 #endif
 
 #undef SELECTED_TIMER
 
 #ifdef ARDUINO_ARCH_ESP32
-#if OPENKNX_TIMER_INTERRUPT >= 0 && OPENKNX_TIMER_INTERRUPT <= 3
-#define SELECTED_TIMER OPENKNX_TIMER_INTERRUPT
-#endif
+    #if OPENKNX_TIMER_INTERRUPT >= 0 && OPENKNX_TIMER_INTERRUPT <= 3
+        #define SELECTED_TIMER OPENKNX_TIMER_INTERRUPT
+    #endif
 #endif
 
 #ifdef ARDUINO_ARCH_RP2040
-#if OPENKNX_TIMER_INTERRUPT >= 0 && OPENKNX_TIMER_INTERRUPT <= 3
-#define SELECTED_TIMER OPENKNX_TIMER_INTERRUPT
-#endif
+    #if OPENKNX_TIMER_INTERRUPT >= 0 && OPENKNX_TIMER_INTERRUPT <= 3
+        #define SELECTED_TIMER OPENKNX_TIMER_INTERRUPT
+    #endif
 #endif
 
 #ifdef ARDUINO_ARCH_SAMD
-#if OPENKNX_TIMER_INTERRUPT == 0
-#define SELECTED_TIMER TIMER_TC3
-#undef USING_TIMER_TC3
-#define USING_TIMER_TC3 true
-#endif
-#if OPENKNX_TIMER_INTERRUPT == 1
-#define SELECTED_TIMER TIMER_TC4
-#undef USING_TIMER_TC4
-#define USING_TIMER_TC4 true
-#endif
-#if OPENKNX_TIMER_INTERRUPT == 2
-#define SELECTED_TIMER TIMER_TC5
-#undef USING_TIMER_TC5
-#define USING_TIMER_TC5 true
-#endif
-#if OPENKNX_TIMER_INTERRUPT == 3
-#define SELECTED_TIMER TIMER_TCC
-#undef USING_TIMER_TCC
-#define USING_TIMER_TCC true
-#endif
-#if OPENKNX_TIMER_INTERRUPT == 4
-#define SELECTED_TIMER TIMER_TCC1
-#undef USING_TIMER_TCC1
-#define USING_TIMER_TCC1 true
-#endif
-#if OPENKNX_TIMER_INTERRUPT == 5
-#define SELECTED_TIMER TIMER_TCC2
-#undef USING_TIMER_TCC2
-#define USING_TIMER_TCC2 true
-#endif
+    #if OPENKNX_TIMER_INTERRUPT == 0
+        #define SELECTED_TIMER TIMER_TC3
+        #undef USING_TIMER_TC3
+        #define USING_TIMER_TC3 true
+    #endif
+    #if OPENKNX_TIMER_INTERRUPT == 1
+        #define SELECTED_TIMER TIMER_TC4
+        #undef USING_TIMER_TC4
+        #define USING_TIMER_TC4 true
+    #endif
+    #if OPENKNX_TIMER_INTERRUPT == 2
+        #define SELECTED_TIMER TIMER_TC5
+        #undef USING_TIMER_TC5
+        #define USING_TIMER_TC5 true
+    #endif
+    #if OPENKNX_TIMER_INTERRUPT == 3
+        #define SELECTED_TIMER TIMER_TCC
+        #undef USING_TIMER_TCC
+        #define USING_TIMER_TCC true
+    #endif
+    #if OPENKNX_TIMER_INTERRUPT == 4
+        #define SELECTED_TIMER TIMER_TCC1
+        #undef USING_TIMER_TCC1
+        #define USING_TIMER_TCC1 true
+    #endif
+    #if OPENKNX_TIMER_INTERRUPT == 5
+        #define SELECTED_TIMER TIMER_TCC2
+        #undef USING_TIMER_TCC2
+        #define USING_TIMER_TCC2 true
+    #endif
 #endif
 
 #ifndef SELECTED_TIMER
-#error Invalid OPENKNX_TIMER_INTERRUPT defined
+    #error Invalid OPENKNX_TIMER_INTERRUPT defined
 #endif
 
 // include after defines!
