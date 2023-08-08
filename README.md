@@ -24,7 +24,13 @@ ParamLOG_HeartbeatDelayTimeMS
 ```
 ## Hardware
 
-It is written for use with RP2040 (arduino-pico core) or SAMD21 (arduino core). To configure the Hardware-Setup use the following defines in hardware.h
+| ARCH | info |
+|---|---|
+| RP204 | the reference platform with full support (including dual core support) |
+| SAMD21 | obsolete but still supported. no hw should be developed on this anymore |
+| ESP32 | experimental (single core only) |
+
+To configure the Hardware-Setup use the following defines in hardware.h
 
 ```
 SAVE_INTERRUPT_PIN
@@ -40,14 +46,14 @@ KNX_UART_TX_PIN
 
 | define | default | unit | function |
 |---|---:|:---:|---|
-| OPENKNX_DUALCORE | | | build with dualcore support |
+| OPENKNX_DUALCORE | | | build with dualcore support (only on RP2040) |
 | OPENKNX_WATCHDOG | | | compile with watchdog (use only for releases. debugger not working with active watchdog) |
 | OPENKNX_WATCHDOG_MAX_PERIOD | 16384 | ms | the timeout period of watchdog |
 | OPENKNX_NO_BOOT_PULSATING | | | Turn off the pulsating LED during the boot phase. (Only necessary for specific hardware where the LED cannot be controlled via PWM). |
 | OPENKNX_MAX_MODULES | 9 | | |
 | OPENKNX_LEDEFFECT_PULSE_FREQ | 1000 | ms | |
 | OPENKNX_LEDEFFECT_BLINK_FREQ | 1000 | ms | |
-| OPENKNX_WAIT_FOR_SERIAL | 2000 | ms | wait at startup until SERIAL_DEBUG is connected.<br/>(optional with timeout - in devmode use high values like 20000 - 0 will disable waiting) |
+| OPENKNX_WAIT_FOR_SERIAL | 2000 | ms | wait at startup until SERIAL_DEBUG is connected.<br/>(optional with timeout - in devmode use high values like 20000 - 0 will disable waiting)<br/>Not supported on ESP32 |
 | OPENKNX_HEARTBEAT | 1000 | ms | enable heartbeat mode (optional with with specific failure time) |
 | OPENKNX_HEARTBEAT_PRIO | 3000 | ms | enable heartbeat prio mode (optional with with specific failure time) |
 | OPENKNX_HEARTBEAT_FREQ | 200 | ms | |
@@ -58,7 +64,7 @@ KNX_UART_TX_PIN
 | OPENKNX_LOOPTIME_WARNING_INTERVAL | 1000 | ms | how often the warning may be issued in the console |
 | OPENKNX_DEBUG | | | Enable debug mode |
 | OPENKNX_TRACE1..5 | | | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters. |
-| OPENKNX_RTT | | | Enable RTT Mode (Disable USB Serial) + Increase BUFFER_SIZE_UP to 10240! |
+| OPENKNX_RTT | | | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240! |
 | BUFFER_SIZE_UP | 1024 | Bytes | Using by Segger RTT |
 
 ### Heartbeat (Mode: Normal)
