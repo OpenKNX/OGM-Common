@@ -3,6 +3,7 @@
 #include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Pulse.h"
 #include "OpenKNX/defines.h"
+#include "OpenKNX/LedHardware.h"
 #include <Arduino.h>
 #include <string>
 
@@ -18,9 +19,7 @@ namespace OpenKNX
 
     class Led
     {
-      private:
-        volatile long _pin = -1;
-        volatile long _activeOn = HIGH;
+        LedHardware* _ledHardware = NULL;
         volatile uint32_t _lastMillis = 0;
         volatile uint8_t _brightness = 255;
         volatile bool _state = false;
@@ -49,6 +48,8 @@ namespace OpenKNX
         void writeLed(uint8_t brightness);
 
       public:
+        ~Led();
+        void init(LedHardware *ledHardware);
         void init(long pin = -1, long activeOn = HIGH);
 
         /*

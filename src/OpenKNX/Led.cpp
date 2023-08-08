@@ -7,13 +7,29 @@ namespace OpenKNX
     {
         // no valid pin
         if (pin < 0)
+        {
+            init((LedHardware*) NULL);
             return;
+        }
+        init(new LedHardware(pin, activeOn));
+    }
 
-        _pin = pin;
-        _activeOn = activeOn;
-
-        pinMode(_pin, OUTPUT);
-        digitalWrite(_pin, LOW);
+    void Led::init(LedHardware *ledHardware)
+    {
+        if (_ledHardware != NULL)
+            delete _ledHardware;
+        _ledHardware = ledHardware;
+        if (_ledHardware != NULL)
+            _ledHardware->init();
+    }
+    
+    Led::~Led()
+    {
+        if (_ledHardware != NULL)
+        {
+            delete _ledHardware;
+            _ledHardware = NULL;
+        }
     }
 
 #ifdef __time_critical_func
@@ -23,8 +39,8 @@ namespace OpenKNX
 #endif
     {
         // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         _lastMillis = millis();
@@ -101,8 +117,8 @@ namespace OpenKNX
 
     void Led::brightness(uint8_t brightness)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         logTraceP("brightness %i", _brightness);
@@ -111,8 +127,8 @@ namespace OpenKNX
 
     void Led::powerSave(bool active /* = true */)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         logTraceP("powerSave %i", active);
@@ -121,8 +137,8 @@ namespace OpenKNX
 
     void Led::forceOn(bool active /* = true */)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         logTraceP("forceOn %i", active);
@@ -134,8 +150,8 @@ namespace OpenKNX
 
     void Led::errorCode(uint8_t code /* = 0 */)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         if (code > 0)
@@ -152,10 +168,9 @@ namespace OpenKNX
 
     void Led::on(bool active /* = true */)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
-
         logTraceP("on");
         _state = active;
         _effect = LedEffect::Normal;
@@ -163,8 +178,8 @@ namespace OpenKNX
 
     void Led::pulsing(uint16_t frequency)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         logTraceP("pulsing (frequency %i)", frequency);
@@ -175,8 +190,8 @@ namespace OpenKNX
 
     void Led::blinking(uint16_t frequency)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        if (_ledHardware == NULL)
             return;
 
         logTraceP("blinking (frequency %i)", frequency);
@@ -188,7 +203,7 @@ namespace OpenKNX
     void Led::off()
     {
         // no valid pin
-        if (_pin < 0)
+        if (_ledHardware == NULL)
             return;
 
         logTraceP("off");
@@ -209,32 +224,20 @@ namespace OpenKNX
      */
     void Led::writeLed(uint8_t brightness)
     {
-        // no valid pin
-        if (_pin < 0)
+        // no valid hardware
+        LedHardware* ledHardware = _ledHardware;
+        if (ledHardware == NULL)
             return;
 
         if (brightness == _currentLedBrightness)
             return;
 
-#ifdef ARDUINO_ARCH_ESP32
-        // Special Hack for ESP32
-        // Need to reset pinMode after using analogWrite
-        if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
-            pinMode(_pin, OUTPUT);
-#endif
-
         // logTraceP("==== > %i -> %i\n", _pin, brightness);
-        if (brightness == 255)
-            digitalWrite(_pin, _activeOn == HIGH ? true : false);
-
-        else if (brightness == 0)
-            digitalWrite(_pin, _activeOn == HIGH ? false : true);
-
-        else
-            analogWrite(_pin, _activeOn == HIGH ? brightness : (255 - brightness));
-
+        // SERIAL_DEBUG.printf("==== > %i -> %i\n", _pin, brightness);
+        ledHardware->write(brightness);
         _currentLedBrightness = brightness;
     }
+
 
 #ifdef OPENKNX_HEARTBEAT
     void Led::debugLoop()
@@ -256,7 +259,11 @@ namespace OpenKNX
 
     std::string Led::logPrefix()
     {
-        return openknx.logger.buildPrefix("LED", _pin);
+        LedHardware* ledHardware = _ledHardware;
+        if (ledHardware != NULL)   
+            return ledHardware->logPrefix();
+        else
+            return openknx.logger.buildPrefix("LED", "X");
     }
 
 } // namespace OpenKNX
