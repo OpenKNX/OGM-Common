@@ -8,6 +8,8 @@ namespace OpenKNX
 {
     void Hardware::init()
     {
+        initFlash();
+
 #ifdef ARDUINO_ARCH_RP2040
         adc_init();
         adc_set_temp_sensor_enabled(true);
@@ -17,6 +19,20 @@ namespace OpenKNX
 #ifndef ARDUINO_ARCH_SAMD
         requestBcuSystemState();
 #endif
+    }
+
+    void Hardware::initFlash()
+    {
+        logDebug("Hardware<Flash>", "Initialize flash");
+        logIndentUp();
+#ifdef ARDUINO_ARCH_ESP32
+        _openknxFlash = new OpenKNX::Flash::Driver("openknx");
+        _knxFlash = new OpenKNX::Flash::Driver("knx");
+#else
+        _openknxFlash = new OpenKNX::Flash::Driver(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "openknx");
+        _knxFlash = new OpenKNX::Flash::Driver(KNX_FLASH_OFFSET, KNX_FLASH_SIZE, "knx");
+#endif
+        logIndentDown();
     }
 
 #ifdef ARDUINO_ARCH_RP2040
@@ -176,7 +192,7 @@ namespace OpenKNX
 
     float Hardware::cpuTemperature()
     {
-#ifdef ARDUINO_ARCH_RP2040
+#if defined(ARDUINO_ARCH_RP2040)
         adc_select_input(4);
         const float conversionFactor = 3.3f / (1 << 12);
         float adc = (float)adc_read() * conversionFactor;
@@ -184,6 +200,15 @@ namespace OpenKNX
 #else
         return 0.0f;
 #endif
+    }
+
+    Flash::Driver* Hardware::openknxFlash()
+    {
+        return _openknxFlash;
+    }
+    Flash::Driver* Hardware::knxFlash()
+    {
+        return _knxFlash;
     }
 
 } // namespace OpenKNX

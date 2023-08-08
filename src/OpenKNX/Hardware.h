@@ -3,9 +3,9 @@
 #include <Arduino.h>
 
 #ifdef ARDUINO_ARCH_RP2040
-#include <hardware.h>
-#include <hardware/adc.h>
-#include <pico/stdlib.h>
+    #include <hardware.h>
+    #include <hardware/adc.h>
+    #include <pico/stdlib.h>
 #endif
 
 // fatal error codes
@@ -88,6 +88,8 @@ namespace OpenKNX
     {
       private:
         uint8_t features = 0;
+        Flash::Driver* _openknxFlash = nullptr;
+        Flash::Driver* _knxFlash = nullptr;
 
       public:
         // Initialize or HW detection
@@ -112,9 +114,14 @@ namespace OpenKNX
         void fatalError(uint8_t code, const char* message = 0);
         // CPU Temperatur
         float cpuTemperature();
+
+        // Flash
+        Flash::Driver* openknxFlash();
+        Flash::Driver* knxFlash();
 #ifdef ARDUINO_ARCH_RP2040
-        // CPU Temperatur
+        // Filesystem
         void initFilesystem();
 #endif
+        void initFlash();
     };
 } // namespace OpenKNX

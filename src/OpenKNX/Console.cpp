@@ -99,11 +99,11 @@ namespace OpenKNX
         }
         else if (cmd == "flash knx")
         {
-            showMemoryContent(openknx.flashKNX.flashAddress(), KNX_FLASH_SIZE);
+            showMemoryContent(openknx.hardware.knxFlash()->flashAddress(), openknx.hardware.knxFlash()->size());
         }
         else if (cmd == "flash openknx")
         {
-            showMemoryContent(openknx.flashOpenKNX.flashAddress(), OPENKNX_FLASH_SIZE);
+            showMemoryContent(openknx.hardware.openknxFlash()->flashAddress(), openknx.hardware.openknxFlash()->size());
         }
         else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
         {
@@ -204,11 +204,18 @@ namespace OpenKNX
 #ifdef HARDWARE_NAME
         openknx.logger.logWithPrefixAndValues("Board", "%s", HARDWARE_NAME);
 #endif
-#ifdef ARDUINO_ARCH_RP2040
-        const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
 
-        openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
+#ifdef OPENKNX_DUALCORE
+        const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
+#else
+        const char* cpuMode = "Single-Core";
 #endif
+
+        if (openknx.hardware.cpuTemperature() > 0)
+            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
+        else
+            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
+
         showMemory();
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)

@@ -22,7 +22,6 @@ namespace OpenKNX
     class Facade
     {
       public:
-        Facade();
         Common common;
         Flash::Default flash;
         Information info;
@@ -33,8 +32,6 @@ namespace OpenKNX
         Led progLed;
         Led infoLed;
         Modules modules;
-        Flash::Driver flashOpenKNX;
-        Flash::Driver flashKNX;
         volatile bool ready = false;
 
         void init(uint8_t firmwareRevision);

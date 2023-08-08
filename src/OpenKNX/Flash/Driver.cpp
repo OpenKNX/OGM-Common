@@ -17,36 +17,51 @@ namespace OpenKNX
 {
     namespace Flash
     {
+#ifdef ARDUINO_ARCH_ESP32
+        Driver::Driver(std::string id)
+#else
         Driver::Driver(uint32_t offset, uint32_t size, std::string id)
+#endif
         {
             _id = id;
+#ifdef ARDUINO_ARCH_ESP32
+            // ESP32
+            const esp_partition_t *partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, id.c_str());
+            logDebugP("Search for partition with label %s", id.c_str());
+            if (!partition)
+                openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "Flash: Partition not found");
+
+            logIndentUp();
+            _offset = partition->address;
+            _size = partition->size;
+            logDebugP("found at 0x%08X with %i size", _offset, _size);
+            logIndentDown();
+
+            _sectorSize = SPI_FLASH_SEC_SIZE;
+            _pageSize = 256;
+            _startFree = 0;
+            _endFree = spi_flash_get_chip_size(); // value wrong but needed vor validation
+            spi_flash_mmap_handle_t *out_handle;
+            spi_flash_mmap(_offset, _size, SPI_FLASH_MMAP_DATA, (const void **)&_mmap, (spi_flash_mmap_handle_t *)&out_handle);
+
+#else
             _offset = offset;
             _size = size;
 
-#if defined(ARDUINO_ARCH_SAMD)
+    #if defined(ARDUINO_ARCH_SAMD)
+            // SAMD21
             const uint32_t pageSizes[] = {8, 16, 32, 64, 128, 256, 512, 1024};
             _sectorSize = pageSizes[NVMCTRL->PARAM.bit.PSZ] * 4;
             _endFree = pageSizes[NVMCTRL->PARAM.bit.PSZ] * NVMCTRL->PARAM.bit.NVMP;
             _startFree = (uint32_t)(&__etext + (&__data_end__ - &__data_start__)); // text + data MemoryBlock
             _pageSize = FLASH_PAGE_SIZE;
-#elif defined(ARDUINO_ARCH_ESP32)
-            // ToDo: ESP32 initialize flash
-            _sectorSize = SPI_FLASH_SEC_SIZE;
-            _pageSize = 256;
-            _startFree = 0;
-            _endFree = spi_flash_get_chip_size();
-            spi_flash_mmap_handle_t *out_handle;
-            spi_flash_mmap(_offset, _size, SPI_FLASH_MMAP_DATA, (const void **)&_mmap, (spi_flash_mmap_handle_t *)&out_handle);
-#elif defined(ARDUINO_ARCH_RP2040)
+    #elif defined(ARDUINO_ARCH_RP2040)
             // RP2040
             _sectorSize = FLASH_SECTOR_SIZE;
             _pageSize = FLASH_PAGE_SIZE;
-            // Full Size
-            // _maxSize = (uint32_t)(&_EEPROM_start) - 0x10000000lu + 4096lu;
-            // Size up to EEPROM
-            // _maxSize = (uint32_t)(&_EEPROM_start) - 0x10000000lu;
-            // Size up to FS (if FS 0 it = _EEPROM_start)
             _endFree = (uint32_t)(&_FS_start) - 0x10000000lu;
+    #endif
+            logDebugP("flash at 0x%08X with %i size", _offset, _size);
 #endif
 
             validateParameters();

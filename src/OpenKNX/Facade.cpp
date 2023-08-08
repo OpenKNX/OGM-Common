@@ -4,11 +4,6 @@ extern void setup1() __attribute__((weak));
 
 namespace OpenKNX
 {
-    Facade::Facade()
-        : flashOpenKNX(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "OpenKNX"),
-          flashKNX(KNX_FLASH_OFFSET, KNX_FLASH_SIZE, "KNX")
-    {
-    }
 
     void Facade::init(uint8_t firmwareRevision)
     {

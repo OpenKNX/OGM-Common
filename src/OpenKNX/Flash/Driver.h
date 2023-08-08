@@ -35,7 +35,11 @@ namespace OpenKNX
             void loadSector(uint16_t sector, bool force = false);
 
           public:
+#ifdef ARDUINO_ARCH_ESP32
+            Driver(std::string id);
+#else
             Driver(uint32_t offset, uint32_t size, std::string id);
+#endif
             std::string logPrefix();
 
             void eraseSector(uint16_t sector = 0);
