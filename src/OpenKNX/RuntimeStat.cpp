@@ -51,8 +51,6 @@ namespace OpenKNX
         const uint32_t medianCount = _count / 2;
         uint32_t cumulatedCountLower = 0;
         uint32_t cumulatedCountUpper = 0;
-        uint32_t lower = 0;
-        uint32_t upper = 0;
         for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
         {
             cumulatedCountUpper += stat.durationBucket[i];
