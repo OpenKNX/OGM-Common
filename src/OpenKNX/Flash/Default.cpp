@@ -7,7 +7,11 @@ namespace OpenKNX
     {
         uint8_t Default::nextVersion()
         {
+#ifdef ARDUINO_ARCH_RP2040
             return slotVersion(_activeSlot) + 1;
+#else
+            return 0xFF;
+#endif
         }
 
         std::string Default::logPrefix()
@@ -26,7 +30,7 @@ namespace OpenKNX
             if (slotValidA)
                 found = true;
 
-#ifndef ARDUINO_ARCH_SAMD
+#ifdef ARDUINO_ARCH_RP2040
             const bool slotValidB = validateSlot(true);
             const uint8_t slotVersionA = slotVersion(false);
             const uint8_t slotVersionB = slotVersion(true);
@@ -66,19 +70,19 @@ namespace OpenKNX
 
         uint16_t Default::slotOffset(bool slot)
         {
-#ifdef ARDUINO_ARCH_SAMD
-            return slotSize();
-#else
+#ifdef ARDUINO_ARCH_RP2040
             return slotSize() + (slot ? slotSize() : 0);
+#else
+            return slotSize();
 #endif
         }
 
         uint16_t Default::slotSize()
         {
-#ifdef ARDUINO_ARCH_SAMD
-            return openknx.hardware.openknxFlash()->size();
-#else
+#ifdef ARDUINO_ARCH_RP2040
             return openknx.hardware.openknxFlash()->size() / 2;
+#else
+            return openknx.hardware.openknxFlash()->size();
 #endif
         }
 
@@ -94,17 +98,17 @@ namespace OpenKNX
 
         bool Default::nextSlot()
         {
-#ifdef ARDUINO_ARCH_SAMD
-            return false;
-#else
+#ifdef ARDUINO_ARCH_RP2040
             return !_activeSlot;
+#else
+            return false;
 #endif
         }
 
         bool Default::validateSlot(bool slot)
         {
 
-#ifdef ARDUINO_ARCH_SAMD
+#ifndef ARDUINO_ARCH_RP2040
             if (slot)
                 return false;
 #endif
@@ -164,7 +168,7 @@ namespace OpenKNX
 
         uint8_t Default::slotVersion(bool slot)
         {
-#ifdef ARDUINO_ARCH_SAMD
+#ifndef ARDUINO_ARCH_RP2040
             if (slot)
                 return false;
 #endif
@@ -337,7 +341,7 @@ namespace OpenKNX
 
             logInfoP("Save completed (%ims)", millis() - start);
 
-#ifndef ARDUINO_ARCH_SAMD
+#ifdef ARDUINO_ARCH_RP2040
             // new active slot
             _activeSlot = !_activeSlot;
 

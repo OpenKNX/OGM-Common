@@ -31,7 +31,7 @@
  * - META: fixed-sized to ensure robust restore of module-data
  *   - APP  uint8_t[4]: device/firmware info
  *   - SIZE uint16_t  : size (and indirect position) definition for DATA
- *   - VERSION uint8_t: save version
+ *   - VERSION uint8_t: save a version (only when slot are using)
  *   - CHK  uint8_t[2]: checksum
  *   - INIT uint8_t[4]: the magic word for format detection
  *
