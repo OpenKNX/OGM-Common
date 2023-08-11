@@ -18,6 +18,15 @@
     #define OPENKNX_RUNTIME_STAT_BUCKETN 16
 #endif
 
+struct DurationStatistic
+{
+  uint64_t sum_us = 0;
+  uint32_t durationMin_us = 0xffffffffu;
+  uint32_t durationMax_us = 0;
+  uint32_t durationBucket[OPENKNX_RUNTIME_STAT_BUCKETN];
+};
+
+
 
 namespace OpenKNX
 {
@@ -30,26 +39,15 @@ namespace OpenKNX
         uint32_t _end_us = 0;
 
         uint32_t _count = 0;
-        uint32_t _countRunDuration[OPENKNX_RUNTIME_STAT_BUCKETN] = {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        };
-        uint32_t _countWaitDuration[OPENKNX_RUNTIME_STAT_BUCKETN] = {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        };
 
-        // TODO use own structure for this
-        uint32_t _runDurationMin_us = 0xffffffffu;
-        uint32_t _runDurationMax_us = 0;
-        uint64_t _runSum_us = 0;
-        uint32_t _waitDurationMin_us = 0xffffffffu;
-        uint32_t _waitDurationMax_us = 0;
-        uint64_t _waitSum_us = 0;
+        DurationStatistic _run;
+        DurationStatistic _wait;
         
         static uint8_t calcBucketIndex(const uint32_t value_us);
 
         uint32_t calcBucketMax(const uint8_t bucketIndex, const uint32_t overallMax);
         uint32_t calcBucketMin(const uint8_t bucketIndex, const uint32_t overallMin);
-        uint32_t estimateMedian();
+        uint32_t estimateMedian(DurationStatistic &stat);
 
       protected:
 

@@ -37,15 +37,15 @@ namespace OpenKNX
         return MAX(bucketMin, overallMin);
     }
 
-    uint32_t RuntimeStat::estimateMedian()
+    uint32_t RuntimeStat::estimateMedian(DurationStatistic &stat)
     {
         // TODO special handling of edge-cases!
 
         if (_count == 0)
-            return _runDurationMin_us;
+            return stat.durationMin_us;
 
         if (_count <= 2)
-            return (_runDurationMin_us + _runDurationMax_us) / 2;
+            return (stat.durationMin_us + stat.durationMax_us) / 2;
 
         uint8_t medianIndex = 0;
         const uint32_t medianCount = _count / 2;
@@ -55,7 +55,7 @@ namespace OpenKNX
         uint32_t upper = 0;
         for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
         {
-            cumulatedCountUpper += _countRunDuration[i];
+            cumulatedCountUpper += stat.durationBucket[i];
             if (cumulatedCountUpper >= medianCount)
             {
                 // found the bucket containing the value
@@ -66,13 +66,13 @@ namespace OpenKNX
         }
 
         // median must be in the closed interval defined by the intersection of selected bucket and [min;max]
-        const uint32_t medianMin = calcBucketMin(medianIndex, _runDurationMin_us);
-        const uint32_t medianMax = calcBucketMax(medianIndex, _runDurationMax_us);
+        const uint32_t medianMin = calcBucketMin(medianIndex, stat.durationMin_us);
+        const uint32_t medianMax = calcBucketMax(medianIndex, stat.durationMax_us);
 
         // "The ``best'' estimate for the mean [and median] is obtained by assuming the data is uniformly spread within each interval"
         // [http://www.cs.uni.edu/~campbell/stat/histrev2.html accessed 2023-08-06]
         // Using information of min- and maximum value can reduce the interval and thereby improve the result.
-        double factor = 1.0d * (medianCount - cumulatedCountLower) / _countRunDuration[medianIndex];
+        double factor = 1.0 * (medianCount - cumulatedCountLower) / stat.durationBucket[medianIndex];
         return  medianMin + (medianMax - medianMin) * factor;
 
         // TODO check usage of one side open interval?
@@ -87,11 +87,11 @@ namespace OpenKNX
         {
             const uint32_t waiting_duration_us = _begin_us - _end_us;
 
-            _countWaitDuration[calcBucketIndex(waiting_duration_us)]++;
+            _wait.durationBucket[calcBucketIndex(waiting_duration_us)]++;
 
-            _waitDurationMax_us = MAX(_waitDurationMax_us, waiting_duration_us);
-            _waitDurationMin_us = MIN(_waitDurationMin_us, waiting_duration_us);
-            _waitSum_us += waiting_duration_us;
+            _wait.durationMax_us = MAX(_wait.durationMax_us, waiting_duration_us);
+            _wait.durationMin_us = MIN(_wait.durationMin_us, waiting_duration_us);
+            _wait.sum_us += waiting_duration_us;
         }
     }
 
@@ -101,11 +101,11 @@ namespace OpenKNX
         _end_us = micros();
 
         const uint32_t duration_us = _end_us - _begin_us;
-        _countRunDuration[calcBucketIndex(duration_us)]++;
+        _run.durationBucket[calcBucketIndex(duration_us)]++;
 
-        _runDurationMax_us = MAX(_runDurationMax_us, duration_us);
-        _runDurationMin_us = MIN(_runDurationMin_us, duration_us);
-        _runSum_us += duration_us;
+        _run.durationMax_us = MAX(_run.durationMax_us, duration_us);
+        _run.durationMin_us = MIN(_run.durationMin_us, duration_us);
+        _run.sum_us += duration_us;
 
         // TODO check removal (is included in _countRunDuration)
         _count++;
@@ -120,26 +120,26 @@ namespace OpenKNX
             runCount, waitCount
         );
         openknx.logger.logWithPrefixAndValues(label, "#      sum     %10d %10d",
-            _runSum_us, _waitSum_us
+            _run.sum_us, _wait.sum_us
         );
         openknx.logger.logWithPrefixAndValues(label, "us     min     %10d %10d",
-            _runDurationMin_us, _waitDurationMin_us
+            _run.durationMin_us, _wait.durationMin_us
         );
         openknx.logger.logWithPrefixAndValues(label, "us     avg     %10d %10d",
-            _runSum_us / runCount,
-            _waitSum_us / waitCount
+            _run.sum_us / runCount,
+            _wait.sum_us / waitCount
         );
         openknx.logger.logWithPrefixAndValues(label, "us    ~med     %10d %10d",
-            estimateMedian(),
-            -1
+            estimateMedian(_run),
+            estimateMedian(_wait)
         );
         openknx.logger.logWithPrefixAndValues(label, "us     max     %10d %10d",
-            _runDurationMax_us, _waitDurationMax_us
+            _run.durationMax_us, _wait.durationMax_us
         );
         for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
         {
             openknx.logger.logWithPrefixAndValues(label, "#<= %6d us  %10d %10d",
-                _timeRangeMax[i], _countRunDuration[i], _countWaitDuration[i]
+                _timeRangeMax[i], _run.durationBucket[i], _wait.durationBucket[i]
             );
         }
         
