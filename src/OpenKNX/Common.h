@@ -66,10 +66,10 @@ namespace OpenKNX
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 
 #ifdef OPENKNX_RUNTIME_STAT
-        RuntimeStat *_runtimeLoop = new RuntimeStat();
-        RuntimeStat *_runtimeConsole = new RuntimeStat();
-        RuntimeStat *_runtimeKnxStack = new RuntimeStat();
-        RuntimeStat *_runtimeModuleLoop = new RuntimeStat();
+        RuntimeStat _runtimeLoop;
+        RuntimeStat _runtimeConsole;
+        RuntimeStat _runtimeKnxStack;
+        RuntimeStat _runtimeModuleLoop;
 #endif
 
       public:

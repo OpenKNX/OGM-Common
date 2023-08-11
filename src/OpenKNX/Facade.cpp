@@ -56,7 +56,7 @@ namespace OpenKNX
         modules.list[modules.count - 1] = module;
         modules.ids[modules.count - 1] = id;
 #ifdef OPENKNX_RUNTIME_STAT
-        modules.runtime[modules.count - 1] = new RuntimeStat();
+        modules.runtime[modules.count - 1] = RuntimeStat();
 #endif
     }
 
