@@ -40,11 +40,11 @@ namespace OpenKNX
                 // Size
                 return openknx.hardware.knxFlash()->size();
             },
-            []() -> uint8_t * {
+            []() -> uint8_t* {
                 // Read
                 return openknx.hardware.knxFlash()->flashAddress();
             },
-            [](uint32_t relativeAddress, uint8_t *buffer, size_t len) -> uint32_t {
+            [](uint32_t relativeAddress, uint8_t* buffer, size_t len) -> uint32_t {
                 // Write
                 return openknx.hardware.knxFlash()->write(relativeAddress, buffer, len);
             },
