@@ -12,24 +12,10 @@ class console_color:
     RED = '\033[91m'
     END = '\033[0m'
 
-def find_header_file(file):
-    folders = [
-        "src/",
-        "include/",
-        "lib/OGM-Common/include/",
-        projenv["PROJECT_LIBDEPS_DIR"] + "/" + env["PIOENV"] + "/OGM-Common/include/"
-    ]
-    for folder in folders:
-        if os.path.isfile(folder + file):
-            return folder + file
-        
-    return file
-            
 def post_program_action(source, target, env):
     print()
     print("{}Patching {}.u2f for KnxUpdater:{}".format(console_color.YELLOW, source[0].get_path()[0:-4], console_color.END))
-
-    content = open(find_header_file("knxprod.h"), 'r').read()
+    content = open("include/knxprod.h", 'r').read()
 
     m = re.search("#define MAIN_OpenKnxId (0x)?([0-9A-Fa-f]{1,2})", content)
     if m is None:
@@ -40,7 +26,7 @@ def post_program_action(source, target, env):
     else:
         openknxid = int(m.group(2))
 
-    m = re.search("#define MAIN_ApplicationNumber (0x)?([0-9A-Fa-f]{1,2})", content)
+    m = re.search("#define MAIN_ApplicationNumber (0x)?([0-9A-Fa-f]{1,3})", content)
     if m is None:
         print("{}  {}{}".format(console_color.RED, "Error: ApplicationNumber not readable", console_color.END))
         return
