@@ -346,13 +346,42 @@ namespace OpenKNX
     void Console::showMemoryContent(uint8_t* start, uint32_t size)
     {
         logBegin();
+        uint16_t repeated = 0;
+        uint8_t previousLine[16];
+
         openknx.logger.logWithPrefixAndValues("Memory content", "Address 0x%08X - Size: 0x%04X (%d bytes)", start, size, size);
         for (uint32_t i = 0; i < floor(size / 16); i++)
         {
+            const bool firstLine = (i == 0);
+            const bool lastLine = (((i + 1) * 16) == size);
             const uint8_t* ptr = start + (i * 16);
+            bool found = false;
+
+            // check line same as prevoius
+            if (!firstLine)
+                found = (memcmp(ptr, &previousLine, 16) == 0);
+
+            // hide double output
+            if (found && !lastLine)
+            {
+                repeated++;
+                continue;
+            }
+
+            // Show repeated
+            if (repeated > 0)
+            {
+                openknx.logger.logWithPrefixAndValues("", "%ix", repeated);
+                repeated = 0;
+            }
+
+            // normale output
             char prefix[24] = {};
             snprintf(prefix, 24, "0x%06X (0x%08X)", (uint)(i * 16), (uint)ptr);
             openknx.logger.logHexWithPrefix(prefix, ptr, 16);
+
+            // save line as previous
+            memcpy(&previousLine, ptr, 16);
         }
         logEnd();
     }
