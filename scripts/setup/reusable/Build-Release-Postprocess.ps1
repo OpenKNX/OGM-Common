@@ -12,12 +12,14 @@ $releaseTarget = "release/data/content.xml"
 # add necessary scripts, but allow project local versions
 if (Test-Path -Path scripts/Readme-Release.txt -PathType Leaf) {
     Copy-Item scripts/Readme-Release.txt release/
-} else {
+}
+else {
     Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
 }
 if (Test-Path -Path scripts/Build-knxprod.ps1 -PathType Leaf) {
     Copy-Item scripts/Build-knxprod.ps1 release/
-} else {
+}
+else {
     Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
 }
 # Copy-Item scripts/Upload-Firmware*.ps1 release/
@@ -37,15 +39,15 @@ if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
 Remove-Item "release/$($settings.targetName).knxprod"
 
 # calculate version string
-$appVersion=Select-String -Path "$($settings.knxprod)" -Pattern MAIN_ApplicationVersion
-$appVersion=$appVersion.ToString().Split()[-1]
-$appMajor=[math]::Floor($appVersion/16)
-$appMinor=$appVersion%16
-$appRev=Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevision"
-$appRev=$appRev.ToString().Split()[-1].Replace(";","")
-$appVersion="$appMajor.$appMinor"
+$appVersion = Select-String -Path "include/knxprod.h" -Pattern MAIN_ApplicationVersion
+$appVersion = $appVersion.ToString().Split()[-1]
+$appMajor = [math]::Floor($appVersion / 16)
+$appMinor = $appVersion % 16
+$appRev = Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevision"
+$appRev = $appRev.ToString().Split()[-1].Replace(";", "")
+$appVersion = "$appMajor.$appMinor"
 if ($appRev -gt 0) {
-    $appVersion="$appVersion.$appRev"
+    $appVersion = "$appVersion.$appRev"
 }
 
 # create dependency file
