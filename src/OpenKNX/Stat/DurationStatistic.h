@@ -60,7 +60,7 @@ namespace OpenKNX
 
           /// @brief Calculate an estimation of the median duration.
           /// @return a duration value; unit µs
-          uint32_t estimateMedian();
+          uint32_t estimateMedian_us();
 
       };
   } // namespace Stat

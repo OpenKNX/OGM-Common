@@ -50,8 +50,8 @@ namespace OpenKNX
                 _wait.sum_us / waitCount
             );
             openknx.logger.logWithPrefixAndValues(label, "us    ~med     %10d %10d",
-                _run.estimateMedian(),
-                _wait.estimateMedian()
+                _run.estimateMedian_us(),
+                _wait.estimateMedian_us()
             );
             openknx.logger.logWithPrefixAndValues(label, "us     max     %10d %10d",
                 _run.durationMax_us, _wait.durationMax_us
