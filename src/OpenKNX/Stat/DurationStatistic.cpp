@@ -32,7 +32,7 @@ namespace OpenKNX
 
         uint32_t DurationStatistic::calcBucketMin(const uint8_t bucketIndex)
         {
-            const uint32_t bucketMin = bucketIndex==0 ? 0 : _timeRangeMax[bucketIndex-1];
+            const uint32_t bucketMin = bucketIndex == 0 ? 0 : _timeRangeMax[bucketIndex - 1];
             return MAX(bucketMin, durationMin_us);
         }
 
@@ -70,7 +70,7 @@ namespace OpenKNX
             // [http://www.cs.uni.edu/~campbell/stat/histrev2.html accessed 2023-08-06]
             // Using information of min- and maximum value can reduce the interval and thereby improve the result.
             double factor = 1.0 * (medianCount - cumulatedCountLower) / durationBucket[medianIndex];
-            return  medianMin + (medianMax - medianMin) * factor;
+            return medianMin + (medianMax - medianMin) * factor;
 
             // TODO check usage of one side open interval?
         }
