@@ -17,6 +17,22 @@ namespace OpenKNX
       class DurationStatistic
       {
         private:
+
+          /// Calculate the histogram bucket-index for a given duration.
+          /// @param value_us the duration to put in histogram; unit µs
+          /// @return index within interval [0; OPENKNX_RUNTIME_STAT_BUCKETN[
+          static uint8_t calcBucketIndex(const uint32_t value_us);
+
+          /// Calculate the maximum possible value within a given histogram-bucket.
+          /// @param bucketIndex 
+          /// @return the upper limit of the bucket, or durationMax_us if within the value range of bucket
+          uint32_t calcBucketMax(const uint8_t bucketIndex);
+
+          /// Calculate the minium possible value within a given histogram-bucket.
+          /// @param bucketIndex 
+          /// @return the lover limit of the bucket, or durationMin_us if within the value range of bucket
+          uint32_t calcBucketMin(const uint8_t bucketIndex);
+          
         public:
 
           // define the upper (included) limit of every time buckets. Last value must be maximum value of data-type.
@@ -37,25 +53,10 @@ namespace OpenKNX
           // the histogram data; number of collected durations within buckets (defined by upper limit, see _timeRangeMax)
           uint32_t durationBucket[OPENKNX_RUNTIME_STAT_BUCKETN];
 
-          /// Calculate the histogram bucket-index for a given duration.
-          /// @param value_us the duration to put in histogram; unit µs
-          /// @return index within interval [0; OPENKNX_RUNTIME_STAT_BUCKETN[
-          static uint8_t calcBucketIndex(const uint32_t value_us);
-
           /// Update statistic based on a duration measurement.
           /// Will increase count, sum, update min/max and include in histogram.
           /// @param duration_us the duration; unit µs
           void measure(const uint32_t duration_us);
-
-          /// Calculate the maximum possible value within a given histogram-bucket.
-          /// @param bucketIndex 
-          /// @return the upper limit of the bucket, or durationMax_us if within the value range of bucket
-          uint32_t calcBucketMax(const uint8_t bucketIndex);
-
-          /// Calculate the minium possible value within a given histogram-bucket.
-          /// @param bucketIndex 
-          /// @return the lover limit of the bucket, or durationMin_us if within the value range of bucket
-          uint32_t calcBucketMin(const uint8_t bucketIndex);
 
           /// @brief Calculate an estimation of the median duration.
           /// @return a duration value; unit µs

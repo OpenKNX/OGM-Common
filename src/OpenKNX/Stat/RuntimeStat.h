@@ -25,8 +25,6 @@ namespace OpenKNX
           DurationStatistic _run;
           DurationStatistic _wait;
 
-        protected:
-
         public:
           void measureTimeBegin();
           void measureTimeEnd();
