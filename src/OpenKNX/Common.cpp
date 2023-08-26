@@ -690,19 +690,19 @@ namespace OpenKNX
     }
 
 #ifdef OPENKNX_RUNTIME_STAT
-    void Common::showRuntimeStat()
+    void Common::showRuntimeStat(const bool stat /*= true*/, const bool hist /*= false*/)
     {
         logInfoP("Runtime Statistics: (Uptime=%dms)", millis());
         logIndentUp();
         {
             Stat::RuntimeStat::showStatHeader();
-            _runtimeLoop.showStat("Overall_Loop");
-            _runtimeConsole.showStat("Console");
-            _runtimeKnxStack.showStat("Stack");
-            _runtimeModuleLoop.showStat("All_Modules_Loop");
+            _runtimeLoop.showStat("Overall_Loop", stat, hist);
+            _runtimeConsole.showStat("Console", stat, hist);
+            _runtimeKnxStack.showStat("Stack", stat, hist);
+            _runtimeModuleLoop.showStat("All_Modules_Loop", stat, hist);
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
-                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str());
+                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), stat, hist);
             }
         }
         logIndentDown();

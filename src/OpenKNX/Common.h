@@ -113,7 +113,7 @@ namespace OpenKNX
         std::string logPrefix();
 
 #ifdef OPENKNX_RUNTIME_STAT
-        void showRuntimeStat();
+        void showRuntimeStat(const bool stat = true, const bool hist = false);
 #endif
 
     };

@@ -30,7 +30,7 @@ namespace OpenKNX
 
             void measureTimeBegin();
             void measureTimeEnd();
-            void showStat(std::string label);
+            void showStat(std::string label, const bool stat = true, const bool hist = false);
         };
     } // namespace Stat
 } // namespace OpenKNX

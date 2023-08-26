@@ -116,6 +116,14 @@ namespace OpenKNX
         {
             openknx.common.showRuntimeStat();
         }
+        else if (!diagnoseKo && (cmd == "runtime hist"))
+        {
+            openknx.common.showRuntimeStat(false, true);
+        }
+        else if (!diagnoseKo && (cmd == "runtime full"))
+        {
+            openknx.common.showRuntimeStat(true, true);
+        }
 #endif
 #ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
@@ -302,7 +310,9 @@ namespace OpenKNX
         printHelpLine("files, fs", "Show files on filesystem");
 #endif
 #ifdef OPENKNX_RUNTIME_STAT
-        printHelpLine("runtime", "Show runtime statistics");
+        printHelpLine("runtime", "Show runtime statistics (Short statistic)");
+        printHelpLine("runtime hist", "Show runtime histogram");
+        printHelpLine("runtime full", "Show runtime statistics and histogram");
 #endif
         printHelpLine("restart, r", "Restart the device");
         printHelpLine("prog, p", "Toggle the ProgMode");

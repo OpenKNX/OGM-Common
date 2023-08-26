@@ -37,17 +37,23 @@ namespace OpenKNX
             openknx.logger.logWithPrefixAndValues("RuntimeStat", "type  param unit    value_run   value_wait");
         }
 
-        void RuntimeStat::showStat(std::string label)
+        void RuntimeStat::showStat(std::string label, const bool stat /*= false*/, const bool hist /*= false*/)
         {
-            openknx.logger.logWithPrefixAndValues(label, "stat  count    # %12d %12d", _run._count, _wait._count);
-            openknx.logger.logWithPrefixAndValues(label, "stat    sum   ms %12d %12d", _run.sum_ms(), _wait.sum_ms());
-            openknx.logger.logWithPrefixAndValues(label, "stat    min   us %12d %12d", _run.durationMin_us, _wait.durationMin_us);
-            openknx.logger.logWithPrefixAndValues(label, "stat    avg   us %12d %12d", _run.avg_us(), _wait.avg_us());
-            openknx.logger.logWithPrefixAndValues(label, "stat   ~med   us %12d %12d", _run.estimateMedian_us(), _wait.estimateMedian_us());
-            openknx.logger.logWithPrefixAndValues(label, "stat    max   us %12d %12d", _run.durationMax_us, _wait.durationMax_us);
-            for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
+            if (stat)
             {
-                openknx.logger.logWithPrefixAndValues(label, "hist %6d  #<= %12d %12d", DurationStatistic::getHistBucketUpper_us(i), _run.getHistBucket(i), _wait.getHistBucket(i));
+                openknx.logger.logWithPrefixAndValues(label, "stat  count    # %12d %12d", _run._count, _wait._count);
+                openknx.logger.logWithPrefixAndValues(label, "stat    sum   ms %12d %12d", _run.sum_ms(), _wait.sum_ms());
+                openknx.logger.logWithPrefixAndValues(label, "stat    min   us %12d %12d", _run.durationMin_us, _wait.durationMin_us);
+                openknx.logger.logWithPrefixAndValues(label, "stat    avg   us %12d %12d", _run.avg_us(), _wait.avg_us());
+                openknx.logger.logWithPrefixAndValues(label, "stat   ~med   us %12d %12d", _run.estimateMedian_us(), _wait.estimateMedian_us());
+                openknx.logger.logWithPrefixAndValues(label, "stat    max   us %12d %12d", _run.durationMax_us, _wait.durationMax_us);
+            }
+            if (hist)
+            {
+                for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
+                {
+                    openknx.logger.logWithPrefixAndValues(label, "hist %6d  #<= %12d %12d", DurationStatistic::getHistBucketUpper_us(i), _run.getHistBucket(i), _wait.getHistBucket(i));
+                }
             }
         }
     } // namespace Stat
