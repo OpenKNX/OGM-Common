@@ -692,7 +692,7 @@ namespace OpenKNX
 #ifdef OPENKNX_RUNTIME_STAT
     void Common::showRuntimeStat()
     {
-        logInfoP("Runtime Statistics:");
+        logInfoP("Runtime Statistics: (Uptime=%dms)", millis());
         logIndentUp();
         {
             Stat::RuntimeStat::showStatHeader();
