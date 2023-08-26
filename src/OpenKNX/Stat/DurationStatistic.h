@@ -39,13 +39,13 @@ namespace OpenKNX
             // the number of collected durations
             uint32_t _count = 0;
 
-            // the overall sum of all collected durations; unit µs
+            // the overall sum of all collected durations; unit µs (microseconds)
             uint64_t sum_us = 0;
 
-            // shortest of all collected durations; unit µs
+            // shortest of all collected durations; unit µs (microseconds)
             uint32_t durationMin_us = 0xffffffffu;
 
-            // longest of all collected durations; unit µs
+            // longest of all collected durations; unit µs (microseconds)
             uint32_t durationMax_us = 0;
 
             // the histogram data; number of collected durations within buckets (defined by upper limit, see _timeRangeMax)
@@ -53,15 +53,15 @@ namespace OpenKNX
 
             /// Update statistic based on a duration measurement.
             /// Will increase count, sum, update min/max and include in histogram.
-            /// @param duration_us the duration; unit µs
+            /// @param duration_us the duration; unit µs (microseconds)
             void measure(const uint32_t duration_us);
 
             /// @brief Calculate an average of duration.
-            /// @return a duration value; unit µs
+            /// @return a duration value; unit µs (microseconds)
             uint32_t avg_us();
 
             /// @brief Calculate an estimation of the median duration.
-            /// @return a duration value; unit µs
+            /// @return a duration value; unit µs (microseconds)
             uint32_t estimateMedian_us();
 
             /// @brief Get sum of all collected durations.
