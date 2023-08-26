@@ -20,7 +20,7 @@ namespace OpenKNX
         va_list values;
         va_start(values, message);
 
-        char buffer[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Last Byte muss Zero!
+        char buffer[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Last byte must be zero!
         uint8_t len = vsnprintf(buffer, 15, message, values);
 
         if (len >= 15)
