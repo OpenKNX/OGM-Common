@@ -38,7 +38,8 @@ namespace OpenKNX
 
         uint32_t DurationStatistic::avg_us()
         {
-            return sum_us / _count;
+            // round result of `sum_us/_count`
+            return (sum_us + _count / 2) / _count;
         }
 
         uint32_t DurationStatistic::estimateMedian_us()
