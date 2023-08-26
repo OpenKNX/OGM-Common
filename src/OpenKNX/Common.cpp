@@ -1,5 +1,6 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
+#include "OpenKNX/Stat/RuntimeStat.h"
 
 namespace OpenKNX
 {
@@ -695,10 +696,11 @@ namespace OpenKNX
         logInfoP("Runtime Statistics:");
         logIndentUp();
         {
-            _runtimeLoop.showStat("Loop (overall)");
+            Stat::RuntimeStat::showStatHeader();
+            _runtimeLoop.showStat("Overall_Loop");
             _runtimeConsole.showStat("Console");
             _runtimeKnxStack.showStat("Stack");
-            _runtimeModuleLoop.showStat("All Modules Loop");
+            _runtimeModuleLoop.showStat("All_Modules_Loop");
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str());

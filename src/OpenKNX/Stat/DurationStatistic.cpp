@@ -80,6 +80,16 @@ namespace OpenKNX
             // TODO check usage of one side open interval?
         }
 
+        uint32_t DurationStatistic::getHistBucket(const uint8_t bucketIndex)
+        {
+            return durationBucket[bucketIndex];
+        }
+
+        uint32_t DurationStatistic::getHistBucketUpper(const uint8_t bucketIndex)
+        {
+            return _timeRangeMax[bucketIndex];
+        }
+
         void DurationStatistic::measure(const uint32_t duration_us)
         {
             durationBucket[calcBucketIndex(duration_us)]++;

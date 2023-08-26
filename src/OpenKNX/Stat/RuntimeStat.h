@@ -26,6 +26,8 @@ namespace OpenKNX
             DurationStatistic _wait;
 
           public:
+            static void showStatHeader();
+
             void measureTimeBegin();
             void measureTimeEnd();
             void showStat(std::string label);

@@ -63,6 +63,10 @@ namespace OpenKNX
             /// @brief Calculate an estimation of the median duration.
             /// @return a duration value; unit µs
             uint32_t estimateMedian_us();
+
+            uint32_t getHistBucket(const uint8_t bucketIndex);
+
+            static uint32_t getHistBucketUpper(const uint8_t bucketIndex);
         };
     } // namespace Stat
 } // namespace OpenKNX
