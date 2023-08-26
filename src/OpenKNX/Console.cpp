@@ -346,21 +346,21 @@ namespace OpenKNX
     void Console::showMemoryContent(uint8_t* start, uint32_t size)
     {
         const size_t lineLen = 16;
-        uint8_t *end = start + size - (size % lineLen);
-        
+        uint8_t* end = start + size - (size % lineLen);
+
         logBegin();
         openknx.logger.logWithPrefixAndValues("Memory content", "Address 0x%08X - Size: 0x%04X (%d bytes)", start, size, size);
-        for (uint8_t *linePtr = start; linePtr < end; linePtr+=lineLen)
+        for (uint8_t* linePtr = start; linePtr < end; linePtr += lineLen)
         {
             // normale output
             showMemoryLine(linePtr, lineLen, start);
 
             // skip repeated lines and show repetition count only
             int repeatCount = 0;
-            while (linePtr+lineLen < end && memcmp(linePtr, linePtr+lineLen, lineLen)==0)
+            while (linePtr + lineLen < end && memcmp(linePtr, linePtr + lineLen, lineLen) == 0)
             {
                 repeatCount++;
-                linePtr+=lineLen;
+                linePtr += lineLen;
             }
             if (repeatCount > 0)
             {
