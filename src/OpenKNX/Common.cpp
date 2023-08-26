@@ -341,7 +341,7 @@ namespace OpenKNX
             return;
 #endif
 
-    RUNTIME_MEASURE_BEGIN(_runtimeLoop);
+        RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT
         openknx.progLed.debugLoop();
@@ -689,7 +689,6 @@ namespace OpenKNX
         return false;
     }
 
-
 #ifdef OPENKNX_RUNTIME_STAT
     void Common::showRuntimeStat()
     {
@@ -704,7 +703,7 @@ namespace OpenKNX
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str());
-            }            
+            }
         }
         logIndentDown();
     }
