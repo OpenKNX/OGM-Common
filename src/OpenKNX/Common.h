@@ -1,7 +1,9 @@
 #pragma once
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
-#include "OpenKNX/RuntimeStat.h"
+#ifdef OPENKNX_RUNTIME_STAT
+#include "OpenKNX/Stat/RuntimeStat.h"
+#endif
 #include "OpenKNX/defines.h"
 #include "knx.h"
 
@@ -66,10 +68,10 @@ namespace OpenKNX
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 
 #ifdef OPENKNX_RUNTIME_STAT
-        RuntimeStat _runtimeLoop;
-        RuntimeStat _runtimeConsole;
-        RuntimeStat _runtimeKnxStack;
-        RuntimeStat _runtimeModuleLoop;
+        Stat::RuntimeStat _runtimeLoop;
+        Stat::RuntimeStat _runtimeConsole;
+        Stat::RuntimeStat _runtimeKnxStack;
+        Stat::RuntimeStat _runtimeModuleLoop;
 #endif
 
       public:

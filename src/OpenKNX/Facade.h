@@ -7,9 +7,11 @@
 #include "OpenKNX/Information.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
+#ifdef OPENKNX_RUNTIME_STAT
+#include "OpenKNX/Stat/RuntimeStat.h"
+#endif
 #include "OpenKNX/TimerInterrupt.h"
 #include "OpenKNX/defines.h"
-#include "OpenKNX/RuntimeStat.h"
 
 namespace OpenKNX
 {
@@ -19,7 +21,8 @@ namespace OpenKNX
         uint8_t ids[OPENKNX_MAX_MODULES];
         Module* list[OPENKNX_MAX_MODULES];
 #ifdef OPENKNX_RUNTIME_STAT
-        RuntimeStat runtime[OPENKNX_MAX_MODULES];
+        // TODO check integration into Module
+        Stat::RuntimeStat runtime[OPENKNX_MAX_MODULES];
 #endif
     };
 
