@@ -64,6 +64,10 @@ namespace OpenKNX
             /// @return a duration value; unit µs
             uint32_t estimateMedian_us();
 
+            /// @brief Get sum of all collected durations.
+            /// @return a duration value; unit ms (milliseconds)
+            uint32_t sum_ms();
+
             uint32_t getHistBucket(const uint8_t bucketIndex);
 
             static uint32_t getHistBucketUpper(const uint8_t bucketIndex);
