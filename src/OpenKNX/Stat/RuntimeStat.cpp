@@ -1,11 +1,12 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
-
 #include "OpenKNX/Facade.h"
-// TODO/FIXME Logger.h is not working without openknx// TODO check
 
 // TODO/LIMITATION: Counter Overflow ist possible and will result in wrong results (for long? runtimes)!
 
-#include "OpenKNX/Log/Logger.h"
+// TODO/Feature: Allow pause measuring for special case handling
+// TODO/Feature: add measuring for core1
+// TODO/Improvement: check integration of RuntimeStat in Module
+// TODO/Feature: Allow measurement of Channels
 
 namespace OpenKNX
 {
