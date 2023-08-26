@@ -347,7 +347,6 @@ namespace OpenKNX
     {
         logBegin();
         uint16_t repeated = 0;
-        uint8_t previousLine[16];
 
         openknx.logger.logWithPrefixAndValues("Memory content", "Address 0x%08X - Size: 0x%04X (%d bytes)", start, size, size);
         for (uint32_t i = 0; i < floor(size / 16); i++)
@@ -359,7 +358,7 @@ namespace OpenKNX
 
             // check line same as prevoius
             if (!firstLine)
-                found = (memcmp(ptr, &previousLine, 16) == 0);
+                found = (memcmp(ptr, (ptr-16), 16) == 0);
 
             // hide double output
             if (found && !lastLine)
@@ -379,9 +378,6 @@ namespace OpenKNX
             char prefix[24] = {};
             snprintf(prefix, 24, "0x%06X (0x%08X)", (uint)(i * 16), (uint)ptr);
             openknx.logger.logHexWithPrefix(prefix, ptr, 16);
-
-            // save line as previous
-            memcpy(&previousLine, ptr, 16);
         }
         logEnd();
     }
