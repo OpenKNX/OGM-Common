@@ -36,6 +36,11 @@ namespace OpenKNX
             return MAX(bucketMin, durationMin_us);
         }
 
+        uint32_t DurationStatistic::avg_us()
+        {
+            return sum_us / _count;
+        }
+
         uint32_t DurationStatistic::estimateMedian_us()
         {
             // TODO special handling of edge-cases!

@@ -56,6 +56,10 @@ namespace OpenKNX
             /// @param duration_us the duration; unit µs
             void measure(const uint32_t duration_us);
 
+            /// @brief Calculate an average of duration.
+            /// @return a duration value; unit µs
+            uint32_t avg_us();
+
             /// @brief Calculate an estimation of the median duration.
             /// @return a duration value; unit µs
             uint32_t estimateMedian_us();

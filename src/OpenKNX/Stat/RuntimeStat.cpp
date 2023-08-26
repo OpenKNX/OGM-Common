@@ -33,18 +33,15 @@ namespace OpenKNX
 
         void RuntimeStat::showStat(std::string label)
         {
-            const uint32_t runCount = _run._count;
-            const uint32_t waitCount = _wait._count;
-
             openknx.logger.logWithPrefixAndValues(label, "#    count     %10d %10d",
-                                                  runCount, waitCount);
+                                                  _run._count, _wait._count);
             openknx.logger.logWithPrefixAndValues(label, "#      sum     %10d %10d",
                                                   _run.sum_us, _wait.sum_us);
             openknx.logger.logWithPrefixAndValues(label, "us     min     %10d %10d",
                                                   _run.durationMin_us, _wait.durationMin_us);
             openknx.logger.logWithPrefixAndValues(label, "us     avg     %10d %10d",
-                                                  _run.sum_us / runCount,
-                                                  _wait.sum_us / waitCount);
+                                                  _run.avg_us(),
+                                                  _wait.avg_us());
             openknx.logger.logWithPrefixAndValues(label, "us    ~med     %10d %10d",
                                                   _run.estimateMedian_us(),
                                                   _wait.estimateMedian_us());
