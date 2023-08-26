@@ -155,12 +155,12 @@ namespace OpenKNX
         knx.bau().deviceObject().version(openknx.info.firmwareVersion());
 
 #ifdef MAIN_OrderNumber
-        knx.orderNumber((const uint8_t *)MAIN_OrderNumber); // set the OrderNumber
+        knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
 #endif
         logIndentDown();
     }
 
-    VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t *hardwareType, uint16_t firmwareVersion)
+    VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion)
     {
         // save ets app data in information struct
         openknx.info.applicationNumber((hardwareType[2] << 8) | hardwareType[3]);
@@ -610,7 +610,7 @@ namespace OpenKNX
     }
 
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
-    void Common::processInputKo(GroupObject &ko)
+    void Common::processInputKo(GroupObject& ko)
     {
     #ifdef LOG_KoDiagnose
         if (ko.asap() == LOG_KoDiagnose)
@@ -631,10 +631,10 @@ namespace OpenKNX
     void Common::registerCallbacks()
     {
         // Register Callbacks for FunctionProperty also when knx ist not configured
-        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength) -> bool {
             return openknx.common.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
         });
-        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength) -> bool {
             return openknx.common.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
         });
 
@@ -646,7 +646,7 @@ namespace OpenKNX
             openknx.common.processBeforeRestart();
         });
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
-        GroupObject::classCallback([](GroupObject &iKo) -> void {
+        GroupObject::classCallback([](GroupObject& iKo) -> void {
             openknx.common.processInputKo(iKo);
         });
 #endif
@@ -669,7 +669,7 @@ namespace OpenKNX
         return _freeMemoryMin;
     }
 
-    bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -679,7 +679,7 @@ namespace OpenKNX
         return false;
     }
 
-    bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
