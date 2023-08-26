@@ -64,7 +64,7 @@ KNX_UART_TX_PIN
 | OPENKNX_LOOPTIME_WARNING_INTERVAL | 1000 | ms | how often the warning may be issued in the console |
 | OPENKNX_RUNTIME_STAT | | | Integrate Collection of Runtime-Statistics  for core0. |
 | OPENKNX_RUNTIME_STAT_BUCKETN | 16 | | the number of histogram buckets for Runtime-Statistics |
-| OPENKNX_RUNTIME_STAT_BUCKETS | see DurationStatistic.h | List of µs | The upper (included) limits of histogram bucket, without last bucket as this will be limited by data-type only. Must be a comma-separated list with OPENKNX_RUNTIME_STAT_BUCKETN-1 entries |
+| OPENKNX_RUNTIME_STAT_BUCKETS | 50, 100, 200, 400, 600, 800, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 10000 | List of µs | The upper (included) limits of histogram bucket, without last bucket as this will be limited by data-type only. Must be a comma-separated list with OPENKNX_RUNTIME_STAT_BUCKETN-1 entries |
 | OPENKNX_DEBUG | | | Enable debug mode |
 | OPENKNX_TRACE1..5 | | | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters. |
 | OPENKNX_RTT | | | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240! |
