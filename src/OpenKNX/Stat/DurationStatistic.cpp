@@ -90,7 +90,7 @@ namespace OpenKNX
             return durationBucket[bucketIndex];
         }
 
-        uint32_t DurationStatistic::getHistBucketUpper(const uint8_t bucketIndex)
+        uint32_t DurationStatistic::getHistBucketUpper_us(const uint8_t bucketIndex)
         {
             return _timeRangeMax[bucketIndex];
         }

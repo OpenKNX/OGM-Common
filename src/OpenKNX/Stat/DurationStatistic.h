@@ -68,9 +68,15 @@ namespace OpenKNX
             /// @return a duration value; unit ms (milliseconds)
             uint32_t sum_ms();
 
+            /// @brief Get the number of durations collected in the bucket.
+            /// @param bucketIndex
+            /// @return
             uint32_t getHistBucket(const uint8_t bucketIndex);
 
-            static uint32_t getHistBucketUpper(const uint8_t bucketIndex);
+            /// @brief Get the maximum duration included in the bucket.
+            /// @param bucketIndex
+            /// @return a duration value; unit µs (microseconds)
+            static uint32_t getHistBucketUpper_us(const uint8_t bucketIndex);
         };
     } // namespace Stat
 } // namespace OpenKNX
