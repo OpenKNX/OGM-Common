@@ -399,6 +399,23 @@ namespace OpenKNX
     {
         return ((micros() - _loopMicros) < OPENKNX_MAX_LOOPTIME);
     }
+
+    bool Common::freeLoopIterate(uint8_t size, uint8_t &position, uint8_t &processed)
+    {
+        // if freeloop time over and it is not the first run
+        if (processed > 0 && !freeLoopTime()) return false;
+        // once completely run through
+        if (processed >= size) return false;
+
+        // when you have to start from the beginning again
+        if (position >= size) position = 0;
+
+        processed++;
+        position++;
+
+        return true;
+    }
+
 #ifdef __time_critical_func
     void __time_critical_func(Common::collectMemoryStats)()
 #else
@@ -418,15 +435,9 @@ namespace OpenKNX
      */
     void Common::processModulesLoop()
     {
-        for (uint8_t processed = 0; freeLoopTime() && (processed < openknx.modules.count); processed++)
-        {
-            if (_currentModule >= openknx.modules.count)
-                _currentModule = 0;
-
-            openknx.modules.list[_currentModule]->loop(knx.configured());
-
-            _currentModule++;
-        }
+        uint8_t processed = 0;
+        while (openknx.freeLoopIterate(openknx.modules.count, _currentModule, processed))
+            openknx.modules.list[_currentModule - 1]->loop(knx.configured());
     }
 
 #ifdef OPENKNX_DUALCORE
