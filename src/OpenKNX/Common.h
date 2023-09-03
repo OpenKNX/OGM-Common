@@ -8,7 +8,7 @@
 #include "knx.h"
 
 #ifdef OPENKNX_WATCHDOG
-#include <Adafruit_SleepyDog.h>
+    #include <Adafruit_SleepyDog.h>
 #endif
 
 namespace OpenKNX
@@ -28,9 +28,9 @@ namespace OpenKNX
         uint32_t _lastLoopOutput = 0;
 #endif
 #ifdef OPENKNX_WATCHDOG
-#ifndef OPENKNX_WATCHDOG_MAX_PERIOD
-#define OPENKNX_WATCHDOG_MAX_PERIOD 16384
-#endif
+    #ifndef OPENKNX_WATCHDOG_MAX_PERIOD
+        #define OPENKNX_WATCHDOG_MAX_PERIOD 16384
+    #endif
         WatchdogData watchdog;
 #endif
         uint8_t _currentModule = 0;
@@ -115,6 +115,5 @@ namespace OpenKNX
 #ifdef OPENKNX_RUNTIME_STAT
         void showRuntimeStat(const bool stat = true, const bool hist = false);
 #endif
-
     };
 } // namespace OpenKNX
