@@ -699,9 +699,9 @@ namespace OpenKNX
         {
             Stat::RuntimeStat::showStatHeader();
             // Use prefix '_' to preserve structure on sorting
-            _runtimeLoop.showStat("__Loop", stat, hist);
-            _runtimeConsole.showStat("_Console", stat, hist);
-            _runtimeKnxStack.showStat("_Stack", stat, hist);
+            _runtimeLoop.showStat("___Loop", stat, hist);
+            _runtimeConsole.showStat("__Console", stat, hist);
+            _runtimeKnxStack.showStat("__Stack", stat, hist);
             _runtimeModuleLoop.showStat("_All_Modules_Loop", stat, hist);
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
