@@ -12,7 +12,8 @@ Write-Host "--------------------------------"
 if (Test-Path -Path release) {
     # clean working dir
     Remove-Item -Recurse release\*
-} else {
+}
+else {
     New-Item -Path release -ItemType Directory | Out-Null
 }
 
@@ -20,7 +21,7 @@ if (Test-Path -Path release) {
 Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 
 # get xml for kxnprod, always first step which also generates headerfile for release
-~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="$($settings.knxprod)" "src/$($settings.releaseName).xml"
+~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="include/knxprod.h" "src/$($settings.releaseName).xml"
 if (!$?) {
     Write-Host "Error in knxprod, Release was not built!"
     $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
@@ -32,10 +33,6 @@ Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.tar
 if (Test-Path -Path "src/$($settings.releaseName).baggages") {
     Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
 }
-
-# copy generated headerfile and according hardware file to according directory
-lib/OGM-Common/scripts/build/OpenKNX-Pre-Build.ps1
-if (!$?) { exit 1 }
 
 # write content.xml header
 $releaseTarget = "release/data/content.xml"

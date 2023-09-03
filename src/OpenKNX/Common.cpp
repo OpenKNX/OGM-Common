@@ -40,6 +40,8 @@ namespace OpenKNX
         showDebugInfo();
 #endif
 
+        openknx.hardware.initFlash();
+
         openknx.info.firmwareRevision(firmwareRevision);
 
         initKnx();

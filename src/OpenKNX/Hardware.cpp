@@ -8,7 +8,7 @@ namespace OpenKNX
 {
     void Hardware::init()
     {
-        initFlash();
+        // initFlash();
 
 #ifdef ARDUINO_ARCH_RP2040
         adc_init();
@@ -31,6 +31,29 @@ namespace OpenKNX
 #else
         _openknxFlash = new OpenKNX::Flash::Driver(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "openknx");
         _knxFlash = new OpenKNX::Flash::Driver(KNX_FLASH_OFFSET, KNX_FLASH_SIZE, "knx");
+#endif
+
+#ifdef KNX_FLASH_CALLBACK
+        // register callbacks
+        knx.platform().registerFlashCallbacks(
+            []() -> uint32_t {
+                // Size
+                return openknx.hardware.knxFlash()->size();
+            },
+            []() -> uint8_t* {
+                // Read
+                return openknx.hardware.knxFlash()->flashAddress();
+            },
+            [](uint32_t relativeAddress, uint8_t* buffer, size_t len) -> uint32_t {
+                // Write
+                return openknx.hardware.knxFlash()->write(relativeAddress, buffer, len);
+            },
+            []() -> void {
+                // Commit
+                return openknx.hardware.knxFlash()->commit();
+            }
+
+        );
 #endif
         logIndentDown();
     }

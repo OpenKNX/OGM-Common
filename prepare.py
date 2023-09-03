@@ -128,6 +128,15 @@ for name, version in openknx_modules.items():
 version_file.close()
 print()
 
+# delete old file
+if os.path.isfile("lib/OGM-Common/include/knxprod.h"):
+    os.remove("lib/OGM-Common/include/knxprod.h")
+
+if os.path.isfile("lib/OGM-Common/include/versions.h"):
+    os.remove("lib/OGM-Common/include/versions.h")
+
+if os.path.isfile("lib/OGM-Common/include/hardware.h"):
+    os.remove("lib/OGM-Common/include/hardware.h")
 
 # def make_macro_name(lib_name):
 #     lib_name = lib_name.upper()

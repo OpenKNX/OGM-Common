@@ -20,7 +20,7 @@ namespace OpenKNX
         va_list values;
         va_start(values, message);
 
-        char buffer[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Last Byte muss Zero!
+        char buffer[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Last byte must be zero!
         uint8_t len = vsnprintf(buffer, 15, message, values);
 
         if (len >= 15)
@@ -282,8 +282,9 @@ namespace OpenKNX
         openknx.logger.log("======================== Versions ==============================================");
         openknx.logger.color(0);
 
-        openknx.logger.logWithPrefix("KNX", KNX_Version);
-        openknx.logger.logWithPrefix("Firmware", MAIN_Version);
+        openknx.logger.logWithPrefix("This Firmware", MAIN_Version);
+        openknx.logger.logWithPrefix("KNX-Stack", KNX_Version);
+        openknx.logger.logWithPrefix("OpenKNX OGM-Common", MODULE_Common_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
 
@@ -363,16 +364,41 @@ namespace OpenKNX
 
     void Console::showMemoryContent(uint8_t* start, uint32_t size)
     {
+        const size_t lineLen = 16;
+        uint8_t* end = start + size - (size % lineLen);
+
         logBegin();
         openknx.logger.logWithPrefixAndValues("Memory content", "Address 0x%08X - Size: 0x%04X (%d bytes)", start, size, size);
-        for (uint32_t i = 0; i < floor(size / 16); i++)
+        for (uint8_t* linePtr = start; linePtr < end; linePtr += lineLen)
         {
-            const uint8_t* ptr = start + (i * 16);
-            char prefix[24] = {};
-            snprintf(prefix, 24, "0x%06X (0x%08X)", (uint)(i * 16), (uint)ptr);
-            openknx.logger.logHexWithPrefix(prefix, ptr, 16);
+            // normale output
+            showMemoryLine(linePtr, lineLen, start);
+
+            // skip repeated lines and show repetition count only
+            int repeatCount = 0;
+            while (linePtr + lineLen < end && memcmp(linePtr, linePtr + lineLen, lineLen) == 0)
+            {
+                repeatCount++;
+                linePtr += lineLen;
+            }
+            if (repeatCount > 0)
+            {
+                openknx.logger.logWithPrefixAndValues("", "%ix (repetitions of previous line)", repeatCount);
+            }
+        }
+        // incomplete last line (edge case)
+        if (end != start + size)
+        {
+            showMemoryLine(end, (start + size) - end, start);
         }
         logEnd();
+    }
+
+    void Console::showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart)
+    {
+        char prefix[24] = {};
+        snprintf(prefix, 24, "0x%06X (0x%08X)", (uint)(line - memoryStart), (uint)line);
+        openknx.logger.logHexWithPrefix(prefix, line, length);
     }
 
     void Console::printHelpLine(const char* command, const char* message)

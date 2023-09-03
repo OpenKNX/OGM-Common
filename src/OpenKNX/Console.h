@@ -39,6 +39,7 @@ namespace OpenKNX
         void showVersions();
         void showMemory(bool diagnoseKo = false);
         void showMemoryContent(uint8_t* start, uint32_t size);
+        void showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart);
 
         void showHelp();
         void sleep();
