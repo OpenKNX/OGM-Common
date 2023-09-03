@@ -2,7 +2,7 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
 #ifdef OPENKNX_RUNTIME_STAT
-#include "OpenKNX/Stat/RuntimeStat.h"
+    #include "OpenKNX/Stat/RuntimeStat.h"
 #endif
 #include "OpenKNX/defines.h"
 #include "knx.h"

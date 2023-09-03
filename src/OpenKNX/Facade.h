@@ -8,7 +8,7 @@
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
 #ifdef OPENKNX_RUNTIME_STAT
-#include "OpenKNX/Stat/RuntimeStat.h"
+    #include "OpenKNX/Stat/RuntimeStat.h"
 #endif
 #include "OpenKNX/TimerInterrupt.h"
 #include "OpenKNX/defines.h"
