@@ -402,16 +402,17 @@ namespace OpenKNX
 
     bool Common::freeLoopIterate(uint8_t size, uint8_t &position, uint8_t &processed)
     {
-        // if freeloop time over and it is not the first run
-        if (processed > 0 && !freeLoopTime()) return false;
-        // once completely run through
-        if (processed >= size) return false;
+        processed++;
+        position++;
 
         // when you have to start from the beginning again
         if (position >= size) position = 0;
 
-        processed++;
-        position++;
+        // if freeloop time over
+        if (!freeLoopTime()) return false;
+
+        // once completely run through
+        if (processed >= size) return false;
 
         return true;
     }
@@ -436,8 +437,9 @@ namespace OpenKNX
     void Common::processModulesLoop()
     {
         uint8_t processed = 0;
-        while (openknx.freeLoopIterate(openknx.modules.count, _currentModule, processed))
-            openknx.modules.list[_currentModule - 1]->loop(knx.configured());
+        do
+            openknx.modules.list[_currentModule]->loop(knx.configured());
+        while (freeLoopIterate(openknx.modules.count, _currentModule, processed));
     }
 
 #ifdef OPENKNX_DUALCORE
