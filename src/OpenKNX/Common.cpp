@@ -703,15 +703,15 @@ namespace OpenKNX
         {
             Stat::RuntimeStat::showStatHeader();
             // Use prefix '_' to preserve structure on sorting
-            _runtimeLoop.showStat("___Loop", stat, hist);
-            _runtimeConsole.showStat("__Console", stat, hist);
-            _runtimeKnxStack.showStat("__Stack", stat, hist);
-            _runtimeModuleLoop.showStat("_All_Modules_Loop", stat, hist);
+            _runtimeLoop.showStat("___Loop", 0, stat, hist);
+            _runtimeConsole.showStat("__Console", 0, stat, hist);
+            _runtimeKnxStack.showStat("__Stack", 0, stat, hist);
+            _runtimeModuleLoop.showStat("_All_Modules_Loop", 0, stat, hist);
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
-                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), stat, hist);
+                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), 0, stat, hist);
     #ifdef OPENKNX_DUALCORE
-                openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), stat, hist);
+                openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), 1, stat, hist);
     #endif
             }
         }
