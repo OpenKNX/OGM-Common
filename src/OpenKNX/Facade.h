@@ -23,6 +23,9 @@ namespace OpenKNX
 #ifdef OPENKNX_RUNTIME_STAT
         // TODO check integration into Module
         Stat::RuntimeStat runtime[OPENKNX_MAX_MODULES];
+    #ifdef OPENKNX_DUALCORE
+        Stat::RuntimeStat runtime1[OPENKNX_MAX_MODULES];
+    #endif
 #endif
     };
 

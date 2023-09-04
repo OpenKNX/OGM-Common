@@ -454,7 +454,11 @@ namespace OpenKNX
     #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            RUNTIME_MEASURE_BEGIN(openknx.modules.runtime1[i]);
             openknx.modules.list[i]->loop1(knx.configured());
+            RUNTIME_MEASURE_END(openknx.modules.runtime1[i]);
+        }
     }
 #endif
 
@@ -706,6 +710,9 @@ namespace OpenKNX
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), stat, hist);
+    #ifdef OPENKNX_DUALCORE
+                openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), stat, hist);
+    #endif
             }
         }
         logIndentDown();
