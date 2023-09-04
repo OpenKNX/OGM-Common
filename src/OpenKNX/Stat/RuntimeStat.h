@@ -12,6 +12,8 @@
     #define RUNTIME_MEASURE_END(X)
 #endif
 
+#define OPENKNX_RUNTIME_STAT_BUCKETN1 (OPENKNX_RUNTIME_STAT_BUCKETN-1)
+
 namespace OpenKNX
 {
     namespace Stat

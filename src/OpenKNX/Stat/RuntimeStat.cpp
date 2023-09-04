@@ -50,10 +50,11 @@ namespace OpenKNX
             }
             if (hist)
             {
-                for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN; i++)
+                for (size_t i = 0; i < OPENKNX_RUNTIME_STAT_BUCKETN1; i++)
                 {
                     openknx.logger.logWithPrefixAndValues(label, "hist %6d  #<= %12d %12d", DurationStatistic::getHistBucketUpper_us(i), _run.getHistBucket(i), _wait.getHistBucket(i));
                 }
+                openknx.logger.logWithPrefixAndValues(label, "hist INFu32  #<= %12d %12d", _run.getHistBucket(OPENKNX_RUNTIME_STAT_BUCKETN1), _wait.getHistBucket(OPENKNX_RUNTIME_STAT_BUCKETN1));
             }
         }
     } // namespace Stat
