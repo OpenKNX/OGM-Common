@@ -72,6 +72,9 @@ namespace OpenKNX
         Stat::RuntimeStat _runtimeConsole;
         Stat::RuntimeStat _runtimeKnxStack;
         Stat::RuntimeStat _runtimeModuleLoop;
+    #ifdef OPENKNX_DUALCORE
+        Stat::RuntimeStat _runtimeModuleLoop1;
+    #endif
 #endif
 
       public:
