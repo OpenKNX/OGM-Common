@@ -1,11 +1,14 @@
 #pragma once
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Log/VirtualSerial.h"
+#ifdef OPENKNX_RUNTIME_STAT
+    #include "OpenKNX/Stat/RuntimeStat.h"
+#endif
 #include "OpenKNX/defines.h"
 #include "knx.h"
 
 #ifdef OPENKNX_WATCHDOG
-#include <Adafruit_SleepyDog.h>
+    #include <Adafruit_SleepyDog.h>
 #endif
 
 namespace OpenKNX
@@ -25,9 +28,9 @@ namespace OpenKNX
         uint32_t _lastLoopOutput = 0;
 #endif
 #ifdef OPENKNX_WATCHDOG
-#ifndef OPENKNX_WATCHDOG_MAX_PERIOD
-#define OPENKNX_WATCHDOG_MAX_PERIOD 16384
-#endif
+    #ifndef OPENKNX_WATCHDOG_MAX_PERIOD
+        #define OPENKNX_WATCHDOG_MAX_PERIOD 16384
+    #endif
         WatchdogData watchdog;
 #endif
         uint8_t _currentModule = 0;
@@ -63,6 +66,13 @@ namespace OpenKNX
 #endif
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
+
+#ifdef OPENKNX_RUNTIME_STAT
+        Stat::RuntimeStat _runtimeLoop;
+        Stat::RuntimeStat _runtimeConsole;
+        Stat::RuntimeStat _runtimeKnxStack;
+        Stat::RuntimeStat _runtimeModuleLoop;
+#endif
 
       public:
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
@@ -102,5 +112,9 @@ namespace OpenKNX
         void processInputKo(GroupObject& ko);
 #endif
         std::string logPrefix();
+
+#ifdef OPENKNX_RUNTIME_STAT
+        void showRuntimeStat(const bool stat = true, const bool hist = false);
+#endif
     };
 } // namespace OpenKNX

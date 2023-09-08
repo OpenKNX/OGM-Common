@@ -1,5 +1,6 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
+#include "OpenKNX/Stat/RuntimeStat.h"
 
 namespace OpenKNX
 {
@@ -156,12 +157,12 @@ namespace OpenKNX
         knx.bau().deviceObject().version(openknx.info.firmwareVersion());
 
 #ifdef MAIN_OrderNumber
-        knx.orderNumber((const uint8_t *)MAIN_OrderNumber); // set the OrderNumber
+        knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
 #endif
         logIndentDown();
     }
 
-    VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t *hardwareType, uint16_t firmwareVersion)
+    VersionCheckResult Common::versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion)
     {
         // save ets app data in information struct
         openknx.info.applicationNumber((hardwareType[2] << 8) | hardwareType[3]);
@@ -342,6 +343,8 @@ namespace OpenKNX
             return;
 #endif
 
+        RUNTIME_MEASURE_BEGIN(_runtimeLoop);
+
 #ifdef OPENKNX_HEARTBEAT
         openknx.progLed.debugLoop();
 #endif
@@ -351,10 +354,14 @@ namespace OpenKNX
 #endif
 
         // loop console helper
+        RUNTIME_MEASURE_BEGIN(_runtimeConsole);
         openknx.console.loop();
+        RUNTIME_MEASURE_END(_runtimeConsole);
 
         // loop  knx stack
+        RUNTIME_MEASURE_BEGIN(_runtimeKnxStack);
         knx.loop();
+        RUNTIME_MEASURE_END(_runtimeKnxStack);
 
         // loop  appstack
         _loopMicros = micros();
@@ -372,11 +379,16 @@ namespace OpenKNX
             processRestoreSavePin();
             processAfterStartupDelay();
         }
+
+        RUNTIME_MEASURE_BEGIN(_runtimeModuleLoop);
         processModulesLoop();
+        RUNTIME_MEASURE_END(_runtimeModuleLoop);
 
 #ifdef OPENKNX_WATCHDOG
         watchdogLoop();
 #endif
+
+        RUNTIME_MEASURE_END(_runtimeLoop);
 
 #if OPENKNX_LOOPTIME_WARNING > 1
         // loop took to long and last out is min 1ms ago
@@ -438,7 +450,11 @@ namespace OpenKNX
     {
         uint8_t processed = 0;
         do
+        {
+            RUNTIME_MEASURE_BEGIN(openknx.modules.runtime[_currentModule]);
             openknx.modules.list[_currentModule]->loop(knx.configured());
+            RUNTIME_MEASURE_END(openknx.modules.runtime[_currentModule]);
+        }
         while (freeLoopIterate(openknx.modules.count, _currentModule, processed));
     }
 
@@ -453,7 +469,11 @@ namespace OpenKNX
     #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            RUNTIME_MEASURE_BEGIN(openknx.modules.runtime1[i]);
             openknx.modules.list[i]->loop1(knx.configured());
+            RUNTIME_MEASURE_END(openknx.modules.runtime1[i]);
+        }
     }
 #endif
 
@@ -611,7 +631,7 @@ namespace OpenKNX
     }
 
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
-    void Common::processInputKo(GroupObject &ko)
+    void Common::processInputKo(GroupObject& ko)
     {
     #ifdef LOG_KoDiagnose
         if (ko.asap() == LOG_KoDiagnose)
@@ -632,10 +652,10 @@ namespace OpenKNX
     void Common::registerCallbacks()
     {
         // Register Callbacks for FunctionProperty also when knx ist not configured
-        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+        knx.bau().functionPropertyCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength) -> bool {
             return openknx.common.processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength);
         });
-        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength) -> bool {
+        knx.bau().functionPropertyStateCallback([](uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength) -> bool {
             return openknx.common.processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength);
         });
 
@@ -647,7 +667,7 @@ namespace OpenKNX
             openknx.common.processBeforeRestart();
         });
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
-        GroupObject::classCallback([](GroupObject &iKo) -> void {
+        GroupObject::classCallback([](GroupObject& iKo) -> void {
             openknx.common.processInputKo(iKo);
         });
 #endif
@@ -670,7 +690,7 @@ namespace OpenKNX
         return _freeMemoryMin;
     }
 
-    bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -680,7 +700,7 @@ namespace OpenKNX
         return false;
     }
 
-    bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t *data, uint8_t *resultData, uint8_t &resultLength)
+    bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -689,4 +709,29 @@ namespace OpenKNX
         }
         return false;
     }
+
+#ifdef OPENKNX_RUNTIME_STAT
+    void Common::showRuntimeStat(const bool stat /*= true*/, const bool hist /*= false*/)
+    {
+        logInfoP("Runtime Statistics: (Uptime=%dms)", millis());
+        logIndentUp();
+        {
+            Stat::RuntimeStat::showStatHeader();
+            // Use prefix '_' to preserve structure on sorting
+            _runtimeLoop.showStat("___Loop", 0, stat, hist);
+            _runtimeConsole.showStat("__Console", 0, stat, hist);
+            _runtimeKnxStack.showStat("__Stack", 0, stat, hist);
+            _runtimeModuleLoop.showStat("_All_Modules_Loop", 0, stat, hist);
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+            {
+                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), 0, stat, hist);
+    #ifdef OPENKNX_DUALCORE
+                openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), 1, stat, hist);
+    #endif
+            }
+        }
+        logIndentDown();
+    }
+#endif
+
 } // namespace OpenKNX

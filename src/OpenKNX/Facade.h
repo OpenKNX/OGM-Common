@@ -7,6 +7,9 @@
 #include "OpenKNX/Information.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
+#ifdef OPENKNX_RUNTIME_STAT
+    #include "OpenKNX/Stat/RuntimeStat.h"
+#endif
 #include "OpenKNX/TimerInterrupt.h"
 #include "OpenKNX/defines.h"
 
@@ -17,6 +20,13 @@ namespace OpenKNX
         uint8_t count = 0;
         uint8_t ids[OPENKNX_MAX_MODULES];
         Module* list[OPENKNX_MAX_MODULES];
+#ifdef OPENKNX_RUNTIME_STAT
+        // TODO check integration into Module
+        Stat::RuntimeStat runtime[OPENKNX_MAX_MODULES];
+    #ifdef OPENKNX_DUALCORE
+        Stat::RuntimeStat runtime1[OPENKNX_MAX_MODULES];
+    #endif
+#endif
     };
 
     class Facade
