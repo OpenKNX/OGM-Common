@@ -24,8 +24,8 @@ namespace OpenKNX
             uint32_t _begin_us = 0;
             uint32_t _end_us = 0;
 
-            DurationStatistic _run;
-            DurationStatistic _wait;
+            DurationStatistic _run = DurationStatistic();
+            DurationStatistic _wait = DurationStatistic();
 
           public:
             static void showStatHeader();
