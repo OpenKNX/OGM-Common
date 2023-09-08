@@ -409,7 +409,7 @@ namespace OpenKNX
 
     bool Common::freeLoopTime()
     {
-        return ((micros() - _loopMicros) < OPENKNX_MAX_LOOPTIME);
+        return !delayCheckMicros(_loopMicros, OPENKNX_MAX_LOOPTIME);
     }
 
     bool Common::freeLoopIterate(uint8_t size, uint8_t &position, uint8_t &processed)
