@@ -720,7 +720,7 @@ namespace OpenKNX
             // Use prefix '_' to preserve structure on sorting
             _runtimeLoop.showStat("___Loop", 0, stat, hist);
             _runtimeConsole.showStat("__Console", 0, stat, hist);
-            _runtimeKnxStack.showStat("__Stack", 0, stat, hist);
+            _runtimeKnxStack.showStat("__KnxStack", 0, stat, hist);
             _runtimeModuleLoop.showStat("_All_Modules_Loop", 0, stat, hist);
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
