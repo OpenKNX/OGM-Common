@@ -13,7 +13,7 @@ namespace OpenKNX
         {
             if (
                 (delayCheck(_lastMillis, 250) && _counter < _code) ||   // Blink
-                (delayCheck(_lastMillis, 1500) && _counter >= _code) || // Pasue between sequence
+                (delayCheck(_lastMillis, 1500) && _counter >= _code) || // Pause between sequence
                 _lastMillis == 0)
             {
                 // Reset
