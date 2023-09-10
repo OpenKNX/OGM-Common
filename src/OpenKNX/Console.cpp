@@ -64,7 +64,7 @@ namespace OpenKNX
         {
             showHelp();
         }
-        else if (cmd == "v" || cmd == "versions")
+        else if (!diagnoseKo && cmd == "v" || cmd == "versions")
         {
             showVersions();
         }
