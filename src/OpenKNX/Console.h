@@ -37,6 +37,7 @@ namespace OpenKNX
         void processSerialInput();
         void showInformations();
         void showVersions();
+        void showUptime(bool diagnoseKo = false);
         void showMemory(bool diagnoseKo = false);
         void showMemoryContent(uint8_t* start, uint32_t size);
         void showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart);

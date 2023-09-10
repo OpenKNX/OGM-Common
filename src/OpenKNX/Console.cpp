@@ -76,6 +76,10 @@ namespace OpenKNX
         {
             knx.toggleProgMode();
         }
+        else if ((cmd == "u" || cmd == "uptime"))
+        {
+            showUptime(diagnoseKo);
+        }
         else if (!diagnoseKo && (cmd == "sleep"))
         {
             sleep();
@@ -348,6 +352,17 @@ namespace OpenKNX
 #else
         return 20000;
 #endif
+    }
+
+    void Console::showUptime(bool diagnoseKo /* = false */)
+    {
+#ifdef LOG_KoDiagnose
+        if (diagnoseKo)
+        {
+            openknx.console.writeDiagenoseKo("%is", (millis() / 1000));
+        }
+#endif
+        openknx.logger.logWithPrefixAndValues("Uptime", "%is", (millis() / 1000));
     }
 
     void Console::showMemory(bool diagnoseKo /* = false */)
