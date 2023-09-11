@@ -3,6 +3,7 @@
 // TODO/LIMITATION: Counter Overflow ist possible and will result in wrong results (for long? runtimes)!
 
 #include "OpenKNX/Log/Logger.h"
+#include "knx.h"
 
 namespace OpenKNX
 {
