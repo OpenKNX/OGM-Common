@@ -335,6 +335,8 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
+        uptime(false);
+
         if (!_setup0Ready)
             return;
 

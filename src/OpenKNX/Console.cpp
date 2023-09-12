@@ -359,10 +359,10 @@ namespace OpenKNX
 #ifdef LOG_KoDiagnose
         if (diagnoseKo)
         {
-            openknx.console.writeDiagenoseKo("%is", (millis() / 1000));
+            openknx.console.writeDiagenoseKo("%is", uptime());
         }
 #endif
-        openknx.logger.logWithPrefixAndValues("Uptime", "%is", (millis() / 1000));
+        openknx.logger.logWithPrefixAndValues("Uptime", "%is", uptime());
     }
 
     void Console::showMemory(bool diagnoseKo /* = false */)

@@ -15,6 +15,12 @@
 #define isNum(value) ((value + 10.0) > NO_NUM)
 
 /*
+ * Uptime
+ * must be called regularly so that the rollovers can be determined
+ */
+uint32_t uptime(bool result = true);
+
+/*
  * Free Memory
  */
 int freeMemory();
