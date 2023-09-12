@@ -367,7 +367,7 @@ namespace OpenKNX
         if (days > 0)
             sprintf(result, "%dd %2.2d:%2.2d:%2.2d", days, hours, mins, secs);
         else
-            sprintf(result, "%2.2d:%2.2d:%2.2d", days, hours, mins, secs);
+            sprintf(result, "%2.2d:%2.2d:%2.2d", hours, mins, secs);
 
 #ifdef LOG_KoDiagnose
         if (diagnoseKo)
