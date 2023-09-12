@@ -23,7 +23,7 @@ namespace OpenKNX
              */
             bool value();
 
-            void init();
+            void init() override;
             void init(uint16_t frequency);
         };
     } // namespace LedEffects
