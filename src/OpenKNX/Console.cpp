@@ -356,13 +356,26 @@ namespace OpenKNX
 
     void Console::showUptime(bool diagnoseKo /* = false */)
     {
+        char result[14];
+        uint32_t secs = uptime();
+        uint32_t days = floor(secs / 86400);
+        secs -= days * 86400;
+        uint32_t hours = floor(secs / 3600);
+        secs -= hours * 3600;
+        uint32_t mins = floor(secs / 60);
+        secs -= mins * 60;
+        if (days > 0)
+            sprintf(result, "%dd %2.2d:%2.2d:%2.2d", days, hours, mins, secs);
+        else
+            sprintf(result, "%2.2d:%2.2d:%2.2d", days, hours, mins, secs);
+
 #ifdef LOG_KoDiagnose
         if (diagnoseKo)
         {
-            openknx.console.writeDiagenoseKo("%is", uptime());
+            openknx.console.writeDiagenoseKo("%s", result);
         }
 #endif
-        openknx.logger.logWithPrefixAndValues("Uptime", "%is", uptime());
+        openknx.logger.logWithPrefixAndValues("Uptime", "%s", result);
     }
 
     void Console::showMemory(bool diagnoseKo /* = false */)
