@@ -32,7 +32,7 @@ int freeMemory()
 }
 
 /*
- * Uptime
+ * Uptime in Seconds
  * must be called regularly so that the rollovers can be determined
  */
 
