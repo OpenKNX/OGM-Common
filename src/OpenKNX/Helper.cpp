@@ -44,7 +44,7 @@ uint32_t uptime(bool result)
     if (uptimeCurrentMillis < uptimeLastMillis) uptimeRolloverCount++;
     uptimeLastMillis = uptimeCurrentMillis;
     if (!result) return 0;
-    return (0xFFFFFFFF / 1000UL) * uptimeRolloverCount + (uptimeCurrentMillis / 1000UL);
+    return ((uint64_t)uptimeRolloverCount << 32 & uptimeCurrentMillis) / 1000UL;
 }
 
 /*
