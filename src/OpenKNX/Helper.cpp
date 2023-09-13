@@ -48,7 +48,7 @@ uint32_t uptime(bool result)
 
     if (!result)
         return 0;
-    return ((uint64_t)uptimeRolloverCount << 32 & uptimeCurrentMillis) / 1000UL;
+    return ((uint64_t)uptimeRolloverCount << 32 | uptimeCurrentMillis) / 1000UL;
 }
 
 /*
