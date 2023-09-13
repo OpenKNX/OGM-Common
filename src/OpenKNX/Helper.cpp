@@ -40,10 +40,14 @@ uint32_t uptime(bool result)
 {
     static uint16_t uptimeRolloverCount = 0;
     static uint32_t uptimeLastMillis = 0;
+
     const uint32_t uptimeCurrentMillis = millis();
-    if (uptimeCurrentMillis < uptimeLastMillis) uptimeRolloverCount++;
+    if (uptimeCurrentMillis < uptimeLastMillis)
+        uptimeRolloverCount++;
     uptimeLastMillis = uptimeCurrentMillis;
-    if (!result) return 0;
+
+    if (!result)
+        return 0;
     return ((uint64_t)uptimeRolloverCount << 32 & uptimeCurrentMillis) / 1000UL;
 }
 
