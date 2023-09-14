@@ -357,11 +357,11 @@ namespace OpenKNX
     void Console::showUptime(bool diagnoseKo /* = false */)
     {
         uint32_t secs = uptime();
-        uint32_t days = secs / 86400;
+        uint16_t days = secs / 86400;
         secs -= days * 86400;
-        uint32_t hours = secs / 3600;
+        uint8_t hours = secs / 3600;
         secs -= hours * 3600;
-        uint32_t mins = secs / 60;
+        uint8_t mins = secs / 60;
         secs -= mins * 60;
 
         char result[14];
