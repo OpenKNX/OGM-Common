@@ -56,6 +56,8 @@ namespace OpenKNX
 
     bool Console::processCommand(std::string cmd, bool diagnoseKo /* = false */)
     {
+        openknx.common.skipLooptimeWarning();
+
         if (!diagnoseKo && (cmd == "i" || cmd == "info"))
         {
             showInformations();
@@ -381,6 +383,7 @@ namespace OpenKNX
 
     void Console::showMemory(bool diagnoseKo /* = false */)
     {
+
 #ifdef LOG_KoDiagnose
         if (diagnoseKo)
         {

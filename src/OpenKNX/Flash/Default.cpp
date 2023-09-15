@@ -251,6 +251,8 @@ namespace OpenKNX
 
         void Default::save(bool force /* = false */)
         {
+            openknx.common.skipLooptimeWarning();
+
             _checksum = 0;
             uint32_t start = millis();
 

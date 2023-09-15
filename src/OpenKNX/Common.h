@@ -25,7 +25,8 @@ namespace OpenKNX
     {
       private:
 #if OPENKNX_LOOPTIME_WARNING > 1
-        uint32_t _lastLoopOutput = 0;
+        uint32_t _lastLooptimeWarning = 0;
+        bool _skipLooptimeWarning = false;
 #endif
 #ifdef OPENKNX_WATCHDOG
     #ifndef OPENKNX_WATCHDOG_MAX_PERIOD
@@ -87,9 +88,6 @@ namespace OpenKNX
         void loop1();
 #endif
 
-#if OPENKNX_LOOPTIME_WARNING > 1
-        void resetLastLoopOutput();
-#endif
 #ifdef LOG_StartupDelayBase
         uint32_t _startupDelay;
 #endif
@@ -99,6 +97,7 @@ namespace OpenKNX
         bool _afterStartupDelay = false;
         bool afterStartupDelay();
         void processAfterStartupDelay();
+        void skipLooptimeWarning();
 
         void collectMemoryStats();
         uint freeMemoryMin();

@@ -335,6 +335,8 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
+        _skipLooptimeWarning = false;
+
         uptime(false);
 
         if (!_setup0Ready)
@@ -394,20 +396,20 @@ namespace OpenKNX
 
 #if OPENKNX_LOOPTIME_WARNING > 1
         // loop took to long and last out is min 1ms ago
-        if (delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLoopOutput, OPENKNX_LOOPTIME_WARNING_INTERVAL))
+        if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
-            logErrorP("Loop took too long %i >= %i", (millis() - start), OPENKNX_LOOPTIME_WARNING);
-            resetLastLoopOutput();
+            logErrorP("Warning: The loop took longer than usual (%i >= %i)", (millis() - start), OPENKNX_LOOPTIME_WARNING);
+            _lastLooptimeWarning = millis();
         }
 #endif
     }
 
-#if OPENKNX_LOOPTIME_WARNING > 1
-    void Common::resetLastLoopOutput()
+    void Common::skipLooptimeWarning()
     {
-        _lastLoopOutput = millis();
-    }
+#if OPENKNX_LOOPTIME_WARNING > 1
+        _skipLooptimeWarning = true;
 #endif
+    }
 
     bool Common::freeLoopTime()
     {
@@ -536,6 +538,7 @@ namespace OpenKNX
             return;
 
         uint32_t start = millis();
+        openknx.common.skipLooptimeWarning();
 
         logErrorP("SavePIN triggered!");
         logIndentUp();
@@ -552,7 +555,7 @@ namespace OpenKNX
 
         openknx.hardware.deactivatePowerRail();
 
-        logInfoP("completed (%ims)", millis() - start);
+        logInfoP("Completed (%ims)", millis() - start);
         logIndentDown();
 
         // save data
@@ -574,6 +577,7 @@ namespace OpenKNX
         if (!delayCheck(_savedPinProcessed, 1000))
             return;
 
+        openknx.common.skipLooptimeWarning();
         logInfoP("Restore power (after 1s)");
         logIndentUp();
 
