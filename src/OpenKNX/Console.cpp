@@ -288,7 +288,7 @@ namespace OpenKNX
         openknx.logger.log("======================== Versions ==============================================");
         openknx.logger.color(0);
 
-        openknx.logger.logWithPrefix("This Firmware", MAIN_Version);
+        openknx.logger.logWithPrefix("This Firmware", openknx.info.humanFirmwareVersion(true));
         openknx.logger.logWithPrefix("KNX-Stack", KNX_Version);
         openknx.logger.logWithPrefix("OpenKNX OGM-Common", MODULE_Common_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)

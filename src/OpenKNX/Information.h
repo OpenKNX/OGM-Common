@@ -81,10 +81,14 @@ namespace OpenKNX
             _firmwareRevision = firmwareRevision;
         }
 
-        std::string humanFirmwareVersion()
+        std::string humanFirmwareVersion(bool withHash = false)
         {
-            char buffer[14];
-            sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11));
+            char buffer[20];
+            if (withHash)
+                sprintf(buffer, "%i.%i.%i+%s", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11), MAIN_Version);
+            else
+                sprintf(buffer, "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11), MAIN_Version);
+
             return std::string(buffer);
         }
 
