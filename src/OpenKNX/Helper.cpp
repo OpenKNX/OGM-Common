@@ -32,7 +32,7 @@ int freeMemory()
 }
 
 /*
- * Uptime
+ * Uptime in Seconds
  * must be called regularly so that the rollovers can be determined
  */
 
@@ -40,11 +40,15 @@ uint32_t uptime(bool result)
 {
     static uint16_t uptimeRolloverCount = 0;
     static uint32_t uptimeLastMillis = 0;
+
     const uint32_t uptimeCurrentMillis = millis();
-    if (uptimeCurrentMillis < uptimeLastMillis) uptimeRolloverCount++;
+    if (uptimeCurrentMillis < uptimeLastMillis)
+        uptimeRolloverCount++;
     uptimeLastMillis = uptimeCurrentMillis;
-    if (!result) return 0;
-    return (0xFFFFFFFF / 1000UL) * uptimeRolloverCount + (millis() / 1000UL);
+
+    if (!result)
+        return 0;
+    return ((uint64_t)uptimeRolloverCount << 32 & uptimeCurrentMillis) / 1000UL;
 }
 
 /*
