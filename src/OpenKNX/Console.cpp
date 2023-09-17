@@ -366,11 +366,11 @@ namespace OpenKNX
         uint8_t mins = secs / 60;
         secs -= mins * 60;
 
-        char result[14];
+        char result[26] = {0};
         if (days > 0)
-            sprintf(result, "%dd %2.2d:%2.2d:%2.2d", days, hours, mins, secs);
+            sprintf(result, "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)secs);
         else
-            sprintf(result, "%2.2d:%2.2d:%2.2d", hours, mins, secs);
+            sprintf(result, "%2.2d:%2.2d:%2.2d", hours, mins, (uint8_t)secs);
 
 #ifdef LOG_KoDiagnose
         if (diagnoseKo)
