@@ -1,4 +1,4 @@
-# Latest Changes
+# Changes since 2023-08-11
 * Feature: Show uptime in human-readable form (days hh:mm:ss)
 * Fix/Extension: `Common:uptime(..)` provides uptime in seconds, detecting overflow of `millis()` for correct uptimes >49 days
 * Fix: Process command 'versions' from console only (9576370424712666d5b24dcefb23062d2d4a4ca2)
@@ -7,9 +7,9 @@
 * Feature #9: Optional Runtime Statistics Measurement to Support Development, available setting `OPENKNX_RUNTIME_STAT`
 * Fix: Update RP2040 platform and platform_packages (90ebc9d4f7618a905ca8a38617a844ee7f130452)
 * Extension: Introduce `Common::freeLoopIterate(..)` as Helper for module / channel iteration respecting `freeLoopTime()`
-  * Change: At least one module will be called in `Common::loop()`
-
-# Changes up to 2023-09-03 
+  * Change: At least one module will be called in `Common::loop()` <!--# 
+Changes up to 2023-09-03 
+--> 
 * Improvement: Show commons version in console and show running firmware version first (05c58c60fa8ffc4406be2c6e058be3110b2430e3)
 * Documentation: Reformat Tables in README
 * Fix: Parsing of application number (86f6f77f338c310ac4f687f9650e90a829e16a35)
