@@ -220,8 +220,6 @@ namespace OpenKNX
 
     void Common::setup()
     {
-        logTraceP("setup");
-
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -496,7 +494,7 @@ namespace OpenKNX
             return;
 #endif
 
-        logTraceP("processAfterStartupDelay");
+        logInfoP("processAfterStartupDelay");
         logIndentUp();
 
         _afterStartupDelay = true;
@@ -612,7 +610,7 @@ namespace OpenKNX
 
     void Common::processBeforeRestart()
     {
-        logTraceP("processBeforeRestart");
+        logInfoP("processBeforeRestart");
         logIndentUp();
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
@@ -625,7 +623,7 @@ namespace OpenKNX
 
     void Common::processBeforeTablesUnload()
     {
-        logTraceP("processBeforeTablesUnload");
+        logInfoP("processBeforeTablesUnload");
         logIndentUp();
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
