@@ -5,6 +5,7 @@ Import("env", "projenv")
 import pathlib
 import os
 import subprocess
+import re
 
 class console_color:
     BLUE = '\033[94m'
@@ -93,6 +94,20 @@ def get_git_version(path):
     return False
 
 
+def get_ets_version(version_string):
+  result = re.match(r"^(\d)\.(\d)\.(\d)(\+.*)*$", version_string)
+  if result:
+    major =  int(result.group(1))
+    minor =  int(result.group(2))
+
+    if major > 15: return None
+    if minor > 15: return None
+
+    return (major << 4) + minor
+  else:
+    return None
+
+
 get_all_library_dependencies(project)
 
 print()
@@ -123,6 +138,12 @@ version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_di
 for name, version in openknx_modules.items():
   define_name = "MODULE_" + name.split("-")[1] + "_Version"
   version_file.write("#define {} \"{}\"\n".format(define_name, version))
+
+  ets = get_ets_version(version)
+  if ets != None:
+    define_name = "MODULE_" + name.split("-")[1] + "_ETS"
+    version_file.write("#define {} {}\n".format(define_name, ets))
+  
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
 version_file.close()
