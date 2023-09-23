@@ -233,11 +233,11 @@ namespace OpenKNX
                 dataProcessed += FLASH_DATA_MODULE_ID_LEN + FLASH_DATA_SIZE_LEN + moduleSize;
                 if (module == nullptr)
                 {
-                    logDebugP("Skip module with id %i (not found)", moduleId);
+                    logInfoP("Skip module with id %i (not found)", moduleId);
                 }
                 else
                 {
-                    logDebugP("Restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
+                    logInfoP("Restore module %s (%i) with %i bytes", module->name().c_str(), moduleId, moduleSize);
                     logIndentUp();
                     logHexTraceP(currentFlash(), moduleSize);
                     module->readFlash(currentFlash(), moduleSize);
