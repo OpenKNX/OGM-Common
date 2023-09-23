@@ -308,6 +308,7 @@ namespace OpenKNX
         openknx.logger.log("Command(s)               Description");
         printHelpLine("help, h", "Show this help");
         printHelpLine("info, i", "Show general information");
+        printHelpLine("uptime, u", "Show uptime");
         printHelpLine("version, v", "Show compiled versions");
         printHelpLine("memory, mem", "Show memory usage");
         printHelpLine("mem 0xXXXXXXXX", "Show memory content (64byte) starting at 0xXXXXXXXX");
