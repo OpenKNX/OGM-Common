@@ -136,13 +136,12 @@ version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_d
 version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_dir / basepath / "knx")))
 # additional_defines = dict()
 for name, version in openknx_modules.items():
-  define_name = "MODULE_" + name.split("-")[1] + "_Version"
-  version_file.write("#define {} \"{}\"\n".format(define_name, version))
+  define_name = "MODULE_" + name.split("-")[1]
+  version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
 
   ets = get_ets_version(version)
   if ets != None:
-    define_name = "MODULE_" + name.split("-")[1] + "_ETS"
-    version_file.write("#define {} {}\n".format(define_name, ets))
+    version_file.write("#define {} {}\n".format(define_name + "_ETS", ets))
   
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
