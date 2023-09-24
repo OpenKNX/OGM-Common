@@ -305,6 +305,7 @@ namespace OpenKNX
         if (!ParamLOG_Watchdog)
             return;
 
+        logInfo("Watchdog", "Start with a watchtime of %ims", OPENKNX_WATCHDOG_MAX_PERIOD);
     #if defined(ARDUINO_ARCH_SAMD)
         // used for Diagnose command
         watchdog.resetCause = Watchdog.resetCause();
@@ -314,8 +315,6 @@ namespace OpenKNX
     #elif defined(ARDUINO_ARCH_RP2040)
         Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD);
     #endif
-
-        logInfo("Watchdog", "Started with a watchtime of %i seconds", OPENKNX_WATCHDOG_MAX_PERIOD / 1000);
     }
     void Common::watchdogLoop()
     {

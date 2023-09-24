@@ -237,6 +237,15 @@ namespace OpenKNX
 
         showMemory();
 
+#ifdef OPENKNX_WATCHDOG
+        if (ParamLOG_Watchdog)
+            openknx.logger.logWithPrefixAndValues("Watchdog", "Running (%ims)", OPENKNX_WATCHDOG_MAX_PERIOD);
+        else
+            openknx.logger.logWithPrefixAndValues("Watchdog", "Disabled");
+#else
+        openknx.logger.logWithPrefixAndValues("Watchdog", "Unsupported");
+#endif
+
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showInformations();
 
@@ -344,7 +353,7 @@ namespace OpenKNX
 
     void Console::sleep()
     {
-        openknx.logger.log("sleep up to 20 seconds");
+        openknx.logger.logWithValues("sleep %ims", sleepTime());
         delay(sleepTime());
     }
 
