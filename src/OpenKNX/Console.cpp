@@ -40,14 +40,19 @@ namespace OpenKNX
         if (_diagnoseKoOutput)
             return;
 
+        // quick-fix to ensure \0 at end of 14 char strings
+        // TODO cleanup implementation and read DPT16.001
+        char cmdBuf[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        memcpy(cmdBuf, ko.valueRef(), 14);
+
         // prevent empty command
-        if (ko.valueRef()[0] == '\0')
+        if (cmdBuf[0] == '\0')
             return;
 
-        openknx.logger.logWithPrefixAndValues("DiagnoseKO", "command \"%s\" received", ko.valueRef());
+        openknx.logger.logWithPrefixAndValues("DiagnoseKO", "command \"%s\" received", cmdBuf);
         logIndentUp();
 
-        if (!processCommand((char*)ko.valueRef(), true))
+        if (!processCommand(cmdBuf, true))
             openknx.logger.logWithPrefix("DiagnoseKO", "command not found");
 
         logIndentDown();
