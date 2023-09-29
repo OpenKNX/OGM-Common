@@ -449,6 +449,9 @@ namespace OpenKNX
      */
     void Common::processModulesLoop()
     {
+        // Skip if no modules have been added (for testing)
+        if (openknx.modules.count == 0) return;
+
         uint8_t processed = 0;
         do
         {
