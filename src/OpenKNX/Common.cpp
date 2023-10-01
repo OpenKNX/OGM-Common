@@ -41,7 +41,7 @@ namespace OpenKNX
 #endif
 
         openknx.hardware.initFlash();
-
+        openknx.info.serialNumber(knx.platform().uniqueSerialNumber());
         openknx.info.firmwareRevision(firmwareRevision);
 
         initKnx();

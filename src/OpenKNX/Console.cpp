@@ -216,16 +216,15 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
-        const uint32_t serialNumber = knx.platform().uniqueSerialNumber();
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("======================== Information ===========================================");
         openknx.logger.color(0);
-        openknx.logger.logWithPrefixAndValues("KNX Address", "%s", openknx.info.humanIndividualAddress().c_str());
+        openknx.logger.logWithPrefix("KNX Address", openknx.info.humanIndividualAddress().c_str());
         openknx.logger.logWithPrefixAndValues("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
         openknx.logger.logWithPrefixAndValues("Firmware", "Number: %s  Version: %s  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.humanFirmwareVersion().c_str(), MAIN_OrderNumber);
-        openknx.logger.logWithPrefixAndValues("Serial number", "00FA:%08X", serialNumber);
+        openknx.logger.logWithPrefix("Serial number", openknx.info.humanSerialNumber().c_str());
 #ifdef HARDWARE_NAME
         openknx.logger.logWithPrefixAndValues("Board", "%s", HARDWARE_NAME);
 #endif

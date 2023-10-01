@@ -9,6 +9,7 @@ namespace OpenKNX
 
     struct Information
     {
+        uint32_t _serialNumber = 0;
         uint16_t _applicationNumber = 0;
         uint8_t _applicationVersion = 0;
         uint8_t _firmwareRevision = 0;
@@ -42,7 +43,7 @@ namespace OpenKNX
 
         std::string humanApplicationVersion()
         {
-            char buffer[10];
+            char buffer[10] = {0};
             sprintf(buffer, "%i.%i", ((applicationVersion() & 0xF0) >> 4), (applicationVersion() & 0x0F));
             return std::string(buffer);
         }
@@ -59,7 +60,7 @@ namespace OpenKNX
 
         std::string humanFirmwareNumber()
         {
-            char buffer[10];
+            char buffer[10] = {0};
             sprintf(buffer, "0x%04X", firmwareNumber());
             return std::string(buffer);
         }
@@ -83,7 +84,7 @@ namespace OpenKNX
 
         std::string humanFirmwareVersion(bool withHash = false)
         {
-            char buffer[20];
+            char buffer[20] = {0};
             sprintf(buffer, withHash ? "%i.%i.%i+%s" : "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11), MAIN_Version);
             return std::string(buffer);
         }
@@ -95,8 +96,25 @@ namespace OpenKNX
 
         std::string humanIndividualAddress()
         {
-            char buffer[14];
+            char buffer[14] = {0};
             sprintf(buffer, "%i.%i.%i", ((knx.individualAddress() & 0xF000) >> 12), ((knx.individualAddress() & 0x0F00) >> 8), (knx.individualAddress() & 0x00FF));
+            return std::string(buffer);
+        }
+
+        void serialNumber(uint32_t serialNumber)
+        {
+            _serialNumber = serialNumber;
+        }
+
+        uint32_t serialNumber()
+        {
+            return _serialNumber;
+        }
+
+        std::string humanSerialNumber()
+        {
+            char buffer[14];
+            sprintf(buffer, "00FA:%08X", _serialNumber);
             return std::string(buffer);
         }
     };
