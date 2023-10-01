@@ -20,7 +20,7 @@ namespace OpenKNX
         va_list values;
         va_start(values, message);
 
-        char buffer[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Last byte must be zero!
+        char buffer[15] = {0}; // Last byte must be zero!
         uint8_t len = vsnprintf(buffer, 15, message, values);
 
         if (len >= 15)
@@ -42,7 +42,7 @@ namespace OpenKNX
 
         // quick-fix to ensure \0 at end of 14 char strings
         // TODO cleanup implementation and read DPT16.001
-        char cmdBuf[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        char cmdBuf[15] = {0};
         memcpy(cmdBuf, ko.valueRef(), 14);
 
         // prevent empty command

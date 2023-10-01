@@ -3,12 +3,12 @@
 #include "knx.h"
 #include <string>
 #ifdef WATCHDOG
-#include <Adafruit_SleepyDog.h>
+    #include <Adafruit_SleepyDog.h>
 #endif
 #ifdef ARDUINO_ARCH_RP2040
 extern "C"
 {
-#include "pico/bootrom.h"
+    #include "pico/bootrom.h"
 }
 #endif
 
@@ -53,7 +53,7 @@ namespace OpenKNX
 #endif
 
       public:
-        char prompt[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        char prompt[15] = {0};
         void loop();
 
         void printHelpLine(const char* command, const char* message);
