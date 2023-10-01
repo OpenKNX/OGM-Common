@@ -114,7 +114,7 @@ namespace OpenKNX
         std::string humanSerialNumber()
         {
             char buffer[14] = {};
-            sprintf(buffer, "00FA:%08X", _serialNumber);
+            sprintf(buffer, "00FA:%08lX", _serialNumber);
             return std::string(buffer);
         }
     };
