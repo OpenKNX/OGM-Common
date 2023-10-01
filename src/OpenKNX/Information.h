@@ -26,7 +26,7 @@ namespace OpenKNX
 
         std::string humanApplicationNumber()
         {
-            char buffer[10] = {0};
+            char buffer[10] = {};
             sprintf(buffer, "0x%04X", applicationNumber());
             return std::string(buffer);
         }
@@ -43,7 +43,7 @@ namespace OpenKNX
 
         std::string humanApplicationVersion()
         {
-            char buffer[10] = {0};
+            char buffer[10] = {};
             sprintf(buffer, "%i.%i", ((applicationVersion() & 0xF0) >> 4), (applicationVersion() & 0x0F));
             return std::string(buffer);
         }
@@ -60,7 +60,7 @@ namespace OpenKNX
 
         std::string humanFirmwareNumber()
         {
-            char buffer[10] = {0};
+            char buffer[10] = {};
             sprintf(buffer, "0x%04X", firmwareNumber());
             return std::string(buffer);
         }
@@ -84,7 +84,7 @@ namespace OpenKNX
 
         std::string humanFirmwareVersion(bool withHash = false)
         {
-            char buffer[20] = {0};
+            char buffer[20] = {};
             sprintf(buffer, withHash ? "%i.%i.%i+%s" : "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11), MAIN_Version);
             return std::string(buffer);
         }
@@ -96,7 +96,7 @@ namespace OpenKNX
 
         std::string humanIndividualAddress()
         {
-            char buffer[14] = {0};
+            char buffer[14] = {};
             sprintf(buffer, "%i.%i.%i", ((knx.individualAddress() & 0xF000) >> 12), ((knx.individualAddress() & 0x0F00) >> 8), (knx.individualAddress() & 0x00FF));
             return std::string(buffer);
         }
@@ -113,7 +113,7 @@ namespace OpenKNX
 
         std::string humanSerialNumber()
         {
-            char buffer[14] = {0};
+            char buffer[14] = {};
             sprintf(buffer, "00FA:%08X", _serialNumber);
             return std::string(buffer);
         }

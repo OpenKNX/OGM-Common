@@ -119,7 +119,7 @@ namespace OpenKNX
           private:
             // Stream* _serial = nullptr;
             uint8_t _lastConsoleLen = 0;
-            char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {0};
+            char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
 #ifdef ARDUINO_ARCH_RP2040
             // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};

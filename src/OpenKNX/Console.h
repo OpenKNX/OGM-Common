@@ -53,7 +53,7 @@ namespace OpenKNX
 #endif
 
       public:
-        char prompt[15] = {0};
+        char prompt[15] = {};
         void loop();
 
         void printHelpLine(const char* command, const char* message);
