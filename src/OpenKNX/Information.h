@@ -26,7 +26,7 @@ namespace OpenKNX
 
         std::string humanApplicationNumber()
         {
-            char buffer[10];
+            char buffer[10] = {0};
             sprintf(buffer, "0x%04X", applicationNumber());
             return std::string(buffer);
         }
@@ -113,7 +113,7 @@ namespace OpenKNX
 
         std::string humanSerialNumber()
         {
-            char buffer[14];
+            char buffer[14] = {0};
             sprintf(buffer, "00FA:%08X", _serialNumber);
             return std::string(buffer);
         }
