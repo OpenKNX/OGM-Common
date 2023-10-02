@@ -142,10 +142,18 @@ namespace OpenKNX
         void Logger::logMacroWrapper(uint8_t logColor, const std::string& prefix, const std::string& message, ...)
         {
             color(logColor);
-            va_list values;
-            va_start(values, message);
-            logWithPrefixAndValues(prefix, message, values);
-            va_end(values);
+            if (message.find_first_of('%') != std::string::npos)
+            {
+                va_list values;
+                va_start(values, message);
+                logWithPrefixAndValues(prefix, message, values);
+                va_end(values);
+            }
+            else
+            {
+                logWithPrefix(prefix, message);
+            }
+
             color(0);
         }
 
@@ -241,6 +249,12 @@ namespace OpenKNX
 
         void Logger::printMessage(const std::string& message, va_list& values)
         {
+            if (message.find_first_of('%') == std::string::npos)
+            {
+                OPENKNX_LOGGER_DEVICE.print(message.c_str());
+                return;
+            }
+
             memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
             uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), values);
             OPENKNX_LOGGER_DEVICE.print(_buffer);
