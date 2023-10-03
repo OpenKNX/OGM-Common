@@ -80,9 +80,9 @@ namespace OpenKNX
         uint16_t Default::slotSize()
         {
 #ifdef ARDUINO_ARCH_RP2040
-            return openknx.hardware.openknxFlash()->size() / 2;
+            return openknx.openknxFlash.size() / 2;
 #else
-            return openknx.hardware.openknxFlash()->size();
+            return openknx.openknxFlash.size();
 #endif
         }
 
@@ -114,7 +114,7 @@ namespace OpenKNX
 #endif
             logDebugP("Validate slot %i", slot);
             logIndentUp();
-            logHexTraceP(openknx.hardware.openknxFlash()->flashAddress() + slotOffset(slot) - FLASH_DATA_META_LEN, FLASH_DATA_META_LEN);
+            logHexTraceP(openknx.openknxFlash.flashAddress() + slotOffset(slot) - FLASH_DATA_META_LEN, FLASH_DATA_META_LEN);
 
             // validate magicwords exists (at last position)
             _currentReadAddress = slotOffset(slot) - FLASH_DATA_INIT_LEN;
@@ -157,7 +157,7 @@ namespace OpenKNX
             if (!verifyChecksum(currentFlash(), checksumSize, checksum))
             {
                 logErrorP("Checksum invalid!");
-                logHexErrorP(openknx.hardware.openknxFlash()->flashAddress() + slotOffset(slot) - FLASH_DATA_META_LEN - dataSize, checksumSize);
+                logHexErrorP(openknx.openknxFlash.flashAddress() + slotOffset(slot) - FLASH_DATA_META_LEN - dataSize, checksumSize);
                 logIndentDown();
                 return false;
             }
@@ -205,8 +205,8 @@ namespace OpenKNX
     #endif
             logDebugP("Erase slot %i", slot);
             logIndentUp();
-            openknx.hardware.openknxFlash()->write(slotOffset(slot) - slotSize(), 0xFF, slotSize());
-            openknx.hardware.openknxFlash()->commit();
+            openknx.openknxFlash.write(slotOffset(slot) - slotSize(), 0xFF, slotSize());
+            openknx.openknxFlash.commit();
             logDebugP("Erase completed (%ims)", millis() - start);
             logIndentDown();
 #endif
@@ -338,8 +338,8 @@ namespace OpenKNX
             // block of metadata
             writeInt(FLASH_DATA_INIT);
 
-            openknx.hardware.openknxFlash()->commit();
-            logHexTraceP(openknx.hardware.openknxFlash()->flashAddress() + writeOffset() - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
+            openknx.openknxFlash.commit();
+            logHexTraceP(openknx.openknxFlash.flashAddress() + writeOffset() - dataSize - FLASH_DATA_META_LEN, dataSize + FLASH_DATA_META_LEN);
 
             logInfoP("Save completed (%ims)", millis() - start);
 
@@ -357,7 +357,7 @@ namespace OpenKNX
 
         uint8_t *Default::currentFlash()
         {
-            return openknx.hardware.openknxFlash()->flashAddress() + _currentReadAddress;
+            return openknx.openknxFlash.flashAddress() + _currentReadAddress;
         }
 
         uint16_t Default::calcChecksum(uint8_t *data, uint16_t size)
@@ -387,7 +387,7 @@ namespace OpenKNX
             for (uint16_t i = 0; i < size; i++)
                 _checksum += buffer[i];
 
-            _currentWriteAddress = openknx.hardware.openknxFlash()->write(_currentWriteAddress, buffer, size);
+            _currentWriteAddress = openknx.openknxFlash.write(_currentWriteAddress, buffer, size);
         }
 
         void Default::write(uint8_t value, uint16_t size)
@@ -401,7 +401,7 @@ namespace OpenKNX
             for (uint16_t i = 0; i < size; i++)
                 _checksum += value;
 
-            _currentWriteAddress = openknx.hardware.openknxFlash()->write(_currentWriteAddress, value, size);
+            _currentWriteAddress = openknx.openknxFlash.write(_currentWriteAddress, value, size);
         }
 
         void Default::writeByte(uint8_t value)
@@ -443,25 +443,25 @@ namespace OpenKNX
         uint8_t Default::readByte()
         {
             _currentReadAddress += 1;
-            return openknx.hardware.openknxFlash()->readByte(_currentReadAddress - 1);
+            return openknx.openknxFlash.readByte(_currentReadAddress - 1);
         }
 
         uint16_t Default::readWord()
         {
             _currentReadAddress += 2;
-            return openknx.hardware.openknxFlash()->readWord(_currentReadAddress - 2);
+            return openknx.openknxFlash.readWord(_currentReadAddress - 2);
         }
 
         uint32_t Default::readInt()
         {
             _currentReadAddress += 4;
-            return openknx.hardware.openknxFlash()->readInt(_currentReadAddress - 4);
+            return openknx.openknxFlash.readInt(_currentReadAddress - 4);
         }
 
         float Default::readFloat()
         {
             _currentReadAddress += 4;
-            return openknx.hardware.openknxFlash()->readFloat(_currentReadAddress - 4);
+            return openknx.openknxFlash.readFloat(_currentReadAddress - 4);
         }
 
         uint16_t Default::firmwareVersion()

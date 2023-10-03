@@ -88,8 +88,6 @@ namespace OpenKNX
     {
       private:
         uint8_t features = 0;
-        Flash::Driver* _openknxFlash = nullptr;
-        Flash::Driver* _knxFlash = nullptr;
 
       public:
         // Initialize or HW detection
@@ -115,9 +113,6 @@ namespace OpenKNX
         // CPU Temperatur
         float cpuTemperature();
 
-        // Flash
-        Flash::Driver* openknxFlash();
-        Flash::Driver* knxFlash();
 #ifdef ARDUINO_ARCH_RP2040
         // Filesystem
         void initFilesystem();

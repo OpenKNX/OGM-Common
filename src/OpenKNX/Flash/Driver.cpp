@@ -17,13 +17,15 @@ namespace OpenKNX
 {
     namespace Flash
     {
+
 #ifdef ARDUINO_ARCH_ESP32
-        Driver::Driver(std::string id)
+        void Driver::init(std::string id)
 #else
-        Driver::Driver(uint32_t offset, uint32_t size, std::string id)
+        void Driver::init(std::string id, uint32_t offset, uint32_t size)
 #endif
         {
             _id = id;
+
 #ifdef ARDUINO_ARCH_ESP32
             // ESP32
             const esp_partition_t *partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, id.c_str());

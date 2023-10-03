@@ -42,6 +42,9 @@ namespace OpenKNX
         Led progLed;
         Led infoLed;
         Modules modules;
+        Flash::Driver openknxFlash;
+        Flash::Driver knxFlash;
+
         volatile bool ready = false;
 
         void init(uint8_t firmwareRevision);

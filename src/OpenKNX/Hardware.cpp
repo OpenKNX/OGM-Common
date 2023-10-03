@@ -26,11 +26,11 @@ namespace OpenKNX
         logDebug("Hardware<Flash>", "Initialize flash");
         logIndentUp();
 #ifdef ARDUINO_ARCH_ESP32
-        _openknxFlash = new OpenKNX::Flash::Driver("openknx");
-        _knxFlash = new OpenKNX::Flash::Driver("knx");
+        openknx.openknxFlash.init("openknx");
+        openknx.knxFlash.init("knx");
 #else
-        _openknxFlash = new OpenKNX::Flash::Driver(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE, "openknx");
-        _knxFlash = new OpenKNX::Flash::Driver(KNX_FLASH_OFFSET, KNX_FLASH_SIZE, "knx");
+        openknx.openknxFlash.init("openknx", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+        openknx.knxFlash.init("knx", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
 #endif
 
 #ifdef KNX_FLASH_CALLBACK
@@ -38,19 +38,19 @@ namespace OpenKNX
         knx.platform().registerFlashCallbacks(
             []() -> uint32_t {
                 // Size
-                return openknx.hardware.knxFlash()->size();
+                return openknx.knxFlash.size();
             },
             []() -> uint8_t* {
                 // Read
-                return openknx.hardware.knxFlash()->flashAddress();
+                return openknx.knxFlash.flashAddress();
             },
             [](uint32_t relativeAddress, uint8_t* buffer, size_t len) -> uint32_t {
                 // Write
-                return openknx.hardware.knxFlash()->write(relativeAddress, buffer, len);
+                return openknx.knxFlash.write(relativeAddress, buffer, len);
             },
             []() -> void {
                 // Commit
-                return openknx.hardware.knxFlash()->commit();
+                return openknx.knxFlash.commit();
             }
 
         );
@@ -224,14 +224,4 @@ namespace OpenKNX
         return 0.0f;
 #endif
     }
-
-    Flash::Driver* Hardware::openknxFlash()
-    {
-        return _openknxFlash;
-    }
-    Flash::Driver* Hardware::knxFlash()
-    {
-        return _knxFlash;
-    }
-
 } // namespace OpenKNX

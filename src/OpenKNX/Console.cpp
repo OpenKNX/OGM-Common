@@ -110,11 +110,11 @@ namespace OpenKNX
         }
         else if (cmd == "flash knx")
         {
-            showMemoryContent(openknx.hardware.knxFlash()->flashAddress(), openknx.hardware.knxFlash()->size());
+            showMemoryContent(openknx.knxFlash.flashAddress(), openknx.knxFlash.size());
         }
         else if (cmd == "flash openknx")
         {
-            showMemoryContent(openknx.hardware.openknxFlash()->flashAddress(), openknx.hardware.openknxFlash()->size());
+            showMemoryContent(openknx.openknxFlash.flashAddress(), openknx.openknxFlash.size());
         }
         else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
         {

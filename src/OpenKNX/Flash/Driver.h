@@ -36,9 +36,9 @@ namespace OpenKNX
 
           public:
 #ifdef ARDUINO_ARCH_ESP32
-            Driver(std::string id);
+            void init(std::string id);
 #else
-            Driver(uint32_t offset, uint32_t size, std::string id);
+            void init(std::string id, uint32_t offset, uint32_t size);
 #endif
             std::string logPrefix();
 
