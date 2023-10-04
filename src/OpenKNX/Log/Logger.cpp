@@ -188,6 +188,14 @@ namespace OpenKNX
             va_end(values);
         }
 
+        void Logger::logMacroWrapper(uint8_t logColor, const std::string& prefix, const char* message, ...)
+        {
+            va_list values;
+            va_start(values, message);
+            logMacroWrapper(logColor, prefix.c_str(), message, values);
+            va_end(values);
+        }
+
         void Logger::logMacroWrapper(uint8_t logColor, const std::string& prefix, const std::string& message, ...)
         {
             va_list values;
@@ -199,15 +207,15 @@ namespace OpenKNX
         void Logger::logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, va_list& values)
         {
             color(logColor);
-            // const char *found = strchr(message, '%');
-            // if (found != NULL) {
-            // {
-            logWithPrefixAndValues(prefix, message, values);
-            // }
-            // else
-            // {
-            //     logWithPrefix(prefix, message);
-            // }
+            const char* found = strchr(message, '%');
+            if (found != NULL)
+            {
+                logWithPrefixAndValues(prefix, message, values);
+            }
+            else
+            {
+                logWithPrefix(prefix, message);
+            }
 
             color(0);
         }
@@ -309,11 +317,12 @@ namespace OpenKNX
 
         void Logger::printMessage(const char* message, va_list& values)
         {
-            // if (message.find_first_of('%') == std::string::npos)
-            // {
-            //     OPENKNX_LOGGER_DEVICE.print(message);
-            //     return;
-            // }
+            const char* found = strchr(message, '%');
+            if (found == NULL)
+            {
+                OPENKNX_LOGGER_DEVICE.print(message);
+                return;
+            }
 
             memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
             uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
@@ -355,9 +364,7 @@ namespace OpenKNX
         void Logger::printIndent()
         {
             for (size_t i = 0; i < getIndent(); i++)
-            {
                 OPENKNX_LOGGER_DEVICE.print("  ");
-            }
         }
 
         void Logger::indentUp()

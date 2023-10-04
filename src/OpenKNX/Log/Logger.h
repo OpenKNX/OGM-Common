@@ -27,14 +27,14 @@
 #define logIndent(X) openknx.logger.indent(X)
 
 #define logError(...) openknx.logger.logMacroWrapper(31, __VA_ARGS__)
-#define logErrorP(...) openknx.logger.logMacroWrapper(31, logPrefix(), __VA_ARGS__)
+#define logErrorP(...) openknx.logger.logMacroWrapper(31, logPrefix().c_str(), __VA_ARGS__)
 #define logHexError(...) openknx.logger.logHexMacroWrapper(31, __VA_ARGS__)
-#define logHexErrorP(...) openknx.logger.logHexMacroWrapper(31, logPrefix(), __VA_ARGS__)
+#define logHexErrorP(...) openknx.logger.logHexMacroWrapper(31, logPrefix().c_str(), __VA_ARGS__)
 
 #define logInfo(...) openknx.logger.logMacroWrapper(0, __VA_ARGS__)
-#define logInfoP(...) openknx.logger.logMacroWrapper(0, logPrefix(), __VA_ARGS__)
+#define logInfoP(...) openknx.logger.logMacroWrapper(0, logPrefix().c_str(), __VA_ARGS__)
 #define logHexInfo(...) openknx.logger.logHexMacroWrapper(0, __VA_ARGS__)
-#define logHexInfoP(...) openknx.logger.logHexMacroWrapper(0, logPrefix(), __VA_ARGS__)
+#define logHexInfoP(...) openknx.logger.logHexMacroWrapper(0, logPrefix().c_str(), __VA_ARGS__)
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
 
@@ -62,15 +62,15 @@
     #define logTrace(prefix, ...)              \
         if (openknx.logger.checkTrace(prefix)) \
         openknx.logger.logMacroWrapper(90, prefix, __VA_ARGS__)
-    #define logTraceP(...)                          \
-        if (openknx.logger.checkTrace(logPrefix())) \
-        openknx.logger.logMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logTraceP(...)                                  \
+        if (openknx.logger.checkTrace(logPrefix().c_str())) \
+        openknx.logger.logMacroWrapper(90, logPrefix().c_str(), __VA_ARGS__)
     #define logHexTrace(prefix, ...)           \
         if (openknx.logger.checkTrace(prefix)) \
         openknx.logger.logHexMacroWrapper(90, prefix, __VA_ARGS__)
-    #define logHexTraceP(...)                       \
-        if (openknx.logger.checkTrace(logPrefix())) \
-        openknx.logger.logHexMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logHexTraceP(...)                               \
+        if (openknx.logger.checkTrace(logPrefix().c_str())) \
+        openknx.logger.logHexMacroWrapper(90, logPrefix().c_str(), __VA_ARGS__)
 #else
     #define logTrace(...)
     #define logTraceP(...)
@@ -80,9 +80,9 @@
 
 #ifdef OPENKNX_DEBUG
     #define logDebug(...) openknx.logger.logMacroWrapper(90, __VA_ARGS__)
-    #define logDebugP(...) openknx.logger.logMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logDebugP(...) openknx.logger.logMacroWrapper(90, logPrefix().c_str(), __VA_ARGS__)
     #define logHexDebug(...) openknx.logger.logHexMacroWrapper(90, __VA_ARGS__)
-    #define logHexDebugP(...) openknx.logger.logHexMacroWrapper(90, logPrefix(), __VA_ARGS__)
+    #define logHexDebugP(...) openknx.logger.logHexMacroWrapper(90, logPrefix().c_str(), __VA_ARGS__)
 #else
     #define logDebug(...)
     #define logDebugP(...)
@@ -195,10 +195,11 @@ namespace OpenKNX
             void logHexWithPrefix(const std::string& prefix, const uint8_t* data, size_t size);
             void color(uint8_t color = 0);
 
-            void logMacroWrapper(uint8_t logColor, const std::string& prefix, const std::string& message, ...);
             void logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, ...);
-            void logHexMacroWrapper(uint8_t logColor, const std::string& prefix, const uint8_t* data, size_t size);
+            void logMacroWrapper(uint8_t logColor, const std::string&, const char* message, ...);
+            void logMacroWrapper(uint8_t logColor, const std::string& prefix, const std::string& message, ...);
             void logHexMacroWrapper(uint8_t logColor, const char* prefix, const uint8_t* data, size_t size);
+            void logHexMacroWrapper(uint8_t logColor, const std::string& prefix, const uint8_t* data, size_t size);
 
             void indentUp();
             void indentDown();
