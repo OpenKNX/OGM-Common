@@ -31,9 +31,14 @@ int freeMemory();
 #ifdef ARDUINO_ARCH_RP2040
     #include "hardware/flash.h"
     #include "hardware/sync.h"
+    #include "pico/sync.h"
 
 /*
  * Erase flash
  */
 void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count);
+
+uint32_t stackPointer();
+int freeStackSize();
+void printFreeStackSize();
 #endif

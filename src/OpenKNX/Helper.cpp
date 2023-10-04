@@ -8,9 +8,9 @@
      */
     #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
-extern "C" char* sbrk(int incr);
+extern "C" char *sbrk(int incr);
     #else  // __ARM__
-extern char* __brkval;
+extern char *__brkval;
     #endif // __arm__
 
 #endif // !ARDUINO_ARCH_ESP32
@@ -22,7 +22,7 @@ int freeMemory()
 #else
     char top;
     #ifdef __arm__
-    return &top - reinterpret_cast<char*>(sbrk(0));
+    return &top - reinterpret_cast<char *>(sbrk(0));
     #elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
     return &top - __brkval;
     #else  // __arm__
@@ -69,5 +69,32 @@ void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
         interrupts();
         rp2040.resumeOtherCore();
     }
+}
+
+uint32_t stackPointer()
+{
+    uint32_t *sp;
+    asm volatile("mov %0, sp"
+                 : "=r"(sp));
+    return (uint32_t)sp;
+}
+
+int freeStackSize()
+{
+    unsigned int sp = stackPointer();
+    uint32_t ref = 0x20041000;
+    #ifdef OPENKNX_DUALCORE
+    if (rp2040.cpuid() == 1) ref = 0x20040000;
+    #endif
+
+    return sp - ref;
+}
+
+void printFreeStackSize()
+{
+    #ifdef OPENKNX_DUALCORE
+    SERIAL_DEBUG.print(rp2040.cpuid() ? "_1> " : "0_> ");
+    #endif
+    SERIAL_DEBUG.printf("Free stack size: %i bytes\r\n", freeStackSize());
 }
 #endif

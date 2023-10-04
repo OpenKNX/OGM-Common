@@ -44,6 +44,9 @@ namespace OpenKNX
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
+#ifdef ARDUINO_ARCH_RP2040
+        volatile int32_t _freeStack0Min = 0x1000;
+#endif
 
         void initKnx();
 
@@ -101,8 +104,11 @@ namespace OpenKNX
 
         void collectMemoryStats();
         uint freeMemoryMin();
+#ifdef ARDUINO_ARCH_RP2040
+        int freeStack0Min();
+#endif
         bool freeLoopTime();
-        bool freeLoopIterate(uint8_t size, uint8_t &position, uint8_t &processed);
+        bool freeLoopIterate(uint8_t size, uint8_t& position, uint8_t& processed);
 
         void processSavePin();
         void processBeforeRestart();

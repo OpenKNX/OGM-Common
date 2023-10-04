@@ -438,6 +438,9 @@ namespace OpenKNX
     {
         // int current = freeMemory();
         _freeMemoryMin = MIN(_freeMemoryMin, freeMemory());
+#ifdef ARDUINO_ARCH_RP2040
+        _freeStack0Min = MIN(_freeStack0Min, freeStackSize());
+#endif
     }
 
     /**
@@ -695,6 +698,13 @@ namespace OpenKNX
     {
         return _freeMemoryMin;
     }
+
+#ifdef ARDUINO_ARCH_RP2040
+    int Common::freeStack0Min()
+    {
+        return _freeStack0Min;
+    }
+#endif
 
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
