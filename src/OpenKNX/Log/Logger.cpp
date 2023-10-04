@@ -332,7 +332,7 @@ namespace OpenKNX
         }
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-        bool Logger::checkTrace(std::string& prefix)
+        bool Logger::checkTrace(const std::string& prefix)
         {
             MatchState ms;
             ms.Target((char*)prefix.c_str());

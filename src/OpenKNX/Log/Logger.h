@@ -206,7 +206,7 @@ namespace OpenKNX
             void indent(uint8_t indent);
 
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-            bool checkTrace(const std::string prefix);
+            bool checkTrace(const std::string& prefix);
 #endif
             void printPrompt();
             void clearPreviouseLine();
