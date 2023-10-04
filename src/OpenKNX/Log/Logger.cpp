@@ -45,15 +45,25 @@ namespace OpenKNX
 
         std::string Logger::buildPrefix(const std::string& prefix, const std::string& id)
         {
+            return buildPrefix(prefix.c_str(), id.c_str());
+        }
+
+        std::string Logger::buildPrefix(const char* prefix, const char* id)
+        {
             char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH] = {};
-            sprintf(buffer, "%s<%s>", prefix.c_str(), id.c_str());
+            sprintf(buffer, "%s<%s>", prefix, id);
             return std::string(buffer);
         }
 
         std::string Logger::buildPrefix(const std::string& prefix, const int id)
         {
+            return buildPrefix(prefix.c_str(), id);
+        }
+
+        std::string Logger::buildPrefix(const char* prefix, const int id)
+        {
             char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH] = {};
-            sprintf(buffer, "%s<%i>", prefix.c_str(), id);
+            sprintf(buffer, "%s<%i>", prefix, id);
             return std::string(buffer);
         }
 
@@ -77,12 +87,22 @@ namespace OpenKNX
 
         void Logger::log(const std::string& message)
         {
+            log(message.c_str());
+        }
+
+        void Logger::log(const char* message)
+        {
             beforeLog();
             printMessage(message);
             afterLog();
         }
 
         void Logger::logWithPrefix(const std::string& prefix, const std::string& message)
+        {
+            logWithPrefix(prefix.c_str(), message.c_str());
+        }
+
+        void Logger::logWithPrefix(const char* prefix, const char* message)
         {
             beforeLog();
             printPrefix(prefix);
@@ -95,11 +115,19 @@ namespace OpenKNX
         {
             va_list values;
             va_start(values, message);
+            logWithPrefixAndValues(prefix.c_str(), message.c_str(), values);
+            va_end(values);
+        }
+
+        void Logger::logWithPrefixAndValues(const char* prefix, const char* message, ...)
+        {
+            va_list values;
+            va_start(values, message);
             logWithPrefixAndValues(prefix, message, values);
             va_end(values);
         }
 
-        void Logger::logWithPrefixAndValues(const std::string& prefix, const std::string& message, va_list& values)
+        void Logger::logWithPrefixAndValues(const char* prefix, const char* message, va_list& values)
         {
             beforeLog();
             printPrefix(prefix);
@@ -112,11 +140,19 @@ namespace OpenKNX
         {
             va_list values;
             va_start(values, message);
+            logWithValues(message.c_str(), values);
+            va_end(values);
+        }
+
+        void Logger::logWithValues(const char* message, ...)
+        {
+            va_list values;
+            va_start(values, message);
             logWithValues(message, values);
             va_end(values);
         }
 
-        void Logger::logWithValues(const std::string& message, va_list& values)
+        void Logger::logWithValues(const char* message, va_list& values)
         {
             beforeLog();
             printMessage(message, values);
@@ -132,6 +168,11 @@ namespace OpenKNX
 
         void Logger::logHexWithPrefix(const std::string& prefix, const uint8_t* data, size_t size)
         {
+            logHexWithPrefix(prefix.c_str(), data, size);
+        }
+
+        void Logger::logHexWithPrefix(const char* prefix, const uint8_t* data, size_t size)
+        {
             beforeLog();
             printPrefix(prefix);
             printIndent();
@@ -139,25 +180,44 @@ namespace OpenKNX
             afterLog();
         }
 
+        void Logger::logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, ...)
+        {
+            va_list values;
+            va_start(values, message);
+            logMacroWrapper(logColor, prefix, message, values);
+            va_end(values);
+        }
+
         void Logger::logMacroWrapper(uint8_t logColor, const std::string& prefix, const std::string& message, ...)
         {
+            va_list values;
+            va_start(values, message);
+            logMacroWrapper(logColor, prefix.c_str(), message.c_str(), values);
+            va_end(values);
+        }
+
+        void Logger::logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, va_list& values)
+        {
             color(logColor);
-            if (message.find_first_of('%') != std::string::npos)
-            {
-                va_list values;
-                va_start(values, message);
-                logWithPrefixAndValues(prefix, message, values);
-                va_end(values);
-            }
-            else
-            {
-                logWithPrefix(prefix, message);
-            }
+            // const char *found = strchr(message, '%');
+            // if (found != NULL) {
+            // {
+            logWithPrefixAndValues(prefix, message, values);
+            // }
+            // else
+            // {
+            //     logWithPrefix(prefix, message);
+            // }
 
             color(0);
         }
 
         void Logger::logHexMacroWrapper(uint8_t logColor, const std::string& prefix, const uint8_t* data, size_t size)
+        {
+            logHexMacroWrapper(logColor, prefix.c_str(), data, size);
+        }
+
+        void Logger::logHexMacroWrapper(uint8_t logColor, const char* prefix, const uint8_t* data, size_t size)
         {
             color(logColor);
             logHexWithPrefix(prefix, data, size);
@@ -214,14 +274,14 @@ namespace OpenKNX
 #endif
         }
 
-        void Logger::printPrefix(const std::string& prefix)
+        void Logger::printPrefix(const char* prefix)
         {
-            size_t prefixLen = MIN(strlen(prefix.c_str()), OPENKNX_MAX_LOG_PREFIX_LENGTH);
+            size_t prefixLen = MIN(strlen(prefix), OPENKNX_MAX_LOG_PREFIX_LENGTH);
             for (size_t i = 0; i < (OPENKNX_MAX_LOG_PREFIX_LENGTH + 2); i++)
             {
                 if (i < prefixLen)
                 {
-                    OPENKNX_LOGGER_DEVICE.print(prefix.c_str()[i]);
+                    OPENKNX_LOGGER_DEVICE.print(prefix[i]);
                 }
                 else if (i == prefixLen && prefixLen > 0)
                 {
@@ -242,21 +302,21 @@ namespace OpenKNX
 #endif
         }
 
-        void Logger::printMessage(const std::string& message)
+        void Logger::printMessage(const char* message)
         {
-            OPENKNX_LOGGER_DEVICE.print(message.c_str());
+            OPENKNX_LOGGER_DEVICE.print(message);
         }
 
-        void Logger::printMessage(const std::string& message, va_list& values)
+        void Logger::printMessage(const char* message, va_list& values)
         {
-            if (message.find_first_of('%') == std::string::npos)
-            {
-                OPENKNX_LOGGER_DEVICE.print(message.c_str());
-                return;
-            }
+            // if (message.find_first_of('%') == std::string::npos)
+            // {
+            //     OPENKNX_LOGGER_DEVICE.print(message);
+            //     return;
+            // }
 
             memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
-            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message.c_str(), values);
+            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
             OPENKNX_LOGGER_DEVICE.print(_buffer);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
                 openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");

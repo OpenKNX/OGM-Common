@@ -130,9 +130,12 @@ namespace OpenKNX
             uint8_t _indent = 0;
 #endif
             void printHex(const uint8_t* data, size_t size);
-            void printMessage(const std::string& message, va_list& values);
-            void printMessage(const std::string& message);
-            void printPrefix(const std::string& prefix);
+            void printMessage(const char* message, va_list& values);
+            void printMessage(const char* message);
+            void printPrefix(const char* prefix);
+            void logWithValues(const char* message, va_list& values);
+            void logWithPrefixAndValues(const char* prefix, const char* message, va_list& values);
+            void logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, va_list& values);
             void printCore();
             bool isColorSet();
             void beforeLog();
@@ -171,24 +174,31 @@ namespace OpenKNX
              */
             void end();
 
+            std::string buildPrefix(const char* prefix, const char* id);
             std::string buildPrefix(const std::string& prefix, const std::string& id);
+            std::string buildPrefix(const char* prefix, const int id);
             std::string buildPrefix(const std::string& prefix, const int id);
 
             void log(const std::string& message);
+            void log(const char* message);
+            void logWithPrefix(const char* prefix, const char* message);
             void logWithPrefix(const std::string& prefix, const std::string& message);
 
+            void logWithPrefixAndValues(const char* prefix, const char* message, ...);
             void logWithPrefixAndValues(const std::string& prefix, const std::string& message, ...);
-            void logWithPrefixAndValues(const std::string& prefix, const std::string& message, va_list& values);
 
             void logWithValues(const std::string& message, ...);
-            void logWithValues(const std::string& message, va_list& values);
+            void logWithValues(const char* message, ...);
 
             void logHex(const uint8_t* data, size_t size);
+            void logHexWithPrefix(const char* prefix, const uint8_t* data, size_t size);
             void logHexWithPrefix(const std::string& prefix, const uint8_t* data, size_t size);
             void color(uint8_t color = 0);
 
             void logMacroWrapper(uint8_t logColor, const std::string& prefix, const std::string& message, ...);
+            void logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, ...);
             void logHexMacroWrapper(uint8_t logColor, const std::string& prefix, const uint8_t* data, size_t size);
+            void logHexMacroWrapper(uint8_t logColor, const char* prefix, const uint8_t* data, size_t size);
 
             void indentUp();
             void indentDown();
