@@ -277,6 +277,8 @@ namespace OpenKNX
 #ifdef OPENKNX_DUALCORE
     void Common::setup1()
     {
+        openknx.timerInterrupt.init1();
+
         // wait for setup0
         while (!_setup0Ready)
             delay(50);
@@ -439,7 +441,12 @@ namespace OpenKNX
         // int current = freeMemory();
         _freeMemoryMin = MIN(_freeMemoryMin, freeMemory());
 #ifdef ARDUINO_ARCH_RP2040
-        _freeStack0Min = MIN(_freeStack0Min, freeStackSize());
+    #ifdef OPENKNX_DUALCORE
+        if (rp2040.cpuid())
+            _freeStackMin1 = MIN(_freeStackMin1, freeStackSize());
+        else
+    #endif
+            _freeStackMin = MIN(_freeStackMin, freeStackSize());
 #endif
     }
 
@@ -700,10 +707,16 @@ namespace OpenKNX
     }
 
 #ifdef ARDUINO_ARCH_RP2040
-    int Common::freeStack0Min()
+    int Common::freeStackMin()
     {
-        return _freeStack0Min;
+        return _freeStackMin;
     }
+    #ifdef OPENKNX_DUALCORE
+    int Common::freeStackMin1()
+    {
+        return _freeStackMin1;
+    }
+    #endif
 #endif
 
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
