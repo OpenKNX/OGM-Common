@@ -4,10 +4,10 @@
 * Restore-Scripts:
   * Use knx from OpenKNX-Repository
   * Improve error-handling: Restore working-directory before exit 1
-* Refactor: Optimization of the logger to use less memory on the stack.
-* Refactor: Das TimerInterupt wurde für die RP2040 Platform umgebaut.
-* Feature: Stack usage monitoring
 * Update: Platform raspberrypi
+* Refactor: TimerInterrupt for RP2040 platform using SDA API
+* Refactor: Optimization of the logger to use less memory on the stack.
+* Feature: Stack usage monitoring
 
 ## 2023-09-22 -- 2023-09-26
 * Fix: Diagnose-KO with 14 characters input ([Quick-Fix for Missing \0 at End of 14 Characters Strings](https://github.com/OpenKNX/OGM-Common/commit/ec3a31ef96d1b1af7b5327e356de78fcdc092293))
