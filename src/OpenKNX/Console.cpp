@@ -303,6 +303,40 @@ namespace OpenKNX
             return true;
         }
 #endif
+        else if (cmd.substr(0, 2) == "ko" && cmd.length() >= 7)
+        {
+            std::string koNumber = cmd.substr(2, 4);
+            uint32_t addr = std::stoi(koNumber, nullptr, 10);
+            if (addr > 0 && addr <= MAIN_MaxKoNumber)
+            {
+                // TODO move to out of Console
+                GroupObject *go = &knx.getGroupObject(addr);
+
+                if (cmd[6] == 'v')
+                {
+                    openknx.logger.logWithPrefixAndValues("KO-Value", "size=%d, @[0]=%2x", go->valueSize(), go->valueRef()[0]);
+                    openknx.logger.logHexWithPrefix("KO-Value Hex", go->valueRef(), go->valueSize());
+
+                    // TODO find solution for raw values with \0
+                    char koRawValue[14+1] = {};
+                    memcpy(koRawValue, go->valueRef(), go->valueSize());
+                    writeDiagenoseKo("%s", koRawValue);
+                }
+                else if (cmd[6] == 'r')
+                {
+                    openknx.logger.logWithPrefixAndValues("KO-Value ReadReq", "konr=%d", addr);
+                    go->requestObjectRead();
+                }
+                else if (cmd[6] == 'w')
+                {
+                    openknx.logger.logWithPrefixAndValues("KO-Value Write", "NO-Nr=%d", addr);
+                    go->objectWritten();
+                }
+            }
+
+
+
+        }
         else
         {
             // check modules for command
@@ -570,6 +604,9 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("bootloader", "Reset into Bootloader Mode");
 #endif
+        printHelpLine("koNNNNv", "Show value of KO NNNNN");
+        printHelpLine("koNNNNr", "Send readRequest for KO NNNNN");
+        printHelpLine("koNNNNw", "Send write for KO NNNNN");
 #ifndef ARDUINO_ARCH_SAMD
         printHelpLine("dwon <pin>", "Write digital pin to HIGH");
         printHelpLine("dwoff <pin>", "Write digital pin to LOW");
