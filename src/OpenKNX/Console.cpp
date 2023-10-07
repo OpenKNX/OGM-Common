@@ -194,6 +194,11 @@ namespace OpenKNX
                     memcpy(koRawValue, go.valueRef(), go.valueSize());
                     writeDiagenoseKo("%s", koRawValue);
                 }
+                else if (cmd[6] == 'r')
+                {
+                    go.requestObjectRead();
+                }
+                
             }
 
 
