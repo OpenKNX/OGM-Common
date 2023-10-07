@@ -29,14 +29,14 @@ namespace OpenKNX
         void init();
         void interrupt();
 #ifdef ARDUINO_ARCH_RP2040
-        alarm_pool_t *repeatingTimer();
+        alarm_pool_t *alarmPool();
 #endif
 
 #ifdef OPENKNX_DUALCORE
         void init1();
         void interrupt1();
     #ifdef ARDUINO_ARCH_RP2040
-        alarm_pool_t *repeatingTimer1();
+        alarm_pool_t *alarmPool1();
     #endif
 #endif
     };

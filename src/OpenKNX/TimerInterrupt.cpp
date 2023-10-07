@@ -135,7 +135,7 @@ namespace OpenKNX
     }
 
 #ifdef ARDUINO_ARCH_RP2040
-    alarm_pool_t *TimerInterrupt::repeatingTimer()
+    alarm_pool_t *TimerInterrupt::alarmPool()
     {
         return _alarmPool;
     }
@@ -161,7 +161,7 @@ namespace OpenKNX
     }
 
     #ifdef ARDUINO_ARCH_RP2040
-    alarm_pool_t *TimerInterrupt::repeatingTimer1()
+    alarm_pool_t *TimerInterrupt::alarmPool1()
     {
         return _alarmPool1;
     }
