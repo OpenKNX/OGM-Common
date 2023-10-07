@@ -9,6 +9,11 @@
 * Refactor: Optimization of the logger to use less memory on the stack.
 * Feature: Stack usage monitoring
 
+## 2023-09-29 -- 2023-10-01
+* Stability: Initialize string buffers 
+* Stability/Improvement: Read hardware serial once on startup only, not in console output
+* Fix: [Skip processModulesLoop with 0 modules (for testing)](https://github.com/OpenKNX/OGM-Common/commit/c663b51cadbfc9ae9b2c9ca61a919f20e5632598)
+
 ## 2023-09-22 -- 2023-09-26
 * Fix: Diagnose-KO with 14 characters input ([Quick-Fix for Missing \0 at End of 14 Characters Strings](https://github.com/OpenKNX/OGM-Common/commit/ec3a31ef96d1b1af7b5327e356de78fcdc092293))
 * Improvement: Console-Output
