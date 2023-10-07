@@ -1,6 +1,9 @@
 # Changes
 
 ## 2023-10-02 -- 2023-10-07
+* Restore-Scripts:
+  * Use knx from OpenKNX-Repository
+  * Improve error-handling: Restore working-directory before exit 1
 * Refactor: Optimization of the logger to use less memory on the stack.
 * Refactor: Das TimerInterupt wurde für die RP2040 Platform umgebaut.
 * Feature: Stack usage monitoring
