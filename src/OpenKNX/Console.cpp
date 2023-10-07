@@ -176,6 +176,29 @@ namespace OpenKNX
             erase(EraseMode::All);
         }
 #endif
+        else if (cmd.substr(0, 2) == "ko" && cmd.length() >= 7)
+        {
+            std::string koNumber = cmd.substr(2, 4);
+            uint32_t addr = std::stoi(koNumber, nullptr, 10);
+            if (addr > 0 && addr <= MAIN_MaxKoNumber)
+            {
+                GroupObject go = knx.getGroupObject(addr);
+
+                if (cmd[6] == 'v')
+                {
+                    openknx.logger.logWithPrefixAndValues("KO-Value", "size=%d, @[0]=%2x", go.valueSize(), go.valueRef()[0]);
+                    openknx.logger.logHexWithPrefix("KO-Value Hex", go.valueRef(), go.valueSize());
+
+                    // TODO finde solution for raw values with \0
+                    char koRawValue[14+1] = {};
+                    memcpy(koRawValue, go.valueRef(), go.valueSize());
+                    writeDiagenoseKo("%s", koRawValue);
+                }
+            }
+
+
+
+        }
         else
         {
             // check modules for command
