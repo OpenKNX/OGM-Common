@@ -4,6 +4,7 @@
 * Refactor: Optimization of the logger to use less memory on the stack.
 * Refactor: Das TimerInterupt wurde für die RP2040 Platform umgebaut.
 * Feature: Stack usage monitoring
+* Update: Platform raspberrypi
 
 ## 2023-09-22 -- 2023-09-26
 * Fix: Diagnose-KO with 14 characters input ([Quick-Fix for Missing \0 at End of 14 Characters Strings](https://github.com/OpenKNX/OGM-Common/commit/ec3a31ef96d1b1af7b5327e356de78fcdc092293))
