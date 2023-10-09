@@ -196,6 +196,7 @@ namespace OpenKNX
                 }
                 else if (cmd[6] == 'r')
                 {
+                    openknx.logger.logWithPrefixAndValues("KO-Value ReadReq", "konr=%d", addr);
                     go.requestObjectRead();
                 }
                 
