@@ -45,8 +45,6 @@ namespace OpenKNX
         Flash::Driver openknxFlash;
         Flash::Driver knxFlash;
 
-        volatile bool ready = false;
-
         void init(uint8_t firmwareRevision);
         void loop();
         void setup();
