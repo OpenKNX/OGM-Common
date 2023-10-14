@@ -1,5 +1,9 @@
 # Changes
 
+## 2023-10-13
+* Refactor: Force an overload of the name() and version(). 
+* Feature: Hide modules with blank version on the console.
+
 ## 2023-10-02 -- 2023-10-07
 * Restore-Scripts:
   * Use knx from OpenKNX-Repository
