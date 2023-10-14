@@ -131,17 +131,17 @@ namespace OpenKNX
         if (_time % 2)
         {
             openknx.progLed.loop();
-#ifdef INFO1_LED_PIN
-            openknx.info1Led.loop();
+#ifdef INFO2_LED_PIN
+            openknx.info2Led.loop();
 #endif
         }
         else
         {
-#ifdef INFO_LED_PIN
-            openknx.infoLed.loop();
+#ifdef INFO1_LED_PIN
+            openknx.info1Led.loop();
 #endif
-#ifdef INFO2_LED_PIN
-            openknx.info2Led.loop();
+#ifdef INFO3_LED_PIN
+            openknx.info3Led.loop();
 #endif
         }
     }

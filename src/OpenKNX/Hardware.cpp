@@ -24,14 +24,14 @@ namespace OpenKNX
     void Hardware::initLeds()
     {
         openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
-#ifdef INFO_LED_PIN
-        openknx.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
-#endif
 #ifdef INFO1_LED_PIN
         openknx.info1Led.init(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON);
 #endif
 #ifdef INFO2_LED_PIN
         openknx.info2Led.init(INFO2_LED_PIN, INFO2_LED_PIN_ACTIVE_ON);
+#endif
+#ifdef INFO3_LED_PIN
+        openknx.info3Led.init(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON);
 #endif
     }
 
@@ -207,8 +207,8 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
-#ifdef INFO_LED_PIN
-        openknx.infoLed.on();
+#ifdef INFO1_LED_PIN
+        openknx.info1Led.on();
 #endif
         openknx.progLed.errorCode(code);
 

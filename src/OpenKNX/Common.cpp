@@ -23,13 +23,13 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
-    #ifdef INFO_LED_PIN
-        openknx.infoLed.on();
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.on();
     #endif
 #else
         openknx.progLed.pulsing();
-    #ifdef INFO_LED_PIN
-        openknx.infoLed.pulsing();
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.pulsing();
     #endif
 #endif
 
@@ -195,13 +195,13 @@ namespace OpenKNX
     {
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.blinking();
-    #ifdef INFO_LED_PIN
-        openknx.infoLed.blinking();
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.blinking();
     #endif
 #else
         openknx.progLed.pulsing(500);
-    #ifdef INFO_LED_PIN
-        openknx.infoLed.pulsing(500);
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.pulsing(500);
     #endif
 #endif
 
@@ -216,13 +216,13 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
-    #ifdef INFO_LED_PIN
-        openknx.infoLed.on();
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.on();
     #endif
 #else
         openknx.progLed.pulsing();
-    #ifdef INFO_LED_PIN
-        openknx.infoLed.pulsing();
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.pulsing();
     #endif
 #endif
     }
@@ -277,9 +277,9 @@ namespace OpenKNX
                 delay(1);
 #endif
 
-#ifdef INFO_LED_PIN
-        // setup complete: turn infoLed off
-        openknx.infoLed.off();
+#ifdef INFO1_LED_PIN
+        // setup complete: turn info1Led off
+        openknx.info1Led.off();
 #endif
 
         openknx.logger.logOpenKnxHeader();
@@ -490,8 +490,8 @@ namespace OpenKNX
             return;
 
     #ifdef OPENKNX_HEARTBEAT
-        #ifdef INFO_LED_PIN
-        openknx.infoLed.debugLoop();
+        #ifdef INFO1_LED_PIN
+        openknx.info1Led.debugLoop();
         #endif
     #endif
 
@@ -569,8 +569,8 @@ namespace OpenKNX
         logIndentUp();
 
         openknx.progLed.powerSave();
-#ifdef INFO_LED_PIN
-        openknx.infoLed.powerSave();
+#ifdef INFO1_LED_PIN
+        openknx.info1Led.powerSave();
 #endif
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave();
@@ -613,8 +613,8 @@ namespace OpenKNX
         logIndentUp();
 
         openknx.progLed.powerSave(false);
-#ifdef INFO_LED_PIN
-        openknx.infoLed.powerSave(false);
+#ifdef INFO1_LED_PIN
+        openknx.info1Led.powerSave(false);
 #endif
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave(false);

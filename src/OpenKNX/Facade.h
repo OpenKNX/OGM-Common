@@ -40,14 +40,15 @@ namespace OpenKNX
         TimerInterrupt timerInterrupt;
         Hardware hardware;
         Led progLed;
-#ifdef INFO_LED_PIN
-        Led infoLed;
-#endif
 #ifdef INFO1_LED_PIN
         Led info1Led;
+        Led& infoLed = info1Led;
 #endif
 #ifdef INFO2_LED_PIN
         Led info2Led;
+#endif
+#ifdef INFO3_LED_PIN
+        Led info3Led;
 #endif
         Modules modules;
         Flash::Driver openknxFlash;

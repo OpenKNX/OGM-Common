@@ -65,3 +65,9 @@
 #ifndef KNX_SERIAL
     #define KNX_SERIAL Serial1
 #endif
+
+// Fallback for old defines
+#ifdef INFO_LED_PIN
+    #define INFO1_LED_PIN INFO_LED_PIN
+    #define INFO1_LED_PIN_ACTIVE_ON INFO_LED_PIN_ACTIVE_ON
+#endif
