@@ -13,7 +13,7 @@ namespace OpenKNX
          * The version of module.
          * @return version
          */
-        virtual const std::string version();
+        virtual const std::string version() = 0;
 
         /*
          * This method must returned the size for reservation space in flash storage.

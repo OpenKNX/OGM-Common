@@ -8,11 +8,6 @@ namespace OpenKNX
         return name();
     }
 
-    const std::string Base::name()
-    {
-        return "Unnamed";
-    }
-
     void Base::init() {}
 
     void Base::setup(bool configured)

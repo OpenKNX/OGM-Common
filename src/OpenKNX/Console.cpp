@@ -306,8 +306,11 @@ namespace OpenKNX
         openknx.logger.logWithPrefix("KNX", KNX_Version);
         openknx.logger.logWithPrefix(openknx.common.logPrefix(), MODULE_Common_Version);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
+        {
+            if (openknx.modules.list[i]->version().empty()) continue;
 
+            openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
+        }
         openknx.logger.log("--------------------------------------------------------------------------------");
         logEnd();
     }

@@ -3,11 +3,6 @@
 
 namespace OpenKNX
 {
-    const std::string Module::version()
-    {
-        return openknx.info.humanFirmwareVersion(true);
-    }
-
     uint16_t Module::flashSize()
     {
         return 0;

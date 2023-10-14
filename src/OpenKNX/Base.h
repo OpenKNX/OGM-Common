@@ -32,7 +32,7 @@ namespace OpenKNX
          * The name. Used for "log" methods.
          * @return name
          */
-        virtual const std::string name();
+        virtual const std::string name() = 0;
 
         /*
          * Called after knx.init() before setup() called.
