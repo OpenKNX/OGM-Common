@@ -21,6 +21,20 @@ namespace OpenKNX
 #endif
     }
 
+    void Hardware::initLeds()
+    {
+        openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
+#ifdef INFO_LED_PIN
+        openknx.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
+#endif
+#ifdef INFO1_LED_PIN
+        openknx.info1Led.init(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON);
+#endif
+#ifdef INFO2_LED_PIN
+        openknx.info2Led.init(INFO2_LED_PIN, INFO2_LED_PIN_ACTIVE_ON);
+#endif
+    }
+
     void Hardware::initFlash()
     {
         logDebug("Hardware<Flash>", "Initialize flash");
@@ -193,7 +207,9 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
+#ifdef INFO_LED_PIN
         openknx.infoLed.on();
+#endif
         openknx.progLed.errorCode(code);
 
         // stopknx

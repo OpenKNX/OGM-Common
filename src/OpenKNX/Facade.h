@@ -40,7 +40,15 @@ namespace OpenKNX
         TimerInterrupt timerInterrupt;
         Hardware hardware;
         Led progLed;
+#ifdef INFO_LED_PIN
         Led infoLed;
+#endif
+#ifdef INFO1_LED_PIN
+        Led info1Led;
+#endif
+#ifdef INFO2_LED_PIN
+        Led info2Led;
+#endif
         Modules modules;
         Flash::Driver openknxFlash;
         Flash::Driver knxFlash;
@@ -58,7 +66,7 @@ namespace OpenKNX
         Modules* getModules();
         bool afterStartupDelay();
         bool freeLoopTime();
-        bool freeLoopIterate(uint8_t size, uint8_t &position, uint8_t &processed);
+        bool freeLoopIterate(uint8_t size, uint8_t& position, uint8_t& processed);
     };
 } // namespace OpenKNX
 

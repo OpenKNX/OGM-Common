@@ -478,7 +478,15 @@ namespace OpenKNX
     #endif
 
         openknx.progLed.blinking();
+    #ifdef INFO_LED_PIN
         openknx.infoLed.off();
+    #endif
+    #ifdef INFO1_LED_PIN
+        openknx.info1Led.off();
+    #endif
+    #ifdef INFO2_LED_PIN
+        openknx.info2Led.off();
+    #endif
         openknx.hardware.stopKnxMode();
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)

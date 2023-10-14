@@ -118,5 +118,6 @@ namespace OpenKNX
         void initFilesystem();
 #endif
         void initFlash();
+        void initLeds();
     };
 } // namespace OpenKNX

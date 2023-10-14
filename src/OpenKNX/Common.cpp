@@ -14,10 +14,7 @@ namespace OpenKNX
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
-        openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
-#ifdef INFO_LED_PIN
-        openknx.infoLed.init(INFO_LED_PIN, INFO_LED_PIN_ACTIVE_ON);
-#endif
+        openknx.hardware.initLeds();
 
 #if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
         // Recovery
@@ -26,10 +23,14 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
+    #ifdef INFO_LED_PIN
         openknx.infoLed.on();
+    #endif
 #else
         openknx.progLed.pulsing();
+    #ifdef INFO_LED_PIN
         openknx.infoLed.pulsing();
+    #endif
 #endif
 
         debugWait();
@@ -194,10 +195,14 @@ namespace OpenKNX
     {
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.blinking();
+    #ifdef INFO_LED_PIN
         openknx.infoLed.blinking();
+    #endif
 #else
         openknx.progLed.pulsing(500);
+    #ifdef INFO_LED_PIN
         openknx.infoLed.pulsing(500);
+    #endif
 #endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
@@ -211,10 +216,14 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
+    #ifdef INFO_LED_PIN
         openknx.infoLed.on();
+    #endif
 #else
         openknx.progLed.pulsing();
+    #ifdef INFO_LED_PIN
         openknx.infoLed.pulsing();
+    #endif
 #endif
     }
 
@@ -268,8 +277,10 @@ namespace OpenKNX
                 delay(1);
 #endif
 
+#ifdef INFO_LED_PIN
         // setup complete: turn infoLed off
         openknx.infoLed.off();
+#endif
 
         openknx.logger.logOpenKnxHeader();
     }
@@ -479,7 +490,9 @@ namespace OpenKNX
             return;
 
     #ifdef OPENKNX_HEARTBEAT
+        #ifdef INFO_LED_PIN
         openknx.infoLed.debugLoop();
+        #endif
     #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
@@ -556,7 +569,15 @@ namespace OpenKNX
         logIndentUp();
 
         openknx.progLed.powerSave();
+#ifdef INFO_LED_PIN
         openknx.infoLed.powerSave();
+#endif
+#ifdef INFO1_LED_PIN
+        openknx.info1Led.powerSave();
+#endif
+#ifdef INFO2_LED_PIN
+        openknx.info2Led.powerSave();
+#endif
         openknx.hardware.stopKnxMode(false);
 
         // first save all modules to save power before...
@@ -592,7 +613,15 @@ namespace OpenKNX
         logIndentUp();
 
         openknx.progLed.powerSave(false);
+#ifdef INFO_LED_PIN
         openknx.infoLed.powerSave(false);
+#endif
+#ifdef INFO1_LED_PIN
+        openknx.info1Led.powerSave(false);
+#endif
+#ifdef INFO2_LED_PIN
+        openknx.info2Led.powerSave(false);
+#endif
         openknx.hardware.activatePowerRail();
         openknx.hardware.startKnxMode();
 
