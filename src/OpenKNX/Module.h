@@ -11,6 +11,11 @@ namespace OpenKNX
       public:
         /*
          * The version of module.
+         *
+         * Hint:
+         * By returning an empty string, the module is hidden in the version output on the console.
+         * In the case of modules within OAM, this is practical since the firmware version is already output.
+         *
          * @return version
          */
         virtual const std::string version() = 0;
