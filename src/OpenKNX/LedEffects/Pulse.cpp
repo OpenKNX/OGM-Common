@@ -11,19 +11,12 @@ namespace OpenKNX
 #endif
         {
             // first run
-            if (_lastMillis == 0)
-                _lastMillis = millis();
+            if (_lastMillis == 0) _lastMillis = millis();
 
-            uint8_t value = _table[((millis() - _lastMillis) % (_frequency * 2) * 46 / (_frequency * 2))];
+            // calc
+            uint8_t value = _ledPulseEffetTable[((millis() - _lastMillis) % (_frequency * 2) * 46 / (_frequency * 2))];
 
-            if (maxValue == 255)
-            {
-                return value;
-            }
-            else
-            {
-                return value * maxValue / 255;
-            }
+            return (maxValue == 255) ? value : value * maxValue / 255;
         }
 
         void Pulse::init(uint16_t frequency)
