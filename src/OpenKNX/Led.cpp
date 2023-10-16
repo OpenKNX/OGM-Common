@@ -88,7 +88,9 @@ namespace OpenKNX
                 case LedEffect::Blink:
                     writeLed(_blinkEffect.value());
                     break;
-
+                case LedEffect::Flash:
+                    writeLed(_flashEffect.value());
+                    break;
                 default:
                     writeLed(true);
                     break;
@@ -183,6 +185,18 @@ namespace OpenKNX
         _state = true;
         _effect = LedEffect::Blink;
         _blinkEffect.init(frequency);
+    }
+
+    void Led::flash(uint16_t duration)
+    {
+        // no valid pin
+        if (_pin < 0)
+            return;
+
+        logTraceP("flash (duration %i ms)", duration);
+        _state = true;
+        _effect = LedEffect::Flash;
+        _blinkEffect.init(duration);
     }
 
     void Led::off()

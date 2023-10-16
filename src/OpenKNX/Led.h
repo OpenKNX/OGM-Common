@@ -2,6 +2,7 @@
 #include "OpenKNX/LedEffects/Blink.h"
 #include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Pulse.h"
+#include "OpenKNX/LedEffects/Flash.h"
 #include "OpenKNX/defines.h"
 #include <Arduino.h>
 #include <string>
@@ -13,6 +14,7 @@ namespace OpenKNX
         Normal,
         Blink,
         Pulse,
+        Flash,
         Error
     };
 
@@ -32,6 +34,7 @@ namespace OpenKNX
         LedEffects::Error _errorEffect;
         LedEffects::Pulse _pulseEffect;
         LedEffects::Blink _blinkEffect;
+        LedEffects::Flash _flashEffect;
 
 #ifdef OPENKNX_HEARTBEAT
         volatile bool _debugMode = false;
@@ -109,6 +112,12 @@ namespace OpenKNX
          * -> Prio 5
          */
         void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ);
+
+        /*
+         * Normal "On" with flash effect
+         * -> Prio 5
+         */
+        void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION);
 
         /*
          * Normal "Off"
