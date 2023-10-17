@@ -1,23 +1,14 @@
 #pragma once
 #include "OpenKNX/LedEffects/Blink.h"
 #include "OpenKNX/LedEffects/Error.h"
-#include "OpenKNX/LedEffects/Pulse.h"
 #include "OpenKNX/LedEffects/Flash.h"
+#include "OpenKNX/LedEffects/Pulse.h"
 #include "OpenKNX/defines.h"
 #include <Arduino.h>
 #include <string>
 
 namespace OpenKNX
 {
-    enum class LedEffect
-    {
-        Normal,
-        Blink,
-        Pulse,
-        Flash,
-        Error
-    };
-
     class Led
     {
       private:
@@ -28,18 +19,18 @@ namespace OpenKNX
         volatile bool _state = false;
         volatile bool _powerSave = false;
         volatile bool _forceOn = false;
-        volatile bool _errorCode = false;
         volatile uint8_t _currentLedBrightness = 0;
-        volatile LedEffect _effect = LedEffect::Normal;
-        LedEffects::Error _errorEffect;
-        LedEffects::Pulse _pulseEffect;
-        LedEffects::Blink _blinkEffect;
-        LedEffects::Flash _flashEffect;
+
+        volatile bool _effectMode = false;
+        LedEffects::Base *_effect = nullptr;
+
+        volatile bool _errorMode = false;
+        LedEffects::Error *_errorEffect = nullptr;
 
 #ifdef OPENKNX_HEARTBEAT
         volatile bool _debugMode = false;
         volatile uint32_t _debugHeartbeat = 0;
-        LedEffects::Blink _debugEffect;
+        LedEffects::Blink *_debugEffect = nullptr;
 #endif
 
         /*
@@ -124,6 +115,16 @@ namespace OpenKNX
          * -> Prio 5
          */
         void off();
+
+        /*
+         * Unload current normal effect is available
+         */
+        void unloadEffect();
+
+        /*
+         * Call unloadEffect() and load new normal effect
+         */
+        void loadEffect(LedEffects::Base *effect);
 
         /*
          * Get a logPrefix as string

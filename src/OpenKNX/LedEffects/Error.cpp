@@ -5,10 +5,15 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
+        Error::Error(uint8_t code)
+        {
+            _code = code;
+        }
+
 #ifdef __time_critical_func
-        bool __time_critical_func(Error::value)()
+        uint8_t __time_critical_func(Error::value)(uint8_t maxValue)
 #else
-        bool Error::value()
+        uint8_t Error::value(uint8_t maxValue)
 #endif
         {
             if (
@@ -27,14 +32,7 @@ namespace OpenKNX
                     _counter++;
             }
 
-            return _state;
-        }
-
-        void Error::init(uint8_t code)
-        {
-            Base::init();
-            _code = code;
-            _counter = 0;
+            return _state ? maxValue : 0;
         }
     } // namespace LedEffects
 } // namespace OpenKNX

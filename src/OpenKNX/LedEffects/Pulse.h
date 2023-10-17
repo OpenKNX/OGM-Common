@@ -17,19 +17,11 @@ namespace OpenKNX
         class Pulse : public Base
         {
           protected:
-            volatile uint16_t _frequency = OPENKNX_LEDEFFECT_PULSE_FREQ;
-
-            // use a table for a consistent pulsing
+            uint16_t _frequency = 0;
 
           public:
-            /*
-             * call value
-             */
-            uint8_t value(uint8_t maxValue = 255);
-            /*
-             * Reset internal micros to start first sequence and give a frequency for effect
-             */
-            void init(uint16_t frequency);
+            Pulse(uint16_t frequency = OPENKNX_LEDEFFECT_PULSE_FREQ);
+            uint8_t value(uint8_t maxValue) override;
         };
     } // namespace LedEffects
 } // namespace OpenKNX

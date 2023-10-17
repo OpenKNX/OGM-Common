@@ -13,18 +13,13 @@ namespace OpenKNX
         class Flash : public Base
         {
           protected:
-            volatile uint16_t _duration = OPENKNX_LEDEFFECT_FLASH_DURATION;
+            volatile uint16_t _duration = 0;
 
             bool _state = false;
 
           public:
-            /*
-             * call value
-             */
-            bool value();
-
-            void init() override;
-            void init(uint16_t duration);
+            Flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION);
+            uint8_t value(uint8_t maxValue) override;
         };
     } // namespace LedEffects
 } // namespace OpenKNX

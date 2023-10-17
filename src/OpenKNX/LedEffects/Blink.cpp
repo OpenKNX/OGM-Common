@@ -4,10 +4,21 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
+        Blink::Blink(uint16_t frequency)
+        {
+            _frequency = frequency;
+        }
+
+        void Blink::updateFrequency(uint16_t frequency)
+        {
+            _frequency = frequency;
+            _lastMillis = 0;
+        }
+
 #ifdef __time_critical_func
-        bool __time_critical_func(Blink::value)()
+        uint8_t __time_critical_func(Blink::value)(uint8_t maxValue)
 #else
-        bool Blink::value()
+        uint8_t Blink::value(uint8_t maxValue)
 #endif
         {
             if (delayCheck(_lastMillis, _frequency) || _lastMillis == 0)
@@ -16,21 +27,7 @@ namespace OpenKNX
                 _lastMillis = millis();
             }
 
-            return _state;
-        }
-
-        void Blink::init()
-        {
-            Base::init();
-            _state = false;
-            _frequency = OPENKNX_LEDEFFECT_BLINK_FREQ;
-        }
-
-        void Blink::init(uint16_t frequency)
-        {
-            Base::init();
-            _state = false;
-            _frequency = frequency;
+            return _state ? maxValue : 0;
         }
     } // namespace LedEffects
 } // namespace OpenKNX

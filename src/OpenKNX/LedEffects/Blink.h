@@ -9,22 +9,18 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
-
         class Blink : public Base
         {
           protected:
-            volatile uint16_t _frequency = OPENKNX_LEDEFFECT_BLINK_FREQ;
+            volatile uint16_t _frequency = 0;
 
             bool _state = false;
 
           public:
-            /*
-             * call value
-             */
-            bool value();
+            Blink(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ);
+            uint8_t value(uint8_t maxValue) override;
+            void updateFrequency(uint16_t frequency);
 
-            void init() override;
-            void init(uint16_t frequency);
         };
     } // namespace LedEffects
 } // namespace OpenKNX

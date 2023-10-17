@@ -12,10 +12,10 @@ namespace OpenKNX
             uint8_t _code = 1;
             uint8_t _counter = 0;
             bool _state = false;
-            
+
           public:
-            void init(uint8_t code);
-            bool value();
+            Error(uint8_t code);
+            uint8_t value(uint8_t maxValue) override;
         };
     } // namespace LedEffects
 } // namespace OpenKNX

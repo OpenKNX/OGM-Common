@@ -4,30 +4,20 @@ namespace OpenKNX
 {
     namespace LedEffects
     {
+        Flash::Flash(uint16_t duration)
+        {
+            _duration = duration;
+            _lastMillis = millis();
+        }
+
 #ifdef __time_critical_func
-        bool __time_critical_func(Flash::value)()
+        uint8_t __time_critical_func(Flash::value)(uint8_t maxValue)
 #else
-        bool Flash::value()
+        uint8_t Flash::value(uint8_t maxValue)
 #endif
         {
             _state = !delayCheck(_lastMillis, _duration);
-            return _state;
-        }
-
-        void Flash::init()
-        {
-            Base::init();
-            _lastMillis = millis();
-            _state = true;
-            _duration = OPENKNX_LEDEFFECT_FLASH_DURATION;
-        }
-
-        void Flash::init(uint16_t duration)
-        {
-            Base::init();
-            _lastMillis = millis();
-            _state = true;
-            _duration = duration;
+            return _state ? maxValue : 0;
         }
     } // namespace LedEffects
 } // namespace OpenKNX
