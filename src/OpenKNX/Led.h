@@ -1,4 +1,5 @@
 #pragma once
+#include "OpenKNX/LedEffects/Activity.h"
 #include "OpenKNX/LedEffects/Blink.h"
 #include "OpenKNX/LedEffects/Error.h"
 #include "OpenKNX/LedEffects/Flash.h"
@@ -109,6 +110,12 @@ namespace OpenKNX
          * -> Prio 5
          */
         void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION);
+
+        /*
+         * Normal "On" with activity effect
+         * -> Prio 5
+         */
+        void activity(uint32_t &lastActivity);
 
         /*
          * Normal "Off"

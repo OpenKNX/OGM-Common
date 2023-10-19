@@ -173,6 +173,16 @@ namespace OpenKNX
         _state = true;
     }
 
+    void Led::activity(uint32_t &lastActivity)
+    {
+        // no valid pin
+        if (_pin < 0) return;
+
+        logTraceP("activity");
+        loadEffect(new LedEffects::Activity(lastActivity));
+        _state = true;
+    }
+
     void Led::off()
     {
         // no valid pin
