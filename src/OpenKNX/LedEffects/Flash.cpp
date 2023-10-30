@@ -10,11 +10,7 @@ namespace OpenKNX
             _lastMillis = millis();
         }
 
-#ifdef __time_critical_func
         uint8_t __time_critical_func(Flash::value)(uint8_t maxValue)
-#else
-        uint8_t Flash::value(uint8_t maxValue)
-#endif
         {
             _state = !delayCheck(_lastMillis, _duration);
             return _state ? maxValue : 0;

@@ -71,3 +71,9 @@
     #define INFO1_LED_PIN INFO_LED_PIN
     #define INFO1_LED_PIN_ACTIVE_ON INFO_LED_PIN_ACTIVE_ON
 #endif
+
+// __time_critical_func fallback
+#ifndef ARDUINO_ARCH_RP2040
+    #define __time_critical_func(X) X
+    #define __isr
+#endif

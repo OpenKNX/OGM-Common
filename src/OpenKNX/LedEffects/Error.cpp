@@ -10,11 +10,7 @@ namespace OpenKNX
             _code = code;
         }
 
-#ifdef __time_critical_func
         uint8_t __time_critical_func(Error::value)(uint8_t maxValue)
-#else
-        uint8_t Error::value(uint8_t maxValue)
-#endif
         {
             if (
                 (delayCheck(_lastMillis, 250) && _counter < _code) ||   // Blink

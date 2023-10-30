@@ -443,11 +443,7 @@ namespace OpenKNX
         return true;
     }
 
-#ifdef __time_critical_func
     void __time_critical_func(Common::collectMemoryStats)()
-#else
-    void Common::collectMemoryStats()
-#endif
     {
         // int current = freeMemory();
         _freeMemoryMin = MIN(_freeMemoryMin, freeMemory());

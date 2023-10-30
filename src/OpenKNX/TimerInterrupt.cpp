@@ -119,11 +119,7 @@ namespace OpenKNX
 #endif
     }
 
-#ifdef __time_critical_func
     void __isr __time_critical_func(TimerInterrupt::interrupt)()
-#else
-    void TimerInterrupt::interrupt()
-#endif
     {
         _time = millis();
         openknx.common.collectMemoryStats();
@@ -162,11 +158,7 @@ namespace OpenKNX
     #endif
     }
 
-    #ifdef __time_critical_func
     void __isr __time_critical_func(TimerInterrupt::interrupt1)()
-    #else
-    void TimerInterrupt::interrupt1()
-    #endif
     {
         _time1 = millis();
         openknx.common.collectMemoryStats();

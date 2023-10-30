@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+#include "OpenKNX/defines.h"
 #include <Arduino.h>
 
 // Interval of interrupt for leds and free memory collector
