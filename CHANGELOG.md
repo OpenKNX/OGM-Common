@@ -1,5 +1,12 @@
 # Changes
 
+## 2023-10-23 - 2023-10-29
+* Refactor: Led handling to optimize ram usage
+* Refactor: Rename openknx.ledInfo to openknx.led1Info and also the defines
+* Feature: Add 2 new infoLeds. Now we have 4 global Leds: progLed, info1Led, info2Led, info3Led
+* Feature: Add new Led effects (Activity & Flash)
+* Refactor: Remove -D LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS
+
 ## 2023-10-13
 * Refactor: Force an overload of the name() and version(). 
 * Feature: Hide modules with blank version on the console.
@@ -9,7 +16,7 @@
   * Use knx from OpenKNX-Repository
   * Improve error-handling: Restore working-directory before exit 1
 * Update: Platform raspberrypi
-* Refactor: TimerInterrupt for RP2040 platform using SDA API
+* Refactor: TimerInterrupt for RP2040 platform using SDK API
 * Refactor: Optimization of the logger to use less memory on the stack.
 * Feature: Stack usage monitoring
 
