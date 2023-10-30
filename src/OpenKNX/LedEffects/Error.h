@@ -15,6 +15,7 @@ namespace OpenKNX
 
           public:
             Error(uint8_t code);
+            ~Error(){};
             uint8_t value(uint8_t maxValue) override;
         };
     } // namespace LedEffects

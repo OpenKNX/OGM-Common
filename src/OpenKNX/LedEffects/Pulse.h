@@ -21,6 +21,7 @@ namespace OpenKNX
 
           public:
             Pulse(uint16_t frequency = OPENKNX_LEDEFFECT_PULSE_FREQ);
+            ~Pulse(){};
             uint8_t value(uint8_t maxValue) override;
         };
     } // namespace LedEffects
