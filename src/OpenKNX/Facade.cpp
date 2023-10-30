@@ -55,6 +55,11 @@ namespace OpenKNX
         return common.freeLoopIterate(size, position, processed);
     }
 
+    void Facade::addModule(uint8_t id, Module &module)
+    {
+        addModule(id, &module);
+    }
+
     void Facade::addModule(uint8_t id, Module *module)
     {
         modules.count++;

@@ -1,5 +1,8 @@
 # Changes
 
+## 2023-10-30
+* Feature: Allows to pass a module reference to addModule
+
 ## 2023-10-23 - 2023-10-29
 * Refactor: Led handling to optimize ram usage
 * Refactor: Rename openknx.ledInfo to openknx.led1Info and also the defines

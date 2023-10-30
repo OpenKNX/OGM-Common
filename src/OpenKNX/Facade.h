@@ -63,6 +63,7 @@ namespace OpenKNX
         void setup1();
 #endif
         void addModule(uint8_t id, Module* module);
+        void addModule(uint8_t id, Module &module);
         Module* getModule(uint8_t id);
         Modules* getModules();
         bool afterStartupDelay();
