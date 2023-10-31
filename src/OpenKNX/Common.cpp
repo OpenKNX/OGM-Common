@@ -231,9 +231,7 @@ namespace OpenKNX
     {
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
             openknx.modules.list[i]->init();
-        }
 
 #ifdef LOG_StartupDelayBase
         _startupDelay = millis();
@@ -242,16 +240,13 @@ namespace OpenKNX
         _heartbeatDelay = 0;
 #endif
 
+        bool configured = knx.configured();
+
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
-            openknx.modules.list[i]->setup(knx.configured());
-        }
+            openknx.modules.list[i]->setup(configured);
 
-        if (knx.configured())
-        {
-            openknx.flash.load();
-        }
+        if (configured) openknx.flash.load();
 
         // start the framework
         openknx.progLed.off();
@@ -302,11 +297,11 @@ namespace OpenKNX
             return;
         }
 
+        bool configured = knx.configured();
+
         // Handle loop of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
-            openknx.modules.list[i]->setup1(knx.configured());
-        }
+            openknx.modules.list[i]->setup1(configured);
 
         _setup1Ready = true;
     }
@@ -315,8 +310,7 @@ namespace OpenKNX
 #ifdef OPENKNX_WATCHDOG
     void Common::watchdogSetup()
     {
-        if (!ParamLOG_Watchdog)
-            return;
+        if (!ParamLOG_Watchdog) return;
 
         logInfo("Watchdog", "Start with a watchtime of %ims", OPENKNX_WATCHDOG_MAX_PERIOD);
     #if defined(ARDUINO_ARCH_SAMD)
@@ -331,11 +325,8 @@ namespace OpenKNX
     }
     void Common::watchdogLoop()
     {
-        if (!delayCheck(watchdog.timer, OPENKNX_WATCHDOG_MAX_PERIOD / 10))
-            return;
-
-        if (!ParamLOG_Watchdog)
-            return;
+        if (!delayCheck(watchdog.timer, OPENKNX_WATCHDOG_MAX_PERIOD / 10)) return;
+        if (!ParamLOG_Watchdog) return;
 
         Watchdog.reset();
         watchdog.timer = millis();
@@ -349,12 +340,9 @@ namespace OpenKNX
 
         uptime(false);
 
-        if (!_setup0Ready)
-            return;
-
+        if (!_setup0Ready) return;
 #ifdef OPENKNX_DUALCORE
-        if (!_setup1Ready)
-            return;
+        if (!_setup1Ready) return;
 #endif
 
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
@@ -469,11 +457,13 @@ namespace OpenKNX
         // Skip if no modules have been added (for testing)
         if (openknx.modules.count == 0) return;
 
+        bool configured = knx.configured();
+
         uint8_t processed = 0;
         do
         {
             RUNTIME_MEASURE_BEGIN(openknx.modules.runtime[_currentModule]);
-            openknx.modules.list[_currentModule]->loop(knx.configured());
+            openknx.modules.list[_currentModule]->loop(configured);
             RUNTIME_MEASURE_END(openknx.modules.runtime[_currentModule]);
         }
         while (freeLoopIterate(openknx.modules.count, _currentModule, processed));
@@ -482,8 +472,7 @@ namespace OpenKNX
 #ifdef OPENKNX_DUALCORE
     void Common::loop1()
     {
-        if (!_setup1Ready)
-            return;
+        if (!_setup1Ready) return;
 
     #ifdef OPENKNX_HEARTBEAT
         #ifdef INFO1_LED_PIN
@@ -491,10 +480,12 @@ namespace OpenKNX
         #endif
     #endif
 
+        bool configured = knx.configured();
+
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
             RUNTIME_MEASURE_BEGIN(openknx.modules.runtime1[i]);
-            openknx.modules.list[i]->loop1(knx.configured());
+            openknx.modules.list[i]->loop1(configured);
             RUNTIME_MEASURE_END(openknx.modules.runtime1[i]);
         }
     }
@@ -701,8 +692,7 @@ namespace OpenKNX
         });
 
         // abort if knx not configured
-        if (!knx.configured())
-            return;
+        if (!knx.configured()) return;
 
         knx.beforeRestartCallback([]() -> void {
             openknx.common.processBeforeRestart();
@@ -747,20 +737,18 @@ namespace OpenKNX
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
             if (openknx.modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
-        }
+
         return false;
     }
 
     bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-        {
             if (openknx.modules.list[i]->processFunctionPropertyState(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
-        }
+
         return false;
     }
 
