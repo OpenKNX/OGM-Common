@@ -65,7 +65,7 @@ void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
     {
         rp2040.idleOtherCore();
         noInterrupts();
-        flash_range_erase(offset, offset + size);
+        flash_range_erase(offset, size);
         interrupts();
         rp2040.resumeOtherCore();
     }
