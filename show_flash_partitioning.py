@@ -145,7 +145,6 @@ def show_flash_partitioning(source, target, env):
     flash_elements = []
 
     flash_start = 0
-    system_start = 0
     firmware_start = 0
     flash_end = 0
 
@@ -153,12 +152,10 @@ def show_flash_partitioning(source, target, env):
     if projenv['PIOPLATFORM'] == 'raspberrypi':
         eeprom_start = env["PICO_EEPROM_START"] - 268435456
         flash_end = eeprom_start + 4096
-        system_end = eeprom_start
 
         if env["FS_START"] > 0 and not env["FS_START"] == env["FS_END"]:
             filesystem_start = env["FS_START"] - 268435456
             filesystem_end = env["FS_END"] - 268435456
-            system_end = filesystem_start # overwrite new system end
             flash_elements.append({ 'name': 'FILESYSTEM', 'start': filesystem_start, 'end': filesystem_end, 'container': False })
         
     if projenv['PIOPLATFORM'] == 'atmelsam':
@@ -170,7 +167,6 @@ def show_flash_partitioning(source, target, env):
     flash_elements.append({ 'name': 'FIRMWARE',   'start': firmware_start, 'end': firmware_end, 'container': False })
     if projenv['PIOPLATFORM'] != 'atmelsam':
         flash_elements.append({ 'name': 'EEPROM',     'start': eeprom_start, 'end': eeprom_end, 'container': False })
-        flash_elements.append({ 'name': 'SYSTEM',     'start': system_start, 'end': system_end, 'container': True })
 
     defined_sizes = {}
     for x in projenv["CPPDEFINES"]:
