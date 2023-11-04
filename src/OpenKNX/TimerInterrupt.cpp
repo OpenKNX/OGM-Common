@@ -162,6 +162,23 @@ namespace OpenKNX
     {
         _time1 = millis();
         openknx.common.collectMemoryStats();
+        
+        if (_time % 2)
+        {
+#ifdef INFO1_LED_PIN
+            openknx.info1Led.loop();
+#endif
+#ifdef INFO3_LED_PIN
+            openknx.info3Led.loop();
+#endif
+        }
+        else
+        {
+            openknx.progLed.loop();
+#ifdef INFO2_LED_PIN
+            openknx.info2Led.loop();
+#endif
+        }
     }
 
     #ifdef ARDUINO_ARCH_RP2040
