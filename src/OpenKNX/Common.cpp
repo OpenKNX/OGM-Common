@@ -240,6 +240,11 @@ namespace OpenKNX
         _heartbeatDelay = 0;
 #endif
 
+#ifdef INFO1_LED_PIN
+        // pre setup complete
+        openknx.info1Led.off();
+#endif
+
         bool configured = knx.configured();
 
         // Handle setup of modules
@@ -249,7 +254,6 @@ namespace OpenKNX
         if (configured) openknx.flash.load();
 
         // start the framework
-        openknx.progLed.off();
         knx.start();
 
         // when module was restarted during bcu was disabled, reenable
@@ -272,12 +276,11 @@ namespace OpenKNX
                 delay(1);
 #endif
 
-#ifdef INFO1_LED_PIN
-        // setup complete: turn info1Led off
-        openknx.info1Led.off();
-#endif
-
         openknx.logger.logOpenKnxHeader();
+        
+#ifndef OPENKNX_DUALCORE
+        openknx.progLed.off();
+#endif
     }
 
 #ifdef OPENKNX_DUALCORE
@@ -304,6 +307,7 @@ namespace OpenKNX
             openknx.modules.list[i]->setup1(configured);
 
         _setup1Ready = true;
+        openknx.progLed.off();
     }
 #endif
 
