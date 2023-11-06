@@ -17,9 +17,10 @@ namespace OpenKNX
         {
           protected:
             uint32_t &_lastActivity;
+            bool _inverted = false;
 
           public:
-            Activity(uint32_t &lastActivity) : _lastActivity(lastActivity){};
+            Activity(uint32_t &lastActivity, bool inverted = false) : _lastActivity(lastActivity), _inverted(inverted){};
             ~Activity(){};
             uint8_t value(uint8_t maxValue) override;
         };

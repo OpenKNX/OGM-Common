@@ -115,7 +115,7 @@ namespace OpenKNX
          * Normal "On" with activity effect
          * -> Prio 5
          */
-        void activity(uint32_t &lastActivity);
+        void activity(uint32_t &lastActivity, bool inverted = false);
 
         /*
          * Normal "Off"
