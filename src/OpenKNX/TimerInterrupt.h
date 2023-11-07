@@ -24,6 +24,9 @@ namespace OpenKNX
         alarm_pool_t *_alarmPool1;
     #endif
 #endif
+        inline void processStats();
+        inline void processButtons();
+        inline void processLeds();
 
       public:
         void init();

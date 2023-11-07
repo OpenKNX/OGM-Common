@@ -15,6 +15,7 @@ namespace OpenKNX
 
         openknx.timerInterrupt.init();
         openknx.hardware.initLeds();
+        openknx.hardware.initButtons();
 
 #if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
         // Recovery
@@ -129,10 +130,9 @@ namespace OpenKNX
         KNX_SERIAL.setTX(KNX_UART_TX_PIN);
 #endif
 
-        // pin or GPIO programming button is connected to. Default is 0
-        knx.buttonPin(PROG_BUTTON_PIN);
-        // Is the interrupt created in RISING or FALLING signal? Default is RISING
-        // knx.buttonPinInterruptOn(PROG_BUTTON_PIN_INTERRUPT_ON);
+        openknx.progButton.onShortClick([]() -> void {
+            knx.toggleProgMode();
+        });
 
         knx.ledPin(0);
         knx.setProgLedOnCallback([]() -> void {

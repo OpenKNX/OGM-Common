@@ -1,5 +1,6 @@
 #pragma once
 #include "OpenKNX/Led.h"
+#include "OpenKNX/Button.h"
 #include <Arduino.h>
 
 #ifdef ARDUINO_ARCH_RP2040
@@ -88,6 +89,7 @@ namespace OpenKNX
     {
       private:
         uint8_t features = 0;
+        void testbtn();
 
       public:
         // Initialize or HW detection
@@ -119,5 +121,6 @@ namespace OpenKNX
 #endif
         void initFlash();
         void initLeds();
+        void initButtons();
     };
 } // namespace OpenKNX

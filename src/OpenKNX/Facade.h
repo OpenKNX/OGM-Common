@@ -39,6 +39,18 @@ namespace OpenKNX
         Log::Logger logger;
         TimerInterrupt timerInterrupt;
         Hardware hardware;
+
+        Button progButton = Button("Prog");
+#ifdef FUNC1_BUTTON_PIN
+        Button func1Button = Button("Func1");
+#endif
+#ifdef FUNC2_BUTTON_PIN
+        Button func2Button = Button("Func2");
+#endif
+#ifdef FUNC3_BUTTON_PIN
+        Button func3Button = Button("Func3");
+#endif
+
         Led progLed;
 #ifdef INFO1_LED_PIN
         Led info1Led;
@@ -63,7 +75,7 @@ namespace OpenKNX
         void setup1();
 #endif
         void addModule(uint8_t id, Module* module);
-        void addModule(uint8_t id, Module &module);
+        void addModule(uint8_t id, Module& module);
         Module* getModule(uint8_t id);
         Modules* getModules();
         bool afterStartupDelay();

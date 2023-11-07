@@ -35,6 +35,37 @@ namespace OpenKNX
 #endif
     }
 
+    void Hardware::initButtons()
+    {
+        pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
+        attachInterrupt(
+            digitalPinToInterrupt(PROG_BUTTON_PIN),
+            []() -> void { openknx.progButton.change(!digitalRead(PROG_BUTTON_PIN)); },
+            CHANGE);
+
+#ifdef FUNC1_BUTTON_PIN
+        pinMode(FUNC1_BUTTON_PIN, INPUT_PULLUP);
+        attachInterrupt(
+            digitalPinToInterrupt(FUNC1_BUTTON_PIN),
+            []() -> void { openknx.func1Button.change(!digitalRead(FUNC1_BUTTON_PIN)); },
+            CHANGE);
+#endif
+
+#ifdef FUNC2_BUTTON_PIN
+        pinMode(FUNC2_BUTTON_PIN, INPUT_PULLUP);
+        attachInterrupt(
+            digitalPinToInterrupt(FUNC2_BUTTON_PIN),
+            []() -> void { openknx.func2Button.change(!digitalRead(FUNC2_BUTTON_PIN)); }, CHANGE);
+#endif
+
+#ifdef FUNC3_BUTTON_PIN
+        pinMode(FUNC3_BUTTON_PIN, INPUT_PULLUP);
+        attachInterrupt(
+            digitalPinToInterrupt(FUNC3_BUTTON_PIN),
+            []() -> void { openknx.func3Button.change(!digitalRead(FUNC3_BUTTON_PIN)); }, CHANGE);
+#endif
+    }
+
     void Hardware::initFlash()
     {
         logDebug("Hardware<Flash>", "Initialize flash");

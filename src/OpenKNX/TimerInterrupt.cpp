@@ -122,8 +122,32 @@ namespace OpenKNX
     void __isr __time_critical_func(TimerInterrupt::interrupt)()
     {
         _time = millis();
-        openknx.common.collectMemoryStats();
 
+        processStats();
+        processLeds();
+        processButtons();
+    }
+
+    void TimerInterrupt::processStats()
+    {
+        openknx.common.collectMemoryStats();
+    }
+
+    void TimerInterrupt::processButtons()
+    {
+        openknx.progButton.loop();
+#ifdef FUNC1_BUTTON_PIN
+        openknx.func1Button.loop();
+#endif
+#ifdef FUNC2_BUTTON_PIN
+        openknx.func2Button.loop();
+#endif
+#ifdef FUNC3_BUTTON_PIN
+        openknx.func3Button.loop();
+#endif
+    }
+    void TimerInterrupt::processLeds()
+    {
         if (_time % 2)
         {
             openknx.progLed.loop();
@@ -161,24 +185,8 @@ namespace OpenKNX
     void __isr __time_critical_func(TimerInterrupt::interrupt1)()
     {
         _time1 = millis();
-        openknx.common.collectMemoryStats();
-        
-        if (_time % 2)
-        {
-#ifdef INFO1_LED_PIN
-            openknx.info1Led.loop();
-#endif
-#ifdef INFO3_LED_PIN
-            openknx.info3Led.loop();
-#endif
-        }
-        else
-        {
-            openknx.progLed.loop();
-#ifdef INFO2_LED_PIN
-            openknx.info2Led.loop();
-#endif
-        }
+        processStats();
+        processLeds();
     }
 
     #ifdef ARDUINO_ARCH_RP2040
