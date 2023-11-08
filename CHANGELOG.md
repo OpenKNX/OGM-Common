@@ -1,20 +1,25 @@
 # Changes
 
-## 2023-10-30
-* Feature: Allows to pass a module reference to addModule
+## 1.0.9: 2023-11-06 - 2023-11-12
+* Feature: Adds an inverted mode for the led effect activity
+* Feature: Adds custom button processing to offer short click, long click and double click
 
-## 2023-10-23 - 2023-10-29
+## 1.0.8: 2023-10-30 - 2023-11-05
+* Feature: Allows to pass a module reference to addModule
+* Improvement: Swap the meaning of info1Led and progLed in the boot phase.
+
+## 1.0.7: 2023-10-23 - 2023-10-29
 * Refactor: Led handling to optimize ram usage
 * Refactor: Rename openknx.ledInfo to openknx.led1Info and also the defines
 * Feature: Add 2 new infoLeds. Now we have 4 global Leds: progLed, info1Led, info2Led, info3Led
 * Feature: Add new Led effects (Activity & Flash)
 * Refactor: Remove -D LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS
 
-## 2023-10-13
+## 1.0.6: 2023-10-13
 * Refactor: Force an overload of the name() and version(). 
 * Feature: Hide modules with blank version on the console.
 
-## 2023-10-02 -- 2023-10-07
+## 1.0.5: 2023-10-02 -- 2023-10-07
 * Restore-Scripts:
   * Use knx from OpenKNX-Repository
   * Improve error-handling: Restore working-directory before exit 1
@@ -23,12 +28,12 @@
 * Refactor: Optimization of the logger to use less memory on the stack.
 * Feature: Stack usage monitoring
 
-## 2023-09-29 -- 2023-10-01
+## 1.0.4: 2023-09-29 -- 2023-10-01
 * Stability: Initialize string buffers 
 * Stability/Improvement: Read hardware serial once on startup only, not in console output
 * Fix: [Skip processModulesLoop with 0 modules (for testing)](https://github.com/OpenKNX/OGM-Common/commit/c663b51cadbfc9ae9b2c9ca61a919f20e5632598)
 
-## 2023-09-22 -- 2023-09-26
+## 1.0.3: 2023-09-22 -- 2023-09-26
 * Fix: Diagnose-KO with 14 characters input ([Quick-Fix for Missing \0 at End of 14 Characters Strings](https://github.com/OpenKNX/OGM-Common/commit/ec3a31ef96d1b1af7b5327e356de78fcdc092293))
 * Improvement: Console-Output
   * Version-Listing on Console
@@ -41,7 +46,7 @@
 * Change: Increase `OPENKNX_LOOPTIME_WARNING` default from 6ms to 7ms
 * Extension: New Hardware `OKNXHW_REG1_CONTROLLER2040` and `OKNXHW_REG1_IPCONTROLLER2040`
 
-## 2023-09-04 -- 2023-09-17
+## 1.0.2: 2023-09-04 -- 2023-09-17
 * Feature: Show uptime in human-readable form (days hh:mm:ss)
 * Fix/Extension: `Common:uptime(..)` provides uptime in seconds, detecting overflow of `millis()` for correct uptimes >49 days
 * Fix: [Process command 'versions' from console only](https://github.com/OpenKNX/OGM-Common/commit/9576370424712666d5b24dcefb23062d2d4a4ca2)
@@ -52,7 +57,7 @@
 * Extension: Introduce `Common::freeLoopIterate(..)` as Helper for module / channel iteration respecting `freeLoopTime()`
   * Change: At least one module will be called in `Common::loop()`
 
-## 2023-08-11 -- 2023-09-03
+## 1.0.1: 2023-08-11 -- 2023-09-03
 * Improvement: [Show commons version in console and show running firmware version first](https://github.com/OpenKNX/OGM-Common/commit/05c58c60fa8ffc4406be2c6e058be3110b2430e3)
 * Documentation: Reformat Tables in README
 * Fix: [Parsing of application number](https://github.com/OpenKNX/OGM-Common/commit/86f6f77f338c310ac4f687f9650e90a829e16a35)
@@ -63,5 +68,5 @@
 * Portability: [Use flash slots + slot version only on rp2040](https://github.com/OpenKNX/OGM-Common/commit/6559af514074ed079aaade39f49230b42e5bcb62)
 * Feature: [Use callbacks in knx stack for register external flash system](https://github.com/OpenKNX/OGM-Common/commit/c725bd94c6a3111cf39155e2c544984510b00bdc)
 
-# v1 (2023-08-11)
+## 1.0.0: (2023-08-11)
 New modular commons architecture seen as stable and recommended for usage in all OpenKNX firmwars. 
