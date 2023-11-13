@@ -1,15 +1,16 @@
 #pragma once
 #include "OpenKNX/defines.h"
 #include <Arduino.h>
+#include <functional>
 #include <string>
 
 #define OPENKNX_BUTTON_DEBOUNCE 50
 #define OPENKNX_BUTTON_DOUBLE_CLICK 500
 #define OPENKNX_BUTTON_LONG_CLICK 1000
 
-typedef void (*ShortClickCallbackFunction)();
-typedef void (*LongClickCallbackFunction)();
-typedef void (*DoubleClickCallbackFunction)();
+typedef std::function<void(void)> ShortClickCallbackFunction;
+typedef std::function<void(void)> LongClickCallbackFunction;
+typedef std::function<void(void)> DoubleClickCallbackFunction;
 
 namespace OpenKNX
 {
