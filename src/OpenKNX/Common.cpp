@@ -130,17 +130,11 @@ namespace OpenKNX
         KNX_SERIAL.setTX(KNX_UART_TX_PIN);
 #endif
 
-        openknx.progButton.onShortClick([]() -> void {
-            knx.toggleProgMode();
-        });
+        openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
 
         knx.ledPin(0);
-        knx.setProgLedOnCallback([]() -> void {
-            openknx.progLed.forceOn(true);
-        });
-        knx.setProgLedOffCallback([]() -> void {
-            openknx.progLed.forceOn(false);
-        });
+        knx.setProgLedOnCallback([] { openknx.progLed.forceOn(true); });
+        knx.setProgLedOffCallback([] { openknx.progLed.forceOn(false); });
 
         uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, 0x00};
 
