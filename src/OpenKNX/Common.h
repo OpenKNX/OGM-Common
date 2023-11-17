@@ -45,9 +45,9 @@ namespace OpenKNX
         bool _savePinTriggered = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
 #ifdef ARDUINO_ARCH_RP2040
-        volatile int32_t _freeStackMin = 0x1000;
+        volatile int32_t _freeStackMin = 0x2000;
     #ifdef OPENKNX_DUALCORE
-        volatile int32_t _freeStackMin1 = 0x1000;
+        volatile int32_t _freeStackMin1 = 0x2000;
     #endif
 #endif
 

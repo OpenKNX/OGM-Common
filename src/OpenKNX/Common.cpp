@@ -436,10 +436,10 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
     #ifdef OPENKNX_DUALCORE
         if (rp2040.cpuid())
-            _freeStackMin1 = MIN(_freeStackMin1, freeStackSize());
+            _freeStackMin1 = MIN(_freeStackMin1, rp2040.getFreeStack());
         else
     #endif
-            _freeStackMin = MIN(_freeStackMin, freeStackSize());
+            _freeStackMin = MIN(_freeStackMin, rp2040.getFreeStack());
 #endif
     }
 
