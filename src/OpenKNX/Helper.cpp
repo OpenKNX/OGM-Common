@@ -17,8 +17,10 @@ extern char *__brkval;
 
 int freeMemory()
 {
-#ifdef ARDUINO_ARCH_ESP32
+#if defined(ARDUINO_ARCH_ESP32)
     return ESP.getFreeHeap();
+#elif defined(ARDUINO_ARCH_RP2040)
+    return rp2040.getFreeHeap();
 #else
     char top;
     #ifdef __arm__
@@ -72,32 +74,13 @@ bool __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
     }
 }
 
-uint32_t stackPointer()
-{
-    uint32_t *sp;
-    asm volatile("mov %0, sp"
-                 : "=r"(sp));
-    return (uint32_t)sp;
-}
-
-int freeStackSize()
-{
-    unsigned int sp = stackPointer();
-    uint32_t ref = 0x20041000;
-    #ifdef OPENKNX_DUALCORE
-    if (rp2040.cpuid() == 1) ref = 0x20040000;
-    #endif
-
-    return sp - ref;
-}
-
 #ifdef SERIAL_DEBUG
 void printFreeStackSize()
 {
     #ifdef OPENKNX_DUALCORE
     SERIAL_DEBUG.print(rp2040.cpuid() ? "_1> " : "0_> ");
     #endif
-    SERIAL_DEBUG.printf("Free stack size: %i bytes\r\n", freeStackSize());
+    SERIAL_DEBUG.printf("Free stack size: %i bytes\r\n", rp2040.getFreeStack());
 }
 #endif
 #endif
