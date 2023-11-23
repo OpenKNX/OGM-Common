@@ -492,13 +492,15 @@ namespace OpenKNX
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
             openknx.logger.logWithPrefixAndValues("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-            __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+            if(!__nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE))
+                openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
         if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
         {
             openknx.logger.logWithPrefixAndValues("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
-            __nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+            if(!__nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE))
+                openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
         if (mode == EraseMode::All || mode == EraseMode::Filesystem)
@@ -513,7 +515,8 @@ namespace OpenKNX
         if (mode == EraseMode::All)
         {
             openknx.logger.logWithPrefix("Erase", "First bytes of Firmware");
-            __nukeFlash(0, 4096);
+            if(!__nukeFlash(0, 4096))
+                openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
         openknx.progLed.forceOn();

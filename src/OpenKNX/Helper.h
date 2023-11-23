@@ -36,7 +36,9 @@ int freeMemory();
 /*
  * Erase flash
  */
-void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count);
+bool __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count);
 
+#ifdef SERIAL_DEBUG
 void printFreeStackSize();
+#endif
 #endif
