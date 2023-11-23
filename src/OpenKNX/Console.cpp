@@ -14,7 +14,7 @@ namespace OpenKNX
             processSerialInput();
     }
 
-#ifdef LOG_KoDiagnose
+#ifdef BASE_KoDiagnose
     void Console::writeDiagenoseKo(const char* message, ...)
     {
         va_list values;
@@ -29,7 +29,7 @@ namespace OpenKNX
         va_end(values);
 
         _diagnoseKoOutput = true;
-        KoLOG_Diagnose.value(buffer, Dpt(16, 1));
+        KoBASE_Diagnose.value(buffer, Dpt(16, 1));
         knx.loop();
         _diagnoseKoOutput = false;
     }
@@ -243,7 +243,7 @@ namespace OpenKNX
         showMemory();
 
 #ifdef OPENKNX_WATCHDOG
-        if (ParamLOG_Watchdog)
+        if (ParamBASE_Watchdog)
             openknx.logger.logWithPrefixAndValues("Watchdog", "Running (%ims)", OPENKNX_WATCHDOG_MAX_PERIOD);
         else
             openknx.logger.logWithPrefixAndValues("Watchdog", "Disabled");
@@ -387,7 +387,7 @@ namespace OpenKNX
         char result[26] = {};
         sprintf(result, "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)secs);
 
-#ifdef LOG_KoDiagnose
+#ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {
             openknx.console.writeDiagenoseKo("%s", result);
@@ -399,7 +399,7 @@ namespace OpenKNX
     void Console::showMemory(bool diagnoseKo /* = false */)
     {
 
-#ifdef LOG_KoDiagnose
+#ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {
             openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));

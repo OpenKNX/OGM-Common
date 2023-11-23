@@ -227,10 +227,10 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
 
-#ifdef LOG_StartupDelayBase
+#ifdef BASE_StartupDelayBase
         _startupDelay = millis();
 #endif
-#ifdef LOG_HeartbeatDelayBase
+#ifdef BASE_HeartbeatDelayBase
         _heartbeatDelay = 0;
 #endif
 
@@ -308,7 +308,7 @@ namespace OpenKNX
 #ifdef OPENKNX_WATCHDOG
     void Common::watchdogSetup()
     {
-        if (!ParamLOG_Watchdog) return;
+        if (!ParamBASE_Watchdog) return;
 
         logInfo("Watchdog", "Start with a watchtime of %ims", OPENKNX_WATCHDOG_MAX_PERIOD);
     #if defined(ARDUINO_ARCH_SAMD)
@@ -324,7 +324,7 @@ namespace OpenKNX
     void Common::watchdogLoop()
     {
         if (!delayCheck(watchdog.timer, OPENKNX_WATCHDOG_MAX_PERIOD / 10)) return;
-        if (!ParamLOG_Watchdog) return;
+        if (!ParamBASE_Watchdog) return;
 
         Watchdog.reset();
         watchdog.timer = millis();
@@ -370,7 +370,7 @@ namespace OpenKNX
         if (knx.configured())
         {
 
-#ifdef LOG_HeartbeatDelayBase
+#ifdef BASE_HeartbeatDelayBase
             // Handle heartbeat delay
             processHeartbeat();
 #endif
@@ -499,8 +499,8 @@ namespace OpenKNX
         if (afterStartupDelay())
             return;
 
-#ifdef LOG_StartupDelayBase
-        if (!delayCheck(_startupDelay, ParamLOG_StartupDelayTimeMS))
+#ifdef BASE_StartupDelayBase
+        if (!delayCheck(_startupDelay, ParamBASE_StartupDelayTimeMS))
             return;
 #endif
 
@@ -517,14 +517,14 @@ namespace OpenKNX
         logIndentDown();
     }
 
-#ifdef LOG_HeartbeatDelayBase
+#ifdef BASE_HeartbeatDelayBase
     void Common::processHeartbeat()
     {
         // the first heartbeat is send directly after startup delay of the device
-        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, ParamLOG_HeartbeatDelayTimeMS))
+        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, ParamBASE_HeartbeatDelayTimeMS))
         {
             // we waited enough, let's send a heartbeat signal
-            KoLOG_Heartbeat.value(true, DPT_Switch);
+            KoBASE_Heartbeat.value(true, DPT_Switch);
             _heartbeatDelay = millis();
         }
     }
@@ -663,8 +663,8 @@ namespace OpenKNX
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
     void Common::processInputKo(GroupObject& ko)
     {
-    #ifdef LOG_KoDiagnose
-        if (ko.asap() == LOG_KoDiagnose)
+    #ifdef BASE_KoDiagnose
+        if (ko.asap() == BASE_KoDiagnose)
         {
             openknx.console.processDiagnoseKo(ko);
             return;

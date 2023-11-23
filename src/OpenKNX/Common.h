@@ -67,7 +67,7 @@ namespace OpenKNX
 #ifdef OPENKNX_WATCHDOG
         void watchdogSetup();
 #endif
-#ifdef LOG_HeartbeatDelayBase
+#ifdef BASE_HeartbeatDelayBase
         uint32_t _heartbeatDelay;
         void processHeartbeat();
 #endif
@@ -94,7 +94,7 @@ namespace OpenKNX
         void loop1();
 #endif
 
-#ifdef LOG_StartupDelayBase
+#ifdef BASE_StartupDelayBase
         uint32_t _startupDelay;
 #endif
 #ifdef OPENKNX_WATCHDOG

@@ -82,61 +82,61 @@
 // New ETS Base View
 // CHeck on Param is available
 
-#if defined(BASE_StartupDelayBase) && defined(LOG_StartupDelayBase)
-#undef LOG_StartupDelayBase
-#undef ParamLOG_StartupDelayBase
-#define LOG_StartupDelayBase BASE_StartupDelayBase
-#define ParamLOG_StartupDelayBase ParamBASE_StartupDelayBase
-#undef LOG_StartupDelayTime
-#undef ParamLOG_StartupDelayTime
-#define LOG_StartupDelayTime BASE_StartupDelayTime
-#define ParamLOG_StartupDelayTime ParamBASE_StartupDelayTime
-#undef LOG_StartupDelayTimeMS
-#undef ParamLOG_StartupDelayTimeMS
-#define LOG_StartupDelayTimeMS BASE_StartupDelayTimeMS
-#define ParamLOG_StartupDelayTimeMS ParamBASE_StartupDelayTimeMS
-#endif
+// #if defined(BASE_StartupDelayBase) && defined(LOG_StartupDelayBase)
+// #undef LOG_StartupDelayBase
+// #undef ParamLOG_StartupDelayBase
+// #define LOG_StartupDelayBase BASE_StartupDelayBase
+// #define ParamLOG_StartupDelayBase ParamBASE_StartupDelayBase
+// #undef LOG_StartupDelayTime
+// #undef ParamLOG_StartupDelayTime
+// #define LOG_StartupDelayTime BASE_StartupDelayTime
+// #define ParamLOG_StartupDelayTime ParamBASE_StartupDelayTime
+// #undef LOG_StartupDelayTimeMS
+// #undef ParamLOG_StartupDelayTimeMS
+// #define LOG_StartupDelayTimeMS BASE_StartupDelayTimeMS
+// #define ParamLOG_StartupDelayTimeMS ParamBASE_StartupDelayTimeMS
+// #endif
 
-#if defined(BASE_HeartbeatDelayBase) && defined(LOG_HeartbeatDelayBase)
-#undef KoLOG_Heartbeat
-#define KoLOG_Heartbeat KoBASE_Heartbeat
-#undef LOG_HeartbeatDelayBase
-#undef ParamLOG_HeartbeatDelayBase
-#define LOG_HeartbeatDelayBase BASE_HeartbeatDelayBase
-#define ParamLOG_HeartbeatDelayBase ParamBASE_HeartbeatDelayBase
-#undef LOG_HeartbeatDelayTime
-#undef ParamLOG_HeartbeatDelayTime
-#define LOG_HeartbeatDelayTime BASE_HeartbeatDelayTime
-#define ParamLOG_HeartbeatDelayTime ParamBASE_HeartbeatDelayTime
-#undef LOG_HeartbeatDelayTimeMS
-#undef ParamLOG_HeartbeatDelayTimeMS
-#define LOG_HeartbeatDelayTimeMS BASE_HeartbeatDelayTimeMS
-#define ParamLOG_HeartbeatDelayTimeMS ParamBASE_HeartbeatDelayTimeMS
-#endif
+// #if defined(BASE_HeartbeatDelayBase) && defined(LOG_HeartbeatDelayBase)
+// #undef KoLOG_Heartbeat
+// #define KoLOG_Heartbeat KoBASE_Heartbeat
+// #undef LOG_HeartbeatDelayBase
+// #undef ParamLOG_HeartbeatDelayBase
+// #define LOG_HeartbeatDelayBase BASE_HeartbeatDelayBase
+// #define ParamLOG_HeartbeatDelayBase ParamBASE_HeartbeatDelayBase
+// #undef LOG_HeartbeatDelayTime
+// #undef ParamLOG_HeartbeatDelayTime
+// #define LOG_HeartbeatDelayTime BASE_HeartbeatDelayTime
+// #define ParamLOG_HeartbeatDelayTime ParamBASE_HeartbeatDelayTime
+// #undef LOG_HeartbeatDelayTimeMS
+// #undef ParamLOG_HeartbeatDelayTimeMS
+// #define LOG_HeartbeatDelayTimeMS BASE_HeartbeatDelayTimeMS
+// #define ParamLOG_HeartbeatDelayTimeMS ParamBASE_HeartbeatDelayTimeMS
+// #endif
 
-#if defined(BASE_Diagnose) && defined(LOG_Diagnose)
-#undef KoLOG_Diagnose
-#define KoLOG_Diagnose KoBASE_Diagnose
-#undef LOG_Diagnose
-#undef ParamLOG_Diagnose
-#define LOG_Diagnose BASE_Diagnose
-#define ParamLOG_Diagnose ParamBASE_Diagnose
-#endif
+// #if defined(BASE_Diagnose) && defined(LOG_Diagnose)
+// #undef KoLOG_Diagnose
+// #define KoLOG_Diagnose KoBASE_Diagnose
+// #undef LOG_Diagnose
+// #undef ParamLOG_Diagnose
+// #define LOG_Diagnose BASE_Diagnose
+// #define ParamLOG_Diagnose ParamBASE_Diagnose
+// #endif
 
-#if defined(BASE_ReadTimeDate) && defined(LOG_ReadTimeDate)
-#undef LOG_ReadTimeDate
-#undef ParamLOG_ReadTimeDate
-#define LOG_ReadTimeDate BASE_ReadTimeDate
-#define ParamLOG_ReadTimeDate ParamBASE_ReadTimeDate
-#endif
+// #if defined(BASE_ReadTimeDate) && defined(LOG_ReadTimeDate)
+// #undef LOG_ReadTimeDate
+// #undef ParamLOG_ReadTimeDate
+// #define LOG_ReadTimeDate BASE_ReadTimeDate
+// #define ParamLOG_ReadTimeDate ParamBASE_ReadTimeDate
+// #endif
 
-#if defined(BASE_CombinedTimeDate) && defined(LOG_CombinedTimeDate)
-#undef KoLOG_Time
-#define KoLOG_Time KoBASE_Time
-#undef KoLOG_Date
-#define KoLOG_Date KoBASE_Date
-#undef LOG_CombinedTimeDate
-#undef ParamLOG_CombinedTimeDate
-#define LOG_CombinedTimeDate BASE_CombinedTimeDate
-#define ParamLOG_CombinedTimeDate ParamBASE_CombinedTimeDate
-#endif
+// #if defined(BASE_CombinedTimeDate) && defined(LOG_CombinedTimeDate)
+// #undef KoLOG_Time
+// #define KoLOG_Time KoBASE_Time
+// #undef KoLOG_Date
+// #define KoLOG_Date KoBASE_Date
+// #undef LOG_CombinedTimeDate
+// #undef ParamLOG_CombinedTimeDate
+// #define LOG_CombinedTimeDate BASE_CombinedTimeDate
+// #define ParamLOG_CombinedTimeDate ParamBASE_CombinedTimeDate
+// #endif
