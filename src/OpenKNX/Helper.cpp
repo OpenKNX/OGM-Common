@@ -55,11 +55,11 @@ uint32_t uptime(bool result)
  * Nuker
  */
 #ifdef ARDUINO_ARCH_RP2040
-void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
+bool __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
 {
     if (offset % 4096 > 0 || size % 4096 > 0)
     {
-        openknx.logger.log("Fatal: nuke paramters invalid");
+        return false;
     }
     else
     {
@@ -68,6 +68,7 @@ void __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t size)
         flash_range_erase(offset, size);
         interrupts();
         rp2040.resumeOtherCore();
+        return true;
     }
 }
 
@@ -90,6 +91,7 @@ int freeStackSize()
     return sp - ref;
 }
 
+#ifdef SERIAL_DEBUG
 void printFreeStackSize()
 {
     #ifdef OPENKNX_DUALCORE
@@ -97,4 +99,5 @@ void printFreeStackSize()
     #endif
     SERIAL_DEBUG.printf("Free stack size: %i bytes\r\n", freeStackSize());
 }
+#endif
 #endif
