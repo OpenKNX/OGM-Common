@@ -266,9 +266,32 @@
               <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000301" RefId="%AID%_O-%TT%00003" />
               <!-- Diagnose-->
               <ComObjectRef Id="%AID%_O-%TT%00007_R-%TT%0000701" RefId="%AID%_O-%TT%00007" />
-
             </ComObjectRefs>
+            <Script>
+              <op:include href="Common.script.js" prefix="BASE" type="script" />
+            </Script>            
           </Static>
+          <ModuleDefs>
+            <ModuleDef Id="%AID%_MD-%TT%00001" Name="KommentarModule">
+              <!-- <Arguments>
+                <Argument Id="%AID%_MD-%TT%00001_A-1" Name="argHelpContext" Type="Text" />
+              </Arguments> -->
+              <Static>
+                <Parameters>
+                  <Parameter Id="%AID%_MD-%TT%00001_P-%TT%00001" Name="Kommentar-%TT%00001" ParameterType="%AID%_PT-Text512Byte" Text="Kommentar" Value="" />
+                </Parameters>
+                <ParameterRefs>
+                  <ParameterRef Id="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" RefId="%AID%_MD-%TT%00001_P-%TT%00001" />
+                </ParameterRefs>
+              </Static>
+              <Dynamic>
+                <ParameterBlock Id="%AID%_MD-%TT%00001_PB-nnn" Inline="true">
+                  <ParameterRefRef RefId="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" HelpContext="Base-Kommentar" />
+                  <Button Id="%AID%_MD-%TT%00001_B-%TT%00001" Text="Alle '\n' im Text durch neue Zeile(n) ersetzen" EventHandler="newline" EventHandlerParameters="{ &quot;textbox&quot;:&quot;BASE_Kommentar-%TT%00001&quot; }" />
+                </ParameterBlock>
+              </Dynamic>
+            </ModuleDef> 
+          </ModuleDefs>
           <Dynamic>
             <ChannelIndependentBlock>
               <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="Empty">
