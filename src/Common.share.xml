@@ -419,23 +419,8 @@
                 </choose>
 
                 <ParameterSeparator Id="%AID%_PS-49" Text="Gerätestandort" UIHint="Headline" />
-                <ParameterBlock Id="%AID%_PB-nnn" Name="GeoCoordinates" Inline="true" Layout="Grid" HelpContext="Empty">
-                  <Rows>
-                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                    <Row Id="%AID%_PB-nnn_R-2" Name="Row2" />
-                  </Rows>
-                  <Columns>
-                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="45%" />
-                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="15%" />
-                    <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="20%" />
-                  </Columns>
-                  <ParameterSeparator Id="%AID%_PS-nnn" Text="  Breitengrad" Cell="1,1" />
-                  <ParameterRefRef RefId="%AID%_UP-%TT%00142_R-%TT%0014201" Cell="1,2" HelpContext="Empty" />
-                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Nord" Cell="1,3" />
-                  <ParameterSeparator Id="%AID%_PS-nnn" Text="  Längengrad" Cell="2,1" />
-                  <ParameterRefRef RefId="%AID%_UP-%TT%00143_R-%TT%0014301" Cell="2,2" HelpContext="Empty" />
-                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Ost" Cell="2,3" />
-                </ParameterBlock>
+                <ParameterRefRef RefId="%AID%_UP-%TT%00142_R-%TT%0014201" HelpContext="Base-Location" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00143_R-%TT%0014301" HelpContext="Base-Location" IndentLevel="1" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00146_R-%TT%0014601" HelpContext="Base-Diagnose" IndentLevel="1" />
                 <choose ParamRefId="%AID%_UP-%TT%00146_R-%TT%0014601">
