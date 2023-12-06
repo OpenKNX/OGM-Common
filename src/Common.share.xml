@@ -431,8 +431,7 @@
                 </choose>
                 <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="Base-Watchdog" IndentLevel="1" />
 
-
-                <ParameterBlock Id="%AID%_PB-nnn" Name="PoweredBy" Inline="true" Layout="Grid">
+                <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid">
                   <Rows>
                     <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
                   </Rows>
@@ -442,7 +441,7 @@
                   <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" Cell="1,1"/>
                 </ParameterBlock>
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX-Projekt" UIHint="Headline" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX ist eine DIY-Gemeinschaft, die kostenlose KNX-Lösungen entwickelt. Die Software zeichnet sich durch einen umfangreichen Funktionsumfang aus, was individuelle Smart-Home-Gestaltung und vielfältige technische Möglichkeiten bietet." />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX ist eine DIY-Gemeinschaft, die kostenlose KNX-Lösungen entwickelt. Die Software zeichnet sich durch einen umfangreichen Funktionsumfang aus, was individuelle Smarthome-Lösungen und vielfältige technische Möglichkeiten bietet." />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Weitere Informationen findest du unter: www.openknx.de - wiki.openknx.de - forum.openknx.de" />
               </ParameterBlock>
             </ChannelIndependentBlock>
