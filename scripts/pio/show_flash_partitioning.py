@@ -64,8 +64,8 @@ def show_flash_partitioning(source, target, env):
             if (element in stack):
                 continue
 
-            if (element.start >= start and element.start < end):
-                if (prev != element.start and element.start > prev):
+            if start <= element.start < end:
+                if element.start > prev:
                     print_entry(console_color.GREEN, FlashRegion('FREE', prev, element.start), indent)
 
                 stack.append(element)
@@ -150,6 +150,43 @@ def show_flash_partitioning(source, target, env):
             return 0
         return int(m.group(1))
 
+    def estimate_knx_used():
+        # Größe der Parameter
+        knx_parameter_size = get_knxprod_define_value("MAIN_ParameterSize")
+        # Größe der KO Tabelle
+        knx_ko_table_size = get_knxprod_define_value("MAIN_MaxKoNumber") * 2
+        # Größe der GA Tabelle geschätzt
+        # Annahme, dass im Schnitt 2 GA mit einem KO verknüpft wird = get_knx_max_ko_number * 2 (Eintrag) * 2 (GAs)
+        knx_ga_table_size = knx_ko_table_size * 2
+        # jede GA muss auch einem KO zugeordnet werden können = get_knx_max_ko_number * 4 (Eintrag) * 2 (GAs)
+        knx_association_table_size = knx_ko_table_size * 4
+
+        # Metadaten & etwas Overhead
+        knx_meta = 100
+        # Zusammen gerechnete Größe
+        return knx_meta + knx_parameter_size + knx_ko_table_size + knx_ga_table_size + knx_association_table_size
+
+    def get_defined_sizes():
+        defined_sizes = {}
+        for x in projenv["CPPDEFINES"]:
+            if type(x) is tuple:
+                name = x[0]
+                if (x[0].endswith("_FLASH_OFFSET") or x[0].endswith("_FLASH_SIZE")):
+                    name = name.replace("_FLASH_OFFSET", "")
+                    name = name.replace("_FLASH_SIZE", "")
+                    if (name not in defined_sizes):
+                        defined_sizes[name] = {'offset': 0, 'size': 0}
+
+                    if (x[0].endswith("_FLASH_OFFSET")):
+                        defined_sizes[name]['offset'] = int(x[1], 16)
+
+                    if (x[0].endswith("_FLASH_SIZE")):
+                        defined_sizes[name]['size'] = int(x[1], 16)
+        if projenv['PIOPLATFORM'] == 'atmelsam' and defined_sizes['KNX']['offset'] <= 0:
+            defined_sizes['KNX']['offset'] = system_end - defined_sizes['KNX']['size']
+        return defined_sizes
+
+
     # print(str(source[0]))
     # print(env.Dictionary())
     # print(projenv.Dictionary())
@@ -180,48 +217,15 @@ def show_flash_partitioning(source, target, env):
     if projenv['PIOPLATFORM'] != 'atmelsam':
         flash_elements.append(FlashRegion('EEPROM', eeprom_start, eeprom_end))
 
-    defined_sizes = {}
-    for x in projenv["CPPDEFINES"]:
-        if type(x) is tuple:
-            name = x[0]
-            if (x[0].endswith("FLASH_OFFSET") or x[0].endswith("FLASH_SIZE")):
-                name = name.replace("_FLASH_OFFSET", "")
-                name = name.replace("_FLASH_SIZE", "")
-                if(name not in defined_sizes):
-                    defined_sizes[name] = { 'offset': 0, 'size': 0 }
-
-                if(x[0].endswith("FLASH_OFFSET")):
-                    defined_sizes[name]['offset'] = int(x[1], 16)
-
-                if(x[0].endswith("_FLASH_SIZE")):
-                    defined_sizes[name]['size'] = int(x[1], 16)
-
-    if projenv['PIOPLATFORM'] == 'atmelsam' and defined_sizes['KNX']['offset'] <= 0:
-        defined_sizes['KNX']['offset'] = system_end - defined_sizes['KNX']['size']
-
     # Schätzung der nutzung des knx speichers
-    # Größe der Parameter
-    knx_parameter_size = get_knxprod_define_value("MAIN_ParameterSize")
-    # Größe der KO Tabelle
-    knx_ko_table_size = get_knxprod_define_value("MAIN_MaxKoNumber") * 2
-    # Größe der GA Tabelle geschätzt
-    # Annahme, dass im Schnitt 2 GA mit einem KO verknüpft wird = get_knx_max_ko_number * 2 (Eintrag) * 2 (GAs)
-    knx_ga_table_size = knx_ko_table_size * 2
-    # jede GA muss auch einem KO zugeordnet werden können = get_knx_max_ko_number * 4 (Eintrag) * 2 (GAs)
-    knx_association_table_size = knx_ko_table_size * 4
+    knx_used = estimate_knx_used()
 
-    # Metadaten & etwas Overhead
-    knx_meta = 100
-    # Zusammen gerechnete Größe
-    knx_used = knx_meta + knx_parameter_size + knx_ko_table_size + knx_ga_table_size + knx_association_table_size
-
-    for name, data in defined_sizes.items():
+    for name, data in get_defined_sizes().items():
         if data['offset'] > 0 and data['size'] > 0:
-            container = False
-            if name == "KNX" and knx_used > 0:
-                container = True
+            is_data_container = (name == "KNX" and knx_used > 0)
+            if is_data_container:
                 flash_elements.append(FlashRegion("DATA*", data['offset'], data['offset'] + knx_used))
-            flash_elements.append(FlashRegion(name, data['offset'], data['offset'] + data['size'], container))
+            flash_elements.append(FlashRegion(name, data['offset'], data['offset'] + data['size'], is_data_container))
 
 
     sorted_flash_elements = sorted(flash_elements, key=lambda element: (element.start, -element.size()))
