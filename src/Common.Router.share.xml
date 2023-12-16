@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  <!-- This is a special include File for Applications that do not allow Group objects like a Router. In this file, only parts that differ from Common.share.xml are specified. For the other parts, use the Common.share.xml -->
+  <ManufacturerData>
+    <Manufacturer RefId="M-00FA">
+      <ApplicationPrograms>
+        <ApplicationProgram>
+          <Static>
+            <Parameters>
+              <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
+              <Parameter Id="%AID%_P-%TT%00010" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Text="InternalTime" Access="None" Value="0" />
+              <Union SizeInBit="32">
+                <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00002" Name="StartupDelayBase"   ParameterType="%AID%_PT-DelayBase"        Offset="0" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00003" Name="StartupDelayTime"   ParameterType="%AID%_PT-DelayTimeMin1"    Offset="0" BitOffset="2" Text="Zeit" Value="1" />
+              </Union>
+              <Union SizeInBit="16">
+                <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
+              </Union>
+            </Parameters>
+            <ParameterRefs>
+              <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
+              <ParameterRef Id="%AID%_P-%TT%00010_R-%TT%0001001" RefId="%AID%_P-%TT%00010" />
+              <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
+              <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
+              <ParameterRef Id="%AID%_UP-%TT%00147_R-%TT%0014701" RefId="%AID%_UP-%TT%00147" />
+            </ParameterRefs>
+          </Static>
+          <Dynamic>
+            <ChannelIndependentBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="Empty">
+                <!-- Hidden -->
+                <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline"/>
+                <!-- Startup Delay pattern -->
+                <ParameterBlock Id="%AID%_PB-nnn" Name="StartupDelayCycle" Inline="true" Layout="Grid" HelpContext="Base-Startup">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="15%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="20%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="  Startverzögerung" Cell="1,1" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" Cell="1,2" IndentLevel="1" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%00002_R-%TT%0000201" Cell="1,3" IndentLevel="1" />
+                </ParameterBlock>
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="Base-Watchdog" IndentLevel="1" />
+                <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid" >
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="100%" />
+                  </Columns>
+                  <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" Cell="1,1"/>
+                </ParameterBlock>
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX-Projekt" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX ist eine DIY-Gemeinschaft, die kostenlose KNX-Lösungen entwickelt. Die Software zeichnet sich durch einen umfangreichen Funktionsumfang aus, was individuelle Smarthome-Lösungen und vielfältige technische Möglichkeiten bietet." Tag="Router"/>
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Weitere Informationen findest du unter: www.openknx.de - wiki.openknx.de - forum.openknx.de" />
+              </ParameterBlock>
+            </ChannelIndependentBlock>
+          </Dynamic>
+        </ApplicationProgram>
+      </ApplicationPrograms>
+    </Manufacturer>
+  </ManufacturerData>
+</KNX>
