@@ -312,6 +312,9 @@ namespace OpenKNX
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
         openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logWithPrefix("Builddate", __DATE__);
+        openknx.logger.logWithPrefix("Buildtime", __TIME__);
+        openknx.logger.log("--------------------------------------------------------------------------------");
         logEnd();
     }
 
