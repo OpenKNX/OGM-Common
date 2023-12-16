@@ -73,6 +73,7 @@ namespace OpenKNX
             clearPreviouseLine();
             if (isColorSet())
                 printColorCode();
+            printTimestamp();
             printCore();
         }
 
@@ -264,12 +265,7 @@ namespace OpenKNX
         void Logger::clearPreviouseLine()
         {
 #ifndef OPENKNX_RTT
-            while (_lastConsoleLen > 0)
-            {
-                _lastConsoleLen--;
-                OPENKNX_LOGGER_DEVICE.print("\b");
-            }
-            OPENKNX_LOGGER_DEVICE.print("\33[K");
+            OPENKNX_LOGGER_DEVICE.print("\33[2K\r");
 #endif
         }
 
@@ -277,8 +273,8 @@ namespace OpenKNX
         {
 #ifndef OPENKNX_RTT
             clearPreviouseLine();
+            OPENKNX_LOGGER_DEVICE.print("$ ");
             OPENKNX_LOGGER_DEVICE.print(openknx.console.prompt);
-            _lastConsoleLen = strlen(openknx.console.prompt);
 #endif
         }
 
@@ -414,6 +410,7 @@ namespace OpenKNX
 
             begin();
 
+            printTimestamp();
             printCore();
             OPENKNX_LOGGER_DEVICE.println();
             printCore();
@@ -472,6 +469,28 @@ namespace OpenKNX
             OPENKNX_LOGGER_DEVICE.println();
 
             end();
+        }
+
+        void Logger::printTimestamp()
+        {
+            OPENKNX_LOGGER_DEVICE.print(buildUptime().c_str());
+            OPENKNX_LOGGER_DEVICE.print(": ");
+        }
+
+        std::string Logger::buildUptime()
+        {
+            uint32_t secs = uptime();
+            uint16_t days = secs / 86400;
+            secs -= days * 86400;
+            uint8_t hours = secs / 3600;
+            secs -= hours * 3600;
+            uint8_t mins = secs / 60;
+            secs -= mins * 60;
+
+            char result[26] = {};
+            sprintf(result, "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)secs);
+
+            return result;
         }
     } // namespace Log
 } // namespace OpenKNX

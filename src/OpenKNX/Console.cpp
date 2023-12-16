@@ -376,24 +376,14 @@ namespace OpenKNX
 
     void Console::showUptime(bool diagnoseKo /* = false */)
     {
-        uint32_t secs = uptime();
-        uint16_t days = secs / 86400;
-        secs -= days * 86400;
-        uint8_t hours = secs / 3600;
-        secs -= hours * 3600;
-        uint8_t mins = secs / 60;
-        secs -= mins * 60;
-
-        char result[26] = {};
-        sprintf(result, "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)secs);
-
+        std::string uptimeStr = openknx.logger.buildUptime();
 #ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {
-            openknx.console.writeDiagenoseKo("%s", result);
+            openknx.console.writeDiagenoseKo("%s", uptimeStr.c_str());
         }
 #endif
-        openknx.logger.logWithPrefixAndValues("Uptime", "%s", result);
+        openknx.logger.logWithPrefixAndValues("Uptime", "%s", uptimeStr.c_str());
     }
 
     void Console::showMemory(bool diagnoseKo /* = false */)
@@ -492,14 +482,14 @@ namespace OpenKNX
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
             openknx.logger.logWithPrefixAndValues("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-            if(!__nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE))
+            if (!__nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
         if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
         {
             openknx.logger.logWithPrefixAndValues("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
-            if(!__nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE))
+            if (!__nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
@@ -515,7 +505,7 @@ namespace OpenKNX
         if (mode == EraseMode::All)
         {
             openknx.logger.logWithPrefix("Erase", "First bytes of Firmware");
-            if(!__nukeFlash(0, 4096))
+            if (!__nukeFlash(0, 4096))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
