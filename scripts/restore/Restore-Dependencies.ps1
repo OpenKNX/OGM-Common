@@ -188,7 +188,7 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir) {
         }
         
         if($Verbose) { Write-Host "CloneRepository - Branch - GitDir: "$GitDir -ForegroundColor Yellow }
-        $GitCmd = "git --git-dir=""$($GitDir)"" --work-tree="+$($CloneTarget).ToString()
+        $GitCmd = "git --git-dir=""$($GitDir)"" --work-tree=`""+$($CloneTarget).ToString()+"`""
         if($Verbose) { Write-Host "CloneRepository - Branch - GitCmd: "$GitCmd -ForegroundColor Yellow }
 
         if ((& git --version) -ge 'git version 2.23') {
