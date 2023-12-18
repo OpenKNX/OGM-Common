@@ -1,3 +1,4 @@
+
 function newline(device, online, progress, context) {
     // input contains c++ like control chars (\n,\\)
     var text = device.getParameterByName(context.textbox);
