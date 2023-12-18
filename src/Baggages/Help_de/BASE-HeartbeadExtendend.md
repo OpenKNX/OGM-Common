@@ -12,4 +12,6 @@ Daraus ergeben sich aktuell 3 Werte ohne die Bits auswerten zu müssen.
 - 3 oder 7 = Das Gerät ist gerade hochgefahren
 - 7 = Es gab einen Neustart durch den Watchdog initiert
 
-**Hinweis:** Wenn die Firmware auf ein Gerät übertragen wird, kann es in manchen Fällen auch dazu kommen, dass das Flag für den Neustart durch den Watchdog gesetzt wurde.
+**Tipp:** Bei Bedarf kann das Logikmodul daraus einzelne 1-Bit KOs machen.
+
+**Hinweis:** Wenn eine neue Firmware auf das Gerät übertragen wird, kommt es in manchen Fällen dazu, dass das Flag für den "Neustart durch den Watchdog" gesetzt wurde.
