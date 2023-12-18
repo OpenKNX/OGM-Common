@@ -259,9 +259,6 @@ namespace OpenKNX
 #ifdef BASE_StartupDelayBase
         _startupDelay = millis();
 #endif
-#ifdef BASE_HeartbeatDelayBase
-        _heartbeatDelay = 0;
-#endif
 
 #ifdef INFO1_LED_PIN
         // pre setup complete

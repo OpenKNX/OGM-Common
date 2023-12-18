@@ -68,7 +68,7 @@ namespace OpenKNX
         void watchdogSetup();
 #endif
 #ifdef BASE_HeartbeatDelayBase
-        uint32_t _heartbeatDelay;
+        uint32_t _heartbeatDelay = 0;
         void processHeartbeat();
 #endif
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
