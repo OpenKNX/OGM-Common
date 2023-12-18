@@ -94,7 +94,7 @@ namespace OpenKNX
         else if (!diagnoseKo && (cmd == "r" || cmd == "restart"))
         {
             delay(20);
-            knx.platform().restart();
+            openknx.common.restart();
         }
         else if (!diagnoseKo && (cmd == "fatal"))
         {
@@ -108,6 +108,12 @@ namespace OpenKNX
         {
             openknx.flash.save();
         }
+#ifdef OPENKNX_WATCHDOG
+        else if (cmd == "watchdog")
+        {
+            showWatchdogRestart(diagnoseKo);
+        }
+#endif
         else if (cmd == "flash knx")
         {
             showMemoryContent(openknx.knxFlash.flashAddress(), openknx.knxFlash.size());
@@ -213,6 +219,19 @@ namespace OpenKNX
         openknx.logger.printPrompt();
         _consoleCharLast = current;
     }
+
+#ifdef OPENKNX_WATCHDOG
+    void Console::showWatchdogRestart(bool diagnoseKo /* = false */)
+    {
+    #ifdef BASE_KoDiagnose
+        if (diagnoseKo)
+        {
+            openknx.console.writeDiagenoseKo("WDRestarts %i", openknx.common.watchdogRestarts());
+        }
+    #endif
+        openknx.logger.logWithPrefixAndValues("Watchdog restarts", "%ix", openknx.common.watchdogRestarts());
+    }
+#endif
 
     void Console::showInformations()
     {
@@ -348,6 +367,7 @@ namespace OpenKNX
         printHelpLine("sleep", "Sleep for up to 20 seconds");
         printHelpLine("fatal", "Trigger a FatalError");
         printHelpLine("powerloss", "Trigger a PowerLoss (SavePin)");
+        printHelpLine("watchdog", "Show restart count by watchdog");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase knx", "Erase knx parameters");
         printHelpLine("erase openknx", "Erase opeknx module data");

@@ -95,15 +95,19 @@ namespace OpenKNX
 #endif
 
 #ifdef BASE_StartupDelayBase
-        uint32_t _startupDelay;
+        uint32_t _startupDelay = 0;
+        bool _firstStartup = true;
 #endif
+        bool _watchdogRebooted = false;
 #ifdef OPENKNX_WATCHDOG
         void watchdogLoop();
+        uint8_t watchdogRestarts();
 #endif
         bool _afterStartupDelay = false;
         bool afterStartupDelay();
         void processAfterStartupDelay();
         void skipLooptimeWarning();
+        void restart();
 
         void collectMemoryStats();
         uint freeMemoryMin();
