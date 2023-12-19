@@ -29,7 +29,7 @@ if ($IsMacOS -or $IsLinux) { Write-Host -ForegroundColor Yellow "
 } 
 else {
   # get xml for kxnprod, always first step which also generates headerfile for release
-  ~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="$($settings.knxprod)" "src/$($settings.releaseName).xml"
+  ~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="include/knxprod.h" "src/$($settings.releaseName).xml"
   if (!$?) {
       Write-Host "Error in knxprod, Release was not built!"
       $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
