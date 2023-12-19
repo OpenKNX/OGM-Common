@@ -14,7 +14,7 @@ namespace OpenKNX
             processSerialInput();
     }
 
-#ifdef LOG_KoDiagnose
+#ifdef BASE_KoDiagnose
     void Console::writeDiagenoseKo(const char* message, ...)
     {
         va_list values;
@@ -29,7 +29,7 @@ namespace OpenKNX
         va_end(values);
 
         _diagnoseKoOutput = true;
-        KoLOG_Diagnose.value(buffer, Dpt(16, 1));
+        KoBASE_Diagnose.value(buffer, Dpt(16, 1));
         knx.loop();
         _diagnoseKoOutput = false;
     }
@@ -94,7 +94,7 @@ namespace OpenKNX
         else if (!diagnoseKo && (cmd == "r" || cmd == "restart"))
         {
             delay(20);
-            knx.platform().restart();
+            openknx.common.restart();
         }
         else if (!diagnoseKo && (cmd == "fatal"))
         {
@@ -108,6 +108,12 @@ namespace OpenKNX
         {
             openknx.flash.save();
         }
+#ifdef OPENKNX_WATCHDOG
+        else if (cmd == "watchdog")
+        {
+            showWatchdogRestart(diagnoseKo);
+        }
+#endif
         else if (cmd == "flash knx")
         {
             showMemoryContent(openknx.knxFlash.flashAddress(), openknx.knxFlash.size());
@@ -214,6 +220,19 @@ namespace OpenKNX
         _consoleCharLast = current;
     }
 
+#ifdef OPENKNX_WATCHDOG
+    void Console::showWatchdogRestart(bool diagnoseKo /* = false */)
+    {
+    #ifdef BASE_KoDiagnose
+        if (diagnoseKo)
+        {
+            openknx.console.writeDiagenoseKo("WDRestarts %i", openknx.common.watchdogRestarts());
+        }
+    #endif
+        openknx.logger.logWithPrefixAndValues("Watchdog restarts", "%ix", openknx.common.watchdogRestarts());
+    }
+#endif
+
     void Console::showInformations()
     {
         logBegin();
@@ -243,7 +262,7 @@ namespace OpenKNX
         showMemory();
 
 #ifdef OPENKNX_WATCHDOG
-        if (ParamLOG_Watchdog)
+        if (ParamBASE_Watchdog)
             openknx.logger.logWithPrefixAndValues("Watchdog", "Running (%ims)", OPENKNX_WATCHDOG_MAX_PERIOD);
         else
             openknx.logger.logWithPrefixAndValues("Watchdog", "Disabled");
@@ -312,6 +331,9 @@ namespace OpenKNX
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
         openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logWithPrefix("Builddate", __DATE__);
+        openknx.logger.logWithPrefix("Buildtime", __TIME__);
+        openknx.logger.log("--------------------------------------------------------------------------------");
         logEnd();
     }
 
@@ -345,6 +367,7 @@ namespace OpenKNX
         printHelpLine("sleep", "Sleep for up to 20 seconds");
         printHelpLine("fatal", "Trigger a FatalError");
         printHelpLine("powerloss", "Trigger a PowerLoss (SavePin)");
+        printHelpLine("watchdog", "Show restart count by watchdog");
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase knx", "Erase knx parameters");
         printHelpLine("erase openknx", "Erase opeknx module data");
@@ -376,30 +399,20 @@ namespace OpenKNX
 
     void Console::showUptime(bool diagnoseKo /* = false */)
     {
-        uint32_t secs = uptime();
-        uint16_t days = secs / 86400;
-        secs -= days * 86400;
-        uint8_t hours = secs / 3600;
-        secs -= hours * 3600;
-        uint8_t mins = secs / 60;
-        secs -= mins * 60;
-
-        char result[26] = {};
-        sprintf(result, "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)secs);
-
-#ifdef LOG_KoDiagnose
+        std::string uptimeStr = openknx.logger.buildUptime();
+#ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {
-            openknx.console.writeDiagenoseKo("%s", result);
+            openknx.console.writeDiagenoseKo("%s", uptimeStr.c_str());
         }
 #endif
-        openknx.logger.logWithPrefixAndValues("Uptime", "%s", result);
+        openknx.logger.logWithPrefixAndValues("Uptime", "%s", uptimeStr.c_str());
     }
 
     void Console::showMemory(bool diagnoseKo /* = false */)
     {
 
-#ifdef LOG_KoDiagnose
+#ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {
             openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));
@@ -492,14 +505,14 @@ namespace OpenKNX
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
             openknx.logger.logWithPrefixAndValues("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-            if(!__nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE))
+            if (!__nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
         if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
         {
             openknx.logger.logWithPrefixAndValues("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
-            if(!__nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE))
+            if (!__nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
 
@@ -515,7 +528,7 @@ namespace OpenKNX
         if (mode == EraseMode::All)
         {
             openknx.logger.logWithPrefix("Erase", "First bytes of Firmware");
-            if(!__nukeFlash(0, 4096))
+            if (!__nukeFlash(0, 4096))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
 

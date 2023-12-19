@@ -67,8 +67,8 @@ namespace OpenKNX
 #ifdef OPENKNX_WATCHDOG
         void watchdogSetup();
 #endif
-#ifdef LOG_HeartbeatDelayBase
-        uint32_t _heartbeatDelay;
+#ifdef BASE_HeartbeatDelayBase
+        uint32_t _heartbeatDelay = 0;
         void processHeartbeat();
 #endif
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
@@ -94,16 +94,20 @@ namespace OpenKNX
         void loop1();
 #endif
 
-#ifdef LOG_StartupDelayBase
-        uint32_t _startupDelay;
+#ifdef BASE_StartupDelayBase
+        uint32_t _startupDelay = 0;
+        bool _firstStartup = true;
 #endif
+        bool _watchdogRebooted = false;
 #ifdef OPENKNX_WATCHDOG
         void watchdogLoop();
+        uint8_t watchdogRestarts();
 #endif
         bool _afterStartupDelay = false;
         bool afterStartupDelay();
         void processAfterStartupDelay();
         void skipLooptimeWarning();
+        void restart();
 
         void collectMemoryStats();
         uint freeMemoryMin();

@@ -117,8 +117,6 @@ namespace OpenKNX
         class Logger
         {
           private:
-            // Stream* _serial = nullptr;
-            uint8_t _lastConsoleLen = 0;
             char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
 #ifdef ARDUINO_ARCH_RP2040
             // use individual values per core
@@ -211,6 +209,8 @@ namespace OpenKNX
             void printPrompt();
             void clearPreviouseLine();
             void logOpenKnxHeader();
+            void printTimestamp();
+            std::string buildUptime();
         };
     } // namespace Log
 } // namespace OpenKNX

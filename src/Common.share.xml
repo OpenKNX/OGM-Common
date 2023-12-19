@@ -1,12 +1,475 @@
 <?xml version="1.0" encoding="utf-8"?>
-<KNX>
+<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
+      <ApplicationPrograms>
+        <ApplicationProgram>
+          <Static>
+            <ParameterTypes>
+              <ParameterType Id="%AID%_PT-ETS" Name="ETS">
+                <TypePicture RefId="%FILE-ets%" HorizontalAlignment="Right"/>
+              </ParameterType>
+              <!-- short description -->
+              <ParameterType Id="%AID%_PT-Text40Byte" Name="Text40Byte">
+                <TypeText SizeInBit="320" />
+              </ParameterType>
+              <!-- comment field -->
+              <ParameterType Id="%AID%_PT-Text512Byte" Name="Text512Byte">
+                <TypeText SizeInBit="4096" />
+              </ParameterType>
+              <!-- Delay pattern -->
+              <ParameterType Id="%AID%_PT-DelayBase" Name="DelayBase">
+                <TypeRestriction Base="Value" SizeInBit="2">
+                  <Enumeration Text="Sekunde(n)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Minute(n)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Stunde(n)" Value="2" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-DelayBase10" Name="DelayBase10">
+                <TypeRestriction Base="Value" SizeInBit="2">
+                  <Enumeration Text="1/10  Sekunde(n)" Value="3" Id="%ENID%" />
+                  <Enumeration Text="Sekunde(n)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Minute(n)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Stunde(n)" Value="2" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-DelayTime" Name="DelayTime">
+                <TypeNumber SizeInBit="14" Type="unsignedInt" minInclusive="0" maxInclusive="16000" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-DelayTimeMin1" Name="DelayTimeMin1">
+                <TypeNumber SizeInBit="14" Type="unsignedInt" minInclusive="1" maxInclusive="16000" />
+              </ParameterType>
+              <!-- end of delay pattern -->
+              <!-- Boolean values -->
+              <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
+                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-OnOffYesNo" Name="OnOffYesNo">
+                <TypeRestriction Base="Value" SizeInBit="1">
+                  <Enumeration Text="Nein" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Ja" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-OnOffYesNoInverted" Name="OnOffYesNoInverted">
+                <TypeRestriction Base="Value" SizeInBit="1">
+                  <Enumeration Text="Nein" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Ja" Value="0" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <!-- KO numbers -->
+              <ParameterType Id="%AID%_PT-KONumber" Name="KONumber">
+                <!-- We assume, there will be never more than 32767 KO, currently we set the limit to 9999 -->
+                <TypeNumber SizeInBit="15" Type="unsignedInt" minInclusive="1" maxInclusive="9999" />
+              </ParameterType>
+              <!-- generic (DPT dependant) fields -->
+              <ParameterType Id="%AID%_PT-ValueDpt1" Name="ValueDpt1">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Text="AUS (0)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="EIN (1)" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt2" Name="ValueDpt2">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Text="nicht genutzt" Value="4" Id="%ENID%" />
+                  <Enumeration Text="normal AUS (00)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="normal EIN (01)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="priorität AUS (10)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="priorität EIN (11)" Value="3" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt2Out" Name="ValueDpt2Out">
+                <TypeRestriction Base="Value" SizeInBit="8">
+                  <Enumeration Text="normal AUS (00)" Value="0"    Id="%ENID%" />
+                  <Enumeration Text="normal EIN (01)" Value="1"    Id="%ENID%" />
+                  <Enumeration Text="priorität AUS (10)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="priorität EIN (11)" Value="3" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt5" Name="ValueDpt5">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="255" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt5001" Name="ValueDpt5001">
+                <TypeNumber SizeInBit="8" Type="unsignedInt" minInclusive="0" maxInclusive="100" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt6" Name="ValueDpt6">
+                <TypeNumber SizeInBit="8" Type="signedInt" minInclusive="-128" maxInclusive="127" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt7" Name="ValueDpt7">
+                <TypeNumber SizeInBit="16" Type="unsignedInt" minInclusive="0" maxInclusive="65535" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt8" Name="ValueDpt8">
+                <TypeNumber SizeInBit="16" Type="signedInt" minInclusive="-32768" maxInclusive="32767" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt9" Name="ValueDpt9">
+                <TypeFloat Encoding="IEEE-754 Single" minInclusive="-671088" maxInclusive="670760" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt12" Name="ValueDpt12">
+                <TypeNumber SizeInBit="32" Type="unsignedInt" minInclusive="0" maxInclusive="4294967295" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt13" Name="ValueDpt13">
+                <TypeNumber SizeInBit="32" Type="signedInt" minInclusive="-2147483648" maxInclusive="2147483647" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueDpt14" Name="ValueDpt14">
+                <TypeFloat Encoding="IEEE-754 Single" minInclusive="-1000000000000" maxInclusive="1000000000000" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueRGB" Name="ValueRGB">
+                <TypeNumber SizeInBit="32" Type="signedInt" minInclusive="0" maxInclusive="16777216" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ValueColor" Name="ValueColor">
+                <TypeColor Space="RGB" />
+              </ParameterType>
+              <!-- Specific Types for common -->
+              <!-- selection of seperated or combined com-object for time and date -->
+              <ParameterType Id="%AID%_PT-CombinedTimeDate" Name="CombinedTimeDate">
+                <TypeRestriction Base="Value" SizeInBit="1">
+                  <Enumeration Text="zwei getrennte KOs" Value="0" Id="%ENID%" />
+                  <Enumeration Text="ein kombiniertes KO" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <!-- Time handling -->
+              <ParameterType Id="%AID%_PT-SummertimeAll" Name="SummertimeAll">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown" >
+                  <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SummertimeDE" Name="SummertimeDE">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
+                  <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SummertimeWorld" Name="SummertimeWorld">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
+                  <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SummertimeKO" Name="SummertimeKO">
+                <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
+                  <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+                <ParameterType Id="%AID%_PT-Timezone" Name="Timezone">
+                <TypeRestriction Base="Value" SizeInBit="5">
+                  <!-- <Enumeration Text="(-12 Stunden)" Value="28" Id="%ENID%" /> -->
+                  <Enumeration Text="Midway-Inseln (-11 Stunden)" Value="27" Id="%ENID%" />
+                  <Enumeration Text="Honolulu (-10 Stunden)" Value="26" Id="%ENID%" />
+                  <Enumeration Text="Anchorage (-9 Stunden)" Value="25" Id="%ENID%" />
+                  <Enumeration Text="Los Angeles (-8 Stunden)" Value="24" Id="%ENID%" />
+                  <Enumeration Text="Denver (-7 Stunden)" Value="23" Id="%ENID%" />
+                  <Enumeration Text="Chicago (-6 Stunden)" Value="22" Id="%ENID%" />
+                  <Enumeration Text="New York (-5 Stunden)" Value="21" Id="%ENID%" />
+                  <Enumeration Text="Santo Domingo (-4 Stunden)" Value="20" Id="%ENID%" />
+                  <Enumeration Text="Rio de Janeiro (-3 Stunden)" Value="19" Id="%ENID%" />
+                  <Enumeration Text="(-2 Stunden)" Value="18" Id="%ENID%" />
+                  <Enumeration Text="Azoren (-1 Stunde)" Value="17" Id="%ENID%" />
+                  <Enumeration Text="London (+0 Stunden)" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Berlin (+1 Stunde)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Athen (+2 Stunden)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Moskau (+3 Stunden)" Value="3" Id="%ENID%" />
+                  <Enumeration Text="Dubai (+4 Stunden)" Value="4" Id="%ENID%" />
+                  <Enumeration Text="Karatschi (+5 Stunden)" Value="5" Id="%ENID%" />
+                  <Enumeration Text="Dhaka (+6 Stunden)" Value="6" Id="%ENID%" />
+                  <Enumeration Text="Bangkok (+7 Stunden)" Value="7" Id="%ENID%" />
+                  <Enumeration Text="Peking (+8 Stunden)" Value="8" Id="%ENID%" />
+                  <Enumeration Text="Tokio (+9 Stunden)" Value="9" Id="%ENID%" />
+                  <Enumeration Text="Sydney (+10 Stunden)" Value="10" Id="%ENID%" />
+                  <Enumeration Text="Nouméa (+11 Stunden)" Value="11" Id="%ENID%" />
+                  <Enumeration Text="Wellington (+12 Stunden)" Value="12" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-TimezoneValue" Name="TimezoneValue">
+                <!-- Timezone value are the 4 lowest bits from timezone -->
+                <TypeNumber SizeInBit="4" Type="unsignedInt" minInclusive="0" maxInclusive="15" />
+              </ParameterType>
+              <!-- Location -->
+              <ParameterType Id="%AID%_PT-Latitude" Name="Latitude">
+                <TypeFloat Encoding="IEEE-754 Single" minInclusive="-90" maxInclusive="90" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Longitude" Name="Longitude">
+                <TypeFloat Encoding="IEEE-754 Single" minInclusive="-180" maxInclusive="180" />
+              </ParameterType>
+          </ParameterTypes>
+            <Parameters>
+              <!-- Parameter ID-Namespace 001-099 / Namespace is shared with LogicModule (historical reason) -->
+              <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
+              <Parameter Id="%AID%_P-%TT%00010" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Text="InternalTime" Access="None" Value="0" />
+
+              <Union SizeInBit="32">
+                <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00002" Name="StartupDelayBase"   ParameterType="%AID%_PT-DelayBase"        Offset="0" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00003" Name="StartupDelayTime"   ParameterType="%AID%_PT-DelayTimeMin1"    Offset="0" BitOffset="2" Text="Zeit" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00004" Name="HeartbeatDelayBase" ParameterType="%AID%_PT-DelayBase"        Offset="2" BitOffset="0" Text="Zeitbasis" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00005" Name="HeartbeatDelayTime" ParameterType="%AID%_PT-DelayTime"        Offset="2" BitOffset="2" Text="Zeit" Value="300" />
+              </Union>
+              <Union SizeInBit="16">
+                <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone" ParameterType="%AID%_PT-Timezone" Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00157" Name="TimezoneSign" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="Zeitzone-Vorzeichen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00158" Name="TimezoneValue" ParameterType="%AID%_PT-TimezoneValue" Offset="0" BitOffset="1" Text="Zeitzone-Wert" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate"   ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll" ParameterType="%AID%_PT-SummertimeAll" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
+                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE" ParameterType="%AID%_PT-SummertimeDE" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
+                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld" ParameterType="%AID%_PT-SummertimeWorld" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO" ParameterType="%AID%_PT-SummertimeKO" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00146" Name="Diagnose"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="0" Text="Diagnoseobjekt anzeigen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00034" Name="ReadTimeDate"       ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="2" Text="Bei Neustart vom Bus lesen" Value="1" />
+                <!-- The follwing 2 IDs are used by logic module for update compatibility -->
+                <!-- <Parameter Id="%AID%_UP-%TT%00035" Name="BuzzerInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="1" Text="Akustischer Signalgeber vorhanden (Buzzer)?" Value="0" /> -->
+                <!-- <Parameter Id="%AID%_UP-%TT%00036" Name="LedInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Optischer Signalgeber vorhanden (RGB-LED)?" Value="0" /> -->
+                <Parameter Id="%AID%_UP-%TT%00037" Name="HeartbeatExtended"  ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="3" Text="Erweitertes &quot;In Betrieb&quot;" Value="0" />
+                <!-- 4 Bit free  -->
+              </Union>
+              <Union SizeInBit="64">
+                <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" />
+                <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764"  />
+              </Union>
+
+            </Parameters>
+            <ParameterRefs>
+              <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
+              <ParameterRef Id="%AID%_P-%TT%00010_R-%TT%0001001" RefId="%AID%_P-%TT%00010" />
+              <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
+              <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
+              <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000401" RefId="%AID%_UP-%TT%00004" />
+              <ParameterRef Id="%AID%_UP-%TT%00005_R-%TT%0000501" RefId="%AID%_UP-%TT%00005" />
+              <ParameterRef Id="%AID%_UP-%TT%00034_R-%TT%0003401" RefId="%AID%_UP-%TT%00034" />
+              <!-- The follwing 2 IDs are used by logic module for update compatibility -->
+              <!-- <ParameterRef Id="%AID%_UP-%TT%00035_R-%TT%0003501" RefId="%AID%_UP-%TT%00035" /> -->
+              <!-- <ParameterRef Id="%AID%_UP-%TT%00036_R-%TT%0003601" RefId="%AID%_UP-%TT%00036" /> -->
+              <ParameterRef Id="%AID%_UP-%TT%00037_R-%TT%0003701" RefId="%AID%_UP-%TT%00037" />
+              <ParameterRef Id="%AID%_UP-%TT%00142_R-%TT%0014201" RefId="%AID%_UP-%TT%00142" />
+              <ParameterRef Id="%AID%_UP-%TT%00143_R-%TT%0014301" RefId="%AID%_UP-%TT%00143" />
+              <ParameterRef Id="%AID%_UP-%TT%00144_R-%TT%0014401" RefId="%AID%_UP-%TT%00144" />
+              <ParameterRef Id="%AID%_UP-%TT%00146_R-%TT%0014601" RefId="%AID%_UP-%TT%00146" />
+              <ParameterRef Id="%AID%_UP-%TT%00147_R-%TT%0014701" RefId="%AID%_UP-%TT%00147" />
+              <ParameterRef Id="%AID%_UP-%TT%00156_R-%TT%0015601" RefId="%AID%_UP-%TT%00156" />
+              <ParameterRef Id="%AID%_UP-%TT%00159_R-%TT%0015901" RefId="%AID%_UP-%TT%00159" />
+              <ParameterRef Id="%AID%_UP-%TT%00160_R-%TT%0016001" RefId="%AID%_UP-%TT%00160" />
+              <ParameterRef Id="%AID%_UP-%TT%00161_R-%TT%0016101" RefId="%AID%_UP-%TT%00161" />
+              <ParameterRef Id="%AID%_UP-%TT%00162_R-%TT%0016201" RefId="%AID%_UP-%TT%00162" />
+            </ParameterRefs>
+            <ComObjectTable>
+              <ComObject Id="%AID%_O-%TT%00001" Name="Heartbeat"      Text="In Betrieb"       Number="1"  FunctionText="Zyklisch" ObjectSize="1 Byte" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-5" />
+              <ComObject Id="%AID%_O-%TT%00002" Name="Time"           Text="Uhrzeit/Datum"    Number="2"  FunctionText="Eingang" ObjectSize="8 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-19-1" />
+              <ComObject Id="%AID%_O-%TT%00003" Name="Date"           Text="Datum"            Number="3"  FunctionText="Eingang" ObjectSize="3 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-11-1" />
+              <ComObject Id="%AID%_O-%TT%00007" Name="Diagnose"       Text="Diagnose"         Number="7"  FunctionText="Diagnoseobjekt" ObjectSize="14 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-16-1" />
+              <ComObject Id="%AID%_O-%TT%00010" Name="IsSummertime"   Text="Sommerzeit aktiv" Number="10" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <!-- ComObject-IDs 011-019 are free -->
+            </ComObjectTable>
+            <ComObjectRefs>
+              <!-- Heartbeat -->
+              <ComObjectRef Id="%AID%_O-%TT%00001_R-%TT%0000101" RefId="%AID%_O-%TT%00001" ObjectSize="1 Bit" DatapointType="DPST-1-2" />
+              <ComObjectRef Id="%AID%_O-%TT%00001_R-%TT%0000102" RefId="%AID%_O-%TT%00001" />
+              <!-- Time -->
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000201" RefId="%AID%_O-%TT%00002" Text="Uhrzeit" ObjectSize="3 Bytes" DatapointType="DPST-10-1" />
+              <!-- DateTime -->
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000202" RefId="%AID%_O-%TT%00002" />
+              <!-- Date -->
+              <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000301" RefId="%AID%_O-%TT%00003" />
+              <!-- Diagnose-->
+              <ComObjectRef Id="%AID%_O-%TT%00007_R-%TT%0000701" RefId="%AID%_O-%TT%00007" />
+              <!-- Summertime -->
+              <ComObjectRef Id="%AID%_O-%TT%00010_R-%TT%0001001" RefId="%AID%_O-%TT%00010" />
+            </ComObjectRefs>
+            <Script>
+              <op:include href="Common.script.js" prefix="BASE" type="script" />
+            </Script>            
+          </Static>
+          <ModuleDefs>
+            <ModuleDef Id="%AID%_MD-%TT%00001" Name="KommentarModule">
+              <!-- <Arguments>
+                <Argument Id="%AID%_MD-%TT%00001_A-1" Name="argHelpContext" Type="Text" />
+              </Arguments> -->
+              <Static>
+                <Parameters>
+                  <Parameter Id="%AID%_MD-%TT%00001_P-%TT%00001" Name="Kommentar-%TT%00001" ParameterType="%AID%_PT-Text512Byte" Text="Kommentar" Value="" />
+                </Parameters>
+                <ParameterRefs>
+                  <ParameterRef Id="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" RefId="%AID%_MD-%TT%00001_P-%TT%00001" />
+                </ParameterRefs>
+              </Static>
+              <Dynamic>
+                <ParameterBlock Id="%AID%_MD-%TT%00001_PB-nnn" Inline="true">
+                  <ParameterRefRef RefId="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" HelpContext="BASE-Comment" />
+                  <Button Id="%AID%_MD-%TT%00001_B-%TT%00001" Text="Alle '\n' im Text durch neue Zeile(n) ersetzen" EventHandler="newline" EventHandlerParameters="{ &quot;textbox&quot;:&quot;BASE_Kommentar-%TT%00001&quot; }" />
+                </ParameterBlock>
+              </Dynamic>
+            </ModuleDef> 
+          </ModuleDefs>
+          <Dynamic>
+            <ChannelIndependentBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX">
+                <!-- Hidden -->
+                <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
+                <!-- Startup Delay pattern -->
+                <ParameterBlock Id="%AID%_PB-nnn" Name="StartupDelayCycle" Inline="true" Layout="Grid" HelpContext="BASE-Startup">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="15%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="20%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="  Startverzögerung" Cell="1,1" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" Cell="1,2" IndentLevel="1" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%00002_R-%TT%0000201" Cell="1,3" IndentLevel="1" />
+                </ParameterBlock>
+                <!-- Heartbeat Delay pattern -->
+                <ParameterBlock Id="%AID%_PB-nnn" Name="HeartbeatSendCycle" Inline="true" Layout="Grid" HelpContext="BASE-Heartbeat">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="45%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="15%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="20%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="  In Betrieb senden alle" Cell="1,1" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%00005_R-%TT%0000501" Cell="1,2" />
+                  <ParameterRefRef RefId="%AID%_UP-%TT%00004_R-%TT%0000401" Cell="1,3" />
+                </ParameterBlock>
+                <choose ParamRefId="%AID%_UP-%TT%00005_R-%TT%0000501">
+                  <when test="!=0">
+                    <!-- show heartbeat only if it is parametrized -->
+                    <choose ParamRefId="%AID%_UP-%TT%00037_R-%TT%0003701">
+                      <when test="0">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00001_R-%TT%0000101" />
+                      </when>
+                      <when test="1">
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00001_R-%TT%0000102" />                        
+                      </when>
+                    </choose>
+                  </when>
+                </choose>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Uhrzeit &amp; Datum" UIHint="Headline" />
+                <choose ParamRefId="%AID%_P-%TT%00010_R-%TT%0001001">
+                  <when test="0">
+                    <!-- Combined Time/Date KO -->
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00156_R-%TT%0015601" HelpContext="BASE-CombinedTimeDate" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
+                      <when test="0">
+                        <!-- Time -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000201" />
+                        <!-- Date -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00003_R-%TT%0000301" />
+                      </when>
+                      <when test="1">
+                        <!-- Date-Time -->
+                        <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000202" />
+                      </when>
+                    </choose>
+                    <!-- Read Time/Date on startup -->
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00034_R-%TT%0003401" HelpContext="BASE-ReadTimeDate" IndentLevel="1" />
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00144_R-%TT%0014401" HelpContext="Empty" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_UP-%TT%00144_R-%TT%0014401">
+                      <when test="!=1">
+                        <!-- Timezone is other than Germany -->
+                        <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
+                          <when test="0">
+                            <!-- DPT19 not active -->
+                            <ParameterRefRef RefId="%AID%_UP-%TT%00162_R-%TT%0016201" HelpContext="Empty" IndentLevel="1"/>
+                            <choose ParamRefId="%AID%_UP-%TT%00162_R-%TT%0016201">
+                              <when test="0">
+                                <!-- Summertime active? -->
+                                <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001001" />
+                              </when>
+                            </choose>
+                          </when>
+                          <when test="1">
+                            <!-- DPT19 active -->
+                            <ParameterRefRef RefId="%AID%_UP-%TT%00161_R-%TT%0016101" HelpContext="Empty" IndentLevel="1" />
+                            <choose ParamRefId="%AID%_UP-%TT%00161_R-%TT%0016101">
+                              <when test="0">
+                                <!-- Summertime active? -->
+                                <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001001" />
+                              </when>
+                            </choose>
+                          </when>
+                        </choose>
+                      </when>
+                      <when test="1">
+                        <!-- Timezone is Germany -->
+                        <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
+                          <when test="0">
+                            <!-- DPT19 not active -->
+                            <ParameterRefRef RefId="%AID%_UP-%TT%00160_R-%TT%0016001" HelpContext="Empty"  IndentLevel="1" />
+                            <choose ParamRefId="%AID%_UP-%TT%00160_R-%TT%0016001">
+                              <when test="0">
+                                <!-- Summertime active? -->
+                                <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001001" />
+                              </when>
+                              <!-- <when test="2">
+                                <ParameterSeparator Id="%AID%_PS-nnn" Text="Für Deutschland kann die Sommerzeit auch intern vom Logikmodul berechnet werden. Für alle anderen Länder (auch in der gleichen Zeitzone) sollte diese Einstellung nicht gewählt werden!" UIHint="Information" />
+                              </when> -->
+                            </choose>
+                          </when>
+                          <when test="1">
+                            <ParameterRefRef RefId="%AID%_UP-%TT%00159_R-%TT%0015901" HelpContext="Empty" IndentLevel="1" />
+                            <choose ParamRefId="%AID%_UP-%TT%00159_R-%TT%0015901">
+                              <when test="0">
+                                <!-- Summertime active? -->
+                                <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001001" />
+                              </when>
+                              <!-- <when test="2">
+                                <ParameterSeparator Id="%AID%_PS-nnn" Text="Für Deutschland kann die Sommerzeit auch intern vom Logikmodul berechnet werden. Für alle anderen Länder (auch in der gleichen Zeitzone) sollte diese Einstellung nicht gewählt werden!" UIHint="Information" />
+                              </when> -->
+                            </choose>
+                          </when>
+                        </choose>
+                      </when>
+                    </choose>
+                  </when>
+                  <when test="1">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00144_R-%TT%0014401" HelpContext="Empty" IndentLevel="1" />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Die Zeit wird durch einen internen Zeitgeber verwaltet!" UIHint="Information" />
+                  </when>
+                </choose>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Gerätestandort" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00142_R-%TT%0014201" HelpContext="BASE-Location" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00143_R-%TT%0014301" HelpContext="BASE-Location" IndentLevel="1" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="BASE-Watchdog" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00146_R-%TT%0014601" HelpContext="BASE-Diagnose" IndentLevel="1" />
+                <choose ParamRefId="%AID%_UP-%TT%00146_R-%TT%0014601">
+                  <when test="1">
+                    <!-- show diagnose object just if requested -->
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00007_R-%TT%0000701" />
+                  </when>
+                </choose>
+                <choose ParamRefId="%AID%_UP-%TT%00005_R-%TT%0000501">
+                  <when test="!=0">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00037_R-%TT%0003701" HelpContext="BASE-HeartbeadExtendend" IndentLevel="1"/>
+                  </when>
+                </choose>
+
+                <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                    <Row Id="%AID%_PB-nnn_R-2" Name="Row2" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="100%" />
+                  </Columns>
+                  <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" Cell="1,1" HelpContext="BASE-OpenKNX"/>
+                </ParameterBlock>
+              </ParameterBlock>
+            </ChannelIndependentBlock>
+          </Dynamic>
+        </ApplicationProgram>
+      </ApplicationPrograms>
       <Baggages>
-        <Baggage TargetPath="" Name="logo_280x280.png" Id="%FILE-logo_280x280%">
-          <FileInfo TimeInfo="%DATETIME%" />
-        </Baggage>
-        <Baggage TargetPath="" Name="logo_200x200.png" Id="%FILE-logo_200x200%">
+        <Baggage TargetPath="" Name="ets.png" Id="%FILE-ets%">
           <FileInfo TimeInfo="%DATETIME%" />
         </Baggage>
         <Baggage TargetPath="" Name="Help_de.zip" Id="%FILE-HELP-de%">

@@ -58,7 +58,8 @@ namespace OpenKNX
 
         void printHelpLine(const char* command, const char* message);
         bool processCommand(std::string cmd, bool diagnoseKo = false);
-#ifdef LOG_KoDiagnose
+        void showWatchdogRestart(bool diagnoseKo = false);
+#ifdef BASE_KoDiagnose
         void processDiagnoseKo(GroupObject& ko);
         void writeDiagenoseKo(const char* message, ...);
 #endif

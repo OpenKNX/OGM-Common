@@ -20,16 +20,28 @@ else {
 # create required directories
 Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 
-# get xml for kxnprod, always first step which also generates headerfile for release
-~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="include/knxprod.h" "src/$($settings.releaseName).xml"
-if (!$?) {
-    Write-Host "Error in knxprod, Release was not built!"
-    $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
-    if ($prompt -ne "y") {
-        exit 1
+if ($IsMacOS -or $IsLinux) {
+    Write-Host -ForegroundColor Yellow "
+  This OS does not support OpenKNX-Tools. Please use Windows to Build KNX production file. 
+  For more Informations visit: https://github.com/OpenKNX/OpenKNX/wiki/Installation-of-OpenKNX-toolscl
+  
+  " 
+    Start-Sleep -Seconds 2 
+} 
+else {
+    # get xml for kxnprod, always first step which also generates headerfile for release
+    ~/bin/OpenKNXproducer.exe create --Debug --Output="release/$($settings.targetName).knxprod" --HeaderFileName="include/knxprod.h" "src/$($settings.releaseName).xml"
+    if (!$?) {
+        Write-Host "Error in knxprod, Release was not built!"
+        $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
+        if ($prompt -ne "y") {
+            exit 1
+        }
     }
 }
-Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
+if (Test-Path -Path "src/$($settings.releaseName).debug.xml") {
+    Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
+}
 if (Test-Path -Path "src/$($settings.releaseName).baggages") {
     Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
 }
