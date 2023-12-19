@@ -30,7 +30,7 @@
           </Static>
           <Dynamic>
             <ChannelIndependentBlock>
-              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="Empty">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline"/>
@@ -50,19 +50,16 @@
                 </ParameterBlock>
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="BASE-Watchdog" IndentLevel="1" />
-                <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid" >
+                <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid">
                   <Rows>
                     <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                    <Row Id="%AID%_PB-nnn_R-2" Name="Row2" />
                   </Rows>
                   <Columns>
                     <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="100%" />
                   </Columns>
-                  <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" Cell="1,1"/>
+                  <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" Cell="1,1" HelpContext="BASE-OpenKNX"/>
                 </ParameterBlock>
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX-Projekt" UIHint="Headline" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX ist eine offene Gemeinschaft von Hobbyisten die freie und quelloffene Software für KNX-Geräte erstellen. Um eine nachhaltige und professionelle Integration ins Smarthome zu erreichen streben wir eine weitgehende Kompatibilität zum KNX-Standard an."/>
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Mit OpenKNX hast Du die Möglichkeit bereits fertige Lösungen einzusetzen, diese individuell anzupassen oder ganz neue Lösungen zu realisieren - der modulare Ansatz bietet schnelle Erfolge durch den Einsatz bewährter Softwaremodule." />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Weitere Informationen findest Du unter: www.openknx.de - wiki.openknx.de - forum.openknx.de" />
               </ParameterBlock>
             </ChannelIndependentBlock>
           </Dynamic>
