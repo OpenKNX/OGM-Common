@@ -566,7 +566,7 @@ namespace OpenKNX
                 if (_watchdogRebooted) value |= (1 << 2);
             }
 
-            logInfoP("Hearbeat %i %i", value, _watchdogRebooted);
+            logDebugP("Send Hearbeat %i", value);
 
             if (BASE_HeartbeatExtended)
             {
