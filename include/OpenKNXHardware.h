@@ -53,6 +53,10 @@
 
     #endif
 
+    #ifdef OKNXHW_REG1_BASE_V0
+        #define OKNXHW_REG1_CONTROLLER2040
+    #endif
+
 // REG1-Base
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-Base-IP
     #ifdef OKNXHW_REG1_BASE_IP
