@@ -184,20 +184,20 @@
 
     #ifdef  OKNXHW_REG2_PIPICO_W_V1
         #define OKNXHW_REG2_PIPICO_V1_BASE
-            #define INFO_LED_PIN  32  // PiPicoW Onboard LED
-            #define INFO_LED_PIN_ACTIVE_ON HIGH
-            #define INFO1_LED_PIN 3
+            #define INFO1_LED_PIN  32  // PiPicoW Onboard LED
             #define INFO1_LED_PIN_ACTIVE_ON HIGH
+            #define INFO2_LED_PIN 3
+            #define INFO2_LED_PIN_ACTIVE_ON HIGH
             #define FUNC1_BUTTON_PIN 21 // Optional. It can be also used for the SAVE_INTERRUPT_PIN
             //#define SAVE_INTERRUPT_PIN 21 // Optional. It can be also used for the FUNC1_BUTTON_PIN
       #endif
       
     #ifdef  OKNXHW_REG2_PIPICO_V1
         #define OKNXHW_REG2_PIPICO_V1_BASE
-            #define INFO_LED_PIN  25  // PiPico Onboard LED
-            #define INFO_LED_PIN_ACTIVE_ON HIGH
-            #define INFO1_LED_PIN 3
+            #define INFO1_LED_PIN  25  // PiPico Onboard LED
             #define INFO1_LED_PIN_ACTIVE_ON HIGH
+            #define INFO2_LED_PIN 3
+            #define INFO3_LED_PIN_ACTIVE_ON HIGH
             #define FUNC1_BUTTON_PIN 21 // Optional. It can be also used for the SAVE_INTERRUPT_PIN
             //#define SAVE_INTERRUPT_PIN 21 // Optional. It can be also used for the FUNC1_BUTTON_PIN
     #endif
