@@ -158,4 +158,57 @@
         #define KNX_UART_TX_PIN 0
     #endif
 
+// REG2-Pi-Pico (Base) V1
+// https://github.com/OpenKNX/OpenKNX-Pi-Pico-REG2
+    #ifdef OKNXHW_REG2_PIPICO_W_ETH_V1
+        #define OKNXHW_REG2_PIPICO_W_V1
+            #define ETH_SPI_INTERFACE SPI // SPI or SPI1, depends on the pins
+            #define PIN_ETH_MISO  (16) // ETH_MISO  - SPI0 RX UART0 TX I2C0 SDA PWM0_A SIO PIO0 PIO1
+            #define PIN_ETH_SS    (17) // ETH_CS    - SPI0 CSn UART0 RX I2C0 SCL PWM0_B SIO PIO0 PIO1
+            #define PIN_ETH_SCK   (18) // ETH_SCK   - SPI0 SCK UART0 CTS I2C1 SDA PWM1_A SIO PIO0 PIO1
+            #define PIN_ETH_MOSI  (19) // ETH_MOSI  - SPI0 TX UART0 RTS I2C1 SCL PWM1_B SIO PIO0 PIO1
+            #define PIN_ETH_INT   (26) // ETH_RES   - SPI1 SCK UART1 CTS I2C1 SDA PWM5_A SIO PIO0 PIO1
+            #define PIN_ETH_RES   (27) // ETH_INT   - SPI1 TX UART1 RTS I2C1 SCL PWM5_B SIO PIO0 PIO1
+    #endif
+
+    #ifdef OKNXHW_REG2_PIPICO_ETH_V1
+        #define OKNXHW_REG2_PIPICO_V1
+            #define ETH_SPI_INTERFACE SPI // SPI or SPI1, depends on the pins
+            #define PIN_ETH_MISO  (16) // ETH_MISO  - SPI0 RX UART0 TX I2C0 SDA PWM0_A SIO PIO0 PIO1
+            #define PIN_ETH_SS    (17) // ETH_CS    - SPI0 CSn UART0 RX I2C0 SCL PWM0_B SIO PIO0 PIO1
+            #define PIN_ETH_SCK   (18) // ETH_SCK   - SPI0 SCK UART0 CTS I2C1 SDA PWM1_A SIO PIO0 PIO1
+            #define PIN_ETH_MOSI  (19) // ETH_MOSI  - SPI0 TX UART0 RTS I2C1 SCL PWM1_B SIO PIO0 PIO1
+            #define PIN_ETH_INT   (26) // ETH_RES   - SPI1 SCK UART1 CTS I2C1 SDA PWM5_A SIO PIO0 PIO1
+            #define PIN_ETH_RES   (27) // ETH_INT   - SPI1 TX UART1 RTS I2C1 SCL PWM5_B SIO PIO0 PIO1
+    #endif
+
+    #ifdef  OKNXHW_REG2_PIPICO_W_V1
+        #define OKNXHW_REG2_PIPICO_V1_BASE
+            #define INFO_LED_PIN  32  // PiPicoW Onboard LED
+            #define INFO_LED_PIN_ACTIVE_ON HIGH
+            #define INFO1_LED_PIN 3
+            #define INFO1_LED_PIN_ACTIVE_ON HIGH
+            #define FUNC1_BUTTON_PIN 21 // Optional. It can be also used for the SAVE_INTERRUPT_PIN
+            //#define SAVE_INTERRUPT_PIN 21 // Optional. It can be also used for the FUNC1_BUTTON_PIN
+      #endif
+      
+    #ifdef  OKNXHW_REG2_PIPICO_V1
+        #define OKNXHW_REG2_PIPICO_V1_BASE
+            #define INFO_LED_PIN  25  // PiPico Onboard LED
+            #define INFO_LED_PIN_ACTIVE_ON HIGH
+            #define INFO1_LED_PIN 3
+            #define INFO1_LED_PIN_ACTIVE_ON HIGH
+            #define FUNC1_BUTTON_PIN 21 // Optional. It can be also used for the SAVE_INTERRUPT_PIN
+            //#define SAVE_INTERRUPT_PIN 21 // Optional. It can be also used for the FUNC1_BUTTON_PIN
+    #endif
+
+    #ifdef OKNXHW_REG2_PIPICO_V1_BASE
+        #define PROG_LED_PIN 2
+        #define PROG_LED_PIN_ACTIVE_ON HIGH
+        #define PROG_BUTTON_PIN 20
+        #define PROG_BUTTON_PIN_INTERRUPT_ON FALLING
+        #define KNX_SERIAL Serial1
+        #define KNX_UART_RX_PIN 1
+        #define KNX_UART_TX_PIN 0
+    #endif
 #endif
