@@ -108,12 +108,6 @@ namespace OpenKNX
         {
             openknx.flash.save();
         }
-#ifdef OPENKNX_WATCHDOG
-        else if (cmd == "watchdog")
-        {
-            showWatchdogRestart(diagnoseKo);
-        }
-#endif
         else if (cmd == "flash knx")
         {
             showMemoryContent(openknx.knxFlash.flashAddress(), openknx.knxFlash.size());
@@ -143,6 +137,12 @@ namespace OpenKNX
         }
 #endif
 #ifdef ARDUINO_ARCH_RP2040
+    #ifdef OPENKNX_WATCHDOG
+        else if (cmd == "watchdog")
+        {
+            showWatchdogResets(diagnoseKo);
+        }
+    #endif
         else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
         {
             showFilesystem();
@@ -220,19 +220,6 @@ namespace OpenKNX
         _consoleCharLast = current;
     }
 
-#ifdef OPENKNX_WATCHDOG
-    void Console::showWatchdogRestart(bool diagnoseKo /* = false */)
-    {
-    #ifdef BASE_KoDiagnose
-        if (diagnoseKo)
-        {
-            openknx.console.writeDiagenoseKo("WDRestarts %i", openknx.common.watchdogRestarts());
-        }
-    #endif
-        openknx.logger.logWithPrefixAndValues("Watchdog restarts", "%ix", openknx.common.watchdogRestarts());
-    }
-#endif
-
     void Console::showInformations()
     {
         logBegin();
@@ -262,8 +249,8 @@ namespace OpenKNX
         showMemory();
 
 #ifdef OPENKNX_WATCHDOG
-        if (ParamBASE_Watchdog)
-            openknx.logger.logWithPrefixAndValues("Watchdog", "Running (%ims)", OPENKNX_WATCHDOG_MAX_PERIOD);
+        if (openknx.watchdog.active())
+            openknx.logger.logWithPrefixAndValues("Watchdog", "Running (%ims)", openknx.watchdog.maxPeriod());
         else
             openknx.logger.logWithPrefixAndValues("Watchdog", "Disabled");
 #else
@@ -279,6 +266,19 @@ namespace OpenKNX
     }
 
 #ifdef ARDUINO_ARCH_RP2040
+    #ifdef OPENKNX_WATCHDOG
+    void Console::showWatchdogResets(bool diagnoseKo /* = false */)
+    {
+        #ifdef BASE_KoDiagnose
+        if (diagnoseKo)
+        {
+            openknx.console.writeDiagenoseKo("Resets %i", openknx.watchdog.resets());
+        }
+        #endif
+        openknx.logger.logWithPrefixAndValues("Watchdog resets", "%ix", openknx.watchdog.resets());
+    }
+    #endif
+
     void Console::showFilesystem()
     {
         logBegin();
@@ -391,7 +391,7 @@ namespace OpenKNX
     uint32_t Console::sleepTime()
     {
 #ifdef OPENKNX_WATCHDOG
-        return MAX(OPENKNX_WATCHDOG_MAX_PERIOD + 1, 20000);
+        return MAX(openknx.watchdog.maxPeriod() + 1, 20000);
 #else
         return 20000;
 #endif
@@ -486,9 +486,7 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
     void Console::erase(EraseMode mode)
     {
-    #ifdef OPENKNX_WATCHDOG
-        Watchdog.enable(2147483647);
-    #endif
+        openknx.watchdog.deactivate();
 
         openknx.progLed.blinking();
     #ifdef INFO1_LED_PIN
