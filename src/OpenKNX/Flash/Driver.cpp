@@ -317,6 +317,15 @@ namespace OpenKNX
             return buffer;
         }
 
+        void Driver::erase()
+        {
+            uint16_t sectors = _size / _sectorSize;
+            for (size_t i = 0; i < sectors; i++)
+            {
+                eraseSector(i);
+            }
+                }
+
         void Driver::eraseSector(uint16_t sector)
         {
             if (!needEraseSector(sector))

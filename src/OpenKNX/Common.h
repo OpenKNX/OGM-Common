@@ -7,19 +7,8 @@
 #include "OpenKNX/defines.h"
 #include "knx.h"
 
-#ifdef OPENKNX_WATCHDOG
-    #include <Adafruit_SleepyDog.h>
-#endif
-
 namespace OpenKNX
 {
-#ifdef OPENKNX_WATCHDOG
-    struct WatchdogData
-    {
-        uint32_t timer = 0;
-        uint8_t resetCause;
-    };
-#endif
 
     class Common
     {
@@ -27,12 +16,6 @@ namespace OpenKNX
 #if OPENKNX_LOOPTIME_WARNING > 1
         uint32_t _lastLooptimeWarning = 0;
         bool _skipLooptimeWarning = false;
-#endif
-#ifdef OPENKNX_WATCHDOG
-    #ifndef OPENKNX_WATCHDOG_MAX_PERIOD
-        #define OPENKNX_WATCHDOG_MAX_PERIOD 16384
-    #endif
-        WatchdogData watchdog;
 #endif
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
@@ -58,15 +41,15 @@ namespace OpenKNX
         void processRestoreSavePin();
         void initMemoryTimerInterrupt();
         void debugWait();
+
 #ifdef OPENKNX_DEBUG
         void showDebugInfo();
 #endif
-#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
+
+#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
         void processRecovery();
 #endif
-#ifdef OPENKNX_WATCHDOG
-        void watchdogSetup();
-#endif
+
 #ifdef BASE_HeartbeatDelayBase
         uint32_t _heartbeatDelay = 0;
         void processHeartbeat();
@@ -97,11 +80,6 @@ namespace OpenKNX
 #ifdef BASE_StartupDelayBase
         uint32_t _startupDelay = 0;
         bool _firstStartup = true;
-#endif
-        bool _watchdogRebooted = false;
-#ifdef OPENKNX_WATCHDOG
-        void watchdogLoop();
-        uint8_t watchdogRestarts();
 #endif
         bool _afterStartupDelay = false;
         bool afterStartupDelay();

@@ -19,6 +19,11 @@ namespace OpenKNX
         common.loop();
     }
 
+    void Facade::restart()
+    {
+        common.restart();
+    }
+
     bool Facade::usesDualCore()
     {
 #ifdef OPENKNX_DUALCORE

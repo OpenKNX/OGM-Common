@@ -7,6 +7,7 @@
 #include "OpenKNX/Information.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
+#include "OpenKNX/Watchdog.h"
 #ifdef OPENKNX_RUNTIME_STAT
     #include "OpenKNX/Stat/RuntimeStat.h"
 #endif
@@ -39,6 +40,7 @@ namespace OpenKNX
         Log::Logger logger;
         TimerInterrupt timerInterrupt;
         Hardware hardware;
+        Watchdog watchdog;
 
         Button progButton = Button("Prog");
 #ifdef FUNC1_BUTTON_PIN
@@ -81,6 +83,7 @@ namespace OpenKNX
         bool afterStartupDelay();
         bool freeLoopTime();
         bool freeLoopIterate(uint8_t size, uint8_t& position, uint8_t& processed);
+        void restart();
     };
 } // namespace OpenKNX
 

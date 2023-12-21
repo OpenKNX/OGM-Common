@@ -50,6 +50,7 @@ namespace OpenKNX
         void showFilesystem();
         void showFilesystemDirectory(std::string path);
         void erase(EraseMode mode = EraseMode::All);
+        void showWatchdogResets(bool diagnoseKo = false);
 #endif
 
       public:
@@ -58,7 +59,6 @@ namespace OpenKNX
 
         void printHelpLine(const char* command, const char* message);
         bool processCommand(std::string cmd, bool diagnoseKo = false);
-        void showWatchdogRestart(bool diagnoseKo = false);
 #ifdef BASE_KoDiagnose
         void processDiagnoseKo(GroupObject& ko);
         void writeDiagenoseKo(const char* message, ...);

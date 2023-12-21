@@ -42,6 +42,7 @@ namespace OpenKNX
 #endif
             std::string logPrefix();
 
+            void erase();
             void eraseSector(uint16_t sector = 0);
             uint8_t *flashAddress();
 

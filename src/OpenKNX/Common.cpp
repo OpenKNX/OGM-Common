@@ -2,18 +2,6 @@
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Stat/RuntimeStat.h"
 
-/*
- * 166 != Uninitalized (safe reboot or powerloss, maybe a new firmware)
- * 166 = Normal running (after reboot = restart by watchdog or maybe flash firmware)
- */
-uint8_t __uninitialized_ram(__openKnxRunningState);
-#ifdef OPENKNX_WATCHDOG
-/*
- * Counting the restarts of the WD over the restart
- */
-uint8_t __uninitialized_ram(__openKnxWatchdogRestarts);
-#endif
-
 namespace OpenKNX
 {
     std::string Common::logPrefix()
@@ -27,12 +15,12 @@ namespace OpenKNX
 
         openknx.timerInterrupt.init();
         openknx.hardware.initLeds();
-        openknx.hardware.initButtons();
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
-        // Recovery
+#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
         processRecovery();
 #endif
+
+        openknx.hardware.initButtons();
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
@@ -48,6 +36,8 @@ namespace OpenKNX
 
         debugWait();
 
+        if (openknx.watchdog.lastReset()) logErrorP("Restarted by watchdog");
+
         logInfoP("Init firmware");
 
 #ifdef OPENKNX_DEBUG
@@ -61,23 +51,6 @@ namespace OpenKNX
         initKnx();
 
         openknx.hardware.init();
-
-        if (__openKnxRunningState == 166)
-        {
-            // system was rebooted by watchdog or flash firmware
-            _watchdogRebooted = true;
-#ifdef OPENKNX_WATCHDOG
-            if (__openKnxWatchdogRestarts < 255) __openKnxWatchdogRestarts++;
-#endif
-            logErrorP("Restarted by watchdog");
-        }
-        else
-        {
-#ifdef OPENKNX_WATCHDOG
-            __openKnxWatchdogRestarts = 0;
-#endif
-        }
-        __openKnxRunningState = 166;
     }
 
 #ifdef OPENKNX_DEBUG
@@ -107,45 +80,32 @@ namespace OpenKNX
     }
 #endif
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
+#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
     void Common::processRecovery()
     {
-        uint8_t mode = 0;
-        uint32_t recoveryStart = millis();
+        bool erase = false;
         pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
-        while (digitalRead(PROG_BUTTON_PIN) == OPENKNX_RECOVERY_ON && mode < 3)
+        while (!digitalRead(PROG_BUTTON_PIN))
         {
-            if (mode == 0 && delayCheck(recoveryStart, 500))
+            if (millis() >= OPENKNX_RECOVERY_TIME)
             {
-                hardware.progLed.blinking(400);
-                mode++;
-            }
-
-            if (mode == 1 && delayCheck(recoveryStart, 5500))
-            {
-                hardware.progLed.blinking(200);
-                mode++;
-            }
-
-            if (mode == 2 && delayCheck(recoveryStart, 10500))
-            {
-                mode++;
-                hardware.progLed.on();
+                if (!erase)
+                {
+                    openknx.progLed.blinking(200);
+                    erase = true;
+                }
             }
         }
 
-        switch (mode)
+        if (erase)
         {
-            case 1: // usbMode
-                reset_usb_boot(0, 0);
-                break;
-            case 2: // nukeFLash KNX
-                __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-                break;
-            case 3: // nukeFLash
-                __nukeFlash(0, NUKE_FLASH_SIZE_BYTES);
-                break;
+            openknx.hardware.initFlash();
+            openknx.openknxFlash.erase();
+            openknx.knxFlash.erase();
+            restart();
         }
+
+        openknx.progLed.off();
     }
 #endif
 
@@ -280,7 +240,7 @@ namespace OpenKNX
         openknx.hardware.activatePowerRail();
 
 #ifdef OPENKNX_WATCHDOG
-        watchdogSetup();
+        if (ParamBASE_Watchdog) openknx.watchdog.activate();
 #endif
 
         // register callbacks
@@ -331,38 +291,6 @@ namespace OpenKNX
     }
 #endif
 
-#ifdef OPENKNX_WATCHDOG
-    void Common::watchdogSetup()
-    {
-        if (!ParamBASE_Watchdog) return;
-
-        logInfo("Watchdog", "Start with a watchtime of %ims", OPENKNX_WATCHDOG_MAX_PERIOD);
-    #if defined(ARDUINO_ARCH_SAMD)
-        // used for Diagnose command
-        watchdog.resetCause = Watchdog.resetCause();
-
-        // setup watchdog to prevent endless loops
-        Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD, false);
-    #elif defined(ARDUINO_ARCH_RP2040)
-        Watchdog.enable(OPENKNX_WATCHDOG_MAX_PERIOD);
-    #endif
-    }
-
-    void Common::watchdogLoop()
-    {
-        if (!delayCheck(watchdog.timer, OPENKNX_WATCHDOG_MAX_PERIOD / 10)) return;
-        if (!ParamBASE_Watchdog) return;
-
-        Watchdog.reset();
-        watchdog.timer = millis();
-    }
-
-    uint8_t Common::watchdogRestarts()
-    {
-        return __openKnxWatchdogRestarts;
-    }
-#endif
-
     // main loop
     void Common::loop()
     {
@@ -379,6 +307,9 @@ namespace OpenKNX
 
 #ifdef OPENKNX_HEARTBEAT
         openknx.progLed.debugLoop();
+#endif
+#ifdef OPENKNX_WATCHDOG
+        openknx.watchdog.loop();
 #endif
 
 #ifdef OPENKNX_LOOPTIME_WARNING
@@ -415,10 +346,6 @@ namespace OpenKNX
         RUNTIME_MEASURE_BEGIN(_runtimeModuleLoop);
         processModulesLoop();
         RUNTIME_MEASURE_END(_runtimeModuleLoop);
-
-#ifdef OPENKNX_WATCHDOG
-        watchdogLoop();
-#endif
 
         RUNTIME_MEASURE_END(_runtimeLoop);
 
@@ -563,7 +490,7 @@ namespace OpenKNX
             if (_firstStartup)
             {
                 value |= (1 << 1);
-                if (_watchdogRebooted) value |= (1 << 2);
+                if (openknx.watchdog.lastReset()) value |= (1 << 2);
             }
 
             logDebugP("Send Hearbeat %i", value);
@@ -694,7 +621,7 @@ namespace OpenKNX
             openknx.modules.list[i]->processBeforeRestart();
         }
 
-        __openKnxRunningState = 0;
+        openknx.watchdog.safeRestart();
         openknx.flash.save();
         logIndentDown();
     }
@@ -806,7 +733,7 @@ namespace OpenKNX
     {
         logInfoP("System will restart now");
         delay(10);
-        __openKnxRunningState = 0;
+        openknx.watchdog.safeRestart();
         knx.platform().restart();
     }
 
