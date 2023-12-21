@@ -208,12 +208,9 @@ namespace OpenKNX
         if (brightness == _currentLedBrightness)
             return;
 
-#ifdef ARDUINO_ARCH_ESP32
-        // Special Hack for ESP32
         // Need to reset pinMode after using analogWrite
         if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
             pinMode(_pin, OUTPUT);
-#endif
 
         // logTraceP("==== > %i -> %i\n", _pin, brightness);
         if (brightness == 255)
