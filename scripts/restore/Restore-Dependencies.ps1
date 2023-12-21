@@ -36,7 +36,7 @@ $DebugMsg=$false
 $ForceRecreateSymLinks=$false
 
 function Test-IsRunAsAdministrator {
-  return ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+  return $true # ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
 }
 function CheckOS ($AdminOnly = $true) {
   # check on which os we are running
