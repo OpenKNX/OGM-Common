@@ -46,7 +46,7 @@ namespace OpenKNX
         void showDebugInfo();
 #endif
 
-#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
+#if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
         void processRecovery();
 #endif
 

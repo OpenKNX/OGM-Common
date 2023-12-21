@@ -136,13 +136,13 @@ namespace OpenKNX
             openknx.common.showRuntimeStat(true, true);
         }
 #endif
-#ifdef ARDUINO_ARCH_RP2040
-    #ifdef OPENKNX_WATCHDOG
+#ifdef OPENKNX_WATCHDOG
         else if (cmd == "watchdog")
         {
             showWatchdogResets(diagnoseKo);
         }
-    #endif
+#endif
+#ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
         {
             showFilesystem();
@@ -265,20 +265,21 @@ namespace OpenKNX
         logEnd();
     }
 
-#ifdef ARDUINO_ARCH_RP2040
-    #ifdef OPENKNX_WATCHDOG
+#ifdef OPENKNX_WATCHDOG
     void Console::showWatchdogResets(bool diagnoseKo /* = false */)
     {
-        #ifdef BASE_KoDiagnose
+    #ifdef BASE_KoDiagnose
         if (diagnoseKo)
-        {
+        {   
+            if(openknx.watchdog.lastReset())
             openknx.console.writeDiagenoseKo("Resets %i", openknx.watchdog.resets());
         }
-        #endif
-        openknx.logger.logWithPrefixAndValues("Watchdog resets", "%ix", openknx.watchdog.resets());
-    }
     #endif
+        openknx.logger.logWithPrefixAndValues("Watchdog", "Resets %ix", openknx.watchdog.resets());
+    }
+#endif
 
+#ifdef ARDUINO_ARCH_RP2040
     void Console::showFilesystem()
     {
         logBegin();
