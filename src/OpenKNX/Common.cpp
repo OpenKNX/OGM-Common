@@ -15,12 +15,12 @@ namespace OpenKNX
 
         openknx.timerInterrupt.init();
         openknx.hardware.initLeds();
-        openknx.hardware.initButtons();
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
-        // Recovery
+#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
         processRecovery();
 #endif
+
+        openknx.hardware.initButtons();
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.progLed.on();
@@ -36,7 +36,7 @@ namespace OpenKNX
 
         debugWait();
 
-        if(openknx.watchdog.lastReset()) logErrorP("Restarted by watchdog");
+        if (openknx.watchdog.lastReset()) logErrorP("Restarted by watchdog");
 
         logInfoP("Init firmware");
 
@@ -80,45 +80,32 @@ namespace OpenKNX
     }
 #endif
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(OPENKNX_RECOVERY_ON)
+#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
     void Common::processRecovery()
     {
-        uint8_t mode = 0;
-        uint32_t recoveryStart = millis();
+        bool erase = false;
         pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
-        while (digitalRead(PROG_BUTTON_PIN) == OPENKNX_RECOVERY_ON && mode < 3)
+        while (!digitalRead(PROG_BUTTON_PIN))
         {
-            if (mode == 0 && delayCheck(recoveryStart, 500))
+            if (millis() >= OPENKNX_RECOVERY_TIME)
             {
-                hardware.progLed.blinking(400);
-                mode++;
-            }
-
-            if (mode == 1 && delayCheck(recoveryStart, 5500))
-            {
-                hardware.progLed.blinking(200);
-                mode++;
-            }
-
-            if (mode == 2 && delayCheck(recoveryStart, 10500))
-            {
-                mode++;
-                hardware.progLed.on();
+                if (!erase)
+                {
+                    openknx.progLed.blinking(200);
+                    erase = true;
+                }
             }
         }
 
-        switch (mode)
+        if (erase)
         {
-            case 1: // usbMode
-                reset_usb_boot(0, 0);
-                break;
-            case 2: // nukeFLash KNX
-                __nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-                break;
-            case 3: // nukeFLash
-                __nukeFlash(0, NUKE_FLASH_SIZE_BYTES);
-                break;
+            openknx.hardware.initFlash();
+            openknx.openknxFlash.erase();
+            openknx.knxFlash.erase();
+            restart();
         }
+
+        openknx.progLed.off();
     }
 #endif
 

@@ -1,11 +1,12 @@
 # Changes
 
 ## 1.0.10: 2023-11-13 - 2023-12-12
+* Feature: Adds a recovery mode during bootup by hold knx prog button
 * Refactor: Watchdog
 * Refactor: Heartbeat with new advanced info
 * Refactor: Support new producer with Common.share.xml
-*           Move many XML Elements from Logicmodule into Common.share.xml
-*           Adds new multiline comment input
+  * Move many XML Elements from Logicmodule into Common.share.xml
+  * Adds new multiline comment input
 * Feature: Buildscript support MacOS and Linux
 * Feature: Adds new icons
 * Update: RP2040 Platform to Core 3.6.2

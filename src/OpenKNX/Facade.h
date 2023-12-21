@@ -83,6 +83,7 @@ namespace OpenKNX
         bool afterStartupDelay();
         bool freeLoopTime();
         bool freeLoopIterate(uint8_t size, uint8_t& position, uint8_t& processed);
+        void restart();
     };
 } // namespace OpenKNX
 

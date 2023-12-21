@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "OpenKNX/defines.h"
 
 #ifdef OPENKNX_WATCHDOG
     #include <Adafruit_SleepyDog.h>

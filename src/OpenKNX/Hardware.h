@@ -90,7 +90,6 @@ namespace OpenKNX
     {
       private:
         uint8_t features = 0;
-        void testbtn();
 
       public:
         // Initialize or HW detection

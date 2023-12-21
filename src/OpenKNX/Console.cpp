@@ -94,7 +94,7 @@ namespace OpenKNX
         else if (!diagnoseKo && (cmd == "r" || cmd == "restart"))
         {
             delay(20);
-            openknx.common.restart();
+            openknx.restart();
         }
         else if (!diagnoseKo && (cmd == "fatal"))
         {
@@ -502,16 +502,14 @@ namespace OpenKNX
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
-            openknx.logger.logWithPrefixAndValues("Erase", "KNX parameters (%i -> %i)", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
-            if (!__nukeFlash(KNX_FLASH_OFFSET, KNX_FLASH_SIZE))
-                openknx.logger.log("Fatal: nuke paramters invalid");
+            openknx.logger.logWithPrefix("Erase", "KNX parameters");
+            openknx.knxFlash.erase();
         }
 
         if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
         {
-            openknx.logger.logWithPrefixAndValues("Erase", "OpenKNX save data (%i -> %i)", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
-            if (!__nukeFlash(OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE))
-                openknx.logger.log("Fatal: nuke paramters invalid");
+            openknx.logger.logWithPrefix("Erase", "OpenKNX save data");
+            openknx.openknxFlash.erase();
         }
 
         if (mode == EraseMode::All || mode == EraseMode::Filesystem)
@@ -533,9 +531,7 @@ namespace OpenKNX
         openknx.progLed.forceOn();
         openknx.logger.logWithPrefix("Erase", "Completed");
         delay(1000);
-        openknx.logger.log("Restart device");
-        delay(100);
-        knx.platform().restart();
+        openknx.restart();
     }
 
     void Console::resetToBootloader()

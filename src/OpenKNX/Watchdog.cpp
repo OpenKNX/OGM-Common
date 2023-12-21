@@ -1,10 +1,6 @@
 #include "OpenKNX/Watchdog.h"
 #include "OpenKNX/Facade.h"
 
-#ifndef OPENKNX_WATCHDOG_MAX_PERIOD
-    #define OPENKNX_WATCHDOG_MAX_PERIOD 16384
-#endif
-
 #ifdef ARDUINO_ARCH_RP2040
 /*
  * 166 != Uninitalized (safe reboot or powerloss, maybe a new firmware)
