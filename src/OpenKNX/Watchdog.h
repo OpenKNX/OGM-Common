@@ -34,6 +34,7 @@ namespace OpenKNX
 
         /*
          * Returns whether the last restart was performed by the watchdog
+         * Hint: On RP2040 it is possible that reset by flashing firmware also looks like wd reset
          */
         bool lastReset();
 
@@ -57,7 +58,6 @@ namespace OpenKNX
       private:
         bool _active = false;
         bool _lastReset = false;
-        uint8_t _resetCause = 0;
         uint8_t _resets = 0;
     };
 } // namespace OpenKNX

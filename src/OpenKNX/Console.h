@@ -45,12 +45,12 @@ namespace OpenKNX
         void showHelp();
         void sleep();
         uint32_t sleepTime();
+        void showWatchdogResets(bool diagnoseKo = false);
 #ifdef ARDUINO_ARCH_RP2040
         void resetToBootloader();
         void showFilesystem();
         void showFilesystemDirectory(std::string path);
         void erase(EraseMode mode = EraseMode::All);
-        void showWatchdogResets(bool diagnoseKo = false);
 #endif
 
       public:

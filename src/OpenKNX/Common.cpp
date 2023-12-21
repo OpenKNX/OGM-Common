@@ -16,7 +16,7 @@ namespace OpenKNX
         openknx.timerInterrupt.init();
         openknx.hardware.initLeds();
 
-#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
+#if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
         processRecovery();
 #endif
 
@@ -80,7 +80,7 @@ namespace OpenKNX
     }
 #endif
 
-#if defined(PROG_BUTTON_PIN) && OPENKNX_RECOVERY_TIME > 0
+#if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
     void Common::processRecovery()
     {
         bool erase = false;

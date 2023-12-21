@@ -103,8 +103,11 @@ namespace OpenKNX
     #endif
 
     #ifdef ARDUINO_ARCH_SAMD
-        _resetCause = ::Watchdog.resetCause();
-            // TODO: Prüfe ob man auf dem SAMD raus bekommt ob ein gewolter neustart oder ein ungewollter ist.
+        if (::Watchdog.resetCause() & PM_RCAUSE_WDT)
+        {
+            _lastReset = true;
+            _resets = 1;
+        }
     #endif
 #endif
     }
