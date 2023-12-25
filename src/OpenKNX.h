@@ -5,7 +5,7 @@
 #endif
 
 #if !defined(ARDUINO_ARCH_SAMD) && !defined(ARDUINO_ARCH_RP2040) && !defined(ARDUINO_ARCH_ESP32)
-#error Your archetecture is not supported by OpenKNX
+#error Your architecture is not supported by OpenKNX
 #endif
 
 
