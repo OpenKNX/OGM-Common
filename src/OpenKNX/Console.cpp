@@ -271,11 +271,10 @@ namespace OpenKNX
     #ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {   
-            if(openknx.watchdog.lastReset())
-            openknx.console.writeDiagenoseKo("Resets %i", openknx.watchdog.resets());
+            openknx.console.writeDiagenoseKo("WD %i", openknx.watchdog.resets());
         }
     #endif
-        openknx.logger.logWithPrefixAndValues("Watchdog", "Resets %ix", openknx.watchdog.resets());
+        openknx.logger.logWithPrefixAndValues("Watchdog", "%i Resets", openknx.watchdog.resets());
     }
 #endif
 
