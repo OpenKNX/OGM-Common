@@ -64,7 +64,17 @@ namespace OpenKNX
         Stat::RuntimeStat _runtimeModuleLoop;
 #endif
 
+#ifdef BASE_StartupDelayBase
+        uint32_t _startupDelay = 0;
+        bool _firstStartup = true;
+#endif
+        bool _afterStartupDelay = false;
+
       public:
+        /*
+         * Internal public api
+         */
+        uint8_t extendedHeartbeatValue = 1;
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
         void init(uint8_t firmwareRevision);
@@ -77,11 +87,6 @@ namespace OpenKNX
         void loop1();
 #endif
 
-#ifdef BASE_StartupDelayBase
-        uint32_t _startupDelay = 0;
-        bool _firstStartup = true;
-#endif
-        bool _afterStartupDelay = false;
         bool afterStartupDelay();
         void processAfterStartupDelay();
         void skipLooptimeWarning();

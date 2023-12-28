@@ -484,7 +484,7 @@ namespace OpenKNX
 
         if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, ParamBASE_HeartbeatDelayTimeMS))
         {
-            uint8_t value = 1;
+            uint8_t value = extendedHeartbeatValue;
 
             // first startup
             if (_firstStartup)
