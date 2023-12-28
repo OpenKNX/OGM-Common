@@ -270,11 +270,17 @@ namespace OpenKNX
     {
     #ifdef BASE_KoDiagnose
         if (diagnoseKo)
-        {   
-            openknx.console.writeDiagenoseKo("WD %i", openknx.watchdog.resets());
+        {
+            if (openknx.watchdog.active())
+                openknx.console.writeDiagenoseKo("WD ON (%ix)", openknx.watchdog.resets());
+            else
+                openknx.console.writeDiagenoseKo("WD OFF");
         }
     #endif
-        openknx.logger.logWithPrefixAndValues("Watchdog", "%i Resets", openknx.watchdog.resets());
+        if (openknx.watchdog.active())
+            openknx.logger.logWithPrefixAndValues("Watchdog", "Running (%i Resets)", openknx.watchdog.resets());
+        else
+            openknx.logger.logWithPrefixAndValues("Watchdog", "Disabled", openknx.watchdog.resets());
     }
 #endif
 
@@ -415,8 +421,8 @@ namespace OpenKNX
 #ifdef BASE_KoDiagnose
         if (diagnoseKo)
         {
-            openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));
             openknx.console.writeDiagenoseKo("CUR %.3fKiB", ((float)freeMemory() / 1024));
+            openknx.console.writeDiagenoseKo("MIN %.3fKiB", ((float)openknx.common.freeMemoryMin() / 1024));
         }
 #endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
