@@ -132,7 +132,7 @@ namespace OpenKNX
             void printMessage(const char* message);
             void printPrefix(const char* prefix);
             void logWithValues(const char* message, va_list& values);
-            void logWithPrefixAndValues(const char* prefix, const char* message, va_list& values);
+            
             void logMacroWrapper(uint8_t logColor, const char* prefix, const char* message, va_list& values);
             void printCore();
             bool isColorSet();
@@ -183,6 +183,7 @@ namespace OpenKNX
             void logWithPrefix(const std::string& prefix, const std::string& message);
 
             void logWithPrefixAndValues(const char* prefix, const char* message, ...);
+            void logWithPrefixAndValues(const char* prefix, const char* message, va_list& values);
             void logWithPrefixAndValues(const std::string& prefix, const std::string& message, ...);
 
             void logWithValues(const std::string& message, ...);
