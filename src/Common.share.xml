@@ -192,7 +192,7 @@
               <ParameterType Id="%AID%_PT-Longitude" Name="Longitude">
                 <TypeFloat Encoding="IEEE-754 Single" minInclusive="-180" maxInclusive="180" />
               </ParameterType>
-          </ParameterTypes>
+            </ParameterTypes>
             <Parameters>
               <!-- Parameter ID-Namespace 001-099 / Namespace is shared with LogicModule (historical reason) -->
               <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
