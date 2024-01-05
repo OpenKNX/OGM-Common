@@ -251,8 +251,8 @@ namespace OpenKNX
 
         while (true)
         {
-#ifdef WATCHDOG
-            Watchdog.reset();
+#ifdef OPENKNX_WATCHDOG
+            openknx.watchdog.deactivate();
 #endif
             delay(2000);
             // Repeat error message
