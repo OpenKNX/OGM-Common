@@ -190,6 +190,17 @@ namespace OpenKNX
     void Console::processSerialInput()
     {
         const uint8_t current = OPENKNX_LOGGER_DEVICE.read();
+
+        // Magic byte for save data during firmware upgrade
+        if(current == 0x7) {
+            OPENKNX_LOGGER_DEVICE.write(0x7);
+            openknx.progLed.forceOn();
+            openknx.flash.save();
+            OPENKNX_LOGGER_DEVICE.write(0x7);
+            delay(10000);
+            openknx.restart();
+        }
+
         if (current == '\r' || current == '\n')
         {
             if (_consoleCharLast == '\r' && current == '\n')
