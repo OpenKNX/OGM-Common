@@ -200,6 +200,7 @@ namespace OpenKNX
             uint32_t readInt();
             float readFloat();
             uint16_t firmwareVersion();
+            uint32_t lastWrite();
 
           private:
             bool *loadedModules = nullptr;

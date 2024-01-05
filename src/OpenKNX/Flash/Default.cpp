@@ -266,6 +266,8 @@ namespace OpenKNX
             if (!force && _lastWrite > 0 && !delayCheck(_lastWrite, FLASH_DATA_WRITE_LIMIT))
                 return;
 
+            _lastWrite = millis();
+
             logBegin();
             logInfoP("Save data to flash%s", force ? " (force)" : "");
             logIndentUp();
@@ -468,6 +470,11 @@ namespace OpenKNX
         uint16_t Default::firmwareVersion()
         {
             return _lastFirmwareVersion;
+        }
+
+        uint32_t Default::lastWrite()
+        {
+            return _lastWrite;
         }
     } // namespace Flash
 } // namespace OpenKNX
