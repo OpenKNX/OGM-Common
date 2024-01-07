@@ -415,6 +415,9 @@ namespace OpenKNX
         printHelpLine("erase all", "Erase all");
         printHelpLine("bootloader", "Reset into Bootloader Mode");
 #endif
+        printHelpLine("koNNNNv", "Show value of KO NNNNN");
+        printHelpLine("koNNNNr", "Send readRequest for KO NNNNN");
+        printHelpLine("koNNNNw", "Send write for KO NNNNN");
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showHelp();
 
