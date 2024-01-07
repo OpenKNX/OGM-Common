@@ -182,6 +182,7 @@ namespace OpenKNX
             uint32_t addr = std::stoi(koNumber, nullptr, 10);
             if (addr > 0 && addr <= MAIN_MaxKoNumber)
             {
+                // TODO move to out of Console
                 GroupObject go = knx.getGroupObject(addr);
 
                 if (cmd[6] == 'v')
@@ -189,7 +190,7 @@ namespace OpenKNX
                     openknx.logger.logWithPrefixAndValues("KO-Value", "size=%d, @[0]=%2x", go.valueSize(), go.valueRef()[0]);
                     openknx.logger.logHexWithPrefix("KO-Value Hex", go.valueRef(), go.valueSize());
 
-                    // TODO finde solution for raw values with \0
+                    // TODO find solution for raw values with \0
                     char koRawValue[14+1] = {};
                     memcpy(koRawValue, go.valueRef(), go.valueSize());
                     writeDiagenoseKo("%s", koRawValue);
