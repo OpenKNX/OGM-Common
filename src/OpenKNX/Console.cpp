@@ -199,7 +199,11 @@ namespace OpenKNX
                     openknx.logger.logWithPrefixAndValues("KO-Value ReadReq", "konr=%d", addr);
                     go.requestObjectRead();
                 }
-                
+                else if (cmd[6] == 'w')
+                {
+                    openknx.logger.logWithPrefixAndValues("KO-Value Write", "NO-Nr=%d", addr);
+                    go.objectWritten();
+                }
             }
 
 
