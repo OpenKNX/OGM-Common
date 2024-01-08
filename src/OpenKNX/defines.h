@@ -85,3 +85,13 @@
     #define __time_critical_func(X) X
     #define __isr
 #endif
+
+#if defined(OPENKNX_DUALCORE) && defined(ARDUINO_ARCH_ESP32)
+    #ifndef ARDUINO_LOOP1_STACK_SIZE
+        #ifndef CONFIG_ARDUINO_LOOP1_STACK_SIZE
+            #define ARDUINO_LOOP1_STACK_SIZE 8192
+        #else
+            #define ARDUINO_LOOP1_STACK_SIZE CONFIG_ARDUINO_LOOP1_STACK_SIZE
+        #endif
+    #endif
+#endif

@@ -2,6 +2,11 @@
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Stat/RuntimeStat.h"
 
+#if defined(OPENKNX_DUALCORE) && defined(ARDUINO_ARCH_ESP32)
+extern void loop1();
+extern void setup1();
+#endif
+
 namespace OpenKNX
 {
     std::string Common::logPrefix()
@@ -250,11 +255,21 @@ namespace OpenKNX
         _setup0Ready = true;
 
 #ifdef OPENKNX_DUALCORE
+    #ifdef ARDUINO_ARCH_ESP32
+        xTaskCreateUniversal([](void* parms) {
+            ::setup1();
+            for (;;)
+            {
+                ::loop1();
+                vTaskDelay(1);
+            } }, "setup1AndLoop1", ARDUINO_LOOP1_STACK_SIZE, NULL, 0, nullptr, 0);
+    #endif
+
         // if we have a second core wait for setup1 is done
         if (openknx.usesDualCore())
             while (!_setup1Ready)
                 delay(1);
-#endif
+#endif // OPENKNX_DUALCORE
 
         openknx.logger.logOpenKnxHeader();
 

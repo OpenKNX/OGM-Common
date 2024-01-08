@@ -26,9 +26,9 @@ ParamLOG_HeartbeatDelayTimeMS
 
 | ARCH   | info                                                                    |
 | ------ | ----------------------------------------------------------------------- |
-| RP204  | the reference platform with full support (including dual core support)  |
+| RP2040 | the reference platform with full support (including dual core support) |
 | SAMD21 | obsolete but still supported. no hw should be developed on this anymore |
-| ESP32  | experimental (single core only)                                         |
+| ESP32  | experimental                                                            |
 
 To configure the Hardware-Setup use the following defines in hardware.h
 
