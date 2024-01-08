@@ -195,7 +195,7 @@ namespace OpenKNX
         if(current == 0x7) {
             OPENKNX_LOGGER_DEVICE.write(0x7);
             openknx.progLed.forceOn();
-            openknx.flash.save();
+            openknx.flash.save(true);
             OPENKNX_LOGGER_DEVICE.write(0x7);
             delay(10000);
             openknx.restart();
