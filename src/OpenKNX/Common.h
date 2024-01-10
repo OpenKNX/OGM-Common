@@ -54,6 +54,10 @@ namespace OpenKNX
         uint32_t _heartbeatDelay = 0;
         void processHeartbeat();
 #endif
+#ifdef BASE_PeriodicSave
+        void processPeriodicSave();
+#endif
+
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 

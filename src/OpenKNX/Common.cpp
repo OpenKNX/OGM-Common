@@ -352,6 +352,9 @@ namespace OpenKNX
             // Handle heartbeat delay
             processHeartbeat();
 #endif
+#ifdef BASE_PeriodicSave
+            processPeriodicSave();
+#endif
 
             processSavePin();
             processRestoreSavePin();
@@ -372,6 +375,18 @@ namespace OpenKNX
             _lastLooptimeWarning = millis();
         }
 #endif
+    }
+
+    void Common::processPeriodicSave()
+    {
+        const uint32_t delay = ParamBASE_PeriodicSave * 3600000;
+        if (delay > 0 && delayCheck(openknx.flash.lastWrite(), delay))
+        {
+            logInfoP("Start periodic save");
+            logIndentUp();
+            openknx.flash.save();
+            logIndentDown();
+        }
     }
 
     void Common::skipLooptimeWarning()

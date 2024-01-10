@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  <op:config name="%BASE_PeriodicSave%" value="1" />
+  <op:config name="%BASE_PeriodicSaveDefault%" value="0" />
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
@@ -192,12 +194,32 @@
               <ParameterType Id="%AID%_PT-Longitude" Name="Longitude">
                 <TypeFloat Encoding="IEEE-754 Single" minInclusive="-180" maxInclusive="180" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-PeriodicSave" Name="PeriodicSave">
+                <TypeRestriction Base="Value" SizeInBit="8" UIHint="DropDown">
+                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Jede Stunde (Nicht empfohlen)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Alle 2 Stunden" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Alle 4 Stunden" Value="4" Id="%ENID%" />
+                  <Enumeration Text="Alle 6 Stunden" Value="6" Id="%ENID%" />
+                  <Enumeration Text="Täglich" Value="24" Id="%ENID%" />
+                  <Enumeration Text="Wöchentlich" Value="168" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
             </ParameterTypes>
             <Parameters>
               <!-- Parameter ID-Namespace 001-099 / Namespace is shared with LogicModule (historical reason) -->
+              <!-- Some IDs are over 100. In this case the parameters were moved from the logic module to here-->
+
+              <!-- OpenKNX Logo -->
               <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
+
+              <!-- Helper with 0 An auxiliary parameter that is always 0 to make a check against it -->
+              <Parameter Id="%AID%_P-%TT%00099" Name="SelectHelper" ParameterType="%AID%_PT-CheckBox" Text="" Value="0" Access="None"/>
+
+              <!-- Hidden Options for external time control -->
               <Parameter Id="%AID%_P-%TT%00010" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Text="InternalTime" Access="None" Value="0" />
 
+              <!-- General -->
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00002" Name="StartupDelayBase"   ParameterType="%AID%_PT-DelayBase"        Offset="0" BitOffset="0" Text="Zeitbasis" Value="0" />
@@ -205,31 +227,47 @@
                 <Parameter Id="%AID%_UP-%TT%00004" Name="HeartbeatDelayBase" ParameterType="%AID%_PT-DelayBase"        Offset="2" BitOffset="0" Text="Zeitbasis" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00005" Name="HeartbeatDelayTime" ParameterType="%AID%_PT-DelayTime"        Offset="2" BitOffset="2" Text="Zeit" Value="300" />
               </Union>
-              <Union SizeInBit="16">
+
+              <!-- Time & Date -->
+              <Union SizeInBit="8">
                 <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone" ParameterType="%AID%_PT-Timezone" Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
-                <Parameter Id="%AID%_UP-%TT%00157" Name="TimezoneSign" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="Zeitzone-Vorzeichen" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00158" Name="TimezoneValue" ParameterType="%AID%_PT-TimezoneValue" Offset="0" BitOffset="1" Text="Zeitzone-Wert" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate"   ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll" ParameterType="%AID%_PT-SummertimeAll" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE" ParameterType="%AID%_PT-SummertimeDE" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld" ParameterType="%AID%_PT-SummertimeWorld" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO" ParameterType="%AID%_PT-SummertimeKO" Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00146" Name="Diagnose"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="0" Text="Diagnoseobjekt anzeigen" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
-                <Parameter Id="%AID%_UP-%TT%00034" Name="ReadTimeDate"       ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="2" Text="Bei Neustart vom Bus lesen" Value="1" />
-                <!-- The follwing 2 IDs are used by logic module for update compatibility -->
-                <!-- <Parameter Id="%AID%_UP-%TT%00035" Name="BuzzerInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="1" Text="Akustischer Signalgeber vorhanden (Buzzer)?" Value="0" /> -->
-                <!-- <Parameter Id="%AID%_UP-%TT%00036" Name="LedInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Optischer Signalgeber vorhanden (RGB-LED)?" Value="0" /> -->
-                <Parameter Id="%AID%_UP-%TT%00037" Name="HeartbeatExtended"  ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="3" Text="Erweitertes &quot;In Betrieb&quot;" Value="0" />
-                <!-- 4 Bit free  -->
+                <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00157" Name="TimezoneSign"     ParameterType="%AID%_PT-CheckBox"         Offset="0" BitOffset="0" Text="Zeitzone-Vorzeichen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00158" Name="TimezoneValue"    ParameterType="%AID%_PT-TimezoneValue"    Offset="0" BitOffset="1" Text="Zeitzone-Wert" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
+                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
+                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
               </Union>
+
+              <!-- Location -->
               <Union SizeInBit="64">
-                <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
+                <Memory CodeSegment="%MID%" Offset="5" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" />
                 <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764"  />
               </Union>
 
+              <!-- Extended -->
+              <Union SizeInBit="256">
+                <Memory CodeSegment="%MID%" Offset="14" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00146" Name="Diagnose"          ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="0" Text="Diagnoseobjekt anzeigen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"          ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00034" Name="ReadTimeDate"      ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="2" Text="Bei Neustart vom Bus lesen" Value="1" />
+                <!-- The follwing 2 IDs are used by logic module for update compatibility -->
+                <!-- <Parameter Id="%AID%_UP-%TT%00035" Name="BuzzerInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="1" Text="Akustischer Signalgeber vorhanden (Buzzer)?" Value="0" /> -->
+                <!-- <Parameter Id="%AID%_UP-%TT%00036" Name="LedInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Optischer Signalgeber vorhanden (RGB-LED)?" Value="0" /> -->
+                <Parameter Id="%AID%_UP-%TT%00037" Name="HeartbeatExtended" ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="3" Text="Erweitertes &quot;In Betrieb&quot;" Value="0" />
+                <!-- 4 Bit free  -->
+                <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches Speichern" Value="%BASE_PeriodicSaveDefault%" />
+                <!--
+                
+                  Reserved for new parameters
+                
+                -->
+                <!-- Set dummy for last Byte to reserve Space-->
+                <Parameter Id="%AID%_UP-%TT%00098" Name="Dummy"  ParameterType="%AID%_PT-ValueDpt5" Offset="31" BitOffset="0" Text="" Value="0" />
+              </Union>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
@@ -253,6 +291,9 @@
               <ParameterRef Id="%AID%_UP-%TT%00160_R-%TT%0016001" RefId="%AID%_UP-%TT%00160" />
               <ParameterRef Id="%AID%_UP-%TT%00161_R-%TT%0016101" RefId="%AID%_UP-%TT%00161" />
               <ParameterRef Id="%AID%_UP-%TT%00162_R-%TT%0016201" RefId="%AID%_UP-%TT%00162" />
+              <ParameterRef Id="%AID%_UP-%TT%00090_R-%TT%0009001" RefId="%AID%_UP-%TT%00090" />
+              <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
+
             </ParameterRefs>
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%00001" Name="Heartbeat"      Text="In Betrieb"       Number="1"  FunctionText="Zyklisch" ObjectSize="1 Byte" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-5" />
@@ -307,6 +348,7 @@
               <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
+                <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
                 <!-- Startup Delay pattern -->
@@ -450,6 +492,12 @@
                 <choose ParamRefId="%AID%_UP-%TT%00005_R-%TT%0000501">
                   <when test="!=0">
                     <ParameterRefRef RefId="%AID%_UP-%TT%00037_R-%TT%0003701" HelpContext="BASE-HeartbeadExtendend" IndentLevel="1"/>
+                  </when>
+                </choose>
+
+                <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
+                  <when test="!=%BASE_PeriodicSave%">
+                    <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="BASE-PeriodicSave" IndentLevel="1" />
                   </when>
                 </choose>
 
