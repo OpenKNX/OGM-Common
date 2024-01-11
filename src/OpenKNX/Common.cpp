@@ -674,10 +674,12 @@ namespace OpenKNX
     {
     #ifdef BASE_KoDiagnose
         if (ko.asap() == BASE_KoDiagnose)
-        {
-            openknx.console.processDiagnoseKo(ko);
-            return;
-        }
+            return openknx.console.processDiagnoseKo(ko);
+    #endif
+
+    #ifdef BASE_KoSaveOnDemand
+        if (ko.asap() == BASE_KoSaveOnDemand)
+            return processSaveKo(ko);
     #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
@@ -685,7 +687,32 @@ namespace OpenKNX
             openknx.modules.list[i]->processInputKo(ko);
         }
     }
+#endif
 
+#ifdef BASE_KoSaveOnDemand
+    void Common::processSaveKo(GroupObject& ko)
+    {
+        if (ParamBASE_SaveOnDemand && ko.value(DPT_Trigger))
+        {
+            uint32_t time = 60; // 3
+            if (ParamBASE_SaveOnDemand == 2)
+                time = 15;
+            else if (ParamBASE_SaveOnDemand == 1)
+                time = 5;
+
+            if (openknx.flash.lastWrite() == 0 || delayCheck(openknx.flash.lastWrite(), time * 1000 * 60))
+            {
+                logInfoP("Process incoming save event");
+                logIndentUp();
+                openknx.flash.save();
+                logIndentDown();
+            }
+            else
+            {
+                logErrorP("Ignore the incoming save event (write protection %imin)", time);
+            }
+        }
+    }
 #endif
 
     void Common::registerCallbacks()
