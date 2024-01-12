@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
-  <op:config name="%BASE_SaveOnDemand%" value="1" />
-  <op:config name="%BASE_PeriodicSave%" value="1" />
-  <op:config name="%BASE_PeriodicSaveDefault%" value="0" />
+  <op:config name="%BASE_ShowExtendedSave%" value="1" />
+  <op:config name="%BASE_ExtendedSave%" value="0" />
+  <op:config name="%BASE_PeriodicSave%" value="0" />
+  <op:config name="%BASE_ManualSave%" value="0" />
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
@@ -198,7 +199,7 @@
               <ParameterType Id="%AID%_PT-PeriodicSave" Name="PeriodicSave">
                 <TypeRestriction Base="Value" SizeInBit="8" UIHint="DropDown">
                   <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Jede Stunde (Nicht empfohlen)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Jede Stunde" Value="1" Id="%ENID%" />
                   <Enumeration Text="Alle 2 Stunden" Value="2" Id="%ENID%" />
                   <Enumeration Text="Alle 4 Stunden" Value="4" Id="%ENID%" />
                   <Enumeration Text="Alle 6 Stunden" Value="6" Id="%ENID%" />
@@ -206,9 +207,9 @@
                   <Enumeration Text="Wöchentlich" Value="168" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
-              <ParameterType Id="%AID%_PT-SaveOnDemand" Name="SaveOnDemand">
+              <ParameterType Id="%AID%_PT-ManualSave" Name="ManualSave">
                 <TypeRestriction Base="Value" SizeInBit="3" UIHint="DropDown">
-                  <Enumeration Text="Nicht genutzt" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
                   <Enumeration Text="Aktiv mit 5 min. Schreibschutz" Value="1" Id="%ENID%" />
                   <Enumeration Text="Aktiv mit 15 min. Schreibschutz" Value="2" Id="%ENID%" />
                   <Enumeration Text="Aktiv mit 60 min. Schreibschutz" Value="3" Id="%ENID%" />
@@ -217,7 +218,7 @@
             </ParameterTypes>
             <Parameters>
               <!-- Parameter ID-Namespace 001-099 / Namespace is shared with LogicModule (historical reason) -->
-              <!-- Some IDs are over 100. In this case the parameters were moved from the logic module to here-->
+              <!-- Some IDs are over 100. These are parameters that have also been moved here from the logic module -->
 
               <!-- OpenKNX Logo -->
               <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
@@ -227,6 +228,9 @@
 
               <!-- Hidden Options for external time control -->
               <Parameter Id="%AID%_P-%TT%00010" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Text="InternalTime" Access="None" Value="0" />
+
+              <!-- Extended save -->
+              <Parameter Id="%AID%_P-%TT%00011" Name="ExtendedSave" ParameterType="%AID%_PT-OnOffYesNo" Text="Erweitertes Speichern" Value="%BASE_ExtendedSave%" />
 
               <!-- General -->
               <Union SizeInBit="32">
@@ -268,8 +272,8 @@
                 <!-- <Parameter Id="%AID%_UP-%TT%00036" Name="LedInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Optischer Signalgeber vorhanden (RGB-LED)?" Value="0" /> -->
                 <Parameter Id="%AID%_UP-%TT%00037" Name="HeartbeatExtended" ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="3" Text="Erweitertes &quot;In Betrieb&quot;" Value="0" />
                 <!-- 4 Bit free  -->
-                <Parameter Id="%AID%_UP-%TT%00091" Name="SaveOnDemand"      ParameterType="%AID%_PT-SaveOnDemand" Offset="0" BitOffset="5" Text="Speichern on Demand" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches Speichern" Value="%BASE_PeriodicSaveDefault%" />
+                <Parameter Id="%AID%_UP-%TT%00091" Name="ManualSave"        ParameterType="%AID%_PT-ManualSave" Offset="0" BitOffset="5" Text="Manuelles speichern" Value="%BASE_ManualSave%" />
+                <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches speichern" Value="%BASE_PeriodicSave%" />
                 <!--
                 
                   Reserved for new parameters
@@ -282,6 +286,7 @@
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
               <ParameterRef Id="%AID%_P-%TT%00010_R-%TT%0001001" RefId="%AID%_P-%TT%00010" />
+              <ParameterRef Id="%AID%_P-%TT%00011_R-%TT%0001101" RefId="%AID%_P-%TT%00011" />
               <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
               <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
               <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000401" RefId="%AID%_UP-%TT%00004" />
@@ -312,7 +317,7 @@
               <ComObject Id="%AID%_O-%TT%00003" Name="Date"           Text="Datum"            Number="3"  FunctionText="Eingang" ObjectSize="3 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-11-1" />
               <ComObject Id="%AID%_O-%TT%00007" Name="Diagnose"       Text="Diagnose"         Number="7"  FunctionText="Diagnoseobjekt" ObjectSize="14 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-16-1" />
               <ComObject Id="%AID%_O-%TT%00010" Name="IsSummertime"   Text="Sommerzeit aktiv" Number="10" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%00011" Name="SaveOnDemand"   Text="Speichern"        Number="11" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-17" />
+              <ComObject Id="%AID%_O-%TT%00011" Name="ManualSave"   Text="Speichern"        Number="11" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-17" />
               <!-- ComObject-IDs 011-019 are free -->
             </ComObjectTable>
             <ComObjectRefs>
@@ -329,7 +334,7 @@
               <ComObjectRef Id="%AID%_O-%TT%00007_R-%TT%0000701" RefId="%AID%_O-%TT%00007" />
               <!-- Summertime -->
               <ComObjectRef Id="%AID%_O-%TT%00010_R-%TT%0001001" RefId="%AID%_O-%TT%00010" />
-              <!-- SaveOnDemand -->
+              <!-- ManualSave -->
               <ComObjectRef Id="%AID%_O-%TT%00011_R-%TT%0001101" RefId="%AID%_O-%TT%00011" />
             </ComObjectRefs>
             <Script>
@@ -503,30 +508,36 @@
                     <ComObjectRefRef RefId="%AID%_O-%TT%00007_R-%TT%0000701" />
                   </when>
                 </choose>
+
                 <choose ParamRefId="%AID%_UP-%TT%00005_R-%TT%0000501">
                   <when test="!=0">
                     <ParameterRefRef RefId="%AID%_UP-%TT%00037_R-%TT%0003701" HelpContext="BASE-HeartbeadExtendend" IndentLevel="1"/>
                   </when>
                 </choose>
 
+                <!-- Extendend save -->
                 <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                  <when test="!=%BASE_SaveOnDemand%">
-                    <ParameterRefRef RefId="%AID%_UP-%TT%00091_R-%TT%0009101" HelpContext="BASE-SaveOnDemand" IndentLevel="1" />
-                  </when>
-                </choose>
-                <choose ParamRefId="%AID%_UP-%TT%00091_R-%TT%0009101">
-                  <when test=">0">
-                    <ComObjectRefRef RefId="%AID%_O-%TT%00011_R-%TT%0001101" />
+                  <when test="!=%BASE_ShowExtendedSave%">
+                    <ParameterRefRef RefId="%AID%_P-%TT%00011_R-%TT%0001101" HelpContext="BASE-ExtendedSave" IndentLevel="1" />
+                    <choose ParamRefId="%AID%_P-%TT%00011_R-%TT%0001101">
+                      <when test="1">
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitertes Speichern" UIHint="Headline" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="BASE-ExtendedSave" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%00091_R-%TT%0009101" HelpContext="BASE-ExtendedSave" IndentLevel="1" />
+                        <choose ParamRefId="%AID%_UP-%TT%00091_R-%TT%0009101">
+                          <when test=">0">
+                            <ComObjectRefRef RefId="%AID%_O-%TT%00011_R-%TT%0001101" />
+                          </when>
+                        </choose>
+
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="Wichtig: Vor der Nutzung der erweiterten Speichermöglichkeiten sollte unbedingt die Hilfe konsultiert werden. Diese ist kontextsensitiv auf den jeweiligen Feldern hinterlegt. " UIHint="Information" />
+                      </when>
+                    </choose>
                   </when>
                 </choose>
 
 
-                <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                  <when test="!=%BASE_PeriodicSave%">
-                    <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="BASE-PeriodicSave" IndentLevel="1" />
-                  </when>
-                </choose>
-
+                <ParameterSeparator Id="%AID%_PS-nnn" Text=" " />
                 <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid">
                   <Rows>
                     <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
