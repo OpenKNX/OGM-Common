@@ -677,8 +677,8 @@ namespace OpenKNX
             return openknx.console.processDiagnoseKo(ko);
     #endif
 
-    #ifdef BASE_KoSaveOnDemand
-        if (ko.asap() == BASE_KoSaveOnDemand)
+    #ifdef BASE_KoManualSave
+        if (ko.asap() == BASE_KoManualSave)
             return processSaveKo(ko);
     #endif
 
@@ -689,15 +689,16 @@ namespace OpenKNX
     }
 #endif
 
-#ifdef BASE_KoSaveOnDemand
+#ifdef BASE_KoManualSave
     void Common::processSaveKo(GroupObject& ko)
     {
-        if (ParamBASE_SaveOnDemand && ko.value(DPT_Trigger))
+
+        if (ParamBASE_ManualSave && ko.value(DPT_Trigger))
         {
             uint32_t time = 60; // 3
-            if (ParamBASE_SaveOnDemand == 2)
+            if (ParamBASE_ManualSave == 2)
                 time = 15;
-            else if (ParamBASE_SaveOnDemand == 1)
+            else if (ParamBASE_ManualSave == 1)
                 time = 5;
 
             if (openknx.flash.lastWrite() == 0 || delayCheck(openknx.flash.lastWrite(), time * 1000 * 60))

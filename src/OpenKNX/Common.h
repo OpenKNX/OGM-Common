@@ -74,7 +74,7 @@ namespace OpenKNX
 #endif
         bool _afterStartupDelay = false;
 
-#ifdef BASE_KoSaveOnDemand
+#ifdef BASE_KoManualSave
         void processSaveKo(GroupObject& ko);
 #endif
 
