@@ -1,5 +1,16 @@
 # Changes
 
+## 2023-12-21 -- 2023-12-29
+* Feature: Include network-state in 8-bit heartbeat ko
+* Improvement: Watchdog and memory debug output
+* Baggages: Adds new icons
+* Documentation: Add application description for common
+* Change: Symbolic link creation in new restore-script
+* SAMD Platform:
+  * Complete watchdog support
+  * Fix LED-handling
+  * Updated generic SAMD upload script
+
 ## 1.0.10: 2023-11-13 - 2023-12-21
 * Feature: Adds a recovery mode during bootup by hold knx prog button
 * Refactor/Fix: Watchdog
