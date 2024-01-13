@@ -1,6 +1,6 @@
 # Changes
 
-## 2024-01-03 -- 2024-01-08
+## 1.0.12: 2024-01-03 -- 2024-01-08
 * ESP32 Platform: Call `setup1()` and `loop1()`
 * Change: Use mklink as default in new restore-script
 * Feature: (RP2040) Save data to flash before upload
@@ -8,7 +8,7 @@
 * Fix: Flash Write Protection
 * Baggages: Adds new icons
 
-## 2023-12-21 -- 2023-12-29
+## 1.0.11: 2023-12-21 -- 2023-12-29
 * Feature: Include network-state in 8-bit heartbeat ko
 * Improvement: Watchdog and memory debug output
 * Baggages: Adds new icons
