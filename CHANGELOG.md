@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.0: 2024-01-09 -- 2024-01-14
+* Feature: Adds new periodic & manual (by ko) save
+* Change: Adds a reserved memory area
+
 ## 1.0.12: 2024-01-03 -- 2024-01-08
 * ESP32 Platform: Call `setup1()` and `loop1()`
 * Change: Use mklink as default in new restore-script
