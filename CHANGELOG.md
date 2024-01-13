@@ -1,6 +1,7 @@
 # Changes
 
 ## 1.1.0: 2024-01-09 -- 2024-01-14
+* Breaking changes: Remove the call addModule with pointer to prevent duplicate instances.
 * Feature: Adds new periodic & manual (by ko) save
 * Change: Adds a reserved memory area
 
