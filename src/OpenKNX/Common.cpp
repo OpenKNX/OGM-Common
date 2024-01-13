@@ -270,8 +270,13 @@ namespace OpenKNX
             while (!_setup1Ready)
                 delay(1);
 #endif // OPENKNX_DUALCORE
-
+#ifndef ARDUINO_ARCH_SAMD
+        openknx.logger.logOpenKnxHeader(80,
+                                        std::string("Device: ") + MAIN_OrderNumber + " (" + openknx.info.humanFirmwareVersion() + ") - Address: " + openknx.info.humanIndividualAddress(),
+                                        std::string("AppNum: ") + openknx.info.humanApplicationNumber() + " - AppVer: " + openknx.info.humanApplicationVersion() + " - Configured: " + (knx.configured() ? '1' : '0'));
+#else
         openknx.logger.logOpenKnxHeader();
+#endif
 
 #ifndef OPENKNX_DUALCORE
         openknx.progLed.off();

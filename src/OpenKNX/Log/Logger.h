@@ -199,6 +199,10 @@ namespace OpenKNX
             void logHexMacroWrapper(uint8_t logColor, const char* prefix, const uint8_t* data, size_t size);
             void logHexMacroWrapper(uint8_t logColor, const std::string& prefix, const uint8_t* data, size_t size);
 
+#ifndef ARDUINO_ARCH_SAMD
+            void logSymbolSequence(uint8_t size, char symbol, bool newLine = false);
+#endif
+
             void indentUp();
             void indentDown();
             void indent(uint8_t indent);
@@ -208,7 +212,16 @@ namespace OpenKNX
 #endif
             void printPrompt();
             void clearPreviouseLine();
+#ifndef ARDUINO_ARCH_SAMD
+            void logOpenKnxHeader(uint8_t line_siz = 65,
+                                  const std::string& InfoMessage1 = "",                                                     // Default empty
+                                  const std::string& InfoMessage2 = "",                                                     // Default empty
+                                  const std::string& InfoMessage3 = "www.openknx.de - wiki.openknx.de - forum.openknx.de"); // Default OpenKNX URLs
+            void printCenteredLineWithPrefixSuffix(const std::string& text, const uint8_t line_size, const char symbol, const bool bNewLine = true, const u_int8_t color = 0,
+                                                   const std::string& prefix = "", const std::string& suffix = "", const bool bPrintTimestamp = true);
+#else
             void logOpenKnxHeader();
+#endif
             void printTimestamp();
             std::string buildUptime();
         };

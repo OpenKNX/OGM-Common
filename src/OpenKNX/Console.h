@@ -52,6 +52,9 @@ namespace OpenKNX
         void showFilesystemDirectory(std::string path);
         void erase(EraseMode mode = EraseMode::All);
 #endif
+#ifndef ARDUINO_ARCH_SAMD
+        void processPinCommand(const std::string& cmd);
+#endif
 
       public:
         char prompt[15] = {};
