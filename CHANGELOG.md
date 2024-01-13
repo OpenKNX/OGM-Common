@@ -1,18 +1,24 @@
 # Changes
 
-## 1.0.10: 2023-11-13 - 2023-12-12
+## 1.0.10: 2023-11-13 - 2023-12-21
 * Feature: Adds a recovery mode during bootup by hold knx prog button
-* Refactor: Watchdog
+* Refactor/Fix: Watchdog
 * Refactor: Heartbeat with new advanced info
 * Refactor: Support new producer with Common.share.xml
   * Move many XML Elements from Logicmodule into Common.share.xml
   * Adds new multiline comment input
+  * New base-config-page
 * Feature: Buildscript support MacOS and Linux
-* Feature: Adds new icons
+* Baggages: Adds new icons
 * Update: RP2040 Platform to Core 3.6.2
 * Refactor: Uses new helper method from RP2040 Platform Core
 * Feature: Show and monitor the stack usage
 * Update: Uses write callbacks in knx stack as default to save settings by the own flash writer
+* Extension: Include binary build time to version output of console
+* Change: Show uptime before console-outputs (and disable time output by pio)
+* Hardware-Support:
+  * Add OKNXHW_REG1_BASE_V0
+  * Add REG2
 
 ## 1.0.9: 2023-11-06 - 2023-11-12
 * Feature: Adds an inverted mode for the led effect activity
