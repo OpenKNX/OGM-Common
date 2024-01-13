@@ -297,7 +297,7 @@ namespace OpenKNX
 
         bool configured = knx.configured();
 
-        // Handle loop of modules
+        // Handle setup1 of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->setup1(configured);
 
