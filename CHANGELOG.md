@@ -2,7 +2,7 @@
 
 ## 2024-01-03 -- 2024-01-08
 * ESP32 Platform: Call `setup1()` and `loop1()`
-* Change: Use mklink as default in in new restore-script
+* Change: Use mklink as default in new restore-script
 * Feature: (RP2040) Save data to flash before upload
 * Fix: Watchdog in fatal error
 * Fix: Flash Write Protection
