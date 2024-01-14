@@ -188,8 +188,7 @@
             #define INFO1_LED_PIN_ACTIVE_ON HIGH
             #define INFO2_LED_PIN 3
             #define INFO2_LED_PIN_ACTIVE_ON HIGH
-            #define FUNC1_BUTTON_PIN 21 // Optional. It can be also used for the SAVE_INTERRUPT_PIN
-            //#define SAVE_INTERRUPT_PIN 21 // Optional. It can be also used for the FUNC1_BUTTON_PIN
+            #define SAVE_INTERRUPT_PIN 21
     #endif
       
     #ifdef  OKNXHW_REG2_PIPICO_V1
@@ -198,8 +197,7 @@
             #define INFO1_LED_PIN_ACTIVE_ON HIGH
             #define INFO2_LED_PIN 3
             #define INFO2_LED_PIN_ACTIVE_ON HIGH
-            #define FUNC1_BUTTON_PIN 21 // Optional. It can be also used for the SAVE_INTERRUPT_PIN
-            //#define SAVE_INTERRUPT_PIN 21 // Optional. It can be also used for the FUNC1_BUTTON_PIN
+            #define SAVE_INTERRUPT_PIN 21
     #endif
 
     #ifdef OKNXHW_REG2_PIPICO_V1_BASE
@@ -227,33 +225,9 @@
             #define INFO2_LED_PIN 25  // Build-In LED BLUE
             #define INFO2_LED_PIN_ACTIVE_ON HIGH
     #endif
-    #ifdef  OKNXHW_OPENKNXIAO_KNEOPIX_SAMD_V1
-        #define OKNXHW_OPENKNXIAO_SAMD21_BASE_V1
-            #define INFO1_LED_PIN 16  // Build-In LED GREEN
-            #define INFO1_LED_PIN_ACTIVE_ON HIGH
-            #define INFO2_LED_PIN 25  // Build-In LED BLUE
-            #define INFO2_LED_PIN_ACTIVE_ON HIGH
-    #endif
-    #ifdef  OKNXHW_OPENKNXIAO_MINI_SAMD_V1
-        #define OKNXHW_OPENKNXIAO_SAMD21_BASE_V1
-            #define INFO1_LED_PIN 11  // Build-In LED BLUE 1
-            #define INFO1_LED_PIN_ACTIVE_ON HIGH
-            #define INFO2_LED_PIN 12  // Build-In LED BLUE 2
-            #define INFO2_LED_PIN_ACTIVE_ON HIGH
-    #endif
 
     #ifdef OKNXHW_OPENKNXIAO_RP2040_BASE_V1
         #define PROG_LED_PIN 12
-        #define PROG_LED_PIN_ACTIVE_ON HIGH
-        #define PROG_BUTTON_PIN 0
-        #define PROG_BUTTON_PIN_INTERRUPT_ON FALLING
-        #define KNX_SERIAL Serial1
-        #define KNX_UART_RX_PIN 6
-        #define KNX_UART_TX_PIN 7
-    #endif
-
-    #ifdef OKNXHW_OPENKNXIAO_SAMD21_BASE_V1
-        #define PROG_LED_PIN 13
         #define PROG_LED_PIN_ACTIVE_ON HIGH
         #define PROG_BUTTON_PIN 0
         #define PROG_BUTTON_PIN_INTERRUPT_ON FALLING
