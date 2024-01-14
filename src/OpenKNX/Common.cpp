@@ -510,7 +510,7 @@ namespace OpenKNX
 
             logDebugP("Send Hearbeat %i", value);
 
-            if (BASE_HeartbeatExtended)
+            if (ParamBASE_HeartbeatExtended)
             {
                 KoBASE_Heartbeat.value(value, DPT_DecimalFactor);
             }
