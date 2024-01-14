@@ -217,6 +217,7 @@
         #define INFO2_LED_PIN 25 // Build-In LED BLUE
         #define INFO2_LED_PIN_ACTIVE_ON HIGH
     #endif
+    
     #ifdef OKNXHW_OPENKNXIAO_MINI_V1
         #define OKNXHW_OPENKNXIAO_RP2040_BASE_V1
         #define INFO1_LED_PIN 16 // Build-In LED GREEN
