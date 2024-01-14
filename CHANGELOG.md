@@ -1,5 +1,8 @@
 # Changes
 
+## 2024-01-14
+* Fix: Sent heartbeat in configured format
+
 ## 1.0.12: 2024-01-03 -- 2024-01-08
 * ESP32 Platform: Call `setup1()` and `loop1()`
 * Change: Use mklink as default in new restore-script
