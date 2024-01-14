@@ -64,7 +64,11 @@ if (Test-Path -Path "src/$($settings.releaseName).baggages") {
 }
 
 # write content.xml header
-$releaseTarget = Join-Path $ProjectDir "release/data/content.xml"
+$releaseTarget = "release/data/content.xml"
+if (![string]::IsNullOrEmpty($ProjectDir)) {
+  $releaseTarget = Join-Path $ProjectDir $releaseTarget
+}
+
 # Create the directory structure if it doesn't exist
 $directory = [System.IO.Path]::GetDirectoryName($releaseTarget)
 if (-not (Test-Path -Path $directory)) {

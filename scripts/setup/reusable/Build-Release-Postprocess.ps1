@@ -6,26 +6,28 @@ $settings = scripts/OpenKNX-Build-Settings.ps1 $args[0]
 
 
 #check if file exists content.xml exists then add the closing tags
-$releaseTarget = Join-Path $ProjectDir "release/data/content.xml"
+$releaseTarget = "release/data/content.xml"
+
 if (Test-Path -Path $releaseTarget -PathType Leaf) {
   Add-Content -Path $releaseTarget -Value "    <Products>"
   Add-Content -Path $releaseTarget -Value "</Content>"
-} else {
+}
+else {
   Write-Host "ERROR: $releaseTarget could not be found!"
 }
 
 # add necessary scripts, but allow project local versions
 if (Test-Path -Path scripts/Readme-Release.txt -PathType Leaf) {
-    Copy-Item scripts/Readme-Release.txt release/
+  Copy-Item scripts/Readme-Release.txt release/
 }
 else {
-    Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
+  Copy-Item lib/OGM-Common/scripts/setup/reusable/Readme-Release.txt release/
 }
 if (Test-Path -Path scripts/Build-knxprod.ps1 -PathType Leaf) {
-    Copy-Item scripts/Build-knxprod.ps1 release/
+  Copy-Item scripts/Build-knxprod.ps1 release/
 }
 else {
-    Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
+  Copy-Item lib/OGM-Common/scripts/setup/reusable/Build-knxprod.ps1 release/
 }
 # Copy-Item scripts/Upload-Firmware*.ps1 release/
 
@@ -37,23 +39,12 @@ else {
 
 # add optional files
 if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
-    Copy-Item scripts/Readme-Hardware.html release/
+  Copy-Item scripts/Readme-Hardware.html release/
 }
 
 # cleanup
-if ($IsMacOS -or $IsLinux) { 
-Write-Host -ForegroundColor Yellow "
-  Info: The knxprod (KNX Production) file is not created. 
-  This OS does not support OpenKNX-Tools to create knxprod file.
-  Please use Windows to Build your own KNX production file.
-
-  For more Informations visit: 
-  https://github.com/OpenKNX/OpenKNX/wiki/Installation-of-OpenKNX-tools"
-
-Start-Sleep -Seconds 2
-} 
-else { 
-  Remove-Item "release/$($settings.targetName).knxprod" 
+if (Test-Path -Path "release/$($settings.targetName).knxprod" -PathType Leaf) {
+  Remove-Item "release/$($settings.targetName).knxprod"
 }
 
 # calculate version string
@@ -65,12 +56,12 @@ $appRev = Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevis
 $appRev = $appRev.ToString().Split()[-1].Replace(";", "")
 $appVersion = "$appMajor.$appMinor"
 if ($appRev -gt 0) {
-    $appVersion = "$appVersion.$appRev"
+  $appVersion = "$appVersion.$appRev"
 }
 
 # create dependency file
 if (Test-Path -Path dependencies.txt -PathType Leaf) {
-    Remove-Item dependencies.txt
+  Remove-Item dependencies.txt
 }
 lib/OGM-Common/scripts/setup/reusable/Build-Dependencies.ps1
 Get-Content dependencies.txt
@@ -82,7 +73,7 @@ lib/OGM-Common/scripts/setup/reusable/Build-Project-Restore.ps1
 $releaseTemp = "Release.zip"
 # if Release.zip exist, remove it
 if (Test-Path -Path $releaseTemp) {
-    Remove-Item $releaseTemp
+  Remove-Item $releaseTemp
 }
 # create Release.zip
 Compress-Archive -Path release/* -DestinationPath $releaseTemp -Verbose
@@ -93,6 +84,7 @@ if (Test-Path -Path $releaseTemp -PathType Leaf ) {
   # move Release.zip to release directory
   Move-Item $releaseTemp "release/$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
   Write-Host "Release $($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!" -ForegroundColor Green
-} else {
+}
+else {
   Write-Host "ERROR: $($settings.targetName)-$($settings.appRelease)-$appVersion.zip could not be created!"
 }
