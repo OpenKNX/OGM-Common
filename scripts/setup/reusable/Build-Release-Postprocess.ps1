@@ -4,10 +4,15 @@
 # get all definitions for this project
 $settings = scripts/OpenKNX-Build-Settings.ps1 $args[0]
 
-# closeing tag for content.xml
-$releaseTarget = "release/data/content.xml"
-"    </Products>" >>$releaseTarget
-"</Content>" >>$releaseTarget
+
+#check if file exists content.xml exists then add the closing tags
+$releaseTarget = Join-Path $ProjectDir "release/data/content.xml"
+if (Test-Path -Path $releaseTarget -PathType Leaf) {
+  Add-Content -Path $releaseTarget -Value "    <Products>"
+  Add-Content -Path $releaseTarget -Value "</Content>"
+} else {
+  Write-Host "ERROR: $releaseTarget could not be found!"
+}
 
 # add necessary scripts, but allow project local versions
 if (Test-Path -Path scripts/Readme-Release.txt -PathType Leaf) {
@@ -73,9 +78,21 @@ Get-Content dependencies.txt
 # (re-)create restore directory
 lib/OGM-Common/scripts/setup/reusable/Build-Project-Restore.ps1
 
-# create package 
-Compress-Archive -Path release/* -DestinationPath Release.zip
-Remove-Item -Recurse release/*
-Move-Item Release.zip "release/$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
-
-Write-Host "Release $($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!" -ForegroundColor Green
+# create package
+$releaseTemp = "Release.zip"
+# if Release.zip exist, remove it
+if (Test-Path -Path $releaseTemp) {
+    Remove-Item $releaseTemp
+}
+# create Release.zip
+Compress-Archive -Path release/* -DestinationPath $releaseTemp -Verbose
+#Check if Release.zip is created
+if (Test-Path -Path $releaseTemp -PathType Leaf ) {
+  # remove all files and directories in release directory
+  Remove-Item -Recurse release/*
+  # move Release.zip to release directory
+  Move-Item $releaseTemp "release/$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
+  Write-Host "Release $($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!" -ForegroundColor Green
+} else {
+  Write-Host "ERROR: $($settings.targetName)-$($settings.appRelease)-$appVersion.zip could not be created!"
+}
