@@ -377,6 +377,7 @@ namespace OpenKNX
 #endif
     }
 
+#ifdef BASE_PeriodicSave
     void Common::processPeriodicSave()
     {
         const uint32_t delay = ParamBASE_PeriodicSave * 3600000;
@@ -388,6 +389,7 @@ namespace OpenKNX
             logIndentDown();
         }
     }
+#endif
 
     void Common::skipLooptimeWarning()
     {
