@@ -5,6 +5,7 @@
   <op:config name="%BASE_ExtendedSave%" value="0" />
   <op:config name="%BASE_PeriodicSave%" value="0" />
   <op:config name="%BASE_ManualSave%" value="0" />
+  <op:config name="%BASE_StartupDelay%" value="1" />
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
@@ -236,7 +237,7 @@
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00002" Name="StartupDelayBase"   ParameterType="%AID%_PT-DelayBase"        Offset="0" BitOffset="0" Text="Zeitbasis" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00003" Name="StartupDelayTime"   ParameterType="%AID%_PT-DelayTimeMin1"    Offset="0" BitOffset="2" Text="Zeit" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00003" Name="StartupDelayTime"   ParameterType="%AID%_PT-DelayTimeMin1"    Offset="0" BitOffset="2" Text="Zeit" Value="%BASE_StartupDelay%" />
                 <Parameter Id="%AID%_UP-%TT%00004" Name="HeartbeatDelayBase" ParameterType="%AID%_PT-DelayBase"        Offset="2" BitOffset="0" Text="Zeitbasis" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00005" Name="HeartbeatDelayTime" ParameterType="%AID%_PT-DelayTime"        Offset="2" BitOffset="2" Text="Zeit" Value="300" />
               </Union>
