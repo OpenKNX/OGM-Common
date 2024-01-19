@@ -250,8 +250,8 @@ namespace OpenKNX
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("======================== Information ===========================================");
+        
         openknx.logger.color(0);
-
         openknx.logger.logWithPrefix("KNX Address", openknx.info.humanIndividualAddress().c_str());
         openknx.logger.logWithPrefixAndValues("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
         openknx.logger.logWithPrefixAndValues("Firmware", "Number: %s  Version: %s  Name: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.humanFirmwareVersion().c_str(), MAIN_OrderNumber);
@@ -315,7 +315,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Filesystem ===========================================");
+        openknx.logger.log("======================== Filesystem ============================================");
 
         openknx.logger.color(0);
         showFilesystemDirectory("/");
@@ -348,7 +348,6 @@ namespace OpenKNX
     {
         logBegin();
         openknx.logger.log("");
-        // ======================== Versions =============================================="
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("======================== Versions ==============================================");
         openknx.logger.color(0);
@@ -366,7 +365,6 @@ namespace OpenKNX
         openknx.logger.logWithPrefix("Builddate", __DATE__);
         openknx.logger.logWithPrefix("Buildtime", __TIME__);
         openknx.logger.log("--------------------------------------------------------------------------------");
-
         logEnd();
     }
 
@@ -374,11 +372,9 @@ namespace OpenKNX
     {
         logBegin();
         openknx.logger.log("");
-        // ======================== Help =================================================="
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("======================== Help ==================================================");
         openknx.logger.color(0);
-
         openknx.logger.log("Command(s)               Description");
         printHelpLine("help, h", "Show this help");
         printHelpLine("info, i", "Show general information");
@@ -422,7 +418,6 @@ namespace OpenKNX
             openknx.modules.list[i]->showHelp();
 
         openknx.logger.log("--------------------------------------------------------------------------------");
-
         logEnd();
     }
 

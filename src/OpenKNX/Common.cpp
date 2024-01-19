@@ -270,6 +270,7 @@ namespace OpenKNX
             while (!_setup1Ready)
                 delay(1);
 #endif // OPENKNX_DUALCORE
+
         openknx.logger.logOpenKnxHeader();
 
 #ifndef OPENKNX_DUALCORE
