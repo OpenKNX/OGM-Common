@@ -46,11 +46,7 @@ if (-not ([string]::IsNullOrEmpty($OpenKNXproducer))) {
   $expr += '; $success=$?'
   Invoke-Expression $expr
   if (!$success) {
-    Write-Host "Error in knxprod, Release was not built!" -ForegroundColor Red
-    $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
-    if ($prompt -ne "y") {
       exit 1
-    }
   }
   Write-Host "Created release/$($settings.targetName).knxprod" -ForegroundColor Blue
 }
