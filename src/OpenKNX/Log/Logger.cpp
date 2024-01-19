@@ -399,108 +399,6 @@ namespace OpenKNX
             return STATE_BY_CORE(_indent);
         }
 
-#ifndef ARDUINO_ARCH_SAMD
-        // #ifndef ARDUINO_ARCH_SAMD
-        void Logger::logSymbolSequence(uint8_t size, char symbol, bool bNewLine)
-        {
-            if (bNewLine) beforeLog();
-            if (!bNewLine) printCore(), printTimestamp();
-            printMessage(std::string(size, symbol).c_str());
-            if (bNewLine) afterLog();
-        }
-
-        void Logger::printCenteredLineWithPrefixSuffix(const std::string& text, uint8_t line_size, char symbol, bool bNewLine,
-                                                       u_int8_t color, const std::string& prefix, const std::string& suffix, bool bPrintTimestamp)
-        {
-            if (bNewLine)
-                beforeLog();
-            else
-            {
-                printCore();
-                if (bPrintTimestamp) printTimestamp();
-            }
-
-            // Center the text
-            size_t textLength = text.size();
-            size_t paddingSize = line_size > textLength ? line_size - textLength : 0;
-            size_t leftPadding = paddingSize / 2;
-            size_t rightPadding = paddingSize - leftPadding;
-
-            // Print prefix, left padding, text with color, right padding and suffix
-            if (!prefix.empty()) printMessage(prefix.c_str());
-            if (leftPadding > 0) printMessage(std::string(leftPadding, symbol).c_str());
-            if (isColorSet() && color > 0) printColorCode(color);
-            printMessage(text.c_str());
-            if (isColorSet() && color > 0) printColorCode(0);
-            if (rightPadding > 0) printMessage(std::string(rightPadding, symbol).c_str());
-            if (!suffix.empty()) printMessage(suffix.c_str());
-
-            if (bNewLine) afterLog();
-        }
-
-        void Logger::logOpenKnxHeader(uint8_t line_size, const std::string& InfoMessage1, const std::string& InfoMessage2, const std::string& InfoMessage3)
-        {
-            const u_int8_t colorLightGray = 90;
-            const u_int8_t colorWhite = 37;
-            const u_int8_t colorGreen = 32;
-
-            // Example
-            // - TimeStamp- -    Logo    |             Optional (centered / colored ) info text            |
-            // 0d 00:00:01: -------------------------------------------------------------------------------- - Line 0
-            // 0d 00:00:01: |            |                                                                 | - Line 1
-            // 0d 00:00:01: |   Open #   |     Device: OpenKnxLogicDev (99.99.99) - Address: 15.15.255     | - Line 2 -> InfoMessage1
-            // 0d 00:00:01: |   +----+   |          Number: 0x0000 - Version: 9.9 - Configured: 0          | - Line 3 -> InfoMessage2
-            // 0d 00:00:01: |   # KNX    |       www.openknx.de - wiki.openknx.de - forum.openknx.de       | - Line 4 -> InfoMessage3 = Default "www.openknx.de...
-            // 0d 00:00:01: |            |                                                                 | - Line 5
-            // 0d 00:00:01: -------------------------------------------------------------------------------- - Line 6
-
-            color(CONSOLE_HEADLINE_COLOR); // Set the color for the headline
-
-            begin();
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 0
-            // logSymbolSequence(line_size, '-');
-            printCenteredLineWithPrefixSuffix("-----------", 12, '-', false, 0, "+", "", true);    // Full empty line
-            printCenteredLineWithPrefixSuffix("", line_size - 15, '-', false, 0, "+", "+", false); // Full empty line
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 1
-            printCenteredLineWithPrefixSuffix("", line_size - 15, ' ', false, 0, "|            |", "|", true); // Full empty line
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 2
-            // printCenteredLineWithPrefixSuffix("#" /*■*/, 1, ' ', false, colorGreen, "|   Open ", "   |");
-            printCenteredLineWithPrefixSuffix("Open", 4, ' ', false, colorWhite, "|   ", " ");
-            printCenteredLineWithPrefixSuffix("#" /*■*/, 1, ' ', false, colorGreen, "", "   |", false);
-            printCenteredLineWithPrefixSuffix(InfoMessage1, line_size - 15, ' ', false, CONSOLE_HEADLINE_COLOR, "", "|", false); // line_size - Logo 15!
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 3
-            printCenteredLineWithPrefixSuffix("+----+" /*┬────┴*/, 6, ' ', false, colorGreen, "|   ", "   |");
-            printCenteredLineWithPrefixSuffix(InfoMessage2, line_size - 15, ' ', false, colorLightGray, "", "|", false); // line_size - Logo 15!
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 4
-            printCenteredLineWithPrefixSuffix("#" /*■*/, 1, ' ', false, colorGreen, "|   ", "");
-            printCenteredLineWithPrefixSuffix("KNX", 4, ' ', false, colorWhite, " ", "   |", false);
-            printCenteredLineWithPrefixSuffix(InfoMessage3, line_size - 15, ' ', false, colorLightGray, "", "|", false); // line_size - Logo 15!
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 5
-            printCenteredLineWithPrefixSuffix("", line_size - 15, ' ', false, 0, "|            |", "|", true); // Full empty line
-            OPENKNX_LOGGER_DEVICE.println();
-
-            // Line 6
-            // logSymbolSequence(line_size, '-');
-            printCenteredLineWithPrefixSuffix("-----------", 12, '-', false, 0, "+", "", true);    // Full empty line
-            printCenteredLineWithPrefixSuffix("", line_size - 15, '-', false, 0, "+", "+", false); // Full empty line
-            OPENKNX_LOGGER_DEVICE.println();
-
-            end();
-            color(0);
-        }
-#else
         // Open #
         // +----+
         // # KNX
@@ -572,7 +470,6 @@ namespace OpenKNX
 
             end();
         }
-#endif // ARDUINO_ARCH_SAMD
 
         void Logger::printTimestamp()
         {
