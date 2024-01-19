@@ -104,7 +104,7 @@ namespace OpenKNX
         {
             openknx.common.triggerSavePin();
         }
-        else if (cmd == "s" || cmd == "w" || cmd == "save")
+        else if (!diagnoseKo && (cmd == "s" || cmd == "w" || cmd == "save"))
         {
             openknx.flash.save();
         }

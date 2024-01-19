@@ -302,7 +302,7 @@ namespace OpenKNX
 
         bool configured = knx.configured();
 
-        // Handle loop of modules
+        // Handle setup1 of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->setup1(configured);
 
@@ -357,6 +357,9 @@ namespace OpenKNX
             // Handle heartbeat delay
             processHeartbeat();
 #endif
+#ifdef BASE_PeriodicSave
+            processPeriodicSave();
+#endif
 
             processSavePin();
             processRestoreSavePin();
@@ -378,6 +381,20 @@ namespace OpenKNX
         }
 #endif
     }
+
+#ifdef BASE_PeriodicSave
+    void Common::processPeriodicSave()
+    {
+        const uint32_t delay = ParamBASE_PeriodicSave * 3600000;
+        if (delay > 0 && delayCheck(openknx.flash.lastWrite(), delay))
+        {
+            logInfoP("Start periodic save");
+            logIndentUp();
+            openknx.flash.save();
+            logIndentDown();
+        }
+    }
+#endif
 
     void Common::skipLooptimeWarning()
     {
@@ -515,7 +532,7 @@ namespace OpenKNX
 
             logDebugP("Send Hearbeat %i", value);
 
-            if (BASE_HeartbeatExtended)
+            if (ParamBASE_HeartbeatExtended)
             {
                 KoBASE_Heartbeat.value(value, DPT_DecimalFactor);
             }
@@ -664,10 +681,12 @@ namespace OpenKNX
     {
     #ifdef BASE_KoDiagnose
         if (ko.asap() == BASE_KoDiagnose)
-        {
-            openknx.console.processDiagnoseKo(ko);
-            return;
-        }
+            return openknx.console.processDiagnoseKo(ko);
+    #endif
+
+    #ifdef BASE_KoManualSave
+        if (ko.asap() == BASE_KoManualSave)
+            return processSaveKo(ko);
     #endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
@@ -675,7 +694,33 @@ namespace OpenKNX
             openknx.modules.list[i]->processInputKo(ko);
         }
     }
+#endif
 
+#ifdef BASE_KoManualSave
+    void Common::processSaveKo(GroupObject& ko)
+    {
+
+        if (ParamBASE_ManualSave && ko.value(DPT_Trigger))
+        {
+            uint32_t time = 60; // 3
+            if (ParamBASE_ManualSave == 2)
+                time = 15;
+            else if (ParamBASE_ManualSave == 1)
+                time = 5;
+
+            if (openknx.flash.lastWrite() == 0 || delayCheck(openknx.flash.lastWrite(), time * 1000 * 60))
+            {
+                logInfoP("Process incoming save event");
+                logIndentUp();
+                openknx.flash.save();
+                logIndentDown();
+            }
+            else
+            {
+                logErrorP("Ignore the incoming save event (write protection %imin)", time);
+            }
+        }
+    }
 #endif
 
     void Common::registerCallbacks()
