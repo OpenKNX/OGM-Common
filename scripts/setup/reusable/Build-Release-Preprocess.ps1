@@ -42,15 +42,17 @@ else {
 }
 
 if (-not ([string]::IsNullOrEmpty($OpenKNXproducer))) {
-  Invoke-Expression "$OpenKNXproducer create --Debug --Output=""release/$($settings.targetName).knxprod"" --HeaderFileName=""include/knxprod.h"" ""src/$($settings.releaseName).xml"""
-  Write-Host "Created release/$($settings.targetName).knxprod" -ForegroundColor Blue
-  if (!$?) {
+  $expr = "$OpenKNXproducer create --Debug --Output=""release/$($settings.targetName).knxprod"" --HeaderFileName=""include/knxprod.h"" ""src/$($settings.releaseName).xml"""
+  $expr += '; $success=$?'
+  Invoke-Expression $expr
+  if (!$success) {
     Write-Host "Error in knxprod, Release was not built!" -ForegroundColor Red
     $prompt = Read-Host "Press 'y' to continue, any other key to cancel"
     if ($prompt -ne "y") {
       exit 1
     }
   }
+  Write-Host "Created release/$($settings.targetName).knxprod" -ForegroundColor Blue
 }
 else {
   Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
