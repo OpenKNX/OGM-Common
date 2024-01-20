@@ -1,6 +1,13 @@
 #include "OpenKNX/Watchdog.h"
 #include "OpenKNX/Facade.h"
 
+#ifdef OPENKNX_WATCHDOG
+    #ifdef OPENKNX_DEBUGGER
+        #pragma message "Disable watchdog because OPENKNX_DEBUGGER is defined"
+        #undef OPENKNX_WATCHDOG
+    #endif
+#endif
+
 #ifdef ARDUINO_ARCH_RP2040
 /*
  * 166 != Uninitalized (safe reboot or powerloss, maybe a new firmware)
