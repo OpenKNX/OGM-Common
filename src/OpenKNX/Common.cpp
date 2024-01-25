@@ -525,7 +525,7 @@ namespace OpenKNX
                 if (openknx.watchdog.lastReset()) value |= (1 << 2);
             }
 
-            logDebugP("Send Hearbeat %i", value);
+            logDebugP("Send Heartbeat %i", value);
 
             if (ParamBASE_HeartbeatExtended)
             {
