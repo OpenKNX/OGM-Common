@@ -2,10 +2,10 @@
 
 Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus. Dabei wir der Status nicht mehr als Boolesch (DPT-1) gesendet, sondern als Zahl (DPT-5). Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
 
-- Das 8. Bit repräsentiert das normale Signal "In Betrieb" (immer aktiv).
-- Das 7. Bit repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
-- Das 6. Bit repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
-- Das 1. Bit repräsentiert, ob es eine Netzwerkverbindung gibt (Nur bei IP-Geräten; Bei IP-Only-Geräten ist der Wert prinzipbedingt immer aktiv)
+- Das 1. Bit von rechts repräsentiert das normale Signal "In Betrieb" (immer aktiv).
+- Das 2. Bit von rechts repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
+- Das 3. Bit von rechts repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
+- Das 8. Bit von rechts repräsentiert, ob es eine Netzwerkverbindung gibt (Nur bei IP-Geräten; Bei IP-Only-Geräten ist der Wert prinzipbedingt immer aktiv)
 
 **Tipp:** Bei Bedarf kann das Logikmodul daraus einzelne 1-Bit KOs machen.
 
