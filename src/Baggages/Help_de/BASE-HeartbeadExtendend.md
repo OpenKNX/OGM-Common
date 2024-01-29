@@ -1,6 +1,6 @@
 ### Erweitertes "In Betrieb"
 
-Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus. Dabei wir der Status nicht mehr als Boolesch (DPT-1) gesendet, sondern als Zahl (DPT-5). Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
+Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus. Dabei wird der Status nicht mehr als Boolesch (DPT-1) gesendet, sondern als Zahl (DPT-5). Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
 
 - Das 1. Bit von rechts repräsentiert das normale Signal "In Betrieb" und ist immer gesetzt.
 - Das 2. Bit von rechts repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
