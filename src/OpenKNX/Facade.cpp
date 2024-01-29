@@ -1,4 +1,5 @@
 #include "OpenKNX/Facade.h"
+#include "ModuleVersionCheck.h"
 
 extern void setup1() __attribute__((weak));
 
