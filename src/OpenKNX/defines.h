@@ -95,3 +95,7 @@
         #endif
     #endif
 #endif
+
+#ifdef ARDUINO_ARCH_ESP32
+    typedef char pin_size_t;
+#endif
