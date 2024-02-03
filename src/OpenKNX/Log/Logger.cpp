@@ -410,18 +410,19 @@ namespace OpenKNX
 
             begin();
 
-            printTimestamp();
-            printCore();
-            OPENKNX_LOGGER_DEVICE.println();
-            printCore();
+            beforeLog();
+            afterLog();
+
+            beforeLog();
             printMessage("+------------+-----------------------------------------------------------------+");
-            OPENKNX_LOGGER_DEVICE.println();
-            printCore();
+            afterLog();
+            
+            beforeLog();
             printMessage("|            |                                                                 |");
-            OPENKNX_LOGGER_DEVICE.println();
+            afterLog();
 
             // Line 1: "Open #"
-            printCore();
+            beforeLog();
             printMessage("|   ");
             printColorCode(colorLightGray);
             printMessage("Open ");
@@ -437,19 +438,19 @@ namespace OpenKNX
             for (uint8_t i = 0; i < (62 - strlen(buffer)); i++)
                 printMessage(" ");
             printMessage("|");
+            afterLog();
 
             // Line 2: "+----+"
-            OPENKNX_LOGGER_DEVICE.println();
-            printCore();
+            beforeLog();
             printMessage("|   ");
             printColorCode(colorGreen);
             printMessage("+----+");
             printColorCode(0);
             printMessage("   |                                                                 |");
-            OPENKNX_LOGGER_DEVICE.println();
+            afterLog();
 
             // Line 3: "# KNX "
-            printCore();
+            beforeLog();
             printMessage("|   ");
             printColorCode(colorGreen);
             printMessage("#");
@@ -457,16 +458,18 @@ namespace OpenKNX
             printMessage(" KNX ");
             printColorCode(0);
             printMessage("   |   www.openknx.de - wiki.openknx.de - forum.openknx.de           |");
+            afterLog();
 
-            OPENKNX_LOGGER_DEVICE.println();
-            printCore();
+            beforeLog();
             printMessage("|            |                                                                 |");
-            OPENKNX_LOGGER_DEVICE.println();
-            printCore();
+            afterLog();
+
+            beforeLog();
             printMessage("+------------+-----------------------------------------------------------------+");
-            OPENKNX_LOGGER_DEVICE.println();
-            printCore();
-            OPENKNX_LOGGER_DEVICE.println();
+            afterLog();
+
+            beforeLog();
+            afterLog();
 
             end();
         }
