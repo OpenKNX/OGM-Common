@@ -1,5 +1,9 @@
 # Changes
 
+## 1.1.1: 2024-01-29 -- 
+* Fix: Add typedef for missing pin_size_t for esp32 
+* Fix: Button handling when using short, long and double click
+
 ## 1.1.0: 2024-01-09 -- 2024-01-14
 * Enhancment: Reusable scripts for compatibility with MacOS and Linux.
 * Fix: Sent heartbeat in configured format
