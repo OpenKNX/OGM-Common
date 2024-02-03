@@ -37,7 +37,7 @@ namespace OpenKNX
                         callDoubleClickCallback();
                         _processed = true;
                     }
-                    else
+                    else if(!_processed)
                     {
                         _dblClickTimer = millis();
                     }
@@ -59,6 +59,7 @@ namespace OpenKNX
             if (_holdTimer && delayCheck(_holdTimer, OPENKNX_BUTTON_LONG_CLICK))
             {
                 callLongClickCallback();
+                _dblClickTimer = 0;
                 _processed = true;
             }
         }
