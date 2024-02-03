@@ -41,16 +41,14 @@ namespace OpenKNX
         pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
         attachInterrupt(
             digitalPinToInterrupt(PROG_BUTTON_PIN),
-            []() -> void { openknx.progButton.change(!digitalRead(PROG_BUTTON_PIN)); },
-            CHANGE);
+            []() -> void { openknx.progButton.change(!digitalRead(PROG_BUTTON_PIN)); }, CHANGE);
 #endif
 
 #ifdef FUNC1_BUTTON_PIN
         pinMode(FUNC1_BUTTON_PIN, INPUT_PULLUP);
         attachInterrupt(
             digitalPinToInterrupt(FUNC1_BUTTON_PIN),
-            []() -> void { openknx.func1Button.change(!digitalRead(FUNC1_BUTTON_PIN)); },
-            CHANGE);
+            []() -> void { openknx.func1Button.change(!digitalRead(FUNC1_BUTTON_PIN)); }, CHANGE);
 #endif
 
 #ifdef FUNC2_BUTTON_PIN
