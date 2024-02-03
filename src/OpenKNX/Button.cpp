@@ -37,7 +37,7 @@ namespace OpenKNX
                         callDoubleClickCallback();
                         _processed = true;
                     }
-                    else if(!_processed)
+                    else if (!_processed)
                     {
                         _dblClickTimer = millis();
                     }
