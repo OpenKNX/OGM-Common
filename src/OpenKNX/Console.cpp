@@ -583,12 +583,14 @@ namespace OpenKNX
 #ifndef ARDUINO_ARCH_SAMD
     void Console::processPinCommand(const std::string& cmd)
     {
-        if (auto _pos = cmd.find(' '); _pos != std::string::npos)
+        auto _pos = cmd.find(' ');
+        if (_pos != std::string::npos)
         {
             pin_size_t pin = std::stoi(cmd.substr(_pos + 1));
             if (cmd.compare(0, 2, "dw") == 0 || cmd.compare(0, 2, "aw") == 0)
             {
-                if (auto __pos = cmd.find(' ', _pos + 1); __pos != std::string::npos)
+                auto __pos = cmd.find(' ', _pos + 1);
+                if (__pos != std::string::npos)
                 {
                     int value = std::stoi(cmd.substr(__pos + 1));
                     if (cmd.compare(0, 2, "dw") == 0 && value <= HIGH)
