@@ -1,5 +1,8 @@
 # Changes
 
+## 1.1.2: 2024-02-10 --
+* Update: RP2040 & ESP32 Platform
+
 ## 1.1.1: 2024-01-29 -- 2024-02-09
 * Improvement: Project restore scripts
 * Fix: Add typedef for missing pin_size_t for esp32 
