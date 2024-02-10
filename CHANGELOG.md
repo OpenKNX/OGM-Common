@@ -1,6 +1,7 @@
 # Changes
 
-## 1.1.1: 2024-01-29 -- 
+## 1.1.1: 2024-01-29 -- 2024-02-09
+* Improvement: Project restore scripts
 * Fix: Add typedef for missing pin_size_t for esp32 
 * Fix: Button handling when using short, long and double click
 
