@@ -58,6 +58,5 @@ namespace OpenKNX
       private:
         bool _active = false;
         bool _lastReset = false;
-        uint8_t _resets = 0;
     };
 } // namespace OpenKNX

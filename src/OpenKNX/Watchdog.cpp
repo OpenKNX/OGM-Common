@@ -14,11 +14,18 @@
  * 166 = Normal running (after reboot = restart by watchdog or maybe flash firmware)
  */
 uint8_t __uninitialized_ram(__openKnxRunningState);
+#endif
 
 /*
  * Counting the restarts of the WD over the restart
  */
+#if defined(ARDUINO_ARCH_RP2040)
 uint8_t __uninitialized_ram(__openKnxWatchdogResets);
+#elif defined(ARDUINO_ARCH_ESP32)
+static RTC_NOINIT_ATTR uint8_t __openKnxWatchdogResets;
+#else
+// Not supported
+uint8_t __openKnxWatchdogResets = 0;
 #endif
 
 namespace OpenKNX
@@ -35,7 +42,7 @@ namespace OpenKNX
 
     uint8_t Watchdog::resets()
     {
-        return _resets;
+        return __openKnxWatchdogResets;
     }
 
     bool Watchdog::lastReset()
@@ -99,6 +106,26 @@ namespace OpenKNX
         {
             // system was rebooted by watchdog or flash firmware
             _lastReset = true;
+        }
+    #endif
+
+    #ifdef ARDUINO_ARCH_ESP32
+        esp_reset_reason_t reason = esp_reset_reason();
+        if (reason == ESP_RST_TASK_WDT || reason == ESP_RST_PANIC || reason == ESP_RST_WDT || reason == ESP_RST_BROWNOUT)
+        {
+            _lastReset = true;
+        }
+    #endif
+
+    #ifdef ARDUINO_ARCH_SAMD
+        if (::Watchdog.resetCause() & PM_RCAUSE_WDT)
+        {
+            _lastReset = true;
+        }
+    #endif
+
+        if (_lastReset)
+        {
             if (__openKnxWatchdogResets < 255) __openKnxWatchdogResets++;
         }
         else
@@ -106,16 +133,6 @@ namespace OpenKNX
             __openKnxWatchdogResets = 0;
         }
 
-        _resets = __openKnxWatchdogResets;
-    #endif
-
-    #ifdef ARDUINO_ARCH_SAMD
-        if (::Watchdog.resetCause() & PM_RCAUSE_WDT)
-        {
-            _lastReset = true;
-            _resets = 1;
-        }
-    #endif
 #endif
     }
 } // namespace OpenKNX

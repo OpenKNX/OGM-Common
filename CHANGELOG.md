@@ -2,6 +2,7 @@
 
 ## 1.1.2: 2024-02-10 --
 * Update: RP2040 & ESP32 Platform
+* Refactor/Feature: Refactor watchdog to support ESP32
 
 ## 1.1.1: 2024-01-29 -- 2024-02-09
 * Improvement: Project restore scripts
