@@ -1,7 +1,4 @@
 # Import-Module BitsTransfer
-
-$firmwareName = $args[0]
-
 function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
     Write-Host "Open " -NoNewline
@@ -24,13 +21,15 @@ function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
 }
 
-OpenKNX_ShowLogo("Firmware Uploader for RP2040")
+$firmwareName = $args[0]
+if (!($isRecursive -eq "1")) {
+    OpenKNX_ShowLogo "Upload Firmware RP2040"
+} 
 
 Write-Host "Suche RP2040 im BOOTSEL-Modus (das kann einige Zeit dauern)..."
 $device = $(Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -match "RPI-RP2" })
 if (!$device) {
     Write-Host "Keinen RP2040 im BOOTSEL-Modus gefunden."
-    Write-Host
     Write-Host "Alternative: Suche COM-Port fuer RP2040 (auch das kann etwas dauern)..."
     $portList = get-pnpdevice -class Ports
     if ($portList) {
@@ -42,41 +41,16 @@ if (!$device) {
                 if ($isPico) {
                     # $port = $Matches[1]
                     $port = $Matches[0]
-                    Write-Host "COM-Port Gefunden: $port" -ForegroundColor Green
+                    Write-Host "COM-Port Gefunden: $port"
                     break
                 }
             }
         }
-        Write-Host
         if ($port) {
-
-            Write-Host "Informiere die Firmware ueber bevorstehenden Upload (Speichere Zustaende)."
-            $serial = new-Object System.IO.Ports.SerialPort $port, 115200, None, 8, 1
-            try {
-                $serial.Open()
-                $serial.Write([byte[]] (7), 0, 1)
-                Start-Sleep -Seconds 1
-            }
-            catch {
-            }
-            finally {
-                if ($serial.IsOpen) {
-                    $serial.Close();
-                }
-            }
-            Write-Host
-
             Write-Host "Versuche den RP2040 ueber Port $port in den BOOTSEL-Modus zu versetzen..."
             $serial = new-Object System.IO.Ports.SerialPort $port, 1200, None, 8, 1
-            try {
-                $serial.Open()
-            }
-            catch {}
-            finally {
-                if ($serial.IsOpen) {
-                    $serial.Close();
-                }
-            }
+            try { $serial.Open() } catch {}
+            $serial.Close()
             # mode ${port}: BAUD=1200 parity=N data=8 stop=1 | Out-Null
             Start-Sleep -s 1
             # ./rp2040load.exe -v -D firmware
@@ -84,10 +58,8 @@ if (!$device) {
         }
     }
 }
-Write-Host
 if ($device) {
-    Write-Host "RP2040 gefunden, installiere Firmware..." -ForegroundColor Yellow
-    Write-Host
+    Write-Host "RP2040 gefunden, installiere Firmware..."
     # There are different options how to copy a large file, but most of them have side effects
     
     # the following one prints very often errors AFTER the file was copied 
@@ -105,11 +77,12 @@ if ($device) {
     $objShell = New-Object -ComObject "Shell.Application"
     $objFolder = $objShell.NameSpace($device.DeviceID.ToString()) 
     $objFolder.CopyHere("$currentDir\data\$firmwareName", $FOF_CREATEPROGRESSDLG)
-    Write-Host "Fertig!" -ForegroundColor Green
+    Write-Host Fertig!
     timeout /T 20 
 }
 else {
-    Write-Host "Kein RP2040 gefunden!" -ForegroundColor Red
+    Write-Host 
+    Write-Host "Kein RP2040 gefunden!"
     Write-Host 
     Write-Host "Versuche bitte die manuelle Setup-Methode: Den RP2040 selber im BOOTSEL-Modus zu starten"
     Write-Host "Falls die Hardware eine Reset-Taste hat, dann erst die BOOTSEL-Taste druecken und halten,"
