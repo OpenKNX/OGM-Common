@@ -52,8 +52,11 @@ $appVersion = Select-String -Path "include/knxprod.h" -Pattern MAIN_ApplicationV
 $appVersion = $appVersion.ToString().Split()[-1]
 $appMajor = [math]::Floor($appVersion / 16)
 $appMinor = $appVersion % 16
-$appRev = Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevision"
-$appRev = $appRev.ToString().Split()[-1].Replace(";", "")
+$appRev = 0
+if (Test-Path -Path "src/main.cpp" -PathType Leaf) {
+  $appRev = Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevision"
+  $appRev = $appRev.ToString().Split()[-1].Replace(";", "")
+}
 $appVersion = "$appMajor.$appMinor"
 if ($appRev -gt 0) {
   $appVersion = "$appVersion.$appRev"
