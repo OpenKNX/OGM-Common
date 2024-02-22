@@ -1,8 +1,38 @@
+function OpenKNX_ShowLogo($AddCustomText = $null) {
+    Write-Host ""
+    Write-Host "Open " -NoNewline
+    #Write-Host "■" -ForegroundColor Green
+    Write-Host "$( [char]::ConvertFromUtf32(0x25A0) )" -ForegroundColor Green
+    $unicodeString = "$( [char]::ConvertFromUtf32(0x252C) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2534) ) "
+  
+    if ($AddCustomText) { 
+        #Write-Host "┳━━━━┻  $AddCustomText" -ForegroundColor Green
+        Write-Host "$($unicodeString) $($AddCustomText)"  -ForegroundColor Green
+    }
+    else {
+        #Write-Host "┳━━━━┻" -ForegroundColor Green
+        Write-Host "$($unicodeString)"  -ForegroundColor Green
+    }
+
+    #Write-Host "■" -NoNewline -ForegroundColor Green
+    Write-Host "$( [char]::ConvertFromUtf32(0x25A0) )" -NoNewline -ForegroundColor Green
+    Write-Host " KNX"
+    Write-Host ""
+}
+
 $firmwareName = $args[0]
 $isRecursive = $args[1]
+if (!($isRecursive -eq "1")) {
+    OpenKNX_ShowLogo "Upload Firmware SAMD"
+} 
+
 $toolsExist = Test-Path -PathType Leaf ~/bin/bossac.exe
+if ($toolsExist) {
+    $helpText = ~/bin/bossac -h
+    $toolsExist = $helpText -match 'Version 1.7.0'
+}
 if (!$toolsExist) {
-    ../Build-knxprod.ps1
+    ./Build-knxprod.ps1
 }
 
 if ($toolsExist) {
