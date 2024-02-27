@@ -62,6 +62,9 @@ namespace OpenKNX
     bool Console::processCommand(std::string cmd, bool diagnoseKo /* = false */)
     {
         openknx.common.skipLooptimeWarning();
+#if MASK_VERSION == 0x07B0
+        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+#endif
 
         if (!diagnoseKo && (cmd == "i" || cmd == "info"))
         {
@@ -187,6 +190,52 @@ namespace OpenKNX
         {
             erase(EraseMode::All);
         }
+#endif
+#if MASK_VERSION == 0x07B0
+        else if (cmd.compare("tp mon") == 0)
+        {
+            logInfo("KNX<TP>", "Starting tpuart in bus monitor");
+            dll->monitor();
+            return true;
+        }
+        else if (cmd.compare("tp rst") == 0)
+        {
+            logInfo("KNX<TP>", "Reset tpuart");
+            dll->reset();
+            return true;
+        }
+        else if (cmd.compare("tp stats") == 0)
+        {
+            logInfo("KNX<TP>", "ProcessedFrames: %i - IgnoredFrames: %i - InvalidFrames: %i - UnknownControl: %i",
+                    dll->getRxProcessdFrameCounter(), dll->getRxIgnoredFrameCounter(), dll->getRxInvalidFrameCounter(), dll->getRxUnknownControlCounter());
+            return true;
+        }
+        else if (cmd.compare("tp stop") == 0)
+        {
+            logInfo("KNX<TP>", "Stop tpuart");
+            dll->stop(true);
+            return true;
+        }
+        else if (cmd.compare("tp resume") == 0)
+        {
+            logInfo("KNX<TP>", "Resume tpuart");
+            dll->stop(false);
+            return true;
+        }
+    #ifdef NCN5120
+        else if (cmd.compare("tp poff") == 0)
+        {
+            logInfo("KNX<TP>", "Poweroff tpuart VCC2");
+            dll->powerControl(false);
+            return true;
+        }
+        else if (cmd.compare("tp pon") == 0)
+        {
+            logInfo("KNX<TP>", "Poweron tpuart VCC2");
+            dll->powerControl(true);
+            return true;
+        }
+    #endif
 #endif
         else
         {
