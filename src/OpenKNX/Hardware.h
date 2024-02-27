@@ -1,6 +1,6 @@
 #pragma once
-#include "OpenKNX/Led.h"
 #include "OpenKNX/Button.h"
+#include "OpenKNX/Led.h"
 #include <Arduino.h>
 
 #ifdef ARDUINO_ARCH_RP2040
@@ -94,22 +94,6 @@ namespace OpenKNX
       public:
         // Initialize or HW detection
         void init();
-        // Send Command to BCU
-        void sendCommandToBcu(const uint8_t* command, const uint8_t length, const char* debug);
-        // Receive Response from BCU
-        void receiveResponseFromBcu(uint8_t* response, const uint8_t length, const uint16_t wait = 100);
-        // Validate Response
-        bool validateResponse(const uint8_t* expected, const uint8_t* response, uint8_t length);
-        // Turn off 5V rail from NCN5130 to save power for EEPROM write during knx save operation
-        void deactivatePowerRail();
-        // Turn on 5V rail from NCN5130 in case SAVE-Interrupt was false positive
-        void activatePowerRail();
-        // Stop KNX Communication
-        void stopKnxMode(bool waiting = true);
-        // Start KNX Communication
-        void startKnxMode(bool waiting = true);
-        // send system state command and interpret answer
-        void requestBcuSystemState();
         // Fatal Error
         void fatalError(uint8_t code, const char* message = 0);
         // CPU Temperatur

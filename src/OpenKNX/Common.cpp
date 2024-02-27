@@ -241,9 +241,6 @@ namespace OpenKNX
         // start the framework
         knx.start();
 
-        // when module was restarted during bcu was disabled, reenable
-        openknx.hardware.activatePowerRail();
-
 #ifdef OPENKNX_WATCHDOG
         if (ParamBASE_Watchdog) openknx.watchdog.activate();
 #endif
@@ -575,23 +572,25 @@ namespace OpenKNX
 #ifdef INFO2_LED_PIN
         openknx.info2Led.powerSave();
 #endif
-        openknx.hardware.stopKnxMode(false);
+
+#if MASK_VERSION == 0x07B0
+        TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
+        ddl->stop(true);
+#endif
 
         // first save all modules to save power before...
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->savePower();
 
-        openknx.hardware.deactivatePowerRail();
+#if MASK_VERSION == 0x07B0
+        ddl->powerControl(false);
+#endif
 
         logInfoP("Completed (%ims)", millis() - start);
         logIndentDown();
 
         // save data
         openknx.flash.save();
-
-        // manual recevie stopKnxMode respone
-        uint8_t response[2] = {};
-        openknx.hardware.receiveResponseFromBcu(response, 2); // Receive 2 bytes
 
         _savedPinProcessed = millis();
         logIndentDown();
@@ -619,8 +618,12 @@ namespace OpenKNX
 #ifdef INFO2_LED_PIN
         openknx.info2Led.powerSave(false);
 #endif
-        openknx.hardware.activatePowerRail();
-        openknx.hardware.startKnxMode();
+
+#if MASK_VERSION == 0x07B0
+        TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
+        ddl->powerControl(true);
+        ddl->stop(false);
+#endif
 
         bool reboot = false;
 

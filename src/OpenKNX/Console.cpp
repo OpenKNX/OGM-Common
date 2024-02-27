@@ -538,7 +538,6 @@ namespace OpenKNX
     #ifdef INFO3_LED_PIN
         openknx.info3Led.off();
     #endif
-        openknx.hardware.stopKnxMode();
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
