@@ -582,7 +582,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->savePower();
 
-#if MASK_VERSION == 0x07B0
+#if MASK_VERSION == 0x07B0 && defined(NCN5120)
         ddl->powerControl(false);
 #endif
 
@@ -621,7 +621,9 @@ namespace OpenKNX
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
+    #ifdef NCN5120
         ddl->powerControl(true);
+    #endif
         ddl->stop(false);
 #endif
 
