@@ -64,6 +64,8 @@ namespace OpenKNX
         openknx.common.skipLooptimeWarning();
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+#elif MASK_VERSION == 0x091A
+        TpUartDataLinkLayer* dll = knx.bau().getSecondaryDataLinkLayer();
 #endif
 
         if (!diagnoseKo && (cmd == "i" || cmd == "info"))
@@ -191,7 +193,7 @@ namespace OpenKNX
             erase(EraseMode::All);
         }
 #endif
-#if MASK_VERSION == 0x07B0
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("tp mon") == 0)
         {
             logInfo("KNX<TP>", "Starting tpuart in bus monitor");
