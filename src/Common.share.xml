@@ -365,7 +365,7 @@
           </ModuleDefs>
           <Dynamic>
             <ChannelIndependentBlock>
-              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX" ShowInComObjectTree="true">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
