@@ -194,46 +194,38 @@ namespace OpenKNX
         }
 #endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
-        else if (cmd.compare("tp mon") == 0)
+        else if (cmd.compare("bcu") == 0)
         {
-            logInfo("KNX<TP>", "Starting tpuart in bus monitor");
+            logInfo("KNX<BCU>", "Status: %s - Processed: %i - Ignored: %i - Invalid: %i - Unknown: %i",
+                    dll->isConnected() ? "Connected" : "Disconnected",
+                    dll->getRxProcessdFrameCounter(),
+                    dll->getRxIgnoredFrameCounter(),
+                    dll->getRxInvalidFrameCounter(),
+                    dll->getRxUnknownControlCounter());
+            return true;
+        }
+        else if (cmd.compare("bcu mon") == 0)
+        {
+            logInfo("KNX<BCU>", "Start BCU monitoring");
             dll->monitor();
             return true;
         }
-        else if (cmd.compare("tp rst") == 0)
+        else if (cmd.compare("bcu rst") == 0)
         {
-            logInfo("KNX<TP>", "Reset tpuart");
+            logInfo("KNX<BCU>", "Reset BCU");
             dll->reset();
             return true;
         }
-        else if (cmd.compare("tp stats") == 0)
-        {
-            logInfo("KNX<TP>", "ProcessedFrames: %i - IgnoredFrames: %i - InvalidFrames: %i - UnknownControl: %i",
-                    dll->getRxProcessdFrameCounter(), dll->getRxIgnoredFrameCounter(), dll->getRxInvalidFrameCounter(), dll->getRxUnknownControlCounter());
-            return true;
-        }
-        else if (cmd.compare("tp stop") == 0)
-        {
-            logInfo("KNX<TP>", "Stop tpuart");
-            dll->stop(true);
-            return true;
-        }
-        else if (cmd.compare("tp resume") == 0)
-        {
-            logInfo("KNX<TP>", "Resume tpuart");
-            dll->stop(false);
-            return true;
-        }
     #ifdef NCN5120
-        else if (cmd.compare("tp poff") == 0)
+        else if (cmd.compare("bcu poff") == 0)
         {
-            logInfo("KNX<TP>", "Poweroff tpuart VCC2");
+            logInfo("KNX<BCU>", "Switch off VCC2");
             dll->powerControl(false);
             return true;
         }
         else if (cmd.compare("tp pon") == 0)
         {
-            logInfo("KNX<TP>", "Poweron tpuart VCC2");
+            logInfo("KNX<BCU>", "Switch on VCC2");
             dll->powerControl(true);
             return true;
         }
@@ -466,6 +458,12 @@ namespace OpenKNX
         printHelpLine("aw <pin> 0-4096", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+        printHelpLine("bcu", "Show BCU status");
+        printHelpLine("bcu mon", "Start BCU monitoring");
+        printHelpLine("bcu rst", "Reset BCU");
+#endif
+
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showHelp();
 
