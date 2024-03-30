@@ -237,8 +237,9 @@ namespace OpenKNX
 
         if (configured) openknx.flash.load();
 
-        // start the framework
+        // start the framework + isr if needed
         knx.start();
+        openknx.hardware.initKnxRxISR();
 
 #ifdef OPENKNX_WATCHDOG
         if (ParamBASE_Watchdog) openknx.watchdog.activate();
