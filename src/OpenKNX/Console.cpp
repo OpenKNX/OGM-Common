@@ -223,7 +223,7 @@ namespace OpenKNX
             dll->powerControl(false);
             return true;
         }
-        else if (cmd.compare("tp pon") == 0)
+        else if (cmd.compare("bcu pon") == 0)
         {
             logInfo("KNX<BCU>", "Switch on VCC2");
             dll->powerControl(true);
