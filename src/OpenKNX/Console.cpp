@@ -196,12 +196,10 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            logInfo("KNX<BCU>", "Status: %s - Processed: %i - Ignored: %i - Invalid: %i - Unknown: %i",
-                    dll->isConnected() ? "Connected" : "Disconnected",
-                    dll->getRxProcessdFrameCounter(),
-                    dll->getRxIgnoredFrameCounter(),
-                    dll->getRxInvalidFrameCounter(),
-                    dll->getRxUnknownControlCounter());
+            logInfo("BCU<Status>", "%s", dll->isConnected() ? "Connected" : "Disconnected");
+            logInfo("BCU<Received>", "Processed: %i - Ignored: %i - Invalid: %i - Unknown: %i",
+                    dll->getRxProcessdFrameCounter(), dll->getRxIgnoredFrameCounter(), dll->getRxInvalidFrameCounter(), dll->getRxUnknownControlCounter());
+            logInfo("BCU<Transmitted>", "Processed: %i/%i", dll->getTxProcessedFrameCounter(), dll->getTxFrameCounter());
             return true;
         }
         else if (cmd.compare("bcu mon") == 0)
