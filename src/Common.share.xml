@@ -365,9 +365,9 @@
           </ModuleDefs>
           <Dynamic>
             <!-- <ChannelIndependentBlock> -->
-            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX">
+            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="OpenKNX" Icon="openknx" HelpContext="BASE-OpenKNX">
 
-              <ParameterBlock Id="%AID%_PB-nnn" Name="Settings" Text="Einstellungen" Icon="cog-outline" HelpContext="BASE-OpenKNX">
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
