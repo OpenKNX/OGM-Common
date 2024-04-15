@@ -34,15 +34,6 @@ namespace OpenKNX
         uint8_t _consoleCharLast = 0x0;
         bool _diagnoseKoOutput = false;
 
-        void processSerialInput();
-        void showInformations();
-        void showVersions();
-        void showUptime(bool diagnoseKo = false);
-        void showMemory(bool diagnoseKo = false);
-        void showMemoryContent(uint8_t* start, uint32_t size);
-        void showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart);
-
-        void showHelp();
         void sleep();
         uint32_t sleepTime();
         void showWatchdogResets(bool diagnoseKo = false);
@@ -62,6 +53,16 @@ namespace OpenKNX
 
         void printHelpLine(const char* command, const char* message);
         bool processCommand(std::string cmd, bool diagnoseKo = false);
+        void showMemory(bool diagnoseKo = false);
+        void processSerialInput();
+        void showInformations();
+        void showVersions();
+        void showUptime(bool diagnoseKo = false);
+        void showMemoryContent(uint8_t* start, uint32_t size);
+        void showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart);
+
+        void showHelp();
+
 #ifdef BASE_KoDiagnose
         void processDiagnoseKo(GroupObject& ko);
         void writeDiagenoseKo(const char* message, ...);
