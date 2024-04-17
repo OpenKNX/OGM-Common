@@ -4,7 +4,7 @@
     #include "LittleFS.h"
 #endif
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(USE_TP_RX_QUEUE) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
+#if defined(ARDUINO_ARCH_RP2040) && defined(USE_TP_RX_QUEUE) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
 void __time_critical_func(processKnxRxISR)()
 {
     uart_get_hw(KNX_DMA_UART)->icr = UART_UARTICR_RTIC_BITS | UART_UARTICR_RXIC_BITS;
@@ -78,14 +78,13 @@ namespace OpenKNX
 #endif
     }
 
-    
     void Hardware::initKnxRxISR()
     {
-#if defined(ARDUINO_ARCH_RP2040) && defined(USE_TP_RX_QUEUE) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
-    // alarm_pool_add_repeating_timer_ms(openknx.timerInterrupt.alarmPool(), -1, processKnxRxTimer, NULL, &repeatingTimer);
-    irq_set_exclusive_handler(KNX_DMA_UART_IRQ, processKnxRxISR);
-    irq_set_enabled(KNX_DMA_UART_IRQ, true);
-    uart_set_irq_enables(KNX_DMA_UART, true, false);
+#if defined(ARDUINO_ARCH_RP2040) && defined(USE_TP_RX_QUEUE) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
+        // alarm_pool_add_repeating_timer_ms(openknx.timerInterrupt.alarmPool(), -1, processKnxRxTimer, NULL, &repeatingTimer);
+        irq_set_exclusive_handler(KNX_DMA_UART_IRQ, processKnxRxISR);
+        irq_set_enabled(KNX_DMA_UART_IRQ, true);
+        uart_set_irq_enables(KNX_DMA_UART, true, false);
 #endif
     }
 
