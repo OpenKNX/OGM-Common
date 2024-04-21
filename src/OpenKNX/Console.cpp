@@ -231,13 +231,13 @@ namespace OpenKNX
                     openknx.logger.logWithValues("%s: command not found", prompt);
                 }
             }
-            memset(prompt, 0, 15); // Reset Promptbuffer
+            memset(prompt, 0, CONSOLE_INPUT_SIZE); // Reset Promptbuffer
         }
 
         if (current == '\b' && strlen(prompt) > 0)
             prompt[strlen(prompt) - 1] = 0x0;
 
-        if (strlen(prompt) < 14 && current >= 32 && current <= 126) // Max. 14 printables chars allowed
+        if (strlen(prompt) < CONSOLE_INPUT_SIZE && current >= 32 && current <= 126) // Max. printables chars allowed
             prompt[strlen(prompt)] = current;
 
         openknx.logger.printPrompt();

@@ -13,6 +13,11 @@ extern "C"
 #endif
 
 #define CONSOLE_HEADLINE_COLOR 33
+#ifdef ARDUINO_ARCH_SAMD
+#define CONSOLE_INPUT_SIZE 14
+#else
+#define CONSOLE_INPUT_SIZE 100
+#endif
 
 namespace OpenKNX
 {
@@ -48,7 +53,7 @@ namespace OpenKNX
 #endif
 
       public:
-        char prompt[15] = {};
+        char prompt[CONSOLE_INPUT_SIZE + 1] = {};
         void loop();
 
         void printHelpLine(const char* command, const char* message);
