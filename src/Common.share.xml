@@ -64,8 +64,8 @@
               </ParameterType>
               <!-- KO numbers -->
               <ParameterType Id="%AID%_PT-KONumber" Name="KONumber">
-                <!-- We assume, there will be never more than 32767 KO, currently we set the limit to 9999 -->
-                <TypeNumber SizeInBit="15" Type="unsignedInt" minInclusive="1" maxInclusive="9999" />
+                <!-- Number of available KO is derived from current application -->
+                <TypeNumber SizeInBit="15" Type="unsignedInt" minInclusive="1" maxInclusive="%MaxKoNumber%" />
               </ParameterType>
               <!-- generic (DPT dependant) fields -->
               <ParameterType Id="%AID%_PT-ValueDpt1" Name="ValueDpt1">
