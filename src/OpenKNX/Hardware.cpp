@@ -8,7 +8,11 @@
 void __time_critical_func(processKnxRxISR)()
 {
     uart_get_hw(KNX_DMA_UART)->icr = UART_UARTICR_RTIC_BITS | UART_UARTICR_RXIC_BITS;
+#if MASK_VERSION == 0x07B0
     knx.bau().getDataLinkLayer()->processRxISR();
+#elif MASK_VERSION == 0x091A
+    knx.bau().getSecondaryDataLinkLayer()->processRxISR();
+#endif
 }
 // bool __time_critical_func(processKnxRxTimer)(repeating_timer *t)
 // {
