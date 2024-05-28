@@ -29,11 +29,13 @@
             </ParameterRefs>
           </Static>
           <Dynamic>
-            <ChannelIndependentBlock>
-              <ParameterBlock Id="%AID%_PB-nnn" Name="General" Text="Allgemein" Icon="cog" HelpContext="BASE-OpenKNX">
+            <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="OpenKNX" Icon="openknx" HelpContext="BASE-OpenKNX">
+
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline"/>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
                 <!-- Startup Delay pattern -->
                 <ParameterBlock Id="%AID%_PB-nnn" Name="StartupDelayCycle" Inline="true" Layout="Grid" HelpContext="BASE-Startup">
                   <Rows>
@@ -48,8 +50,9 @@
                   <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" Cell="1,2" IndentLevel="1" />
                   <ParameterRefRef RefId="%AID%_UP-%TT%00002_R-%TT%0000201" Cell="1,3" IndentLevel="1" />
                 </ParameterBlock>
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="BASE-Watchdog" IndentLevel="1" />
+                
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text=" " />
                 <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNX" Inline="true" Layout="Grid">
                   <Rows>
                     <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
@@ -60,8 +63,16 @@
                   </Columns>
                   <ParameterRefRef RefId="%AID%_P-%TT%00001_R-%TT%0000101" Cell="1,1" HelpContext="BASE-OpenKNX"/>
                 </ParameterBlock>
+
               </ParameterBlock>
-            </ChannelIndependentBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Extended" Text="Erweitert" Icon="format-list-text" HelpContext="BASE-OpenKNX">
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="BASE-Watchdog" IndentLevel="1" />
+                
+              </ParameterBlock>
+
+            </Channel>
           </Dynamic>
         </ApplicationProgram>
       </ApplicationPrograms>
