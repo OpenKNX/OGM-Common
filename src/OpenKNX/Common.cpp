@@ -105,7 +105,6 @@ namespace OpenKNX
         if (erase)
         {
             openknx.hardware.initFlash();
-            openknx.openknxFlash.erase();
             openknx.knxFlash.erase();
             restart();
         }
