@@ -1,6 +1,17 @@
 # Changes
 
-## 1.1.2: 2024-02-10 --
+## 1.1.3: 2024-06-19
+* Update: RP2040 Platform to Core 3.9.3
+* Enhancement: Scripts
+* Add: New Icons
+* Enhancement: New ETS UI
+* Support longer commands than 14 chars (only console not diagnose ko)
+* Support for new knx stack (openknx repo)
+  * Breaking changes: No support for old knx stack
+  * Add: New commands for bcu information
+  * Add: Support DMA & IRQ for new knx stack
+
+## 1.1.2: 2024-02-10
 * Update: RP2040 & ESP32 Platform
 * Refactor/Feature: Refactor watchdog to support ESP32
 
