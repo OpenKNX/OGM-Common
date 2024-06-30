@@ -31,15 +31,15 @@ foreach ($subproject in $subprojects) {
 foreach ($subproject in $projects) {
     $branch = git --git-dir $subproject/.git branch --show-current
     if ($?) { # if the lib is no git repo, skip it
-        if ($branch) {
-            $info1 = git --git-dir $subproject/.git log -1 --pretty=format:"%h $branch $subproject"
-            $info2 = git --git-dir $subproject/.git config --get remote.origin.url
-            $info = $info1 + " " + $info2
-            Write-Output $info >> dependencies.txt
-        } else {
+        if (!$branch) {
+            $branch = "?" # use invalid branch-name as fallback (prevents restore to branch)
             $info = "-> no branch '" + $subproject + "'"
-            Write-Output $info
+            Write-Host -ForegroundColor DarkYellow $info
         }
+        $info1 = git --git-dir $subproject/.git log -1 --pretty=format:"%h $branch $subproject"
+        $info2 = git --git-dir $subproject/.git config --get remote.origin.url
+        $info = $info1 + " " + $info2
+        Write-Output $info >> dependencies.txt
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
         Write-Host -ForegroundColor Red $info
