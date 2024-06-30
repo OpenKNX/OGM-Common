@@ -1,6 +1,6 @@
-Icons with "openknx" in filename were designed individually for this project.
+Icons with "openknx" or "ofm-" or "oam-" in filename, or with the OpenKNX-Logo inside, were designed individually for this project.
 
-Others were created as custom export from Pictogrammers Material Design Icons Collection:
+Other icons in directory Baggages/Icons were typically created as custom export from Pictogrammers Material Design Icons Collection:
 
 > Pictogrammers Free License
 > --------------------------
