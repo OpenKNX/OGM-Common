@@ -42,7 +42,7 @@ foreach ($subproject in $projects) {
         }
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
-        Write-Output $info
+        Write-Host -ForegroundColor Red $info
     }
 }
 
