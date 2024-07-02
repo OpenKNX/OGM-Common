@@ -1,6 +1,6 @@
 # Changes
 
-## 1.1.3: 2024-07-02
+## 1.2.0: 2024-07-02
 * Update: RP2040 Platform to Core 3.9.3
 * Update: ESP Platform to Core 6.7.0
 * Enhancement: Scripts
