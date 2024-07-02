@@ -1,7 +1,8 @@
 # Changes
 
-## 1.1.3: 2024-06-19
+## 1.1.3: 2024-07-02
 * Update: RP2040 Platform to Core 3.9.3
+* Update: ESP Platform to Core 6.7.0
 * Enhancement: Scripts
 * Add: New Icons
 * Enhancement: New ETS UI
