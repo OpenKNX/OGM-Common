@@ -283,7 +283,12 @@ namespace OpenKNX
             return write(relativeAddress, (uint8_t *)&value, 4);
         }
 
-        uint64_t Driver::writeDouble(uint32_t relativeAddress, double value)
+        uint32_t Driver::writeLong(uint32_t relativeAddress, long value)
+        {
+            return write(relativeAddress, (uint8_t *)&value, 8);
+        }
+
+        uint32_t Driver::writeDouble(uint32_t relativeAddress, double value)
         {
             return write(relativeAddress, (uint8_t *)&value, 8);
         }
@@ -319,6 +324,13 @@ namespace OpenKNX
         {
             float buffer = 0;
             read(relativeAddress, (uint8_t *)&buffer, 4);
+            return buffer;
+        }
+
+        long Driver::readLong(uint32_t relativeAddress)
+        {
+            long buffer = 0;
+            read(relativeAddress, (uint8_t *)&buffer, 8);
             return buffer;
         }
 
