@@ -60,7 +60,8 @@ namespace OpenKNX
             uint32_t writeWord(uint32_t relativeAddress, uint16_t value);
             uint32_t writeInt(uint32_t relativeAddress, uint32_t value);
             uint32_t writeFloat(uint32_t relativeAddress, float value);
-            uint64_t writeDouble(uint32_t relativeAddress, double value);
+            uint32_t writeLong(uint32_t relativeAddress, long value);
+            uint32_t writeDouble(uint32_t relativeAddress, double value);
 
             uint32_t read(uint32_t relativeAddress, uint8_t *output, uint32_t size);
 
@@ -68,6 +69,7 @@ namespace OpenKNX
             uint16_t readWord(uint32_t relativeAddress);
             uint32_t readInt(uint32_t relativeAddress);
             float readFloat(uint32_t relativeAddress);
+            long readLong(uint32_t relativeAddress);
             double readDouble(uint32_t relativeAddress);
         };
     } // namespace Flash
