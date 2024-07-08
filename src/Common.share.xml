@@ -555,6 +555,18 @@
                   </when>
                 </choose>
               </ParameterBlock>
+       	      <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
+						
+              	<ParameterSeparator Id="%AID%_PS-nnn" Text="Dokumentation" UIHint="Headline" />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Die Dokumentation ist als Kontextsensitive Hilfe verfügbar, siehe den Text im unteren Bereich des Bildschirms." />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Wird keine Dokumentation angezeigt, muss diese in der ETS Werkzeugleiste über die Schaltfläche&#10;'(?) Kontexhilfe' aktiviert werden." />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+	
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="ETS Tipp" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Benötigen mehrere Kanäle die gleiche Konfigurationen, können mit gedrückter STRG Taste die jeweils gleichen Seiten mit der Maus ausgewählt werden."  />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Die vorgenommen Konfigurationen werden dann auf alle gewählten Kanäle übernommen."  />
+
+              </ParameterBlock>
 
             </Channel>
             <!-- </ChannelIndependentBlock> -->
