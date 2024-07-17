@@ -327,9 +327,9 @@ namespace OpenKNX
             return buffer;
         }
 
-        long Driver::readLong(uint32_t relativeAddress)
+        uint64_t Driver::readLong(uint32_t relativeAddress)
         {
-            long buffer = 0;
+            uint64_t buffer = 0;
             read(relativeAddress, (uint8_t *)&buffer, 8);
             return buffer;
         }
@@ -348,7 +348,7 @@ namespace OpenKNX
             {
                 eraseSector(i);
             }
-                }
+        }
 
         void Driver::eraseSector(uint16_t sector)
         {
