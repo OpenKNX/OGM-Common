@@ -118,7 +118,7 @@ namespace OpenKNX
         logInfoP("Init knx stack");
         logIndentUp();
 
-#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
+#if (defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
         knx.platform().knxUartPins(KNX_UART_RX_PIN, KNX_UART_TX_PIN);
 #endif
 
