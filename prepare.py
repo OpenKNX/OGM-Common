@@ -133,7 +133,7 @@ for name, lib_version in openknx_modules.items():
 version_file = open("include/versions.h", "w")
 version_file.write("#pragma once\n\n")
 version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
-version_file.write("#define KNX_Version \"{}\"\n".format(get_git_version(base_dir / basepath / "knx")))
+version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
 # additional_defines = dict()
 for name, version in openknx_modules.items():
   define_name = "MODULE_" + name.split("-")[1]
