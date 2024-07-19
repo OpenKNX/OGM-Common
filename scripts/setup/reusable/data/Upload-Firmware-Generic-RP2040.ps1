@@ -115,7 +115,7 @@ else {
     Write-Host "Falls die Hardware eine Reset-Taste hat, dann erst die BOOTSEL-Taste druecken und halten,"
     Write-Host "und dann zusaetzlich die Reset-Taste druecken. Dann beide Tasten loslassen."
     Write-Host "Ohne Reset-Taste das Geraet stromlos machen (USB-Stecker ziehen und vom KNX trennen),"
-    Write-Host "Danach die BOOTSEL-Taste druecken und gleichzeitig USB mit dem Recner verbinden."
+    Write-Host "Danach die BOOTSEL-Taste druecken und gleichzeitig USB mit dem Rechner verbinden."
     Write-Host "Jetzt befindet sich das Geraet im BOOTSEL-Modus, die BOOTSEL-Taste kann jetzt losgelassen werden."
     Write-Host "Anschliessend das Skript erneut starten."
     timeout /T 60     
