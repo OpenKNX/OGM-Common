@@ -176,6 +176,7 @@ namespace OpenKNX
         {
             resetToBootloader();
         }
+#endif
         else if (!diagnoseKo && (cmd == "erase knx"))
         {
             erase(EraseMode::KnxFlash);
@@ -184,15 +185,16 @@ namespace OpenKNX
         {
             erase(EraseMode::OpenKnxFlash);
         }
+#ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "erase files"))
         {
             erase(EraseMode::Filesystem);
         }
+#endif
         else if (!diagnoseKo && (cmd == "erase all"))
         {
             erase(EraseMode::All);
         }
-#endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
@@ -441,9 +443,9 @@ namespace OpenKNX
 #ifdef OPENKNX_WATCHDOG
         printHelpLine("watchdog", "Show restart count by watchdog");
 #endif
-#ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase knx", "Erase knx parameters");
         printHelpLine("erase openknx", "Erase openknx module data");
+#ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase files", "Erase filesystem");
         printHelpLine("erase all", "Erase all");
         printHelpLine("bootloader", "Reset into Bootloader Mode");
@@ -570,21 +572,20 @@ namespace OpenKNX
         openknx.logger.logWithPrefix(command, message);
     }
 
-#ifdef ARDUINO_ARCH_RP2040
     void Console::erase(EraseMode mode)
     {
         openknx.watchdog.deactivate();
 
         openknx.progLed.blinking();
-    #ifdef INFO1_LED_PIN
+#ifdef INFO1_LED_PIN
         openknx.info1Led.off();
-    #endif
-    #ifdef INFO2_LED_PIN
+#endif
+#ifdef INFO2_LED_PIN
         openknx.info2Led.off();
-    #endif
-    #ifdef INFO3_LED_PIN
+#endif
+#ifdef INFO3_LED_PIN
         openknx.info3Led.off();
-    #endif
+#endif
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
@@ -598,6 +599,7 @@ namespace OpenKNX
             openknx.openknxFlash.erase();
         }
 
+#ifdef ARDUINO_ARCH_RP2040
         if (mode == EraseMode::All || mode == EraseMode::Filesystem)
         {
             openknx.logger.logWithPrefix("Erase", "Format Filesystem");
@@ -613,6 +615,7 @@ namespace OpenKNX
             if (!__nukeFlash(0, 4096))
                 openknx.logger.log("Fatal: nuke paramters invalid");
         }
+#endif // ARDUINO_ARCH_RP2040
 
         openknx.progLed.forceOn();
         openknx.logger.logWithPrefix("Erase", "Completed");
@@ -620,6 +623,7 @@ namespace OpenKNX
         openknx.restart();
     }
 
+#ifdef ARDUINO_ARCH_RP2040
     void Console::resetToBootloader()
     {
         reset_usb_boot(0, 0);

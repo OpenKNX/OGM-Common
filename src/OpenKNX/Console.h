@@ -22,7 +22,6 @@ extern "C"
 namespace OpenKNX
 {
 
-#ifdef ARDUINO_ARCH_RP2040
     enum class EraseMode
     {
         All,
@@ -30,7 +29,6 @@ namespace OpenKNX
         KnxFlash,
         OpenKnxFlash
     };
-#endif
 
     class Console
     {
@@ -46,8 +44,8 @@ namespace OpenKNX
         void resetToBootloader();
         void showFilesystem();
         void showFilesystemDirectory(std::string path);
-        void erase(EraseMode mode = EraseMode::All);
 #endif
+        void erase(EraseMode mode = EraseMode::All);
 #ifndef ARDUINO_ARCH_SAMD
         void processPinCommand(const std::string& cmd);
 #endif
