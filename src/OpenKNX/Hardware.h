@@ -15,7 +15,7 @@
 #define FATAL_LOG_WRONG_CHANNEL_COUNT 4 // knxprod contains more channels than logic supports
 #define FATAL_SENS_UNKNOWN 5            // unknown or unsupported sensor
 #define FATAL_SCHEDULE_MAX_CALLBACKS 6  // Too many callbacks in scheduler
-#define FATAL_NETWROK 7                 // Network error
+#define FATAL_NETWORK 7                 // Network error
 #define FATAL_INIT_FILESYSTEM 10        // LittleFS.begin() failed
 #define FATAL_SYSTEM 20                 // Systemerror (e.g. buffer overrun)
 
