@@ -361,7 +361,12 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
           #Invoke-RestMethod -Uri $GitClone -Method Head -ErrorAction Stop;
           if($Verbose) { $GitCmd= "git clone '$($GitClone)' '$($CloneTarget.ToString())'" 
           } else { $GitCmd= "git clone -q '$($GitClone)' '$($CloneTarget.ToString())'" }
-          Invoke-Expression $($GitCmd)
+          $exitCode = Invoke-Expression $($GitCmd+';$?')
+          if (!$exitCode) {
+            Write-Host "- CloneRepository - Failed Cloning "$dependedProject.ProjectName": '$GitClone' to '$CloneTarget' "([Char]0x2717) -ForegroundColor Red
+            # exit 1 expected, but error-handling should be consistent
+            # TODO: extend restore script error-handling and check for possible side-effects
+          }
           #git clone -q '$GitClone' '$CloneTarget.ToString()'
         }
         
