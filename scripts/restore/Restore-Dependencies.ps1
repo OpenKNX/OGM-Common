@@ -425,7 +425,7 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
       catch {
         if($Verbose) {
           $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { "Branch '$($dependedProject.Branch)'" }
-          Write-Host "- CloneRepository - $($dependedProject.ProjectName) - Checkout Error! Cannot checkout $($checkoutTarget) Checked out."([Char]0x2717) -ForegroundColor Red }
+          Write-Host "- CloneRepository - $($dependedProject.ProjectName) - Checkout Error! Cannot checkout $($checkoutTarget)."([Char]0x2717) -ForegroundColor Red }
       }
     }
 
