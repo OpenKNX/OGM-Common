@@ -365,7 +365,7 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
           #git clone -q '$GitClone' '$CloneTarget.ToString()'
         }
         
-        if($true) { Write-Host "- CloneRepository - Cloning "$dependedProject.ProjectName": '$GitClone' to '$CloneTarget' Done"([Char]0x221A) -ForegroundColor Green }
+        if($true) { Write-Host "- CloneRepository - Cloned "$dependedProject.ProjectName": '$GitClone' to '$CloneTarget' "([Char]0x221A) -ForegroundColor Green }
       }
       # If the repository does not exist, catch the error
       catch {
