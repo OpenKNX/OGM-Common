@@ -9,7 +9,7 @@ $settings = scripts/OpenKNX-Build-Settings.ps1 $args[0]
 $releaseTarget = "release/data/content.xml"
 
 if (Test-Path -Path $releaseTarget -PathType Leaf) {
-  Add-Content -Path $releaseTarget -Value "    <Products>"
+  Add-Content -Path $releaseTarget -Value "    </Products>"
   Add-Content -Path $releaseTarget -Value "</Content>"
 }
 else {
