@@ -509,8 +509,8 @@ namespace OpenKNX
         }
 #endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
-#ifdef ARDUINO_ARCH_RP2040
-
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)
+   
     #ifdef OPENKNX_DUALCORE
         if (openknx.common.freeStackMin() <= 0 || openknx.common.freeStackMin1() <= 0)
     #else

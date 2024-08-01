@@ -253,12 +253,15 @@ namespace OpenKNX
 #ifdef OPENKNX_DUALCORE
     #ifdef ARDUINO_ARCH_ESP32
         xTaskCreateUniversal([](void* parms) {
+            Common* common = (Common*)parms;
+            common->_freeStackMin1 =  uxTaskGetStackHighWaterMark(nullptr);
             ::setup1();
             for (;;)
             {
+                common->_freeStackMin1 = uxTaskGetStackHighWaterMark(nullptr);
                 ::loop1();
                 vTaskDelay(1);
-            } }, "setup1AndLoop1", ARDUINO_LOOP1_STACK_SIZE, NULL, 0, nullptr, 0);
+            } }, "setup1AndLoop1", ARDUINO_LOOP1_STACK_SIZE, this, 0, nullptr, 0);
     #endif
 
         // if we have a second core wait for setup1 is done
@@ -370,6 +373,9 @@ namespace OpenKNX
             logErrorP("Warning: The loop took longer than usual (%i >= %i)", (millis() - start), OPENKNX_LOOPTIME_WARNING);
             _lastLooptimeWarning = millis();
         }
+#endif
+#ifdef ARDUINO_ARCH_ESP32
+        _freeStackMin = uxTaskGetStackHighWaterMark(nullptr);
 #endif
     }
 
@@ -762,7 +768,7 @@ namespace OpenKNX
         return _freeMemoryMin;
     }
 
-#ifdef ARDUINO_ARCH_RP2040
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)
     int Common::freeStackMin()
     {
         return _freeStackMin;
