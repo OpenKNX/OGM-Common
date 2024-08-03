@@ -10,9 +10,9 @@
 
 namespace OpenKNX
 {
-    class Led
+    class iLed
     {
-      private:
+      protected:
         volatile long _pin = -1;
         volatile long _activeOn = HIGH;
         volatile uint32_t _lastMillis = 0;
@@ -41,10 +41,10 @@ namespace OpenKNX
         /*
          * write led state based on bool and _brightness
          */
-        void writeLed(uint8_t brightness);
+        virtual void writeLed(uint8_t brightness) = 0;
 
       public:
-        void init(long pin = -1, long activeOn = HIGH);
+        virtual void init(long pin = -1, long activeOn = HIGH) = 0;
 
         /*
          * use in normal loop or loop1
@@ -137,5 +137,37 @@ namespace OpenKNX
          * Get a logPrefix as string
          */
         std::string logPrefix();
+    };
+
+    class Led: public iLed
+    {
+        private: void writeLed(uint8_t brightness) override;
+        public:  void init(long pin = -1, long activeOn = HIGH);
+    };
+
+    #include <driver/rmt.h>
+    class RGBLedManager
+    {
+        private:
+          rmt_item32_t *_rmtItems = nullptr;
+          uint8_t _rmtChannel = 0;
+          uint8_t _ledCount = 0;
+          uint32_t _lastWritten = 0;
+          uint32_t *_ledData = nullptr;
+          void fillRmt();
+        public:
+          void init(uint8_t ledPin, uint8_t rmtChannel, uint8_t ledCount);
+          void setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b);
+          void writeLeds(); // send the color data to the LEDs
+    };
+
+    class RGBLed: public iLed
+    {
+        public:  RGBLed(RGBLedManager* manager) : _manager(manager){};
+        private: RGBLedManager* _manager = nullptr;
+        private: uint8_t color[3] = {0, 0, 0};  // R, G, B
+        private: void writeLed(uint8_t brightness) override;
+        public:  void init(long pin = -1, long activeOn = HIGH) override;
+        public:  void setColor(uint8_t r, uint8_t g, uint8_t b);
     };
 } // namespace OpenKNX

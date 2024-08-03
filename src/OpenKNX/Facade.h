@@ -53,6 +53,21 @@ namespace OpenKNX
         Button func3Button = Button("Func3");
 #endif
 
+#ifdef USE_RGBLED
+        RGBLedManager ledManager;
+        RGBLed progLed = RGBLed(&ledManager);
+#ifdef INFO1_LED_PIN
+        RGBLed info1Led = RGBLed(&ledManager);
+        RGBLed& infoLed = info1Led;
+#endif
+#ifdef INFO2_LED_PIN
+        RGBLed info2Led = RGBLed(&ledManager);
+#endif
+#ifdef INFO3_LED_PIN
+        RGBLed info3Led = RGBLed(&ledManager);
+#endif
+
+#else
         Led progLed;
 #ifdef INFO1_LED_PIN
         Led info1Led;
@@ -63,6 +78,7 @@ namespace OpenKNX
 #endif
 #ifdef INFO3_LED_PIN
         Led info3Led;
+#endif
 #endif
         Modules modules;
         Flash::Driver openknxFlash;
