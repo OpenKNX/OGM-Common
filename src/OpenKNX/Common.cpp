@@ -777,6 +777,25 @@ namespace OpenKNX
 
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
+        if (objectIndex == 0x9E)
+        {
+            if (propertyId == 0 || propertyId == 1)
+            {
+                if (propertyId == 1)
+                {
+                    memcpy(resultData, data, length);
+                    resultLength = length;
+                }
+                else
+                {
+                    resultData[0] = length;
+                    resultLength = 1;
+                }
+                return true;
+            }
+            return false;
+        }
+
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             if (openknx.modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
