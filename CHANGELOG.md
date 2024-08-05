@@ -3,6 +3,10 @@
 ## 1.2.x: 2024-xx-xx
 * Add: Now allows you to delete the KNX or OpenKNX flash area on all platforms
 * Some small optimizations
+* Add: ESP32: Collect stack size statistics
+* Add: ESP32: support printCore
+* Update: Scripts
+* 
 
 ## 1.2.0: 2024-07-02
 * Update: RP2040 Platform to Core 3.9.3

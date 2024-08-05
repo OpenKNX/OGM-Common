@@ -300,9 +300,15 @@ namespace OpenKNX
 
         void Logger::printCore()
         {
-#if defined(ARDUINO_ARCH_RP2040) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
+#if defined(OPENKNX_DUALCORE) && (defined(OPENKNX_DEBUG) || defined(OPENKNX_LOGGER_SHOWCORE))
             if (openknx.usesDualCore())
+            {
+    #if defined(ARDUINO_ARCH_RP2040)
                 OPENKNX_LOGGER_DEVICE.print(rp2040.cpuid() ? "_1> " : "0_> ");
+    #elif defined(ARDUINO_ARCH_ESP32)
+                OPENKNX_LOGGER_DEVICE.print(xPortGetCoreID() ? "_1> " : "0_> ");
+    #endif
+            }
 #endif
         }
 
@@ -416,7 +422,7 @@ namespace OpenKNX
             beforeLog();
             printMessage("+------------+-----------------------------------------------------------------+");
             afterLog();
-            
+
             beforeLog();
             printMessage("|            |                                                                 |");
             afterLog();
