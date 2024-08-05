@@ -305,6 +305,10 @@ namespace OpenKNX
     // main loop
     void Common::loop()
     {
+#ifdef ARDUINO_ARCH_ESP32
+        collectStackStats();
+#endif
+
         _skipLooptimeWarning = false;
 
         uptime(false);
@@ -416,17 +420,27 @@ namespace OpenKNX
         return true;
     }
 
-    void __time_critical_func(Common::collectMemoryStats)()
+    void __time_critical_func(Common::collectHeapStats)()
     {
-        // int current = freeMemory();
         _freeMemoryMin = MIN(_freeMemoryMin, freeMemory());
-#ifdef ARDUINO_ARCH_RP2040
+    }
+
+    void __time_critical_func(Common::collectStackStats)()
+    {
+#if defined(ARDUINO_ARCH_RP2040)
     #ifdef OPENKNX_DUALCORE
         if (rp2040.cpuid())
             _freeStackMin1 = MIN(_freeStackMin1, rp2040.getFreeStack());
         else
     #endif
             _freeStackMin = MIN(_freeStackMin, rp2040.getFreeStack());
+#elif defined(ARDUINO_ARCH_ESP32)
+    #ifdef OPENKNX_DUALCORE
+        if (!xPortGetCoreID())
+            _freeStackMin1 = uxTaskGetStackHighWaterMark(nullptr);
+        else
+    #endif
+            _freeStackMin = uxTaskGetStackHighWaterMark(nullptr);
 #endif
     }
 
@@ -457,6 +471,10 @@ namespace OpenKNX
 #ifdef OPENKNX_DUALCORE
     void Common::loop1()
     {
+    #ifdef ARDUINO_ARCH_ESP32
+        collectStackStats();
+    #endif
+
         if (!_setup1Ready) return;
 
     #ifdef OPENKNX_HEARTBEAT
@@ -762,7 +780,7 @@ namespace OpenKNX
         return _freeMemoryMin;
     }
 
-#ifdef ARDUINO_ARCH_RP2040
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)
     int Common::freeStackMin()
     {
         return _freeStackMin;

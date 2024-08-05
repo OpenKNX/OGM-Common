@@ -130,7 +130,10 @@ namespace OpenKNX
 
     void TimerInterrupt::processStats()
     {
-        openknx.common.collectMemoryStats();
+#ifdef ARDUINO_ARCH_RP2040
+        openknx.common.collectStackStats();
+#endif
+        openknx.common.collectHeapStats();
     }
 
     void TimerInterrupt::processButtons()

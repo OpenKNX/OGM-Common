@@ -509,6 +509,13 @@ namespace OpenKNX
         }
 #endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
+#ifdef ARDUINO_ARCH_ESP32
+    #ifdef OPENKNX_DUALCORE
+        openknx.logger.logWithPrefixAndValues("Free stack size", "Loop0: %i bytes - Loop1: %i bytes", openknx.common.freeStackMin(), openknx.common.freeStackMin1());
+    #else
+        openknx.logger.logWithPrefixAndValues("Free stack size", "Loop0: %i bytes", openknx.common.freeStackMin());
+    #endif
+#endif
 #ifdef ARDUINO_ARCH_RP2040
 
     #ifdef OPENKNX_DUALCORE
