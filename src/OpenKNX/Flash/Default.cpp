@@ -480,13 +480,13 @@ namespace OpenKNX
         long Default::readLong()
         {
             _currentReadAddress += 8;
-            return openknx.openknxFlash.readFloat(_currentReadAddress - 8);
+            return openknx.openknxFlash.readLong(_currentReadAddress - 8);
         }
 
         double Default::readDouble()
         {
             _currentReadAddress += 8;
-            return openknx.openknxFlash.readFloat(_currentReadAddress - 8);
+            return openknx.openknxFlash.readDouble(_currentReadAddress - 8);
         }
 
         uint16_t Default::firmwareVersion()
