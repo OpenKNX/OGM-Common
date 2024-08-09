@@ -283,7 +283,7 @@ namespace OpenKNX
             return write(relativeAddress, (uint8_t *)&value, 4);
         }
 
-        uint32_t Driver::writeLong(uint32_t relativeAddress, long value)
+        uint32_t Driver::writeLong(uint32_t relativeAddress, uint64_t value)
         {
             return write(relativeAddress, (uint8_t *)&value, 8);
         }

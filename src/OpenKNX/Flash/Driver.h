@@ -60,7 +60,7 @@ namespace OpenKNX
             uint32_t writeWord(uint32_t relativeAddress, uint16_t value);
             uint32_t writeInt(uint32_t relativeAddress, uint32_t value);
             uint32_t writeFloat(uint32_t relativeAddress, float value);
-            uint32_t writeLong(uint32_t relativeAddress, long value);
+            uint32_t writeLong(uint32_t relativeAddress, uint64_t value);
             uint32_t writeDouble(uint32_t relativeAddress, double value);
 
             uint32_t read(uint32_t relativeAddress, uint8_t *output, uint32_t size);
