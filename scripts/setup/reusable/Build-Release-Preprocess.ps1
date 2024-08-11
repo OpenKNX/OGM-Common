@@ -1,7 +1,7 @@
 # This script is responsible for all common tasks before a release build is executed
 
 # get all definitions for this project
-$settings = scripts/OpenKNX-Build-Settings.ps1 $args[0] $args[1] $args[2]
+$settings = scripts/OpenKNX-Build-Settings.ps1 $args[0] $args[1] $args[2] $args[3]
 
 # Output current setting
 Write-Host "Provided OpenKNX-Build-Settings:"
@@ -20,46 +20,55 @@ else {
 # create required directories
 Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 
-# check for existance of OpenKNXProducer
-$OpenKNXproducer = "~/bin/OpenKNXproducer.exe"
+if($settings.compileWith -eq "openknxproducer")
+{
+  # check for existance of OpenKNXProducer
+  $OpenKNXproducer = "~/bin/OpenKNXproducer.exe"
 
-if ($IsMacOS -or $IsLinux) {
-  $OpenKNXproducer = "/usr/local/bin/OpenKNXproducer"
-}
-
-if (Test-Path $OpenKNXproducer -PathType Leaf) {
-  Write-Host "OpenKNXproducer found at $OpenKNXproducer"
-}
-else {
-  $OpenKNXproducer = $null
-  Write-Host "OpenKNXproducer not found at $OpenKNXproducer"
-  Write-Host -ForegroundColor Yellow "
-  OpenKNX-Tools are not Installed. Please install OpenKNX-Tools to Build KNX production file. 
-  For more Informations visit: https://github.com/OpenKNX/OpenKNX/wiki/Installation-of-OpenKNX-toolscl
-  
-  "
-  Start-Sleep -Seconds 2
-}
-
-if (-not ([string]::IsNullOrEmpty($OpenKNXproducer))) {
-  $expr = "$OpenKNXproducer create --Debug --Output=""release/$($settings.targetName).knxprod"" --HeaderFileName=""include/knxprod.h"" ""src/$($settings.releaseName).xml"""
-  $expr += '; $success=$?'
-  Invoke-Expression $expr
-  if (!$success) {
-      exit 1
+  if ($IsMacOS -or $IsLinux) {
+    $OpenKNXproducer = "/usr/local/bin/OpenKNXproducer"
   }
-  Write-Host "Created release/$($settings.targetName).knxprod" -ForegroundColor Blue
+
+  if (Test-Path $OpenKNXproducer -PathType Leaf) {
+    Write-Host "OpenKNXproducer found at $OpenKNXproducer"
+  }
+  else {
+    $OpenKNXproducer = $null
+    Write-Host "OpenKNXproducer not found at $OpenKNXproducer"
+    Write-Host -ForegroundColor Yellow "
+    OpenKNX-Tools are not Installed. Please install OpenKNX-Tools to Build KNX production file. 
+    For more Informations visit: https://github.com/OpenKNX/OpenKNX/wiki/Installation-of-OpenKNX-toolscl
+    
+    "
+    Start-Sleep -Seconds 2
+  }
+
+  if (-not ([string]::IsNullOrEmpty($OpenKNXproducer))) {
+    $expr = "$OpenKNXproducer create --Debug --Output=""release/$($settings.targetName).knxprod"" --HeaderFileName=""include/knxprod.h"" ""src/$($settings.releaseName).xml"""
+    $expr += '; $success=$?'
+    Invoke-Expression $expr
+    if (!$success) {
+        exit 1
+    }
+    Write-Host "Created release/$($settings.targetName).knxprod" -ForegroundColor Blue
+  }
+  else {
+    Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
+  }
+  if (Test-Path -Path "src/$($settings.releaseName).debug.xml") {
+    Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
+  }
+  if (Test-Path -Path "src/$($settings.releaseName).baggages") {
+    Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
+  }
 }
-else {
-  Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
+if($settings.compileWith -eq "kaenxcreator")
+{
+  Write-Host "Using Kaenx-Creator!"
 }
 
-if (Test-Path -Path "src/$($settings.releaseName).debug.xml") {
-  Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
-}
-if (Test-Path -Path "src/$($settings.releaseName).baggages") {
-  Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
-}
+
+
 
 # write content.xml header
 $releaseTarget = "release/data/content.xml"
