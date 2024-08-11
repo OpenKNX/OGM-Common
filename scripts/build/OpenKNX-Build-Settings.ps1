@@ -7,6 +7,12 @@ $settings.sourceName = $args[1]    # i.e. "Templatemodul"
 # public project name i.e. in github  
 $settings.targetName = $args[2]    # i.e. "TemplateModule" 
 
+if ($args.length -gt 3) {
+    $settings.useCreator = $args[3]
+} else {
+    $settings.compileWith = "openknxproducer"
+}
+
 # the following properties might be derived, but also defined
 if (!$settings.targetName) {
     # if we leave target name empty, source an target name are identical
