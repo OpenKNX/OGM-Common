@@ -9,6 +9,13 @@
     #include <Regexp.h>
 #endif
 
+// Überprüfung der Länge zur Kompilierzeit
+constexpr std::size_t constexpr_strlen(const char* str, std::size_t length = 0)
+{
+    return str[length] == '\0' ? length : constexpr_strlen(str, length + 1);
+}
+static_assert(constexpr_strlen(MAIN_OrderNumber) <= 20, "MAIN_OrderNumber is to long (max. 20 Chars)");
+
 namespace OpenKNX
 {
     namespace Log
@@ -436,12 +443,12 @@ namespace OpenKNX
             printMessage("#");
             printColorCode(0);
 
-            char buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH];
-            snprintf(buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, "Device: %s (%s) - Address: %s", MAIN_OrderNumber, openknx.info.humanFirmwareVersion().c_str(), openknx.info.humanIndividualAddress().c_str());
+            char buffer[63];
+            snprintf(buffer, 63, "Device: %s (%s) - Address: %s", MAIN_OrderNumber, openknx.info.humanFirmwareVersion().c_str(), openknx.info.humanIndividualAddress().c_str());
             printMessage("   |   ");
             printMessage(buffer);
 
-            for (uint8_t i = 0; i < (62 - strlen(buffer)); i++)
+            for (uint8_t i = 0; i < (uint8_t)(62 - strlen(buffer)); i++)
                 printMessage(" ");
             printMessage("|");
             afterLog();
