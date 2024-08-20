@@ -1,6 +1,12 @@
 #include "OpenKNX/Led.h"
 #include "OpenKNX/Facade.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/timers.h"
+#include "freertos/task.h"
+#include "esp_system.h"
+#include "esp_log.h"
+
 namespace OpenKNX
 {
     void __time_critical_func(iLed::loop)()
@@ -360,6 +366,29 @@ namespace OpenKNX
         rmt_register_tx_end_callback(tx_end_callback, NULL);
 
         writeLeds();
+
+        // Timer-Handle erstellen
+        _timer = xTimerCreate(
+        "RGBLedManager",         // Name des Timers
+        pdMS_TO_TICKS(10),     // Timer-Periode in Millisekunden (hier 1 Sekunde)
+        pdTRUE,                  // Auto-Reload (Wiederholung nach Ablauf)
+        (void *) 0,              // Timer-ID (kann für Identifikation verwendet werden)
+        [](TimerHandle_t timer) {
+            openknx.ledManager.writeLeds();
+        }            // Callback-Funktion, die beim Timeout aufgerufen wird
+    );
+
+    // Überprüfen, ob der Timer erfolgreich erstellt wurde
+    if (_timer == NULL) {
+        //ESP_LOGE("TIMER", "Fehler beim Erstellen des Timers!");
+        return;
+    }
+
+    // Timer starten
+    if (xTimerStart(_timer, 0) != pdPASS) {
+        //ESP_LOGE("TIMER", "Fehler beim Starten des Timers!");
+        return;
+    }
     }
 
     void RGBLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)

@@ -154,6 +154,7 @@ namespace OpenKNX
           uint8_t _ledCount = 0;
           uint32_t _lastWritten = 0;
           uint32_t *_ledData = nullptr;
+          TimerHandle_t _timer;
           void fillRmt();
         public:
           void init(uint8_t ledPin, uint8_t rmtChannel, uint8_t ledCount);
