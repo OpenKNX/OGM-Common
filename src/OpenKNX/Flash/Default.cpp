@@ -427,7 +427,7 @@ namespace OpenKNX
             write((uint8_t *)&value, 4);
         }
 
-        void Default::writeLong(long value)
+        void Default::writeLong(uint64_t value)
         {
             write((uint8_t *)&value, 8);
         }
@@ -477,16 +477,16 @@ namespace OpenKNX
             return openknx.openknxFlash.readFloat(_currentReadAddress - 4);
         }
 
-        long Default::readLong()
+        uint64_t Default::readLong()
         {
             _currentReadAddress += 8;
-            return openknx.openknxFlash.readFloat(_currentReadAddress - 8);
+            return openknx.openknxFlash.readLong(_currentReadAddress - 8);
         }
 
         double Default::readDouble()
         {
             _currentReadAddress += 8;
-            return openknx.openknxFlash.readFloat(_currentReadAddress - 8);
+            return openknx.openknxFlash.readDouble(_currentReadAddress - 8);
         }
 
         uint16_t Default::firmwareVersion()

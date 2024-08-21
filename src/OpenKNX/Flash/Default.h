@@ -194,14 +194,14 @@ namespace OpenKNX
             void writeWord(uint16_t value);
             void writeInt(uint32_t value);
             void writeFloat(float value);
-            void writeLong(long value);
+            void writeLong(uint64_t value);
             void writeDouble(double value);
             uint8_t *read(uint16_t size = 1);
             uint8_t readByte();
             uint16_t readWord();
             uint32_t readInt();
             float readFloat();
-            long readLong();
+            uint64_t readLong();
             double readDouble();
             uint16_t firmwareVersion();
             uint32_t lastWrite();
