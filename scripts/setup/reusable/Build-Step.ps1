@@ -120,8 +120,9 @@ if (![string]::IsNullOrEmpty($ProjectDir)) {
 if ((Test-Path -Path $releaseTarget -PathType Leaf)) {
   # Add entry to content.xml. If entry already exists, do nothing. If not, add it. If file does not exist, create it.
   $XMLContent = "         <Product Name=""$productName"" Firmware=""$firmwareName.$binaryFormat"" Processor=""$processor"" />"
-  if(![string]::IsNullOrEmpty($partition))
+  if(![string]::IsNullOrEmpty($partition)) {
     $XMLContent = "         <Product Name=""$productName"" Firmware=""$firmwareName.$binaryFormat"" Processor=""$processor"" Partition=""$partition"" />"
+  }
   $lineExists = Select-String -Path $fileName -Pattern $XMLContent -Quiet
   if (-not $lineExists) { Add-Content -Path $releaseTarget -Value $XMLContent }
 }
