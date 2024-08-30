@@ -136,6 +136,21 @@ if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
     exit 1
   }
 }
+if ($binaryFormat -eq "bin-esp") {
+  $processor = "ESP32"
+  $binaryFormat = "bin"
+}
+
+$partition = $null
+if($processor -eq "ESP32") {
+  if(Test-Path esp_partition.csv) {
+    $partition = Select-String -Path esp_partition.csv -Pattern app,
+    $partition = $partition.toString().Split(",")[3].Trim()
+  } else {
+    Write-Host "ERROR: esp_partition.csv not found!"
+    exit 1
+  }
+}
 
 # create Upload-Firmware-<firmwarename>.ps1 script
 $fileName = "release/USB-Upload-Firmware-$productName.ps1"
@@ -165,6 +180,8 @@ if (![string]::IsNullOrEmpty($ProjectDir)) {
 if ((Test-Path -Path $releaseTarget -PathType Leaf)) {
   # Add entry to content.xml. If entry already exists, do nothing. If not, add it. If file does not exist, create it.
   $XMLContent = "         <Product Name=""$productName"" Firmware=""$firmwareName.$binaryFormat"" Processor=""$processor"" />"
+  if(![string]::IsNullOrEmpty($partition))
+    $XMLContent = "         <Product Name=""$productName"" Firmware=""$firmwareName.$binaryFormat"" Processor=""$processor"" Partition=""$partition"" />"
   $lineExists = Select-String -Path $fileName -Pattern $XMLContent -Quiet
   if (-not $lineExists) { Add-Content -Path $releaseTarget -Value $XMLContent }
 }
