@@ -39,6 +39,38 @@ namespace OpenKNX
 
     void Hardware::initLeds()
     {
+#ifdef USE_RGBLED
+#ifndef PROG_LED_COLOR
+#define PROG_LED_COLOR 63,0,0
+#endif
+        openknx.ledManager.init(RGBLED_PIN, 0, RGBLED_NUM);
+        openknx.progLed.init(PROG_LED_PIN);
+        openknx.progLed.setColor(PROG_LED_COLOR);
+
+#ifdef INFO1_LED_PIN
+#ifndef INFO1_LED_COLOR
+#define INFO1_LED_COLOR 0,127,0
+#endif
+        openknx.info1Led.init(INFO1_LED_PIN);
+        openknx.info1Led.setColor(INFO1_LED_COLOR);
+#endif
+#ifdef INFO2_LED_PIN
+#ifndef INFO2_LED_COLOR
+#define INFO2_LED_COLOR 0,127,0
+#endif
+        openknx.info2Led.init(INFO2_LED_PIN);
+        openknx.info2Led.setColor(INFO2_LED_COLOR);
+#endif
+#ifdef INFO3_LED_PIN
+#ifndef INFO3_LED_COLOR
+#define INFO3_LED_COLOR 0,127,0
+#endif
+        openknx.info3Led.init(INFO3_LED_PIN);
+        openknx.info3Led.setColor(INFO3_LED_COLOR);
+#endif
+
+#else
+
         openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
 #ifdef INFO1_LED_PIN
         openknx.info1Led.init(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON);
@@ -48,6 +80,7 @@ namespace OpenKNX
 #endif
 #ifdef INFO3_LED_PIN
         openknx.info3Led.init(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON);
+#endif
 #endif
     }
 
