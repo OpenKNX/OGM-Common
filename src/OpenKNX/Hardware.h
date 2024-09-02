@@ -1,6 +1,10 @@
 #pragma once
 #include "OpenKNX/Button.h"
-#include "OpenKNX/Led/Led.h"
+#ifdef USE_RGBLED
+#include "OpenKNX/Led/Serial.h"
+#else
+#include "OpenKNX/Led/GPIO.h"
+#endif
 #include <Arduino.h>
 
 #ifdef ARDUINO_ARCH_RP2040
