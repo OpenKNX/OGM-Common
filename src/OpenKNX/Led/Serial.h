@@ -29,11 +29,10 @@ namespace OpenKNX
 
         class Serial: public Base
         {
-            public:  Serial(SerialLedManager* manager) : _manager(manager){};
             private: SerialLedManager* _manager = nullptr;
             private: uint8_t color[3] = {0, 0, 0};  // R, G, B
             private: void writeLed(uint8_t brightness) override;
-            public:  void init(long pin = -1, long activeOn = HIGH) override;
+            public:  void init(long num, SerialLedManager* manager, uint8_t r=0, uint8_t g=0, uint8_t b=0);
             public:  void setColor(uint8_t r, uint8_t g, uint8_t b);
         };
     } // namespace Led

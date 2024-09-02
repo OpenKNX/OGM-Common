@@ -11,14 +11,15 @@ namespace OpenKNX
 {
     namespace Led
     {
-        void Serial::init(long pin /* = -1 */, long activeOn /* = HIGH */)
+        void Serial::init(long num, SerialLedManager* manager, uint8_t r, uint8_t g, uint8_t b)
         {
             // no valid pin
-            if (pin < 0)
+            if (num < 0 || manager == nullptr)
                 return;
 
-            _pin = pin;
-            _manager->setLED(_pin, 0, 0, 0);
+            _pin = num;
+            _manager = manager;
+            setColor(r,g,b);
         }
 
         /*
@@ -27,7 +28,8 @@ namespace OpenKNX
         void Serial::writeLed(uint8_t brightness)
         {
             // no valid pin
-            if (_pin < 0) return;
+            if (_pin < 0 || _manager == nullptr)
+                return;
 
             if(_currentLedBrightness != brightness)
             {
@@ -56,7 +58,7 @@ namespace OpenKNX
             color[0] = r;
             color[1] = g;
             color[2] = b;
-            writeLed(_currentLedBrightness);
+            _manager->setLED(_pin, (color[0]*(uint16_t)_currentLedBrightness)/256, (color[1]*(uint16_t)_currentLedBrightness)/256, (color[2]*(uint16_t)_currentLedBrightness)/256);
         }
 
         void SerialLedManager::init(uint8_t ledPin, uint8_t rmtChannel, uint8_t ledCount)

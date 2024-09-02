@@ -44,29 +44,25 @@ namespace OpenKNX
 #define PROG_LED_COLOR 63,0,0
 #endif
         openknx.ledManager.init(OPENKNX_SERIALLED_PIN, 0, OPENKNX_SERIALLED_NUM);
-        openknx.progLed.init(PROG_LED_PIN);
-        openknx.progLed.setColor(PROG_LED_COLOR);
+        openknx.progLed.init(PROG_LED_PIN, &(openknx.ledManager), PROG_LED_COLOR);
 
 #ifdef INFO1_LED_PIN
 #ifndef INFO1_LED_COLOR
-#define INFO1_LED_COLOR 0,127,0
+#define INFO1_LED_COLOR 0,63,0
 #endif
-        openknx.info1Led.init(INFO1_LED_PIN);
-        openknx.info1Led.setColor(INFO1_LED_COLOR);
+        openknx.info1Led.init(INFO1_LED_PIN, &(openknx.ledManager), INFO1_LED_COLOR);
 #endif
 #ifdef INFO2_LED_PIN
 #ifndef INFO2_LED_COLOR
-#define INFO2_LED_COLOR 0,127,0
+#define INFO2_LED_COLOR 0,63,0
 #endif
-        openknx.info2Led.init(INFO2_LED_PIN);
-        openknx.info2Led.setColor(INFO2_LED_COLOR);
+        openknx.info2Led.init(INFO2_LED_PIN, &(openknx.ledManager), INFO2_LED_COLOR);
 #endif
 #ifdef INFO3_LED_PIN
 #ifndef INFO3_LED_COLOR
-#define INFO3_LED_COLOR 0,127,0
+#define INFO3_LED_COLOR 0,63,0
 #endif
-        openknx.info3Led.init(INFO3_LED_PIN);
-        openknx.info3Led.setColor(INFO3_LED_COLOR);
+        openknx.info3Led.init(INFO3_LED_PIN, &(openknx.ledManager), INFO3_LED_COLOR);
 #endif
 
 #else

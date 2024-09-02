@@ -46,7 +46,6 @@ namespace OpenKNX
             virtual void writeLed(uint8_t brightness) = 0;
 
           public:
-            virtual void init(long pin = -1, long activeOn = HIGH) = 0;
 
             /*
             * use in normal loop or loop1
