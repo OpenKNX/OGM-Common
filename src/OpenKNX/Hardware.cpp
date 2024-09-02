@@ -39,11 +39,11 @@ namespace OpenKNX
 
     void Hardware::initLeds()
     {
-#ifdef USE_RGBLED
+#ifdef OPENKNX_SERIALLED_ENABLE
 #ifndef PROG_LED_COLOR
 #define PROG_LED_COLOR 63,0,0
 #endif
-        openknx.ledManager.init(RGBLED_PIN, 0, RGBLED_NUM);
+        openknx.ledManager.init(OPENKNX_SERIALLED_PIN, 0, OPENKNX_SERIALLED_NUM);
         openknx.progLed.init(PROG_LED_PIN);
         openknx.progLed.setColor(PROG_LED_COLOR);
 

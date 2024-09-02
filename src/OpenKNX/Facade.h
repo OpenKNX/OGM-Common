@@ -53,7 +53,7 @@ namespace OpenKNX
         Button func3Button = Button("Func3");
 #endif
 
-#ifdef USE_RGBLED
+#ifdef OPENKNX_SERIALLED_ENABLE
         Led::SerialLedManager ledManager;
         Led::Serial progLed = Led::Serial(&ledManager);
 #ifdef INFO1_LED_PIN

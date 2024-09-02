@@ -1,6 +1,6 @@
 #pragma once
 #include "OpenKNX/Button.h"
-#ifdef USE_RGBLED
+#ifdef OPENKNX_SERIALLED_ENABLE
 #include "OpenKNX/Led/Serial.h"
 #else
 #include "OpenKNX/Led/GPIO.h"

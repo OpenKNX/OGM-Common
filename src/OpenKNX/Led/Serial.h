@@ -1,6 +1,10 @@
 #pragma once
-#include "OPenKNX/Led/Base.h"
+#include "OpenKNX/Led/Base.h"
+#ifdef ARDUINO_ARCH_ESP32
 #include <driver/rmt.h>
+#else
+#error "OpenKNX::LED::Serial only supported for ESP32 architecture"
+#endif
 
 namespace OpenKNX
 {
