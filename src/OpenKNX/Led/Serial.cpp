@@ -82,43 +82,54 @@ namespace OpenKNX
             }
     
             // Initialize the RMT driver
-            rmt_config(&config); // ToDo Error Handling
-            rmt_driver_install(config.channel, 0, 0); // ToDo Error Handling
+            if(rmt_config(&config) != ESP_OK)
+            {
+                logError("SerialLedManager", "Configuration of RMT driver failed");
+                return;
+            }
+            if(rmt_driver_install(config.channel, 0, 0) != ESP_OK)
+            {
+                logError("SerialLedManager", "Installation of RMT driver failed");
+                return;
+            }
 
             writeLeds();
 
             // Timer-Handle erstellen
             _timer = xTimerCreate(
-            "SerialLedManager",         // Name des Timers
-            pdMS_TO_TICKS(10),     // Timer-Periode in Millisekunden (hier 1 Sekunde)
-            pdTRUE,                  // Auto-Reload (Wiederholung nach Ablauf)
-            (void *) 0,              // Timer-ID (kann für Identifikation verwendet werden)
-            [](TimerHandle_t timer) {
-                openknx.progLed.loop();
-    #ifdef INFO2_LED_PIN
-                openknx.info2Led.loop();
-    #endif
-    #ifdef INFO1_LED_PIN
-                openknx.info1Led.loop();
-    #endif
-    #ifdef INFO3_LED_PIN
-                openknx.info3Led.loop();
-    #endif
-                openknx.ledManager.writeLeds();
-            }            // Callback-Funktion, die beim Timeout aufgerufen wird
-        );
+                "SerialLedManager",         // Name des Timers
+                pdMS_TO_TICKS(10),     // Timer-Periode in Millisekunden (hier 1 Sekunde)
+                pdTRUE,                  // Auto-Reload (Wiederholung nach Ablauf)
+                (void *) 0,              // Timer-ID (kann für Identifikation verwendet werden)
+                [](TimerHandle_t timer)
+                {
+                    openknx.progLed.loop();
+                    #ifdef INFO2_LED_PIN
+                    openknx.info2Led.loop();
+                    #endif
+                    #ifdef INFO1_LED_PIN
+                    openknx.info1Led.loop();
+                    #endif
+                    #ifdef INFO3_LED_PIN
+                    openknx.info3Led.loop();
+                    #endif
+                    openknx.ledManager.writeLeds();
+                }            // Callback-Funktion, die beim Timeout aufgerufen wird
+            );
 
-        // Überprüfen, ob der Timer erfolgreich erstellt wurde
-        if (_timer == NULL) {
-            //ESP_LOGE("TIMER", "Fehler beim Erstellen des Timers!");
-            return;
-        }
+            // Überprüfen, ob der Timer erfolgreich erstellt wurde
+            if (_timer == NULL)
+            {
+                logError("SerialLedManager", "Timer creation failed");
+                return;
+            }
 
-        // Timer starten
-        if (xTimerStart(_timer, 0) != pdPASS) {
-            //ESP_LOGE("TIMER", "Fehler beim Starten des Timers!");
-            return;
-        }
+            // Timer starten
+            if (xTimerStart(_timer, 0) != pdPASS)
+            {
+                logError("SerialLedManager", "Could not start Timer");
+                return;
+            }
         }
 
         void SerialLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)

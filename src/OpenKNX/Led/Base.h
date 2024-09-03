@@ -5,6 +5,7 @@
 #include "OpenKNX/LedEffects/Flash.h"
 #include "OpenKNX/LedEffects/Pulse.h"
 #include "OpenKNX/defines.h"
+#include "OpenKNX/Log/Logger.h"
 #include <Arduino.h>
 #include <string>
 
