@@ -63,19 +63,16 @@ namespace OpenKNX
 
         void SerialLedManager::init(uint8_t ledPin, uint8_t rmtChannel, uint8_t ledCount)
         {
-            pinMode(7, OUTPUT);
-            digitalWrite(7, 0);
             _rmtChannel = rmtChannel;
             _ledCount = ledCount;
             rmt_config_t config = RMT_DEFAULT_CONFIG_TX((gpio_num_t)ledPin, (rmt_channel_t)rmtChannel);
-            config.clk_div = 2; // Set clock divider, affects the timings
+            config.clk_div = 2;
             config.mem_block_num = ((ledCount * BITS_PER_LED_CMD) / 64)+1; // one memblock has 64 * 32-bit values (rmt items) which represent 1 encoded bit for ws2812 led. 24bit per LED
-            // ToDo calculation
 
             _rmtItems = new rmt_item32_t[_ledCount * BITS_PER_LED_CMD+1];
             _ledData = new uint32_t[_ledCount];
 
-            //initalize all LEDs off
+            //initalize with all LEDs off
             for (int i = 0; i < BITS_PER_LED_CMD*_ledCount; i++)
             {
                 _rmtItems[i].level0 = 1;
@@ -83,14 +80,6 @@ namespace OpenKNX
                 _rmtItems[i].level1 = 0;
                 _rmtItems[i].duration1 = T1H;
             }
-            //_rmtItems[BITS_PER_LED_CMD*_ledCount].level0 = 0;
-            //_rmtItems[BITS_PER_LED_CMD*_ledCount].duration0 = 0xFF;
-            //_rmtItems[BITS_PER_LED_CMD*_ledCount].level1 = 0;
-            //_rmtItems[BITS_PER_LED_CMD*_ledCount].duration1 = 0xFF;
-
-            // stop item
-            //_rmtItems[BITS_PER_LED_CMD*_ledCount].level0 = 0;
-            //_rmtItems[BITS_PER_LED_CMD*_ledCount].duration0 = 0;
     
             // Initialize the RMT driver
             rmt_config(&config); // ToDo Error Handling
@@ -134,25 +123,34 @@ namespace OpenKNX
 
         void SerialLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)
         {
-            _ledData[ledAdr] = (g << 16) | (r << 8) | b;
+            uint32_t newrgb = (g << 16) | (r << 8) | b;
+            if(_ledData[ledAdr] != newrgb)
+            {
+                _ledData[ledAdr] = newrgb;
+                _dirty |= (1 << ledAdr);
+            }
         }
 
         void SerialLedManager::fillRmt()
         {
             for(int j = 0; j < _ledCount; j++)
             {
-                uint32_t colorbits = _ledData[j];
-                for (int i = 0; i < BITS_PER_LED_CMD; i++)
+                if(_dirty & (1 << j))
                 {
-                    if(colorbits & (1 << (23 - i)))
+                    uint32_t colorbits = _ledData[j];
+                    for (int i = 0; i < BITS_PER_LED_CMD; i++)
                     {
-                        _rmtItems[j*BITS_PER_LED_CMD + i].duration0 = T0L;
-                        _rmtItems[j*BITS_PER_LED_CMD + i].duration1 = T1L;
-                    }
-                    else
-                    {
-                        _rmtItems[j*BITS_PER_LED_CMD + i].duration0 = T0H;
-                        _rmtItems[j*BITS_PER_LED_CMD + i].duration1 = T1H;
+                        if(colorbits & (1 << (23 - i)))
+                        {
+                            _rmtItems[j*BITS_PER_LED_CMD + i].duration0 = T0L;
+                            _rmtItems[j*BITS_PER_LED_CMD + i].duration1 = T1L;
+                        }
+                        else
+                        {
+                            _rmtItems[j*BITS_PER_LED_CMD + i].duration0 = T0H;
+                            _rmtItems[j*BITS_PER_LED_CMD + i].duration1 = T1H;
+                        }
+
                     }
                 }
             }
@@ -160,20 +158,25 @@ namespace OpenKNX
 
         void SerialLedManager::writeLeds()
         {
-            if(delayCheckMillis(_lastWritten, 5))
+            if(!_dirty)
+                return;
+            
+            if(delayCheckMillis(_lastWritten, 5)) // prevent calling a new rmt transmission into an running on
             {
                 _lastWritten = millis();
                 //uint32_t t1 = micros();
                 fillRmt();
                 //uint32_t t2 = micros();
                 rmt_write_items((rmt_channel_t)_rmtChannel, _rmtItems, _ledCount * BITS_PER_LED_CMD, false);
+                _dirty = 0;
                 //uint32_t t3 = micros();
+
+                //::Serial.print("fillRmt: ");
+                //::Serial.print(t2-t1);
+                //::Serial.print("us. rmt write: ");
+                //::Serial.print(t3-t2);
+                //::Serial.println("us");
             }
-            //Serial.print("fillRmt: ");
-            //Serial.print(t2-t1);
-            //Serial.print("us. rmt write: ");
-            //Serial.print(t3-t2);
-            //Serial.println("us");
         }
     } // namespace Led
 } // namespace OpenKNX
