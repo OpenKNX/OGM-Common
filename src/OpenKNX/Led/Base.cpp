@@ -28,11 +28,11 @@ namespace OpenKNX
             }
 
             // Debug (Prio 3)
-    #ifdef OPENKNX_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
             // debug mode enable
             if (_debugMode)
             {
-        #ifdef OPENKNX_HEARTBEAT_PRIO
+    #ifdef OPENKNX_HEARTBEAT_PRIO
                 // Blinking until the heartbeat signal stops.
                 if (!(millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
                     writeLed(_debugEffect->value(_brightness));
@@ -40,16 +40,16 @@ namespace OpenKNX
                     writeLed(false);
 
                 return;
-        #else
+    #else
                 // Blinks as soon as the heartbeat signal stops.
                 if ((millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
                 {
                     writeLed(_debugEffect->value(_brightness));
                     return;
                 }
-        #endif
-            }
     #endif
+            }
+#endif
 
             // ForceOn (Prio 4)
             if (_forceOn)
@@ -96,10 +96,10 @@ namespace OpenKNX
 
             logTraceP("forceOn %i", active);
             _forceOn = active;
-    #ifdef OPENKNX_HEARTBEAT_PRIO
+#ifdef OPENKNX_HEARTBEAT_PRIO
             if (_debugMode)
                 _debugEffect->updateFrequency(active ? OPENKNX_HEARTBEAT_PRIO_ON_FREQ : OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
-    #endif
+#endif
         }
 
         void Base::errorCode(uint8_t code /* = 0 */)
@@ -179,30 +179,30 @@ namespace OpenKNX
         }
 
         /*
-        * write led state based on bool
-        */
+         * write led state based on bool
+         */
         void Base::writeLed(bool state)
         {
             writeLed((uint8_t)(state ? _brightness : 0));
         }
 
-    #ifdef OPENKNX_HEARTBEAT
+#ifdef OPENKNX_HEARTBEAT
         void Base::debugLoop()
         {
             // Enable Debug Mode on first run
             if (!_debugMode)
             {
-        #ifdef OPENKNX_HEARTBEAT_PRIO
+    #ifdef OPENKNX_HEARTBEAT_PRIO
                 _debugEffect = new LedEffects::Blink(OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
-        #else
+    #else
                 _debugEffect = new LedEffects::Blink(OPENKNX_HEARTBEAT_FREQ);
-        #endif
+    #endif
                 _debugMode = true;
             }
 
             _debugHeartbeat = millis();
         }
-    #endif
+#endif
 
         void Base::unloadEffect()
         {

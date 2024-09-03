@@ -55,9 +55,9 @@ namespace OpenKNX
 
 #ifdef OPENKNX_SERIALLED_ENABLE
         Led::SerialLedManager ledManager;
-#define LEDCLASS Led::Serial
+    #define LEDCLASS Led::Serial
 #else
-#define LEDCLASS Led::GPIO
+    #define LEDCLASS Led::GPIO
 #endif
 
         LEDCLASS progLed;

@@ -1,9 +1,9 @@
 #pragma once
 #include "OpenKNX/Button.h"
 #ifdef OPENKNX_SERIALLED_ENABLE
-#include "OpenKNX/Led/Serial.h"
+    #include "OpenKNX/Led/Serial.h"
 #else
-#include "OpenKNX/Led/GPIO.h"
+    #include "OpenKNX/Led/GPIO.h"
 #endif
 #include <Arduino.h>
 

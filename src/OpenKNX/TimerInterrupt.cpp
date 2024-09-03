@@ -167,11 +167,9 @@ namespace OpenKNX
 #ifdef INFO3_LED_PIN
             openknx.info3Led.loop();
 #endif
-
         }
         else
         {
-
         }
     }
 

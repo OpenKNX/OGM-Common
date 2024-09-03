@@ -1,6 +1,5 @@
 #include "OpenKNX/Led/GPIO.h"
 
-
 namespace OpenKNX
 {
     namespace Led
@@ -19,8 +18,8 @@ namespace OpenKNX
         }
 
         /*
-        * write led state based on bool and _brightness
-        */
+         * write led state based on bool and _brightness
+         */
         void GPIO::writeLed(uint8_t brightness)
         {
             // no valid pin
