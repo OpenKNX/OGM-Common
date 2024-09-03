@@ -121,7 +121,6 @@ namespace OpenKNX
 
     void __isr __time_critical_func(TimerInterrupt::interrupt)()
     {
-        digitalWrite(20, HIGH);
         _time = millis();
 
         processStats();
@@ -129,7 +128,6 @@ namespace OpenKNX
         processLeds();
 #endif
         processButtons();
-        digitalWrite(20, LOW);
     }
 
     void TimerInterrupt::processStats()
@@ -155,21 +153,21 @@ namespace OpenKNX
     }
     void TimerInterrupt::processLeds()
     {
-        if (_time % 5)
+        if (_time % 2)
         {
             openknx.progLed.loop();
 #ifdef INFO2_LED_PIN
             openknx.info2Led.loop();
 #endif
+        }
+        else
+        {
 #ifdef INFO1_LED_PIN
             openknx.info1Led.loop();
 #endif
 #ifdef INFO3_LED_PIN
             openknx.info3Led.loop();
 #endif
-        }
-        else
-        {
         }
     }
 
