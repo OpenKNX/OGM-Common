@@ -80,9 +80,9 @@
     #endif
 
 // SEN-REG1-Multi
-// https://github.com/OpenKNX/OpenKNX/wiki/xxxxxx
+// https://github.com/OpenKNX/OpenKNX/wiki/SEN-REG1-Multi
     #ifdef OKNXHW_SEN_REG1_MULTI
-        #define HARDWARE_NAME "SEN-REG1-Multi"
+        #define HARDWARE_NAME "OpenKNX-SEN-REG1-Multi"
         #define OKNXHW_REG1_CONTROLLER2040_V1
 
         //#define INFO1_LED_PIN 6
@@ -98,6 +98,26 @@
 
         #define OKNXHW_REG1_APP_SEN_MULTI
 
+    #endif
+
+// SA-REG1-4xSELV
+// https://github.com/OpenKNX/OpenKNX/wiki/SA-REG1-4xSELV
+    #ifdef OKNXHW_SA_REG1_4XSELV
+        #define HARDWARE_NAME "OpenKNX-SA-REG1-4xSELV"
+        #define OKNXHW_REG1_CONTROLLER2040_V1
+
+        #define OKNXHW_REG1_APP_SA_4XSELV
+
+        //#define INFO1_LED_PIN 6
+        //#define INFO1_LED_PIN_ACTIVE_ON HIGH
+
+        //#define INFO2_LED_PIN 24
+        //#define INFO2_LED_PIN_ACTIVE_ON HIGH
+
+        //#define INFO3_LED_PIN 22
+        //#define INFO3_LED_PIN_ACTIVE_ON HIGH
+
+        //#define FUNC1_BUTTON_PIN 7
     #endif
 
 // PiPico-BCU-Connector
@@ -239,49 +259,40 @@
 // REG1-App-SEN-Multi
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-App-SEN-Multi
     #ifdef OKNXHW_REG1_APP_SEN_MULTI
-        #define SENSOR1_SDA_TX_PIN  REG1_APP_PIN4
-        #define SENSOR1_SCL_RX_PIN  REG1_APP_PIN3
-        #define SENSOR2_SDA_TX_PIN  REG1_APP_PIN2
-        #define SENSOR2_SCL_RX_PIN  REG1_APP_PIN1
-        #define BINARY_INPUT1_PIN   REG1_APP_PIN7
-        #define BINARY_INPUT2_PIN   REG1_APP_PIN6
-        #define BINARY_INPUT3_PIN   REG1_APP_PIN5
+        #define OKNXHW_REG1_APP_SEN_MULTI_SENSOR1_SDA_TX_PIN  REG1_APP_PIN2
+        #define OKNXHW_REG1_APP_SEN_MULTI_SENSOR1_SCL_RX_PIN  REG1_APP_PIN1
+        #define OKNXHW_REG1_APP_SEN_MULTI_SENSOR2_SDA_TX_PIN  REG1_APP_PIN4
+        #define OKNXHW_REG1_APP_SEN_MULTI_SENSOR2_SCL_RX_PIN  REG1_APP_PIN3
+        #define OKNXHW_REG1_APP_SEN_MULTI_BINARY_INPUT1_PIN   REG1_APP_PIN7
+        #define OKNXHW_REG1_APP_SEN_MULTI_BINARY_INPUT2_PIN   REG1_APP_PIN6
+        #define OKNXHW_REG1_APP_SEN_MULTI_BINARY_INPUT3_PIN   REG1_APP_PIN5
+        #define OKNXHW_REG1_APP_SEN_MULTI_BINARY_INPUT_ONLEVEL  HIGH
     #endif
 
 // REG1-App-GW-RF2G4
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-App-GW-RF2G4
     #ifdef OKNXHW_REG1_APP_GW_RF2G4
-        #define RF_CS       REG1_APP_PIN1
-        #define RF_MISO     REG1_APP_PIN2
-        #define RF_MOSI     REG1_APP_PIN3
-        #define RF_CLK      REG1_APP_PIN4
-        #define RF_INT      REG1_APP_PIN5
-        #define RF_ENABLE   REG1_APP_PIN6
+        #define OKNXHW_REG1_APP_GW_RF2G4_CS       REG1_APP_PIN1
+        #define OKNXHW_REG1_APP_GW_RF2G4_MISO     REG1_APP_PIN2
+        #define OKNXHW_REG1_APP_GW_RF2G4_MOSI     REG1_APP_PIN3
+        #define OKNXHW_REG1_APP_GW_RF2G4_CLK      REG1_APP_PIN4
+        #define OKNXHW_REG1_APP_GW_RF2G4_INT      REG1_APP_PIN5
+        #define OKNXHW_REG1_APP_GW_RF2G4_ENABLE   REG1_APP_PIN6
     #endif
 
 // REG1-App-SA-4xSELV
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-App-SA-4xSELV
-    #ifdef OKNXHW_REG1_APP_SA_4xSELV
-        #define OPENKNX_SWA_CHANNEL_COUNT 4
-        #define OPENKNX_SWA_SET_PINS 0x0106, 0x0104, 0x0100, 0x0102
-        #define OPENKNX_SWA_RESET_PINS 0x0107, 0x0105, 0x0101, 0x0103
+    #ifdef OKNXHW_REG1_APP_SA_4XSELV
+        #define OKNXHW_REG1_APP_SA_4xSELV_TCA_SDA   REG1_APP_PIN2
+        #define OKNXHW_REG1_APP_SA_4xSELV_TCA_SCL   REG1_APP_PIN1
+        #define OKNXHW_REG1_APP_SA_4xSELV_TCA_ADDR  0x20
+        #define OKNXHW_REG1_APP_SA_4xSELV_TCA_RES   REG1_APP_PIN4
+        #define OKNXHW_REG1_APP_SA_4xSELV_TCA_TYPE  OPENKNX_GPIO_T_TCA6408
+
         #define OPENKNX_SWA_SET_ACTIVE_ON HIGH
         #define OPENKNX_SWA_RESET_ACTIVE_ON HIGH
         #define OPENKNX_SWA_BISTABLE_IMPULSE_LENGTH 50
-
-        #define OPENKNX_GPIO_NUM 1
-        #define OPENKNX_GPIO_TYPES OPENKNX_GPIO_T_TCA6408
-        #define OPENKNX_GPIO_ADDRS 0x20
-        #define OPENKNX_GPIO_INTS 0xFF
-        #define OPENKNX_GPIO_RESETS REG1_APP_PIN4
-
-        #define OPENKNX_GPIO_WIRE Wire
-        #define OPENKNX_GPIO_CLOCK 400000
-        #define OPENKNX_GPIO_SDA REG1_APP_PIN2
-        #define OPENKNX_GPIO_SCL REG1_APP_PIN1
-
         #define V12_ADC_PIN REG1_APP_PIN3
-
     #endif
 
 // UP1-Controller2040
