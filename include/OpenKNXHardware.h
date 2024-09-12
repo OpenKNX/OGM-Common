@@ -56,7 +56,7 @@
         #define OKNXHW_REG1_CONTROLLER2040
     #endif
 
-// REG1-Base
+// REG1-Base-IP
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-Base-IP
     #ifdef OKNXHW_REG1_BASE_IP
         #define OKNXHW_REG1_IPCONTROLLER2040
@@ -79,10 +79,10 @@
 
     #endif
 
-// SEN-REG1-Multi
-// https://github.com/OpenKNX/OpenKNX/wiki/SEN-REG1-Multi
-    #ifdef OKNXHW_SEN_REG1_MULTI
-        #define HARDWARE_NAME "OpenKNX-SEN-REG1-Multi"
+// REG1-SEN-Multi
+// https://github.com/OpenKNX/OpenKNX/wiki/REG1-SEN-Multi
+    #ifdef OKNXHW_REG1_SEN_MULTI
+        #define HARDWARE_NAME "OpenKNX-REG1-SEN-Multi"
         #define OKNXHW_REG1_CONTROLLER2040_V1
 
         //#define INFO1_LED_PIN 6
@@ -100,10 +100,10 @@
 
     #endif
 
-// SA-REG1-4xSELV
-// https://github.com/OpenKNX/OpenKNX/wiki/SA-REG1-4xSELV
-    #ifdef OKNXHW_SA_REG1_4XSELV
-        #define HARDWARE_NAME "OpenKNX-SA-REG1-4xSELV"
+// REG1_SA-4xSELV
+// https://github.com/OpenKNX/OpenKNX/wiki/REG1_SA-4xSELV
+    #ifdef OKNXHW_REG1_SA_4XSELV
+        #define HARDWARE_NAME "OpenKNX-REG1_SA-4xSELV"
         #define OKNXHW_REG1_CONTROLLER2040_V1
 
         #define OKNXHW_REG1_APP_SA_4XSELV
@@ -162,6 +162,9 @@
         #define KNX_SERIAL Serial1
         #define KNX_UART_RX_PIN 1
         #define KNX_UART_TX_PIN 0
+
+        #define OKNXHW_REG1_CONTROLLER2040_SENSOR_SDA_TX_PIN  8
+        #define OKNXHW_REG1_CONTROLLER2040_SENSOR_SCL_RX_PIN  9
 
         #define REG1_APP_PIN1 29
         #define REG1_APP_PIN2 28
@@ -288,11 +291,11 @@
         #define OKNXHW_REG1_APP_SA_4xSELV_TCA_ADDR  0x20
         #define OKNXHW_REG1_APP_SA_4xSELV_TCA_RES   REG1_APP_PIN4
         #define OKNXHW_REG1_APP_SA_4xSELV_TCA_TYPE  OPENKNX_GPIO_T_TCA6408
+        #define OKNXHW_REG1_APP_SA_4xSELV_12VADC    REG1_APP_PIN3
 
         #define OPENKNX_SWA_SET_ACTIVE_ON HIGH
         #define OPENKNX_SWA_RESET_ACTIVE_ON HIGH
         #define OPENKNX_SWA_BISTABLE_IMPULSE_LENGTH 50
-        #define V12_ADC_PIN REG1_APP_PIN3
     #endif
 
 // UP1-Controller2040
