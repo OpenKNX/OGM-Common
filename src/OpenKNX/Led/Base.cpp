@@ -113,7 +113,7 @@ namespace OpenKNX
             if (code > 0)
             {
                 logTraceP("errorCode %i", code);
-                _errorEffect = new LedEffects::Error(code);
+                _errorEffect = new Led::Effects::Error(code);
                 _errorMode = true;
             }
         }
@@ -134,7 +134,7 @@ namespace OpenKNX
             if (_pin < 0) return;
 
             logTraceP("pulsing (frequency %i)", frequency);
-            loadEffect(new LedEffects::Pulse(frequency));
+            loadEffect(new Led::Effects::Pulse(frequency));
             _state = true;
         }
 
@@ -144,7 +144,7 @@ namespace OpenKNX
             if (_pin < 0) return;
 
             logTraceP("blinking (frequency %i)", frequency);
-            loadEffect(new LedEffects::Blink(frequency));
+            loadEffect(new Led::Effects::Blink(frequency));
             _state = true;
         }
 
@@ -154,7 +154,7 @@ namespace OpenKNX
             if (_pin < 0) return;
 
             logTraceP("flash (duration %i ms)", duration);
-            loadEffect(new LedEffects::Flash(duration));
+            loadEffect(new Led::Effects::Flash(duration));
             _state = true;
         }
 
@@ -164,7 +164,7 @@ namespace OpenKNX
             if (_pin < 0) return;
 
             logTraceP("activity");
-            loadEffect(new LedEffects::Activity(lastActivity, inverted));
+            loadEffect(new Led::Effects::Activity(lastActivity, inverted));
             _state = true;
         }
 
@@ -193,9 +193,9 @@ namespace OpenKNX
             if (!_debugMode)
             {
     #ifdef OPENKNX_HEARTBEAT_PRIO
-                _debugEffect = new LedEffects::Blink(OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
+                _debugEffect = new Led::Effects::Blink(OPENKNX_HEARTBEAT_PRIO_OFF_FREQ);
     #else
-                _debugEffect = new LedEffects::Blink(OPENKNX_HEARTBEAT_FREQ);
+                _debugEffect = new Led::Effects::Blink(OPENKNX_HEARTBEAT_FREQ);
     #endif
                 _debugMode = true;
             }
@@ -214,7 +214,7 @@ namespace OpenKNX
             }
         }
 
-        void Base::loadEffect(LedEffects::Base *effect)
+        void Base::loadEffect(Led::Effects::Base *effect)
         {
             unloadEffect();
             logTraceP("load effect");

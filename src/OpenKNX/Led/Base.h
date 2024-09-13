@@ -1,9 +1,9 @@
 #pragma once
-#include "OpenKNX/LedEffects/Activity.h"
-#include "OpenKNX/LedEffects/Blink.h"
-#include "OpenKNX/LedEffects/Error.h"
-#include "OpenKNX/LedEffects/Flash.h"
-#include "OpenKNX/LedEffects/Pulse.h"
+#include "OpenKNX/Led/Effects/Activity.h"
+#include "OpenKNX/Led/Effects/Blink.h"
+#include "OpenKNX/Led/Effects/Error.h"
+#include "OpenKNX/Led/Effects/Flash.h"
+#include "OpenKNX/Led/Effects/Pulse.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/defines.h"
 #include <Arduino.h>
@@ -26,15 +26,15 @@ namespace OpenKNX
             volatile uint8_t _currentLedBrightness = 0;
 
             volatile bool _effectMode = false;
-            LedEffects::Base *_effect = nullptr;
+            Led::Effects::Base *_effect = nullptr;
 
             volatile bool _errorMode = false;
-            LedEffects::Error *_errorEffect = nullptr;
+            Led::Effects::Error *_errorEffect = nullptr;
 
 #ifdef OPENKNX_HEARTBEAT
             volatile bool _debugMode = false;
             volatile uint32_t _debugHeartbeat = 0;
-            LedEffects::Blink *_debugEffect = nullptr;
+            Led::Effects::Blink *_debugEffect = nullptr;
 #endif
 
             /*
@@ -132,7 +132,7 @@ namespace OpenKNX
             /*
              * Call unloadEffect() and load new normal effect
              */
-            void loadEffect(LedEffects::Base *effect);
+            void loadEffect(Led::Effects::Base *effect);
 
             /*
              * Get a logPrefix as string
