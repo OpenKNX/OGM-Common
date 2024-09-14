@@ -25,6 +25,7 @@ namespace OpenKNX
                 Activity(uint32_t &lastActivity, bool inverted = false) : _lastActivity(lastActivity), _inverted(inverted) {};
                 ~Activity() {};
                 uint8_t value(uint8_t maxValue) override;
+                float brightness() override;
             };
         } // namespace LedEffects
     } // namespace Led

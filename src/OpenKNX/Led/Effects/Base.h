@@ -17,6 +17,7 @@ namespace OpenKNX
 
               public:
                 virtual uint8_t value(uint8_t maxValue) = 0;
+                virtual float brightness() = 0;
                 virtual ~Base() {};
             };
         } // namespace Effects
