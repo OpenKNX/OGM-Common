@@ -17,7 +17,7 @@ namespace OpenKNX
                 _lastMillis = 0;
             }
 
-            uint8_t __time_critical_func(Blink::value)(uint8_t maxValue)
+            uint16_t __time_critical_func(Blink::value)(uint16_t maxValue)
             {
                 // if (delayCheck(_lastMillis, _frequency) || _lastMillis == 0)
                 // {

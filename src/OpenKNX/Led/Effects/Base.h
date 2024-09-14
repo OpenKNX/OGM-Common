@@ -16,7 +16,7 @@ namespace OpenKNX
                 volatile uint32_t _lastMillis = 0;
 
               public:
-                virtual uint8_t value(uint8_t maxValue) = 0;
+                virtual uint16_t value(uint16_t maxValue) = 0;
                 virtual float brightness() = 0;
                 virtual ~Base() {};
             };

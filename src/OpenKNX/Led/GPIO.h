@@ -8,7 +8,7 @@ namespace OpenKNX
         class GPIO : public Base
         {
           private:
-            void writeLed(uint8_t brightness) override;
+            void writeLed(uint16_t brightness) override;
 
           public:
             void init(long pin = -1, long activeOn = HIGH);

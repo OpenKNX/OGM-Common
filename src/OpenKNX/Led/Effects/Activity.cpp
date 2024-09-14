@@ -6,7 +6,7 @@ namespace OpenKNX
     {
         namespace Effects
         {
-            uint8_t __time_critical_func(Activity::value)(uint8_t maxValue)
+            uint16_t __time_critical_func(Activity::value)(uint16_t maxValue)
             {
                 // if (_lastActivity >= _lastMillis && delayCheck(_lastMillis, OPENKNX_LEDEFFECT_ACTIVITY_DURATION + OPENKNX_LEDEFFECT_ACTIVITY_PAUSE))
                 //     _lastMillis = millis();

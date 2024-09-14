@@ -17,7 +17,7 @@ namespace OpenKNX
               public:
                 Error(uint8_t code);
                 ~Error() {};
-                uint8_t value(uint8_t maxValue) override;
+                uint16_t value(uint16_t maxValue) override;
                 float brightness() override;
             };
         } // namespace Effects

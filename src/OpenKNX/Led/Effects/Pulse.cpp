@@ -11,7 +11,7 @@ namespace OpenKNX
                 _frequency = frequency;
             }
 
-            uint8_t __time_critical_func(Pulse::value)(uint8_t maxValue /* = 255 */)
+            uint16_t __time_critical_func(Pulse::value)(uint16_t maxValue /* = 255 */)
             {
                 // first run
                 // if (_lastMillis == 0) _lastMillis = millis();

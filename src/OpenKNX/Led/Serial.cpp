@@ -25,7 +25,7 @@ namespace OpenKNX
         /*
          * write led state based on bool and _brightness
          */
-        void Serial::writeLed(uint8_t brightness)
+        void Serial::writeLed(uint16_t brightness)
         {
             // no valid pin
             if (_pin < 0 || _manager == nullptr)
@@ -33,7 +33,7 @@ namespace OpenKNX
 
             if (_currentLedBrightness != brightness)
             {
-                _manager->setLED(_pin, (color[0] * (uint16_t)brightness) / 256, (color[1] * (uint16_t)brightness) / 256, (color[2] * (uint16_t)brightness) / 256);
+                _manager->setLED(_pin, (color[0] * brightness) / 65536, (color[1] * brightness) / 65536, (color[2] * brightness) / 65536);
 
                 _currentLedBrightness = brightness;
             }

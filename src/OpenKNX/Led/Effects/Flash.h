@@ -22,7 +22,7 @@ namespace OpenKNX
               public:
                 Flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION);
                 ~Flash() {};
-                uint8_t value(uint8_t maxValue) override;
+                uint16_t value(uint16_t maxValue) override;
                 float brightness() override;
             };
         } // namespace Effects

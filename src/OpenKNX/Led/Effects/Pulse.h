@@ -23,7 +23,7 @@ namespace OpenKNX
               public:
                 Pulse(uint16_t frequency = OPENKNX_LEDEFFECT_PULSE_FREQ);
                 ~Pulse() {};
-                uint8_t value(uint8_t maxValue) override;
+                uint16_t value(uint16_t maxValue) override;
                 float brightness() override;
             };
         } // namespace Effects

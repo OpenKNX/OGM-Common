@@ -19,11 +19,11 @@ namespace OpenKNX
             volatile long _pin = -1;
             volatile long _activeOn = HIGH;
             volatile uint32_t _lastMillis = 0;
-            volatile uint8_t _brightness = 255;
+            volatile uint16_t _brightness = -1;
             volatile bool _state = false;
             volatile bool _powerSave = false;
             volatile bool _forceOn = false;
-            volatile uint8_t _currentLedBrightness = 0;
+            volatile uint16_t _currentLedBrightness = 0;
 
             volatile bool _effectMode = false;
             Led::Effects::Base *_effect = nullptr;
@@ -44,7 +44,7 @@ namespace OpenKNX
             /*
              * write led state based on bool and _brightness
              */
-            virtual void writeLed(uint8_t brightness) = 0;
+            virtual void writeLed(uint16_t brightness) = 0;
 
           public:
             /*

@@ -37,7 +37,7 @@ namespace OpenKNX
           private:
             uint8_t color[3] = {0, 0, 0}; // R, G, B
           private:
-            void writeLed(uint8_t brightness) override;
+            void writeLed(uint16_t brightness) override;
 
           public:
             void init(long num, SerialLedManager *manager, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
