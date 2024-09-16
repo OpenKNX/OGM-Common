@@ -1,11 +1,12 @@
-#include "OpenKNX/Led/Serial.h"
-#include "OpenKNX/Facade.h"
+#ifdef ARDUINO_ARCH_ESP32
+    #include "OpenKNX/Led/Serial.h"
+    #include "OpenKNX/Facade.h"
 
-#include "esp_log.h"
-#include "esp_system.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/timers.h"
+    #include "esp_log.h"
+    #include "esp_system.h"
+    #include "freertos/FreeRTOS.h"
+    #include "freertos/task.h"
+    #include "freertos/timers.h"
 
 namespace OpenKNX
 {
@@ -28,26 +29,29 @@ namespace OpenKNX
         void Serial::writeLed(uint8_t brightness)
         {
             // no valid pin
-            if (_pin < 0 || _manager == nullptr)
-                return;
+            if (_pin < 0 || _manager == nullptr) return;
 
             if (_currentLedBrightness != brightness)
             {
-                _manager->setLED(_pin, (color[0] * (uint16_t)brightness) / 256, (color[1] * (uint16_t)brightness) / 256, (color[2] * (uint16_t)brightness) / 256);
+                _manager->setLED(
+                    _pin,
+                    ((uint32_t)color[0] * brightness * _maxBrightness / 100 / 256),
+                    ((uint32_t)color[1] * brightness * _maxBrightness / 100 / 256),
+                    ((uint32_t)color[2] * brightness * _maxBrightness / 100 / 256));
 
                 _currentLedBrightness = brightness;
             }
         }
 
-#define BITS_PER_LED_CMD 24
+    #define BITS_PER_LED_CMD 24
 
-// WS2812 timing parameters
-// 0.35us and 0.90us
-// on tick is 80MHz / divider = 0.025us
-#define T0H 14 // 0 bit high time
-#define T0L 36 // 0 bit low time
-#define T1H 36 // 1 bit high time
-#define T1L 14 // 1 bit low time
+    // WS2812 timing parameters
+    // 0.35us and 0.90us
+    // on tick is 80MHz / divider = 0.025us
+    #define T0H 14 // 0 bit high time
+    #define T0L 36 // 0 bit low time
+    #define T1H 36 // 1 bit high time
+    #define T1L 14 // 1 bit low time
 
         /*
          * Set the color of the RGB LED
@@ -102,15 +106,15 @@ namespace OpenKNX
                 (void *)0,          // Timer-ID (kann für Identifikation verwendet werden)
                 [](TimerHandle_t timer) {
                     openknx.progLed.loop();
-#ifdef INFO2_LED_PIN
+    #ifdef INFO2_LED_PIN
                     openknx.info2Led.loop();
-#endif
-#ifdef INFO1_LED_PIN
+    #endif
+    #ifdef INFO1_LED_PIN
                     openknx.info1Led.loop();
-#endif
-#ifdef INFO3_LED_PIN
+    #endif
+    #ifdef INFO3_LED_PIN
                     openknx.info3Led.loop();
-#endif
+    #endif
                     openknx.ledManager.writeLeds();
                 } // Callback-Funktion, die beim Timeout aufgerufen wird
             );
@@ -188,3 +192,5 @@ namespace OpenKNX
         }
     } // namespace Led
 } // namespace OpenKNX
+
+#endif

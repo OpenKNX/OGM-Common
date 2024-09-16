@@ -21,7 +21,7 @@ namespace OpenKNX
               public:
                 Blink(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ);
                 ~Blink() {};
-                uint8_t value(uint8_t maxValue) override;
+                uint8_t value() override;
                 void updateFrequency(uint16_t frequency);
             };
         } // namespace Effects

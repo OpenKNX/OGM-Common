@@ -11,15 +11,13 @@ namespace OpenKNX
                 _frequency = frequency;
             }
 
-            uint8_t __time_critical_func(Pulse::value)(uint8_t maxValue /* = 255 */)
+            uint8_t __time_critical_func(Pulse::value)()
             {
                 // first run
                 if (_lastMillis == 0) _lastMillis = millis();
 
-                // calc
-                uint8_t value = _ledPulseEffetTable[((millis() - _lastMillis) % (_frequency * 2) * 46 / (_frequency * 2))];
-
-                return (maxValue == 255) ? value : value * maxValue / 255;
+                constexpr uint8_t refval = 255 - OPENKNX_LEDEFFECT_PULSE_MIN;
+                return (0.5 * (1 + sin(PI * ((millis() - _lastMillis) % (_frequency * 2)) / 1000.0)) * refval) + OPENKNX_LEDEFFECT_PULSE_MIN;
             }
         } // namespace Effects
     } // namespace Led

@@ -12,10 +12,10 @@ namespace OpenKNX
                 _lastMillis = millis();
             }
 
-            uint8_t __time_critical_func(Flash::value)(uint8_t maxValue)
+            uint8_t __time_critical_func(Flash::value)()
             {
                 _state = !delayCheck(_lastMillis, _duration);
-                return _state ? maxValue : 0;
+                return _state ? 255 : 0;
             }
         } // namespace Effects
     } // namespace Led

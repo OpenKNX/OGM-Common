@@ -23,7 +23,7 @@ namespace OpenKNX
             // FatalError (Prio 2)
             if (_errorMode)
             {
-                writeLed(_errorEffect->value(_brightness));
+                writeLed(_errorEffect->value());
                 return;
             }
 
@@ -35,7 +35,7 @@ namespace OpenKNX
     #ifdef OPENKNX_HEARTBEAT_PRIO
                 // Blinking until the heartbeat signal stops.
                 if (!(millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
-                    writeLed(_debugEffect->value(_brightness));
+                    writeLed(_debugEffect->value());
                 else
                     writeLed(false);
 
@@ -44,7 +44,7 @@ namespace OpenKNX
                 // Blinks as soon as the heartbeat signal stops.
                 if ((millis() - _debugHeartbeat >= OPENKNX_HEARTBEAT))
                 {
-                    writeLed(_debugEffect->value(_brightness));
+                    writeLed(_debugEffect->value());
                     return;
                 }
     #endif
@@ -62,7 +62,7 @@ namespace OpenKNX
             if (_state)
             {
                 if (_effectMode)
-                    writeLed(_effect->value(_brightness));
+                    writeLed(_effect->value());
                 else
                     writeLed(true);
                 return;
@@ -75,9 +75,10 @@ namespace OpenKNX
         {
             // no valid pin
             if (_pin < 0) return;
+            if (brightness > 100) brightness = 100;
 
-            logTraceP("brightness %i", _brightness);
-            _brightness = brightness;
+            logTraceP("brightness %i", brightness);
+            _maxBrightness = brightness;
         }
 
         void Base::powerSave(bool active /* = true */)
@@ -183,7 +184,7 @@ namespace OpenKNX
          */
         void Base::writeLed(bool state)
         {
-            writeLed((uint8_t)(state ? _brightness : 0));
+            writeLed((uint8_t)(state ? 255 : 0));
         }
 
 #ifdef OPENKNX_HEARTBEAT

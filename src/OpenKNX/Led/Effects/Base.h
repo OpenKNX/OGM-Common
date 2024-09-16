@@ -16,7 +16,7 @@ namespace OpenKNX
                 volatile uint32_t _lastMillis = 0;
 
               public:
-                virtual uint8_t value(uint8_t maxValue) = 0;
+                virtual uint8_t value() = 0;
                 virtual ~Base() {};
             };
         } // namespace Effects

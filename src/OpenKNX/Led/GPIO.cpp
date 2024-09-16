@@ -1,4 +1,5 @@
 #include "OpenKNX/Led/GPIO.h"
+#include "OpenKNX/Facade.h"
 
 namespace OpenKNX
 {
@@ -25,24 +26,27 @@ namespace OpenKNX
             // no valid pin
             if (_pin < 0) return;
 
-            if (brightness == _currentLedBrightness)
+            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 100;
+
+            if (calcBrightness == _currentLedBrightness)
                 return;
 
             // Need to reset pinMode after using analogWrite
             if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
                 pinMode(_pin, OUTPUT);
 
-            // logTraceP("==== > %i -> %i\n", _pin, brightness);
-            if (brightness == 255)
+            if (_pin == INFO1_LED_PIN)
+                logTraceP("==== > %i -> %i\n", _pin, calcBrightness);
+            if (calcBrightness == 255)
                 digitalWrite(_pin, _activeOn == HIGH ? true : false);
 
-            else if (brightness == 0)
+            else if (calcBrightness == 0)
                 digitalWrite(_pin, _activeOn == HIGH ? false : true);
 
             else
-                analogWrite(_pin, _activeOn == HIGH ? brightness : (255 - brightness));
+                analogWrite(_pin, _activeOn == HIGH ? calcBrightness : (255 - calcBrightness));
 
-            _currentLedBrightness = brightness;
+            _currentLedBrightness = calcBrightness;
         }
     } // namespace Led
 } // namespace OpenKNX

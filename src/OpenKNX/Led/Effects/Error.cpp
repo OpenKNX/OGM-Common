@@ -12,7 +12,7 @@ namespace OpenKNX
                 _code = code;
             }
 
-            uint8_t __time_critical_func(Error::value)(uint8_t maxValue)
+            uint8_t __time_critical_func(Error::value)()
             {
                 if (
                     (delayCheck(_lastMillis, 250) && _counter < _code) ||   // Blink
@@ -30,7 +30,7 @@ namespace OpenKNX
                         _counter++;
                 }
 
-                return _state ? maxValue : 0;
+                return _state ? 255 : 0;
             }
         } // namespace Effects
     } // namespace Led
