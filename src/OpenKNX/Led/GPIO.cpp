@@ -35,8 +35,6 @@ namespace OpenKNX
             if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
                 pinMode(_pin, OUTPUT);
 
-            if (_pin == INFO1_LED_PIN)
-                logTraceP("==== > %i -> %i\n", _pin, calcBrightness);
             if (calcBrightness == 255)
                 digitalWrite(_pin, _activeOn == HIGH ? true : false);
 
