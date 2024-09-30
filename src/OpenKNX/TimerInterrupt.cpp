@@ -124,7 +124,9 @@ namespace OpenKNX
         _time = millis();
 
         processStats();
+#ifndef OPENKNX_SERIALLED_ENABLE
         processLeds();
+#endif
         processButtons();
     }
 
