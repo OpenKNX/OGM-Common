@@ -115,7 +115,9 @@ namespace OpenKNX
     #ifdef INFO3_LED_PIN
                     openknx.info3Led.loop();
     #endif
+    #ifdef OPENKNX_SERIALLED_ENABLE
                     openknx.ledManager.writeLeds();
+    #endif
                 } // Callback-Funktion, die beim Timeout aufgerufen wird
             );
 
