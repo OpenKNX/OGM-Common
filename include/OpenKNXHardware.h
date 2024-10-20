@@ -205,17 +205,23 @@
             #define HARDWARE_NAME "OpenKNX-REG1-ControllerESP"
         #endif
 
+        #define OPENKNX_SERIALLED_COLOR_RED 63, 0, 0
+        #define OPENKNX_SERIALLED_COLOR_GREEN 0, 47, 0
+        #define OPENKNX_SERIALLED_COLOR_BLUE 0, 0, 63
+        #define OPENKNX_SERIALLED_COLOR_YELLOW 63, 63, 0
+
         #define OPENKNX_SERIALLED_ENABLE
         #define OPENKNX_SERIALLED_PIN 4
         #define OPENKNX_SERIALLED_NUM 4
         #define PROG_LED_PIN 0
-        #define PROG_LED_COLOR 63,0,0
+        #define PROG_LED_COLOR 63, 0, 0
         #define INFO1_LED_PIN 1
-        #define INFO1_LED_COLOR 0,63,0
+        #define INFO1_LED_COLOR 0, 47, 0
         #define INFO2_LED_PIN 2
-        #define INFO2_LED_COLOR 0,63,0
+        #define INFO2_LED_COLOR 63, 63, 0
         #define INFO3_LED_PIN 3
-        #define INFO3_LED_COLOR 0,63,0
+        #define INFO3_LED_COLOR 0, 0, 63
+        #define OPENKNX_LEDEFFECT_PULSE_MIN 50
 
 
         #define PROG_BUTTON_PIN 39
