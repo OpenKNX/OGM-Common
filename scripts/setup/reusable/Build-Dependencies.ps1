@@ -30,7 +30,12 @@ foreach ($subproject in $subprojects) {
 # git log -1 --pretty=format:"%h $branch $subproject" >> dependencies.txt
 foreach ($subproject in $projects) {
     $branch = git --git-dir $subproject/.git branch --show-current
-    if ($branch) { # if the lib is no git repo, skip it
+    if ($?) { # if the lib is no git repo, skip it
+        if (!$branch) {
+            # TODO define handling for missing branch, or try keeping branch for same commit hash
+            # prevent missing column
+            $branch = "?????"
+        }
         $info1 = git --git-dir $subproject/.git log -1 --pretty=format:"%h $branch $subproject"
         $info2 = git --git-dir $subproject/.git config --get remote.origin.url
         $info = $info1 + " " + $info2
