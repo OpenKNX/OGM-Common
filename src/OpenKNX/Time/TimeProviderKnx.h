@@ -25,6 +25,7 @@ namespace OpenKNX
             void initReceiveDateTimeStructure();
 
           public:
+            const static int DelayReadKoOnStart = 300000;
             /*
             * Return the prefix for logging
             */
@@ -42,6 +43,10 @@ namespace OpenKNX
              * @param GroupObject
              */
             void processInputKo(GroupObject& ko) override;
+             /*
+            * return true, if the provider support setting daylight saving time
+            */
+            bool supportKnxDaylightSavingTimeSwitch() override;
         };
     } // namespace Time
 } // namespace OpenKNX

@@ -1,5 +1,7 @@
 #pragma once
 #include "Arduino.h"
+#include "time.h"
+#include "chrono"
 #include "string"
 
 namespace OpenKNX
@@ -19,7 +21,6 @@ namespace OpenKNX
             float _azimut = 0;
             float _elevation = 0;
             const std::string logPrefix();
-            void setup();
             void loop();
             bool processCommand(std::string& cmd, bool diagnoseKo);
             void recalculateSunCalculation(tm& utc);

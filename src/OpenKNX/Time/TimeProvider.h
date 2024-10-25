@@ -14,16 +14,21 @@ namespace OpenKNX
             /*
              * called by the framework after the knx configuration was loaded
              */
-            virtual void setup() {};
+            virtual void setup() {}
             /*
              * called by the framework in the loop for core0
              */
-            virtual void loop() {};
+            virtual void loop() {}
             /*
              * Called on incoming/changing GroupObject
              * @param GroupObject
              */
-            virtual void processInputKo(GroupObject& ko) {};
+            virtual void processInputKo(GroupObject& ko) {}
+
+            /*
+            * return true, if the provider support setting daylight saving time
+            */
+            virtual bool supportKnxDaylightSavingTimeSwitch() { return false;}
 
           protected:
             /*

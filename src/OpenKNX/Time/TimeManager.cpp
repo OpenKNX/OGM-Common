@@ -1,6 +1,7 @@
 #include "TimeManager.h"
 #include "../Log/Logger.h"
 #include "TimeProvider.h"
+#include "TimeProviderKnx.h"
 
 namespace OpenKNX
 {
@@ -16,9 +17,10 @@ namespace OpenKNX
             {
                 if (cmd == "tm ?")
                 {
-                    openknx.console.printHelpLine("tm", "Show current local time");
-                    openknx.console.printHelpLine("tm u", "Show current UTC time");
-                    openknx.console.printHelpLine("tm tz", "Show current posix timezone string");
+                    openknx.console.printHelpLine("tm", "Show time information");
+                    openknx.console.printHelpLine("tm setdst", "Set daylight saving time");
+                    openknx.console.printHelpLine("tm setst", "Set standard time");
+                    openknx.console.printHelpLine("tm calcdst", "Calculate daylight saving time");
                     openknx.console.printHelpLine("tm x", "Set time to 2024-07-01 15:00 UTC (for testing)");
                     openknx.console.printHelpLine("tm y", "Set time to 2024-12-01 15:00 UTC (for testing)");
                     openknx.console.printHelpLine("tm hhmm", "Set time to hh:mm UTC (for testing)");
@@ -30,21 +32,49 @@ namespace OpenKNX
                     if (openknx.time.isTimeValid())
                     {
                         auto time = getLocalTime();
-                        logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "Summertime" : "Wintertime");
+                        logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
+                        time = getUtcTime();
+                        logInfoP("%04d-%02d-%02d %02d:%02d:%02d (UTC)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
                     }
                     else
                         logInfoP("No valid time");
+                    auto tz = getenv("TZ");
+                    if (tz == nullptr)
+                        logInfoP("No timezone set");
+                    else
+                    {
+                        logInfoP("Timezone: %s", buildTimezoneString(DaylightSavingMode::Calculated).c_str());
+                        if (_daylightSavingMode != DaylightSavingMode::Calculated)
+                            logInfoP("Used timezone: %s", tz);
+                    }
+                    switch (_daylightSavingMode)
+                    {
+                        case DaylightSavingMode::AlwaysDayLightSavingTime:
+                            logInfoP("Mode: daylight saving time");
+                            break;
+                        case DaylightSavingMode::AlwaysStandardTime:
+                            logInfoP("Mode: standard time");
+                            break;
+                        case DaylightSavingMode::Calculated:
+                            logInfoP("Mode: calculate daylight saving time");
+                            break;
+                    }
+                    logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
                     return true;
                 }
-                if (cmd == "tm u")
+                if (cmd == "tm setdst")
                 {
-                    if (openknx.time.isTimeValid())
-                    {
-                        auto time = getUtcTime();
-                        logInfoP("%04d-%02d-%02d %02d:%02d:%02d UTC", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
-                    }
-                    else
-                        logInfoP("No valid time");
+                    setDaylightSavingMode(DaylightSavingMode::AlwaysDayLightSavingTime);
+                    return true;
+                }
+                if (cmd == "tm setst")
+                {
+                    setDaylightSavingMode(DaylightSavingMode::AlwaysStandardTime);
+                    return true;
+                }
+                if (cmd == "tm calcdst")
+                {
+                    setDaylightSavingMode(DaylightSavingMode::Calculated);
                     return true;
                 }
                 if (cmd == "tm tz")
@@ -97,24 +127,77 @@ namespace OpenKNX
                         logInfoP("Invalid time format");
                         return true;
                     }
-                    bool summerTime = TimeManager::isSummerTime(tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min) != 0;
-                    logInfoP("%04d-%02d-%02d %02d:%02d (%s)", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, summerTime ? "Summertime" : "Wintertime");
+
+                    bool dst = isDayLightSavingTime(tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min) != 0;
+                    tm.tm_isdst = dst != 0 ? 1 : 0;
                     setLocalTime(tm, millis());
+
                     return true;
                 }
             }
             return false;
         }
+
+        int TimeManager::daylightSavingTimeOffset()
+        {
+            return _dayLightSavingTimeOffset;
+        }
+
         void TimeManager::setTimeProvider(TimeProvider* timeProvider)
         {
             if (_timeProvider != nullptr)
                 delete _timeProvider;
+            _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             _timeProvider = timeProvider;
+            if (timeProvider != nullptr)
+                _timeProvideSupportKnxDaylightSavingTimeSwitch = !timeProvider->supportKnxDaylightSavingTimeSwitch();
             if (_setupCalled && _timeProvider != nullptr)
                 _timeProvider->setup();
+#ifdef KoBASE_IsSummertime
+            if (_timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/)
+                _waitTimerReadKo = max(millis(), 1UL);
+#endif
         }
 
-        void TimeManager::setup()
+        void TimeManager::setup(bool configured)
+        {
+
+            setDaylightSavingMode(DaylightSavingMode::Calculated);
+            tm tm = {0};
+            tm.tm_year = 2024;
+            tm.tm_mon = 8;
+            tm.tm_isdst = 1;
+            auto dst = mktime(&tm);
+            tm.tm_isdst = 0;
+            auto st = mktime(&tm);
+            _dayLightSavingTimeOffset = dst - st;
+
+            if (configured)
+            {
+                // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+                // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
+                if (ParamBASE_SummertimeAll == 2)
+                    setDaylightSavingMode(DaylightSavingMode::Calculated);
+                else
+                    setDaylightSavingMode(DaylightSavingMode::AlwaysStandardTime);
+
+                if (_timeProvider != nullptr)
+                    _timeProvider->setup();
+                _setupCalled = true;
+            }
+        }
+
+        void TimeManager::setDaylightSavingMode(DaylightSavingMode daylightSavingMode)
+        {
+            _daylightSavingMode = daylightSavingMode;
+            auto timezoneString = buildTimezoneString(daylightSavingMode);
+            logDebugP("Using timezone: %s", timezoneString.c_str());
+            setenv("TZ", timezoneString.c_str(), 1);
+            tzset();
+        }
+
+        std::string TimeManager::buildTimezoneString(DaylightSavingMode daylightSavingMode)
         {
             // <Enumeration Text="Midway-Inseln (-11 Stunden)" Value="27" Id="%ENID%" />
             // <Enumeration Text="Honolulu (-10 Stunden)" Value="26" Id="%ENID%" />
@@ -141,94 +224,117 @@ namespace OpenKNX
             // <Enumeration Text="Nouméa (+12 Stunden)" Value="11" Id="%ENID%" />
             // <Enumeration Text="Wellington (+12 Stunden)" Value="12" Id="%ENID%" />
 
-            const char* timezoneString = "CET-1CEST,M3.5.0/02,M10.5.0/03"; // UTC
-            switch (ParamBASE_TimezoneValue)
+            const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
+            if (knx.configured())
             {
-                case 27:
-                    timezoneString = "NUT11"; // America Samoa
-                    break;
-                case 26:
-                    timezoneString = "HST11HDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Hawai
-                    break;
-                case 25:
-                    timezoneString = "ASKT9AKDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Alaska
-                    break;
-                case 24:
-                    timezoneString = "PST8PDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Los Angeles
-                    break;
-                case 23:
-                    timezoneString = "MST7MDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Denver
-                    break;
-                case 22:
-                    timezoneString = "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Chicago
-                    break;
-                case 21:
-                    timezoneString = "EST5EDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // New York
-                    break;
-                case 20:
-                    timezoneString = "GMT-4"; // GMT-4
-                    break;
-                case 19:
-                    timezoneString = "ART3"; // Argentina
-                    break;
-                case 18:
-                    timezoneString = "WGST3WGT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Greenland
-                    break;
-                case 17:
-                    timezoneString = "CVT1"; // Cabo Verde
-                    break;
-                case 0:
-                    timezoneString = "BST0GMT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // UK
-                    break;
-                case 1:
-                    timezoneString = "CEST-1CET,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
-                    break;
-                case 2:
-                    timezoneString = "EET-2EEST,M3.5.0/3,M10.5.0/4"; // Athen
-                    break;
-                case 3:
-                    timezoneString = "MSK-3MSD,M3.5.0,M10.5.0/3"; // Moscow
-                    break;
-                case 4:
-                    timezoneString = "UZT-4"; // Azerbaijan
-                    break;
-                case 5:
-                    timezoneString = "UZT-5"; // Pakistan
-                    break;
-                case 6:
-                    timezoneString = "BDT-6"; // Bangladesh
-                    break;
-                case 7:
-                    timezoneString = "WIB-7"; // Indonesia
-                    break;
-                case 8:
-                    timezoneString = "CST-8"; // China
-                    break;
-                case 9:
-                    timezoneString = "JST-9"; // Japan
-                    break;
-                case 10:
-                    timezoneString = "AEST-9AEDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Eastern Australia
-                    break;
-                case 11:
-                    timezoneString = "SBT-11"; // Solomon Islands
-                    break;
-                case 12:
-                    timezoneString = "ANAT-12"; // New Zealand
-                    break;
+                switch (ParamBASE_TimezoneValue)
+                {
+                    case 27:
+                        timezoneString = "NUT11"; // America Samoa
+                        break;
+                    case 26:
+                        timezoneString = "HST11HDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Hawai
+                        break;
+                    case 25:
+                        timezoneString = "ASKT9AKDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Alaska
+                        break;
+                    case 24:
+                        timezoneString = "PST8PDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Los Angeles
+                        break;
+                    case 23:
+                        timezoneString = "MST7MDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Denver
+                        break;
+                    case 22:
+                        timezoneString = "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Chicago
+                        break;
+                    case 21:
+                        timezoneString = "EST5EDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // New York
+                        break;
+                    case 20:
+                        timezoneString = "GMT-4"; // GMT-4
+                        break;
+                    case 19:
+                        timezoneString = "ART3"; // Argentina
+                        break;
+                    case 18:
+                        timezoneString = "WGST3WGT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Greenland
+                        break;
+                    case 17:
+                        timezoneString = "CVT1"; // Cabo Verde
+                        break;
+                    case 0:
+                        timezoneString = "BST0GMT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // UK
+                        break;
+                    case 1:
+                        timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
+                        break;
+                    case 2:
+                        timezoneString = "EET-2EEST,M3.5.0/3,M10.5.0/4"; // Athen
+                        break;
+                    case 3:
+                        timezoneString = "MSK-3MSD,M3.5.0,M10.5.0/3"; // Moscow
+                        break;
+                    case 4:
+                        timezoneString = "UZT-4"; // Azerbaijan
+                        break;
+                    case 5:
+                        timezoneString = "UZT-5"; // Pakistan
+                        break;
+                    case 6:
+                        timezoneString = "BDT-6"; // Bangladesh
+                        break;
+                    case 7:
+                        timezoneString = "WIB-7"; // Indonesia
+                        break;
+                    case 8:
+                        timezoneString = "CST-8"; // China
+                        break;
+                    case 9:
+                        timezoneString = "JST-9"; // Japan
+                        break;
+                    case 10:
+                        timezoneString = "AEST-9AEDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Eastern Australia
+                        break;
+                    case 11:
+                        timezoneString = "SBT-11"; // Solomon Islands
+                        break;
+                    case 12:
+                        timezoneString = "ANAT-12"; // New Zealand
+                        break;
+                }
             }
-            logDebugP("Using timezone:");
-            logDebugP(timezoneString);
-            setenv("TZ", timezoneString, 1);
-            if (_timeProvider != nullptr)
-                _timeProvider->setup();
-            _setupCalled = true;
+            if (daylightSavingMode == DaylightSavingMode::Calculated)
+                return std::string(timezoneString);
+            auto seperator = strstr(timezoneString, ",");
+            std::string result;
+            if (seperator == nullptr)
+                result = timezoneString;
+            else
+                result = std::string(timezoneString).substr(0, seperator - timezoneString + 1);
+
+            if (daylightSavingMode == DaylightSavingMode::AlwaysDayLightSavingTime)
+                result += "0,366"; // Always summer
+            else
+                result += "366,367"; // Always winter
+            return result;
         }
 
         void TimeManager::loop()
         {
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
+
+#ifdef KoBASE_IsSummertime
+            // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+            // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+            // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+            if (_waitTimerReadKo != 0 && millis() - _waitTimerReadKo > TimeProviderKnx::DelayReadKoOnStart)
+            {
+                _waitTimerReadKo = millis();
+                // Kommunikationsobjekt 'Sommerzeit aktiv'
+                KoBASE_IsSummertime.requestObjectRead();
+            }
+#endif
         }
 
         bool TimeManager::isTimeValid()
@@ -236,7 +342,6 @@ namespace OpenKNX
             time_t now;
             time(&now);
             return now > 1704070800; // 2024-01-01
-
         }
 
         tm TimeManager::getLocalTime()
@@ -247,7 +352,7 @@ namespace OpenKNX
             localtime_r(&now, &localTime);
             return localTime;
         }
-         
+
         tm TimeManager::getUtcTime()
         {
             time_t now;
@@ -260,19 +365,46 @@ namespace OpenKNX
         void TimeManager::processInputKo(GroupObject& ko)
         {
             if (_timeProvider != nullptr)
+            {
                 _timeProvider->processInputKo(ko);
+            }
+#ifdef BASE_KoIsSummertime
+            // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+            // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+            // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+            if (!_timeProvideSupportKnxDaylightSavingTimeSwitch && ko.asap() == BASE_KoIsSummertime && ParamBASE_SummertimeAll == 0)
+            {
+                _waitTimerReadKo = 0;
+                bool dst = (bool)ko.value(DPT_Switch);
+                setDaylightSavingMode(dst ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime);
+            }
+#endif
         }
 
         void TimeManager::setLocalTime(tm& tm, unsigned long millisReceivedTimestamp)
         {
             std::time_t epoch = mktime(&tm);
+            if (_timeProvideSupportKnxDaylightSavingTimeSwitch)
+            {
+                // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+                // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
+                if (ParamBASE_SummertimeAll != 2)
+                {
+                    auto mode = tm.tm_isdst ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime;
+                    if (mode != _daylightSavingMode)
+                        setDaylightSavingMode(mode);
+                }
+            }
+            logInfoP("Setting %04d-%02d-%02d %02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
             setTime(epoch, nullptr, millisReceivedTimestamp);
         }
 
-        void TimeManager::setUtcTime(tm& tmx, unsigned long millisReceivedTimestamp)
+        void TimeManager::setUtcTime(tm& tm, unsigned long millisReceivedTimestamp)
         {
             timezone timezoneUtc{0};
-            std::time_t epoch = mktime(&tmx) - _timezone;
+            std::time_t epoch = mktime(&tm) - _timezone;
+            logInfoP("Setting %04d-%02d-%02d %02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, millis() - millisReceivedTimestamp);
             setTime(epoch, &timezoneUtc, millisReceivedTimestamp);
         }
 
@@ -285,11 +417,13 @@ namespace OpenKNX
             struct timeval tv;
             tv.tv_sec = epoch + seconds;
             tv.tv_usec = milliseconds * 1000;
+#ifndef ARDUINO_ARCH_SAMD
             settimeofday(&tv, tz);
+#endif
             getLocalTime(); // call to update _isTimeValid
         }
 
-        int TimeManager::isSummerTime(int year, int month, int day, int hour, int minute)
+        int TimeManager::isDayLightSavingTime(int year, int month, int day, int hour, int minute)
         {
             tm timeinfo = {0};
             timeinfo.tm_year = year - 1900; // Year since 1900
@@ -305,7 +439,7 @@ namespace OpenKNX
             localtime_r(&rawtime, &localTimeinfo);
 
             // check one hour before
-            timeinfo.tm_sec -= 3600;
+            timeinfo.tm_sec += _dayLightSavingTimeOffset;
             // Convert the date to time_t
             time_t rawtimeMinusOneHour = mktime(&timeinfo);
             // Convert back to local time and check DST
@@ -332,6 +466,5 @@ namespace OpenKNX
             gmtime_r(&localTime, &utc);
             return utc;
         }
-
     } // namespace Time
 } // namespace OpenKNX

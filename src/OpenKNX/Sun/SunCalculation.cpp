@@ -11,9 +11,7 @@ namespace OpenKNX
         {
             return "Sun";
         }
-        void SunCalculation::setup()
-        {
-        }
+       
         void SunCalculation::loop()
         {
             if (openknx.time.isTimeValid())
@@ -63,7 +61,7 @@ namespace OpenKNX
             _sunRiseUtc.tm_hour = (int)floor(rise);
             _sunRiseUtc.tm_min = (int)(60 * (rise - floor(rise)));
             _sunRiseUtc.tm_sec = 0;
-            _sunRiseLocalTime = OpenKNX::Time::TimeManager::convertUtcToLocalTime(_sunRiseUtc);
+            _sunRiseLocalTime = openknx.time.convertUtcToLocalTime(_sunRiseUtc);
 
             _sunSetUtc.tm_year = utc.tm_year;
             _sunSetUtc.tm_mon = utc.tm_mon;
@@ -71,7 +69,7 @@ namespace OpenKNX
             _sunSetUtc.tm_hour = (int)floor(set);
             _sunSetUtc.tm_min = (int)(60 * (set - floor(set)));
             _sunSetUtc.tm_sec = 0;
-            _sunSetLocalTime = OpenKNX::Time::TimeManager::convertUtcToLocalTime(_sunSetUtc);
+            _sunSetLocalTime = openknx.time.convertUtcToLocalTime(_sunSetUtc);
 
             _sunCalculationValid = true;
         }

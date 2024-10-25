@@ -69,7 +69,7 @@ namespace OpenKNX
                 case WaitStates::InitialRead:
                 {
                     // read on start
-                    if (millis() - _waitTimerStart > 30000)
+                    if (millis() - _waitTimerStart > DelayReadKoOnStart)
                     {
                         logErrorP("Wait end for read on start");
                         _waitTimerStart = millis();
@@ -289,7 +289,6 @@ namespace OpenKNX
             }
         }
 
-
         void TimeProviderKnx::checkHasAllDateTimeParts()
         {
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
@@ -297,7 +296,7 @@ namespace OpenKNX
             // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
             if (ParamBASE_SummertimeAll == 2 && _hasDate && _hasTime)
             {
-                int isActive = TimeManager::isSummerTime(_dateTime.tm_year, _dateTime.tm_mon, _dateTime.tm_mday, _dateTime.tm_hour, _dateTime.tm_min);
+                int isActive = openknx.time.isDayLightSavingTime(_dateTime.tm_year, _dateTime.tm_mon, _dateTime.tm_mday, _dateTime.tm_hour, _dateTime.tm_min);
                 if (isActive >= 0)
                 {
                     _dateTime.tm_isdst = isActive == 1;
@@ -358,6 +357,11 @@ namespace OpenKNX
                 _waitTimerStart = millis();
                 _waitStates = WaitStates::ReceiveMissingOtherTelegrams;
             }
+        }
+
+        bool TimeProviderKnx::supportKnxDaylightSavingTimeSwitch()
+        {
+            return true;
         }
 
        
