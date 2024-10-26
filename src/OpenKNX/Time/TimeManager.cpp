@@ -11,6 +11,11 @@ namespace OpenKNX
         {
             return std::string("Time");
         }
+
+        bool TimeManager::hastTimerProvder()
+        {
+            return _timeProvider;
+        }
         bool TimeManager::processCommand(std::string& cmd, bool diagnoseKo)
         {
             if (cmd.rfind("tm") == 0)
@@ -60,6 +65,10 @@ namespace OpenKNX
                             break;
                     }
                     logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
+                    if (!hastTimerProvder())
+                        logErrorP("No timeprovider set");
+                    else
+                        _timeProvider->logInformation();
                     return true;
                 }
                 if (cmd == "tm setdst")
@@ -150,7 +159,7 @@ namespace OpenKNX
             _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             _timeProvider = timeProvider;
             if (timeProvider != nullptr)
-                _timeProvideSupportKnxDaylightSavingTimeSwitch = !timeProvider->supportKnxDaylightSavingTimeSwitch();
+                _timeProvideSupportKnxDaylightSavingTimeSwitch = timeProvider->supportKnxDaylightSavingTimeSwitch();
             if (_setupCalled && _timeProvider != nullptr)
                 _timeProvider->setup();
 #ifdef KoBASE_IsSummertime
@@ -192,7 +201,6 @@ namespace OpenKNX
         {
             _daylightSavingMode = daylightSavingMode;
             auto timezoneString = buildTimezoneString(daylightSavingMode);
-            logDebugP("Using timezone: %s", timezoneString.c_str());
             setenv("TZ", timezoneString.c_str(), 1);
             tzset();
         }
@@ -328,7 +336,7 @@ namespace OpenKNX
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
-            if (_waitTimerReadKo != 0 && millis() - _waitTimerReadKo > TimeProviderKnx::DelayReadKoOnStart)
+            if (_waitTimerReadKo != 0 && millis() - _waitTimerReadKo >= TimeProviderKnx::DelayInitialReadInMs)
             {
                 _waitTimerReadKo = millis();
                 // Kommunikationsobjekt 'Sommerzeit aktiv'
@@ -383,20 +391,25 @@ namespace OpenKNX
 
         void TimeManager::setLocalTime(tm& tm, unsigned long millisReceivedTimestamp)
         {
-            std::time_t epoch = mktime(&tm);
+            logErrorP("Set DST flag: %d", (int)tm.tm_isdst);
+
             if (_timeProvideSupportKnxDaylightSavingTimeSwitch)
             {
+                logErrorP("_timeProvideSupportKnxDaylightSavingTimeSwitch");
                 // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                 // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
                 // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 if (ParamBASE_SummertimeAll != 2)
                 {
-                    auto mode = tm.tm_isdst ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime;
+                    logErrorP("Set DST flag: %d", (int)tm.tm_isdst);
+                    auto mode = tm.tm_isdst == 1 ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime;
+                    logErrorP("Set Mode: %d", (int)mode);
                     if (mode != _daylightSavingMode)
                         setDaylightSavingMode(mode);
                 }
             }
-            logInfoP("Setting %04d-%02d-%02d %02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
+            logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
+            std::time_t epoch = mktime(&tm);
             setTime(epoch, nullptr, millisReceivedTimestamp);
         }
 
@@ -404,7 +417,7 @@ namespace OpenKNX
         {
             timezone timezoneUtc{0};
             std::time_t epoch = mktime(&tm) - _timezone;
-            logInfoP("Setting %04d-%02d-%02d %02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, millis() - millisReceivedTimestamp);
+            logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
             setTime(epoch, &timezoneUtc, millisReceivedTimestamp);
         }
 

@@ -54,6 +54,10 @@ struct timezone {
             std::string buildTimezoneString(DaylightSavingMode daylightSavingMode); 
           public:
             /*
+            Returns true, if a time provider was set
+            */
+            bool hastTimerProvder();
+            /*
              * set a time provider, a previous set time provider will be deleted
              */
             void setTimeProvider(TimeProvider* timeProvider);

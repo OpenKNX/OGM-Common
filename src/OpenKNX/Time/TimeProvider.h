@@ -26,14 +26,14 @@ namespace OpenKNX
             virtual void processInputKo(GroupObject& ko) {}
 
             /*
-            * return true, if the provider support setting daylight saving time
-            */
-            virtual bool supportKnxDaylightSavingTimeSwitch() { return false;}
+             * return true, if the provider support setting daylight saving time
+             */
+            virtual bool supportKnxDaylightSavingTimeSwitch() { return false; }
 
           protected:
             /*
-            * Return the prefix for logging
-            */
+             * Return the prefix for logging
+             */
             virtual const std::string logPrefix() = 0;
             /*
              * The time provide implementation can use this function to set the local time
@@ -45,6 +45,12 @@ namespace OpenKNX
              * By calling this function, the local time will be calculated
              */
             void setUtcTime(tm& utcTime, unsigned long millisReceivedTimestamp = millis());
+          
+          public:
+            /*
+            * Overload this function to log the name of the provider and other usefull information
+            */
+             virtual void logInformation() = 0;
         };
     } // namespace Time
 } // namespace OpenKNX

@@ -7,6 +7,8 @@ namespace OpenKNX
     {
         class TimeProviderKnx : public TimeProvider
         {
+            const static int WaitTimeMissingOtherDelegramsInMs = 1000;
+       
             enum WaitStates
             {
                 None,
@@ -18,18 +20,22 @@ namespace OpenKNX
             bool _hasDate = false;
             bool _hasTime = false;
             unsigned long _timeStampTimeReceived = 0;
-            bool _hasSummertimeFlag = false;
+            bool _hasDaylightSavingFlag = false;
             tm _dateTime = {0};
             unsigned long _waitTimerStart = 0;
             void checkHasAllDateTimeParts();
             void initReceiveDateTimeStructure();
 
           public:
-            const static int DelayReadKoOnStart = 300000;
+            const static int DelayInitialReadInMs = 30000;
             /*
             * Return the prefix for logging
             */
             const std::string logPrefix() override;
+            /*
+            * Overload this function to log the name of the provider and other usefull information
+            */
+            void logInformation() override;
             /*
              * called by the framework after the knx configuration was loaded
              */

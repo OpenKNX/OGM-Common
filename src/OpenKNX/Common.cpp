@@ -63,9 +63,6 @@ namespace OpenKNX
         initKnx();
 
         openknx.hardware.init();
-#ifdef OPENKNX_TimeProvider
-        openknx.time.setTimeProvider(new OPENKNX_TimeProvider());
-#endif
     }
 
 #ifdef OPENKNX_DEBUG
@@ -232,6 +229,10 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
 
+#ifdef OPENKNX_TimeProvider
+        if (!openknx.time.hastTimerProvder())
+            openknx.time.setTimeProvider(new OPENKNX_TimeProvider());
+#endif
 #ifdef BASE_StartupDelayBase
         _startupDelay = millis();
 #endif
