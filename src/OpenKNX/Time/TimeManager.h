@@ -34,7 +34,7 @@ struct timezone {
             friend Common;
             friend Console;
             friend TimeProvider;
-
+            bool _disableKoRead = false;
             TimeProvider* _timeProvider = nullptr;
             bool _setupCalled = false;
             DaylightSavingMode _daylightSavingMode = DaylightSavingMode::AlwaysStandardTime;
@@ -56,7 +56,11 @@ struct timezone {
             /*
             Returns true, if a time provider was set
             */
-            bool hastTimerProvder();
+            bool hasTimerProvder();
+            /*
+            Returns the timerprovider if set, otherwise nullptr
+            */
+            TimeProvider *getTimeProvder();
             /*
              * set a time provider, a previous set time provider will be deleted
              */

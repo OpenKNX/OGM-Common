@@ -11,8 +11,11 @@ namespace OpenKNX
         {
             return std::string("Time");
         }
-
-        bool TimeManager::hastTimerProvder()
+        TimeProvider* TimeManager::getTimeProvder()
+        {
+            return _timeProvider;
+        }
+        bool TimeManager::hasTimerProvder()
         {
             return _timeProvider;
         }
@@ -65,7 +68,7 @@ namespace OpenKNX
                             break;
                     }
                     logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
-                    if (!hastTimerProvder())
+                    if (!hasTimerProvder())
                         logErrorP("No timeprovider set");
                     else
                         _timeProvider->logInformation();
@@ -162,9 +165,10 @@ namespace OpenKNX
                 _timeProvideSupportKnxDaylightSavingTimeSwitch = timeProvider->supportKnxDaylightSavingTimeSwitch();
             if (_setupCalled && _timeProvider != nullptr)
                 _timeProvider->setup();
+            _waitTimerReadKo = 0;
 #ifdef KoBASE_IsSummertime
-            if (_timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/)
-                _waitTimerReadKo = max(millis(), 1UL);
+            if (_timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/ && ParamBASE_ReadTimeDate)
+                _waitTimerReadKo = max(millis(), 1UL) - TimeProviderKnx::InitialReadDelayInMs;
 #endif
         }
 
@@ -340,7 +344,8 @@ namespace OpenKNX
             {
                 _waitTimerReadKo = millis();
                 // Kommunikationsobjekt 'Sommerzeit aktiv'
-                KoBASE_IsSummertime.requestObjectRead();
+                if (!_disableKoRead)
+                    KoBASE_IsSummertime.requestObjectRead();
             }
 #endif
         }
@@ -391,19 +396,14 @@ namespace OpenKNX
 
         void TimeManager::setLocalTime(tm& tm, unsigned long millisReceivedTimestamp)
         {
-            logErrorP("Set DST flag: %d", (int)tm.tm_isdst);
-
             if (_timeProvideSupportKnxDaylightSavingTimeSwitch)
             {
-                logErrorP("_timeProvideSupportKnxDaylightSavingTimeSwitch");
                 // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                 // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
                 // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 if (ParamBASE_SummertimeAll != 2)
                 {
-                    logErrorP("Set DST flag: %d", (int)tm.tm_isdst);
                     auto mode = tm.tm_isdst == 1 ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime;
-                    logErrorP("Set Mode: %d", (int)mode);
                     if (mode != _daylightSavingMode)
                         setDaylightSavingMode(mode);
                 }

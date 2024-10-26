@@ -7,7 +7,7 @@ namespace OpenKNX
     {
         class TimeProviderKnx : public TimeProvider
         {
-            const static int WaitTimeMissingOtherDelegramsInMs = 1000;
+            const static int WaitTimeMissingOtherDelegramsInMs = 900;
        
             enum WaitStates
             {
@@ -27,7 +27,8 @@ namespace OpenKNX
             void initReceiveDateTimeStructure();
 
           public:
-            const static int DelayInitialReadInMs = 30000;
+            const static unsigned long InitialReadDelayInMs = 5000;
+            const static int DelayInitialReadInMs = 32000;
             /*
             * Return the prefix for logging
             */

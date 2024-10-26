@@ -230,7 +230,7 @@ namespace OpenKNX
             openknx.modules.list[i]->init();
 
 #ifdef OPENKNX_TimeProvider
-        if (!openknx.time.hastTimerProvder())
+        if (!openknx.time.hasTimerProvder())
             openknx.time.setTimeProvider(new OPENKNX_TimeProvider());
 #endif
 #ifdef BASE_StartupDelayBase
@@ -362,7 +362,12 @@ namespace OpenKNX
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
         openknx.sun.loop();
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
-   
+#ifdef KoBASE_Date   // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
+        bool checkForDateRead = !openknx.time._disableKoRead;
+        if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
+            checkForDateRead = false;
+#endif
+
         // loop  appstack
         _loopMicros = micros();
 
@@ -397,6 +402,16 @@ namespace OpenKNX
             _lastLooptimeWarning = millis();
         }
 #endif
+#ifdef KoBASE_Date   // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
+        if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
+        {
+            logErrorP("Disable time KO' reads in Common because the LogicModule is old and sent the read request");
+            openknx.time._disableKoRead = true;
+            if (openknx.time.hasTimerProvder())
+                openknx.time.getTimeProvder()->_disableKoRead = true;
+        }
+#endif
+
     }
 
 #ifdef BASE_PeriodicSave

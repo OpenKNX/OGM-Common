@@ -80,7 +80,7 @@ namespace OpenKNX
 
             if ((!_hasDate || !_hasTime || !_hasDaylightSavingFlag) && ParamBASE_ReadTimeDate)
             {
-                _waitTimerStart = millis();
+                _waitTimerStart = millis() - DelayInitialReadInMs + InitialReadDelayInMs; // first read after 5 seconds
                 _waitStates = WaitStates::InitialRead;
             }
 #endif
@@ -93,10 +93,6 @@ namespace OpenKNX
             {
                 case WaitStates::InitialRead:
                 {
-                    if (KoBASE_Time.commFlag() == ReadRequest)
-                    {
-                        logErrorP("READ DETECTED");
-                    }
                     // read on start
                     if (_waitTimerStart != 0 && millis() - _waitTimerStart >= DelayInitialReadInMs)
                     {
@@ -116,7 +112,7 @@ namespace OpenKNX
                         if (ParamBASE_CombinedTimeDate)
                         {
                             // combined date and time
-                            if (!_hasTime)
+                            if (!_hasTime && !_disableKoRead)
                             {
                                 KoBASE_Time.requestObjectRead();
                                 logErrorP("Read KoBASE_DateTime");
@@ -125,18 +121,18 @@ namespace OpenKNX
                         else
                         {
                             // date and time from separate KOs
-                            if (!_hasTime)
+                            if (!_hasTime && !_disableKoRead)
                             {
                                 KoBASE_Time.requestObjectRead();
                                 logErrorP("Read KoBASE_Time");
                             }
-                            if (!_hasDate)
+                            if (!_hasDate && !_disableKoRead)
                             {
                                 KoBASE_Date.requestObjectRead();
                                 logErrorP("Read KoBASE_Date");
                             }
                         }
-                        if (!_hasDaylightSavingFlag && ParamBASE_SummertimeAll == 0)
+                        if (!_hasDaylightSavingFlag && ParamBASE_SummertimeAll == 0 && !_disableKoRead)
                         {
                             KoBASE_IsSummertime.requestObjectRead();
                             logErrorP("Read KoBASE_IsSummertime");

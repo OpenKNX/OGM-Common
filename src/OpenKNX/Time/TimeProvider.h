@@ -10,6 +10,9 @@ namespace OpenKNX
          */
         class TimeProvider
         {
+          friend Common;
+          protected:
+            bool _disableKoRead = false;
           public:
             /*
              * called by the framework after the knx configuration was loaded
