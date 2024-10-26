@@ -140,10 +140,8 @@ namespace OpenKNX
                         return true;
                     }
 
-                    bool dst = isDayLightSavingTime(tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min) != 0;
-                    tm.tm_isdst = dst != 0 ? 1 : 0;
+                    calculateAndSetDstFlag(tm);
                     setLocalTime(tm, millis());
-
                     return true;
                 }
             }
@@ -435,7 +433,6 @@ namespace OpenKNX
 #endif
             getLocalTime(); // call to update _isTimeValid
         }
-
         int TimeManager::isDayLightSavingTime(int year, int month, int day, int hour, int minute)
         {
             tm timeinfo = {0};
@@ -444,7 +441,11 @@ namespace OpenKNX
             timeinfo.tm_mday = day;         // Day of the month (1-31)
             timeinfo.tm_hour = hour;
             timeinfo.tm_min = minute;
-
+            return isDayLightSavingTime(timeinfo);
+        }
+        int TimeManager::isDayLightSavingTime(tm timeinfo)
+        {
+            timeinfo.tm_isdst = 0;
             // Convert the date to time_t
             time_t rawtime = mktime(&timeinfo);
             // Convert back to local time and check DST
@@ -462,6 +463,39 @@ namespace OpenKNX
                 return -1;
             // Check if DST is active (tm_isdst == 1 means DST is active)
             return localTimeinfo.tm_isdst > 0;
+        }
+        void TimeManager::calculateAndSetDstFlag(tm& tm)
+        {
+            int isActive = isDayLightSavingTime(tm);
+            logErrorP("Calculated daylight saving time: %d", isActive);
+            if (isActive >= 0)
+            {
+                tm.tm_isdst = isActive == 1;
+            }
+            else
+            {
+                // switching hour in autumn, its unknown if summer or winter time because the local hour exist twice
+                if (isTimeValid())
+                {
+                    auto currentLocalTime = getLocalTime();
+                    tm.tm_isdst = currentLocalTime.tm_isdst; // asume same time
+                    auto currentTime = mktime(&currentLocalTime);
+                    auto newTime = mktime(&tm);
+                    auto seconds = difftime(currentTime, newTime);
+                    if (seconds < -2700)
+                    {
+                        // new time is more then 45 minutes behind current time, assume switch to winter time
+                        tm.tm_isdst = 0;
+                    }
+                    logErrorP("Assume %s because %lf seconds different", tm.tm_isdst ? "DST" : "ST", seconds);
+                }
+                else
+                {
+                    // No information about DST or ST time available. Just guess it's daylight saving time
+                    tm.tm_isdst = 1;
+                    logErrorP("Guess to have daylight saving time");
+                }
+            }
         }
 
         tm TimeManager::convertUtcToLocalTime(tm& tmUtc)

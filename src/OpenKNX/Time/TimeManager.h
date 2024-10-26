@@ -82,10 +82,12 @@ struct timezone {
              * Converts a UTC time to local time
              */
             tm convertUtcToLocalTime(tm& utcTime);
+
             /*
              * Converts a local time to UTC time
              */
             tm convertLocalTimeToUtc(tm& tmLocalTime);
+
             /*
              * Returns for the provided local time
              * 1 if it is in daylight saving time
@@ -93,6 +95,20 @@ struct timezone {
              * -1 for the switching hour in the auntum which can be summer or winter time
              */
             int isDayLightSavingTime(int year, int month, int day, int hour, int minute);
+
+            /*
+             * Returns for the provided local time (current tm_isdst will be ignored)
+             * 1 if it is in daylight saving time
+             * 0 if it is in standard time
+             * -1 for the switching hour in the auntum which can be summer or winter time
+             */
+            int isDayLightSavingTime(tm tm);
+
+            /*
+            * Calculate and set daylight saving flag. The current tm_isdst will be ignored
+            */
+            void calculateAndSetDstFlag(tm& tm);
+
             /*
             * Offset daylight saving time
             */

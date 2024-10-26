@@ -345,40 +345,7 @@ namespace OpenKNX
             // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
             if (ParamBASE_SummertimeAll == 2 && _hasDate && _hasTime)
             {
-                int isActive = openknx.time.isDayLightSavingTime(_dateTime.tm_year, _dateTime.tm_mon, _dateTime.tm_mday, _dateTime.tm_hour, _dateTime.tm_min);
-                if (isActive >= 0)
-                {
-                    _dateTime.tm_isdst = isActive == 1;
-                }
-                else
-                {
-                    // switching hour in autumn, its unknown if summer or winter time because the local hour exist twice
-                    if (openknx.time.isTimeValid())
-                    {
-                        auto currentLocalTime = openknx.time.getLocalTime();
-                        _dateTime.tm_isdst = currentLocalTime.tm_isdst; // asume same time
-                        auto currentTime = mktime(&currentLocalTime);
-                        auto newTime = mktime(&currentLocalTime);
-                        auto seconds = difftime(currentTime, newTime);
-                        if (seconds < -2700)
-                        {
-                            // new time is more then 45 minutes behind current time, assume switch to winter time
-                            _dateTime.tm_isdst = 0;
-                        }
-                        else
-                        {
-                            // new time seems to be summertime
-                            _dateTime.tm_isdst = 1;
-                        }
-                        logErrorP("Assume {%s} because %lf seconds different", _dateTime.tm_isdst ? "Summertime" : "Wintertime", seconds);
-                    }
-                    else
-                    {
-                        // No information about summer or winter time available. Just guess it's summer time
-                        _dateTime.tm_isdst = 1;
-                        logErrorP("Guess to have summer time");
-                    }
-                }
+                openknx.time.calculateAndSetDstFlag(_dateTime);
                 _hasDaylightSavingFlag = true;
             }
             if (_hasDate && _hasTime && _hasDaylightSavingFlag)
