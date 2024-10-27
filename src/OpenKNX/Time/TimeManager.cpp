@@ -85,14 +85,14 @@ namespace OpenKNX
         void TimeManager::commandHelp()
         {
             openknx.console.printHelpLine("tm", "Show time information");
-            openknx.console.printHelpLine("tm setdst", "Set daylight saving time");
-            openknx.console.printHelpLine("tm setst", "Set standard time");
-            openknx.console.printHelpLine("tm calcdst", "Calculate daylight saving time");
+            openknx.console.printHelpLine("tm setdst", "Set daylight saving time (for testing)");
+            openknx.console.printHelpLine("tm setst", "Set standard time (for testing)");
+            openknx.console.printHelpLine("tm calcdst", "Calculate daylight saving time (for testing)");
             openknx.console.printHelpLine("tm x", "Set time to 2024-07-01 15:00 UTC (for testing)");
             openknx.console.printHelpLine("tm y", "Set time to 2024-12-01 15:00 UTC (for testing)");
             openknx.console.printHelpLine("tm hhmm", "Set time to hh:mm UTC (for testing)");
             openknx.console.printHelpLine("tm YYMMDDhhmm", "Set time to 20YY-MM-DD hh:mm UTC (for testing)");
-            openknx.console.printHelpLine("tm test", "Test some calculation (Only for debugging)");
+            openknx.console.printHelpLine("tm test", "Test some calculation (for testing)");
         }
         void TimeManager::commandInformation()
         {

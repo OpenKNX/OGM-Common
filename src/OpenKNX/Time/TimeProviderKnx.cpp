@@ -31,6 +31,8 @@
     #define VAL_STIM_FROM_DPT19 1
 #endif
 
+#define TIME_TOLERANCE_CHECK_MIN 2
+
 namespace OpenKNX
 {
     namespace Time
@@ -48,7 +50,7 @@ namespace OpenKNX
                 case WaitStates::InitialRead:
                 case WaitStates::ReceiveMissingOtherTelegrams:
                 {
-                    auto prefix = _waitStates == InitialRead ? "initil" : "missing";
+                    auto prefix = _waitStates == InitialRead ? "initial" : "missing";
                     if (!_hasDate)
                     {
                         if (ParamBASE_CombinedTimeDate)
@@ -58,7 +60,7 @@ namespace OpenKNX
                     }
                     if (!_hasTime)
                         logInfoP("Wait for %s diagram time", prefix);
-                    if (!_hasDaylightSavingFlag)
+                    if (!_hasDaylightSavingFlag && ParamBASE_SummertimeAll == 0)
                         logInfoP("Wait for %s diagram daylightsaving", prefix);
                 }
                 break;
@@ -242,24 +244,30 @@ namespace OpenKNX
                         _hasTime = true;
                         if (openknx.time.isTimeValid())
                         {
-                            // date is already valid, use current date
                             auto now = openknx.time.getLocalTime();
-                            if (knxTime.tm_hour == 0 && now.tm_hour == 23)
+                            if (!_hasDate)
                             {
-                                logErrorP("New day started");
-                                // New day started, correct date to use it
-                                now.tm_mday += 1;
-                                mktime(&now); // normalize
-                            }
-                            _dateTime.tm_year = now.tm_year;
-                            _dateTime.tm_mon = now.tm_mon;
-                            _dateTime.tm_mday = now.tm_mday;
-                            _hasDate = true;
-                            if (!_hasDaylightSavingFlag)
-                            {
-                                // use the current DST flag
-                                _dateTime.tm_isdst = now.tm_isdst;
-                                _hasDaylightSavingFlag = true;
+                                // date is already valid, use current date
+                                if (knxTime.tm_hour == 0 && knxTime.tm_min <= TIME_TOLERANCE_CHECK_MIN &&
+                                    now.tm_hour == 23 && now.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN)
+                                {
+                                    logErrorP("New day started, correct date");
+                                    // New day started, correct date to use it
+                                    now.tm_mday += 1;
+                                    mktime(&now); // normalize
+                                }
+                                else if (knxTime.tm_hour == 23 && knxTime.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN &&
+                                         now.tm_hour == 0 && now.tm_min <= TIME_TOLERANCE_CHECK_MIN)
+                                {
+                                    logErrorP("Previous day, correct date");
+                                    // New day started, correct date to use it
+                                    now.tm_mday -= 1;
+                                    mktime(&now); // normalize
+                                }
+                                _dateTime.tm_year = now.tm_year;
+                                _dateTime.tm_mon = now.tm_mon;
+                                _dateTime.tm_mday = now.tm_mday;
+                                _hasDate = true;
                             }
                         }
                         checkHasAllDateTimeParts();
@@ -280,31 +288,49 @@ namespace OpenKNX
                     _hasDate = true;
                     if (openknx.time.isTimeValid())
                     {
-                        auto now = openknx.time.getLocalTime();
-                        if (now.tm_year == _dateTime.tm_year && now.tm_mon == _dateTime.tm_mon && now.tm_mday == _dateTime.tm_mday)
+                        if (!_hasTime)
                         {
-                            // day not changed, wait for receiving time
-                        }
-                        else
-                        {
-                            now.tm_mday += 1;
-                            mktime(&now);
-                            if (now.tm_year == _dateTime.tm_year && now.tm_mon == _dateTime.tm_mon && now.tm_mday == _dateTime.tm_mday && (now.tm_hour == 23 || now.tm_hour == 0))
+                            // use current time
+                            auto now = openknx.time.getLocalTime();
+                            if (now.tm_year == _dateTime.tm_year && now.tm_mon == _dateTime.tm_mon && now.tm_mday == _dateTime.tm_mday)
                             {
-                                // Next day has start, correct the time
-                                _dateTime.tm_hour = 0;
-                                _dateTime.tm_min = 0;
-                                _dateTime.tm_sec = 0;
-                                _timeStampTimeReceived = millis();
-                                _hasTime = true;
-                                if (!_hasDaylightSavingFlag)
+                                // day not changed, wait for receiving time
+                            }
+                            else
+                            {
+                                auto next = now;
+                                next.tm_mday += 1;
+                                mktime(&next);
+                                if (next.tm_year == _dateTime.tm_year && next.tm_mon == _dateTime.tm_mon && next.tm_mday == _dateTime.tm_mday &&
+                                    now.tm_hour == 23 && now.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN)
                                 {
-                                    _dateTime.tm_isdst = now.tm_isdst;
-                                    _hasDaylightSavingFlag = true;
+                                    // Next day has start, correct the time
+                                    _dateTime.tm_hour = 0;
+                                    _dateTime.tm_min = 0;
+                                    _dateTime.tm_sec = 0;
+                                    _timeStampTimeReceived = millis();
+                                    _hasTime = true;
+                                }
+                                else
+                                {
+                                    auto previous = now;
+                                    previous.tm_mday -= 1;
+                                    mktime(&previous);
+                                    if (previous.tm_year == _dateTime.tm_year && previous.tm_mon == _dateTime.tm_mon && previous.tm_mday == _dateTime.tm_mday &&
+                                        now.tm_hour == 0 && now.tm_min <= TIME_TOLERANCE_CHECK_MIN)
+                                    {
+                                        // Still previous day
+                                        _dateTime.tm_hour = 23;
+                                        _dateTime.tm_min = 59;
+                                        _dateTime.tm_sec = 59;
+                                        _timeStampTimeReceived = millis();
+                                        _hasTime = true;
+                                    }
                                 }
                             }
                         }
                     }
+                    checkHasAllDateTimeParts();
                 }
             }
             else if (ko.asap() == BASE_KoIsSummertime)
@@ -327,7 +353,7 @@ namespace OpenKNX
                                 _dateTime.tm_sec += openknx.time.daylightSavingTimeOffset();
                         }
                     }
-                     logErrorP("Receive daylight saving time: %d", (int) newDaylightSaving);
+                    logErrorP("Receive daylight saving time: %d", (int)newDaylightSaving);
                     _hasDaylightSavingFlag = true;
                     checkHasAllDateTimeParts();
                 }
