@@ -194,28 +194,32 @@ namespace OpenKNX
                         // * NY - missing year
                         // * ND - missing date
                         // * NT - missing time
-                        if (!(raw[6] & (DPT19_FAULT | DPT19_NO_YEAR | DPT19_NO_DATE | DPT19_NO_TIME)))
+                        if ((raw[6] & (DPT19_FAULT | DPT19_NO_YEAR | DPT19_NO_DATE | DPT19_NO_TIME)))
+                        {
+                            logErrorP("Unvalid date time received");
+                        }
+                        else
                         {
                             initReceiveDateTimeStructure();
                             _timeStampTimeReceived = receiveTimeStamp;
-                            struct tm lTmp = value;
-                            _dateTime.tm_year = lTmp.tm_year - 1900;
-                            _dateTime.tm_mon = lTmp.tm_mon - 1;
-                            _dateTime.tm_mday = lTmp.tm_mday;
+                            struct tm knxDateTime = value;
+                            _dateTime.tm_year = knxDateTime.tm_year - 1900;
+                            _dateTime.tm_mon = knxDateTime.tm_mon - 1;
+                            _dateTime.tm_mday = knxDateTime.tm_mday;
                             _hasDate = true;
-                            _dateTime.tm_hour = lTmp.tm_hour;
-                            _dateTime.tm_min = lTmp.tm_min;
-                            _dateTime.tm_sec = lTmp.tm_sec;
+                            _dateTime.tm_hour = knxDateTime.tm_hour;
+                            _dateTime.tm_min = knxDateTime.tm_min;
+                            _dateTime.tm_sec = knxDateTime.tm_sec;
                             _hasTime = true;
 
-                            const bool lSummertime = raw[6] & DPT19_SUMMERTIME;
+                            const bool lDST = raw[6] & DPT19_SUMMERTIME;
                             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
                             // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                             if (ParamBASE_SummertimeAll == 1)
                             {
-                                logErrorP("Read summertime from telegram %d", (int)lSummertime);
-                                _dateTime.tm_isdst = lSummertime;
+                                logErrorP("Read daylight saving time flag from telegram %d", (int)lDST);
+                                _dateTime.tm_isdst = lDST;
                                 _hasDaylightSavingFlag = true;
                             }
                             checkHasAllDateTimeParts();
@@ -231,17 +235,18 @@ namespace OpenKNX
                     {
                         initReceiveDateTimeStructure();
                         _timeStampTimeReceived = receiveTimeStamp;
-                        struct tm lTmp = value;
-                        _dateTime.tm_hour = lTmp.tm_hour;
-                        _dateTime.tm_min = lTmp.tm_min;
-                        _dateTime.tm_sec = lTmp.tm_sec;
+                        struct tm knxTime = value;
+                        _dateTime.tm_hour = knxTime.tm_hour;
+                        _dateTime.tm_min = knxTime.tm_min;
+                        _dateTime.tm_sec = knxTime.tm_sec;
                         _hasTime = true;
                         if (openknx.time.isTimeValid())
                         {
                             // time is already valid, use current date
                             auto now = openknx.time.getLocalTime();
-                            if (lTmp.tm_hour == 0 && now.tm_hour == 23)
+                            if (knxTime.tm_hour == 0 && now.tm_hour == 23)
                             {
+                                logErrorP("New day started");
                                 // New day started, correct date to use it
                                 now.tm_mday += 1;
                                 mktime(&now); // normalize
@@ -252,7 +257,7 @@ namespace OpenKNX
                             _hasDate = true;
                             if (!_hasDaylightSavingFlag)
                             {
-                                // use the current summertime flag
+                                // use the current DST flag
                                 _dateTime.tm_isdst = now.tm_isdst;
                                 _hasDaylightSavingFlag = true;
                             }
@@ -268,10 +273,10 @@ namespace OpenKNX
                 if (ko.tryValue(value, DPT_Date))
                 {
                     initReceiveDateTimeStructure();
-                    struct tm lTmp = value;
-                    _dateTime.tm_year = lTmp.tm_year - 1900;
-                    _dateTime.tm_mon = lTmp.tm_mon - 1;
-                    _dateTime.tm_mday = lTmp.tm_mday;
+                    struct tm knxTime = value;
+                    _dateTime.tm_year = knxTime.tm_year - 1900;
+                    _dateTime.tm_mon = knxTime.tm_mon - 1;
+                    _dateTime.tm_mday = knxTime.tm_mday;
                     _hasDate = true;
                     if (openknx.time.isTimeValid())
                     {

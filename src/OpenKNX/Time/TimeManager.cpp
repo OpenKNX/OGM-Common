@@ -323,9 +323,9 @@ namespace OpenKNX
                 result = std::string(timezoneString).substr(0, seperator - timezoneString + 1);
 
             if (daylightSavingMode == DaylightSavingMode::AlwaysDayLightSavingTime)
-                result += "0,366"; // Always summer
+                result += "0,366"; // Always daylight saving tiem
             else
-                result += "366,367"; // Always winter
+                result += "366,367"; // Always standard time
             return result;
         }
 
@@ -474,14 +474,14 @@ namespace OpenKNX
             }
             else
             {
-                // switching hour in autumn, its unknown if summer or winter time because the local hour exist twice
+                // switching hour in autumn, its unknown if daylight saving time or standard time because the local hour exist twice
                 if (isTimeValid())
                 {
                     auto currentLocalTime = getLocalTime();
                     tm.tm_isdst = currentLocalTime.tm_isdst; // asume same time
                     auto currentTime = mktime(&currentLocalTime);
                     auto newTime = mktime(&tm);
-                    auto seconds = difftime(currentTime, newTime);
+                    auto seconds = difftime(newTime, currentTime);
                     if (seconds < -2700)
                     {
                         // new time is more then 45 minutes behind current time, assume switch to winter time
