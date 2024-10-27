@@ -242,7 +242,7 @@ namespace OpenKNX
                         _hasTime = true;
                         if (openknx.time.isTimeValid())
                         {
-                            // time is already valid, use current date
+                            // date is already valid, use current date
                             auto now = openknx.time.getLocalTime();
                             if (knxTime.tm_hour == 0 && now.tm_hour == 23)
                             {

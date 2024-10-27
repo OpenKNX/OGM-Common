@@ -19,59 +19,177 @@ namespace OpenKNX
         {
             return _timeProvider;
         }
+
+        void TimeManager::commandTest()
+        {
+            std::string previousTimezone = getenv("TZ");
+            const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
+            setenv("TZ", timezoneString, 1);
+            tzset();
+
+            tm tm1 = {0};
+            tm1.tm_hour = 15;
+            tm1.tm_mon = 7;
+            tm1.tm_mday = 0;
+            tm1.tm_year = 2024 - 1900;
+
+            auto time = convertUtcToLocalTime(tm1);
+            logDebugP("%04d-%02d-%02d %02d:%02d (%s) (17:00 DST from June, 15:00 UTC calculated)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, time.tm_isdst ? "DST" : "ST");
+
+            time = convertLocalTimeToUtc(time);
+            logDebugP("%04d-%02d-%02d %02d:%02d (UTC) (15:00 converted back to localtime)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min);
+
+            tm tm2 = {0};
+            tm2.tm_hour = 15;
+            tm2.tm_mon = 11;
+            tm2.tm_mday = 0;
+            tm2.tm_year = 2024 - 1900;
+
+            time = convertUtcToLocalTime(tm2);
+            logDebugP("%04d-%02d-%02d %02d:%02d (%s) (16:00 ST from December, 15:00 UTC calculated)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, time.tm_isdst ? "DST" : "ST");
+
+            time = convertLocalTimeToUtc(time);
+            logDebugP("%04d-%02d-%02d %02d:%02d (UTC) (15:00 converted back to localtime)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min);
+
+            logDebugP("    Calculated-> X X <- Expected");
+            logDebugP("29.3.2024 23:59 %2d  0", (int)isDaylightSavingTime(2024, 3, 29, 23, 59));
+            logDebugP("30.3.2024 00:00 %2d  0", (int)isDaylightSavingTime(2024, 3, 30, 0, 0));
+
+            logDebugP("30.3.2024 01:59 %2d  0", (int)isDaylightSavingTime(2024, 3, 30, 1, 59));
+
+            logDebugP("31.3.2024 01:59 %2d  0", (int)isDaylightSavingTime(2024, 3, 31, 1, 59));
+            logDebugP("31.3.2024 02:00 %2d  does not exist", (int)isDaylightSavingTime(2024, 3, 31, 2, 00));
+            logDebugP("31.3.2024 02:01 %2d  does not exist", (int)isDaylightSavingTime(2024, 3, 31, 2, 01));
+
+            logDebugP("31.3.2024 02:59 %2d  does not exist", (int)isDaylightSavingTime(2024, 3, 31, 2, 59));
+            logDebugP("31.3.2024 03:00 %2d  1", (int)isDaylightSavingTime(2024, 3, 31, 3, 00));
+            logDebugP("31.3.2024 03:01 %2d  1", (int)isDaylightSavingTime(2024, 3, 31, 4, 01));
+
+            logDebugP("27.10.2024 01:59 %2d  1", (int)isDaylightSavingTime(2024, 10, 27, 1, 59));
+            logDebugP("27.10.2024 02:00 %2d -1 could be DST or ST", (int)isDaylightSavingTime(2024, 10, 27, 2, 00));
+            logDebugP("27.10.2024 02:01 %2d -1 could be DST or ST", (int)isDaylightSavingTime(2024, 10, 27, 2, 01));
+
+            logDebugP("27.10.2024 02:59 %2d -1 could be DST or ST", (int)isDaylightSavingTime(2024, 10, 27, 2, 59));
+            logDebugP("27.10.2024 03:00 %2d  0", (int)isDaylightSavingTime(2024, 10, 27, 3, 00));
+            logDebugP("27.10.2024 03:01 %2d  0", (int)isDaylightSavingTime(2024, 10, 27, 3, 01));
+            logDebugP("27.10.2024 23:59 %2d  0", (int)isDaylightSavingTime(2024, 10, 27, 23, 59));
+            logDebugP("28.10.2024 00:00 %2d  0", (int)isDaylightSavingTime(2024, 10, 28, 00, 00));
+            logDebugP("29.10.2024 00:00 %2d  0", (int)isDaylightSavingTime(2024, 10, 29, 00, 00));
+            logDebugP("03.11.2024 00:00 %2d  0", (int)isDaylightSavingTime(2024, 11, 3, 00, 00));
+            logDebugP("04.11.2024 00:00 %2d  0", (int)isDaylightSavingTime(2024, 11, 4, 00, 00));
+
+            setenv("TZ", previousTimezone.c_str(), 1);
+            tzset();
+        }
+
+        void TimeManager::commandHelp()
+        {
+            openknx.console.printHelpLine("tm", "Show time information");
+            openknx.console.printHelpLine("tm setdst", "Set daylight saving time");
+            openknx.console.printHelpLine("tm setst", "Set standard time");
+            openknx.console.printHelpLine("tm calcdst", "Calculate daylight saving time");
+            openknx.console.printHelpLine("tm x", "Set time to 2024-07-01 15:00 UTC (for testing)");
+            openknx.console.printHelpLine("tm y", "Set time to 2024-12-01 15:00 UTC (for testing)");
+            openknx.console.printHelpLine("tm hhmm", "Set time to hh:mm UTC (for testing)");
+            openknx.console.printHelpLine("tm YYMMDDhhmm", "Set time to 20YY-MM-DD hh:mm UTC (for testing)");
+            openknx.console.printHelpLine("tm test", "Test some calculation (Only for debugging)");
+        }
+        void TimeManager::commandInformation()
+        {
+            if (openknx.time.isTimeValid())
+            {
+                auto time = getLocalTime();
+                logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
+                time = getUtcTime();
+                logInfoP("%04d-%02d-%02d %02d:%02d:%02d (UTC)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
+            }
+            else
+                logInfoP("No valid time");
+            auto tz = getenv("TZ");
+            if (tz == nullptr)
+                logInfoP("No timezone set");
+            else
+            {
+                logInfoP("Timezone: %s", buildTimezoneString(DaylightSavingMode::Calculated).c_str());
+                if (_daylightSavingMode != DaylightSavingMode::Calculated)
+                    logInfoP("Used timezone: %s", tz);
+            }
+            switch (_daylightSavingMode)
+            {
+                case DaylightSavingMode::AlwaysDayLightSavingTime:
+                    logInfoP("Mode: daylight saving time");
+                    break;
+                case DaylightSavingMode::AlwaysStandardTime:
+                    logInfoP("Mode: standard time");
+                    break;
+                case DaylightSavingMode::Calculated:
+                    logInfoP("Mode: calculate daylight saving time");
+                    break;
+            }
+            logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
+            if (!hasTimerProvder())
+                logErrorP("No timeprovider set");
+            else
+                _timeProvider->logInformation();
+        }
+
+        void TimeManager::commandSetDateTime(std::string& cmd)
+        {
+            logInfoP("Set date/time");
+            tm tm = {0};
+            if (cmd == "tm x")
+            {
+                tm.tm_year = 2024 - 1900;
+                tm.tm_mon = 7 - 1;
+                tm.tm_mday = 1;
+                tm.tm_hour = 15;
+                tm.tm_min = 0;
+            }
+            else if (cmd == "tm y")
+            {
+                tm.tm_year = 2024 - 1900;
+                tm.tm_mon = 12 - 1;
+                tm.tm_mday = 1;
+                tm.tm_hour = 15;
+                tm.tm_min = 0;
+            }
+            else if (cmd.length() == 7)
+            {
+                tm.tm_year = isTimeValid() ? getLocalTime().tm_year : 2024 - 1900;
+                tm.tm_mon = (isTimeValid() ? getLocalTime().tm_mon : 7) - 1;
+                tm.tm_mday = isTimeValid() ? getLocalTime().tm_mday : 1;
+                tm.tm_hour = stoi(cmd.substr(3, 2));
+                tm.tm_min = stoi(cmd.substr(5, 2));
+            }
+            else if (cmd.length() == 13)
+            {
+                tm.tm_year = stoi(cmd.substr(3, 2)) + 2000 - 1900;
+                tm.tm_mon = stoi(cmd.substr(5, 2)) - 1;
+                tm.tm_mday = stoi(cmd.substr(7, 2));
+                tm.tm_hour = stoi(cmd.substr(9, 2));
+                tm.tm_min = stoi(cmd.substr(11, 2));
+            }
+            else
+            {
+                logInfoP("Invalid time format");
+                return;
+            }
+            calculateAndSetDstFlag(tm);
+            setLocalTime(tm, millis());
+        }
+
         bool TimeManager::processCommand(std::string& cmd, bool diagnoseKo)
         {
             if (cmd.rfind("tm") == 0)
             {
                 if (cmd == "tm ?")
                 {
-                    openknx.console.printHelpLine("tm", "Show time information");
-                    openknx.console.printHelpLine("tm setdst", "Set daylight saving time");
-                    openknx.console.printHelpLine("tm setst", "Set standard time");
-                    openknx.console.printHelpLine("tm calcdst", "Calculate daylight saving time");
-                    openknx.console.printHelpLine("tm x", "Set time to 2024-07-01 15:00 UTC (for testing)");
-                    openknx.console.printHelpLine("tm y", "Set time to 2024-12-01 15:00 UTC (for testing)");
-                    openknx.console.printHelpLine("tm hhmm", "Set time to hh:mm UTC (for testing)");
-                    openknx.console.printHelpLine("tm YYMMDDhhmm", "Set time to 20YY-MM-DD hh:mm UTC (for testing)");
+                    commandHelp();
                     return true;
                 }
                 if (cmd == "tm")
                 {
-                    if (openknx.time.isTimeValid())
-                    {
-                        auto time = getLocalTime();
-                        logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
-                        time = getUtcTime();
-                        logInfoP("%04d-%02d-%02d %02d:%02d:%02d (UTC)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
-                    }
-                    else
-                        logInfoP("No valid time");
-                    auto tz = getenv("TZ");
-                    if (tz == nullptr)
-                        logInfoP("No timezone set");
-                    else
-                    {
-                        logInfoP("Timezone: %s", buildTimezoneString(DaylightSavingMode::Calculated).c_str());
-                        if (_daylightSavingMode != DaylightSavingMode::Calculated)
-                            logInfoP("Used timezone: %s", tz);
-                    }
-                    switch (_daylightSavingMode)
-                    {
-                        case DaylightSavingMode::AlwaysDayLightSavingTime:
-                            logInfoP("Mode: daylight saving time");
-                            break;
-                        case DaylightSavingMode::AlwaysStandardTime:
-                            logInfoP("Mode: standard time");
-                            break;
-                        case DaylightSavingMode::Calculated:
-                            logInfoP("Mode: calculate daylight saving time");
-                            break;
-                    }
-                    logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
-                    if (!hasTimerProvder())
-                        logErrorP("No timeprovider set");
-                    else
-                        _timeProvider->logInformation();
+                    commandInformation();
                     return true;
                 }
                 if (cmd == "tm setdst")
@@ -89,59 +207,14 @@ namespace OpenKNX
                     setDaylightSavingMode(DaylightSavingMode::Calculated);
                     return true;
                 }
-                if (cmd == "tm tz")
+                if (cmd == "tm test")
                 {
-                    auto tz = getenv("TZ");
-                    if (tz == nullptr)
-                        logInfoP("No timezone set");
-                    else
-                        logInfoP(tz);
+                    commandTest();
                     return true;
                 }
-                if (cmd.rfind("tm ") == 0)
+                if (cmd.rfind("tm ") == 0) // must be the last command check
                 {
-                    logInfoP("Set date/time");
-                    tm tm = {0};
-                    if (cmd == "tm x")
-                    {
-                        tm.tm_year = 2024 - 1900;
-                        tm.tm_mon = 7 - 1;
-                        tm.tm_mday = 1;
-                        tm.tm_hour = 15;
-                        tm.tm_min = 0;
-                    }
-                    else if (cmd == "tm y")
-                    {
-                        tm.tm_year = 2024 - 1900;
-                        tm.tm_mon = 12 - 1;
-                        tm.tm_mday = 1;
-                        tm.tm_hour = 15;
-                        tm.tm_min = 0;
-                    }
-                    else if (cmd.length() == 7)
-                    {
-                        tm.tm_year = isTimeValid() ? getLocalTime().tm_year : 2024 - 1900;
-                        tm.tm_mon = (isTimeValid() ? getLocalTime().tm_mon : 7) - 1;
-                        tm.tm_mday = isTimeValid() ? getLocalTime().tm_mday : 1;
-                        tm.tm_hour = stoi(cmd.substr(3, 2));
-                        tm.tm_min = stoi(cmd.substr(5, 2));
-                    }
-                    else if (cmd.length() == 13)
-                    {
-                        tm.tm_year = stoi(cmd.substr(3, 2)) + 2000 - 1900;
-                        tm.tm_mon = stoi(cmd.substr(5, 2)) - 1;
-                        tm.tm_mday = stoi(cmd.substr(7, 2));
-                        tm.tm_hour = stoi(cmd.substr(9, 2));
-                        tm.tm_min = stoi(cmd.substr(11, 2));
-                    }
-                    else
-                    {
-                        logInfoP("Invalid time format");
-                        return true;
-                    }
-
-                    calculateAndSetDstFlag(tm);
-                    setLocalTime(tm, millis());
+                    commandSetDateTime(cmd);
                     return true;
                 }
             }
@@ -164,7 +237,7 @@ namespace OpenKNX
             if (_setupCalled && _timeProvider != nullptr)
                 _timeProvider->setup();
             _waitTimerReadKo = 0;
-#ifdef KoBASE_IsSummertime
+#ifdef BASE_KoIsSummertime
             if (_timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/ && ParamBASE_ReadTimeDate)
                 _waitTimerReadKo = max(millis(), 1UL) - TimeProviderKnx::InitialReadDelayInMs;
 #endif
@@ -334,7 +407,7 @@ namespace OpenKNX
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
 
-#ifdef KoBASE_IsSummertime
+#ifdef BASE_KoIsSummertime
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
@@ -433,7 +506,7 @@ namespace OpenKNX
 #endif
             getLocalTime(); // call to update _isTimeValid
         }
-        int TimeManager::isDayLightSavingTime(int year, int month, int day, int hour, int minute)
+        int TimeManager::isDaylightSavingTime(int year, int month, int day, int hour, int minute)
         {
             tm timeinfo = {0};
             timeinfo.tm_year = year - 1900; // Year since 1900
@@ -441,9 +514,9 @@ namespace OpenKNX
             timeinfo.tm_mday = day;         // Day of the month (1-31)
             timeinfo.tm_hour = hour;
             timeinfo.tm_min = minute;
-            return isDayLightSavingTime(timeinfo);
+            return isDaylightSavingTime(timeinfo);
         }
-        int TimeManager::isDayLightSavingTime(tm timeinfo)
+        int TimeManager::isDaylightSavingTime(tm timeinfo)
         {
             timeinfo.tm_isdst = 0;
             // Convert the date to time_t
@@ -466,7 +539,7 @@ namespace OpenKNX
         }
         void TimeManager::calculateAndSetDstFlag(tm& tm)
         {
-            int isActive = isDayLightSavingTime(tm);
+            int isActive = isDaylightSavingTime(tm);
             logErrorP("Calculated daylight saving time: %d", isActive);
             if (isActive >= 0)
             {

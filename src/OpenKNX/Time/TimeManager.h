@@ -42,6 +42,10 @@ struct timezone {
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
            
+            void commandTest();
+            void commandHelp();
+            void commandInformation();
+            void commandSetDateTime(std::string& cmd);
             void setup(bool configured);
             void setDaylightSavingMode(DaylightSavingMode daylightSavingMode);
             void loop();
@@ -94,7 +98,7 @@ struct timezone {
              * 0 if it is in standard time
              * -1 for the switching hour in the auntum which can be summer or winter time
              */
-            int isDayLightSavingTime(int year, int month, int day, int hour, int minute);
+            int isDaylightSavingTime(int year, int month, int day, int hour, int minute);
 
             /*
              * Returns for the provided local time (current tm_isdst will be ignored)
@@ -102,7 +106,7 @@ struct timezone {
              * 0 if it is in standard time
              * -1 for the switching hour in the auntum which can be summer or winter time
              */
-            int isDayLightSavingTime(tm tm);
+            int isDaylightSavingTime(tm tm);
 
             /*
             * Calculate and set daylight saving flag. The current tm_isdst will be ignored
