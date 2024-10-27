@@ -540,7 +540,6 @@ namespace OpenKNX
         void TimeManager::calculateAndSetDstFlag(tm& tm)
         {
             int isActive = isDaylightSavingTime(tm);
-            logErrorP("Calculated daylight saving time: %d", isActive);
             if (isActive >= 0)
             {
                 tm.tm_isdst = isActive == 1;
@@ -560,14 +559,12 @@ namespace OpenKNX
                         // new time is more then 45 minutes behind current time, assume switch to winter time
                         tm.tm_isdst = 0;
                     }
-                    logErrorP("Assume %s because %lf seconds different", tm.tm_isdst ? "DST" : "ST", seconds);
                 }
                 else
                 {
                     // No information about DST or ST time available. Just guess it's daylight saving time
                     tm.tm_isdst = 1;
-                    logErrorP("Guess to have daylight saving time");
-                }
+               }
             }
         }
 

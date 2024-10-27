@@ -98,7 +98,6 @@ namespace OpenKNX
                     // read on start
                     if (_waitTimerStart != 0 && millis() - _waitTimerStart >= DelayInitialReadInMs)
                     {
-                        logErrorP("Wait end for read on start");
                         if (_hasDate && _hasTime)
                         {
                             // Not daylight saving information, assue standard time
@@ -117,7 +116,6 @@ namespace OpenKNX
                             if (!_hasTime && !_disableKoRead)
                             {
                                 KoBASE_Time.requestObjectRead();
-                                logErrorP("Read KoBASE_DateTime");
                             }
                         }
                         else
@@ -126,18 +124,15 @@ namespace OpenKNX
                             if (!_hasTime && !_disableKoRead)
                             {
                                 KoBASE_Time.requestObjectRead();
-                                logErrorP("Read KoBASE_Time");
                             }
                             if (!_hasDate && !_disableKoRead)
                             {
                                 KoBASE_Date.requestObjectRead();
-                                logErrorP("Read KoBASE_Date");
                             }
                         }
                         if (!_hasDaylightSavingFlag && ParamBASE_SummertimeAll == 0 && !_disableKoRead)
                         {
                             KoBASE_IsSummertime.requestObjectRead();
-                            logErrorP("Read KoBASE_IsSummertime");
                         }
                     }
                     break;
@@ -146,7 +141,6 @@ namespace OpenKNX
                 {
                     if (_waitTimerStart != 0 && millis() - _waitTimerStart >= WaitTimeMissingOtherDelegramsInMs)
                     {
-                        logErrorP("Wait end for ReceiveMissingOtherTelegrams");
                         _waitStates = WaitStates::None;
                         // Use the already loaded internal time for all time parts
                         _hasDate = true;
@@ -220,7 +214,6 @@ namespace OpenKNX
                             // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                             if (ParamBASE_SummertimeAll == 1)
                             {
-                                logErrorP("Read daylight saving time flag from telegram %d", (int)lDST);
                                 _dateTime.tm_isdst = lDST;
                                 _hasDaylightSavingFlag = true;
                             }
@@ -251,7 +244,6 @@ namespace OpenKNX
                                 if (knxTime.tm_hour == 0 && knxTime.tm_min <= TIME_TOLERANCE_CHECK_MIN &&
                                     now.tm_hour == 23 && now.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN)
                                 {
-                                    logErrorP("New day started, correct date");
                                     // New day started, correct date to use it
                                     now.tm_mday += 1;
                                     mktime(&now); // normalize
@@ -259,7 +251,6 @@ namespace OpenKNX
                                 else if (knxTime.tm_hour == 23 && knxTime.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN &&
                                          now.tm_hour == 0 && now.tm_min <= TIME_TOLERANCE_CHECK_MIN)
                                 {
-                                    logErrorP("Previous day, correct date");
                                     // New day started, correct date to use it
                                     now.tm_mday -= 1;
                                     mktime(&now); // normalize
@@ -353,7 +344,6 @@ namespace OpenKNX
                                 _dateTime.tm_sec += openknx.time.daylightSavingTimeOffset();
                         }
                     }
-                    logErrorP("Receive daylight saving time: %d", (int)newDaylightSaving);
                     _hasDaylightSavingFlag = true;
                     checkHasAllDateTimeParts();
                 }
@@ -384,15 +374,6 @@ namespace OpenKNX
                 _waitStates = WaitStates::None;
                 _waitTimerStart = 0;
 
-                logErrorP("Set %04d-%02d-%02d %02d:%02d:%02d (%s) with offset of %dms",
-                          _dateTime.tm_year + 1900,
-                          _dateTime.tm_mon + 1,
-                          _dateTime.tm_mday,
-                          _dateTime.tm_hour,
-                          _dateTime.tm_min,
-                          _dateTime.tm_sec,
-                          _dateTime.tm_isdst ? "DST" : "ST",
-                          millis() - _timeStampTimeReceived);
                 setLocalTime(_dateTime, _timeStampTimeReceived);
                 _hasDate = false;
                 _hasTime = false;
@@ -400,7 +381,6 @@ namespace OpenKNX
             }
             else if (openknx.time.isTimeValid() && _waitStates == WaitStates::None)
             {
-                logErrorP("Not all parts received, start wait for missing telegrams");
                 _waitTimerStart = millis();
                 _waitStates = WaitStates::ReceiveMissingOtherTelegrams;
             }
