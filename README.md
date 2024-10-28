@@ -64,6 +64,7 @@ KNX_UART_TX_PIN
 | OPENKNX_TIME_DIGAGNOSTIC          |             |       | Enable time diagnostic console commands                                                                                                                                                    |
 | OPENKNX_TIME_TESTCOMMAND          |             |       | Enable time text command to check the behavior of the posix time calculation functions                                                                                                     |
 | OPENKNX_SUN_POSITION              |             |       | Enable sun position (azimut and elevation) calulation                                                                                                                                      |
+| OPENKNX_TIME_CLOCK                | arch depen. |       | Specifies the used time class. The default for SAMD21 is OpenKNX::Time::TimeClockMillis, for all other architectures  OpenKNX::Time::TimeClockSystem                                       |
 | OPENKNX_RTT                       |             |       | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240!                                                                                                            |
 | BUFFER_SIZE_UP                    |        1024 | Bytes | Using by Segger RTT                                                                                                                                                                        |
 
