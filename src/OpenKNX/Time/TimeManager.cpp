@@ -20,6 +20,7 @@ namespace OpenKNX
             return _timeProvider;
         }
 
+#ifdef OPENKNX_TIME_TESTCOMMAND
         void TimeManager::commandTest()
         {
             const char* tz = getenv("TZ");
@@ -84,7 +85,9 @@ namespace OpenKNX
             setenv("TZ", previousTimezone.c_str(), 1);
             tzset();
         }
+#endif
 
+#ifdef OPENKNX_TIME_DIGAGNOSTIC
         void TimeManager::commandHelp()
         {
             openknx.console.printHelpLine("tm", "Show time information");
@@ -97,6 +100,7 @@ namespace OpenKNX
             openknx.console.printHelpLine("tm YYMMDDhhmm", "Set time to 20YY-MM-DD hh:mm UTC (for testing)");
             openknx.console.printHelpLine("tm test", "Test some calculation (for testing)");
         }
+#endif
         void TimeManager::commandInformation()
         {
             if (isTimeValid())
@@ -139,7 +143,7 @@ namespace OpenKNX
             else
                 _timeProvider->logInformation();
         }
-
+#ifdef OPENKNX_TIME_DIGAGNOSTIC
         void TimeManager::commandSetDateTime(std::string& cmd)
         {
             logInfoP("Set date/time");
@@ -184,21 +188,29 @@ namespace OpenKNX
             calculateAndSetDstFlag(tm);
             setLocalTime(tm, millis());
         }
-
+#endif
         bool TimeManager::processCommand(std::string& cmd, bool diagnoseKo)
         {
             if (cmd.rfind("tm") == 0)
             {
-                if (cmd == "tm ?")
-                {
-                    commandHelp();
-                    return true;
-                }
                 if (cmd == "tm")
                 {
                     commandInformation();
                     return true;
                 }
+#ifdef OPENKNX_TIME_TESTCOMMAND
+                if (cmd == "tm test")
+                {
+                    commandTest();
+                    return true;
+                }
+#endif
+#ifdef OPENKNX_TIME_DIGAGNOSTIC
+                if (cmd == "tm ?")
+                {
+                    commandHelp();
+                    return true;
+                }            
                 if (cmd == "tm setdst")
                 {
                     setDaylightSavingMode(DaylightSavingMode::AlwaysDayLightSavingTime);
@@ -214,16 +226,13 @@ namespace OpenKNX
                     setDaylightSavingMode(DaylightSavingMode::Calculated);
                     return true;
                 }
-                if (cmd == "tm test")
-                {
-                    commandTest();
-                    return true;
-                }
+        
                 if (cmd.rfind("tm ") == 0) // must be the last command check
                 {
                     commandSetDateTime(cmd);
                     return true;
                 }
+#endif
             }
             return false;
         }

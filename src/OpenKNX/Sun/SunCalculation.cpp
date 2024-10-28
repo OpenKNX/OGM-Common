@@ -11,7 +11,6 @@ namespace OpenKNX
         {
             return "Sun";
         }
-       
         void SunCalculation::loop()
         {
             if (openknx.time.isTimeValid())
@@ -30,7 +29,7 @@ namespace OpenKNX
         {
             double latitude = ParamBASE_Latitude;
             double longitude = ParamBASE_Longitude;
-
+#ifdef OPENKNX_SUN_POSITION
             cTime cTime = {0};
             cTime.iYear = utc.tm_year + 1900;
             cTime.iMonth = utc.tm_mon + 1;
@@ -38,8 +37,6 @@ namespace OpenKNX
             cTime.dHours = utc.tm_hour;
             cTime.dMinutes = utc.tm_min;
             cTime.dSeconds = 0;
-
-            logDebugP("%04d-%02d-%02d %02d:%02d", cTime.iYear, cTime.iMonth, cTime.iDay, (int) cTime.dHours, (int) cTime.dMinutes);
 
             cLocation cLocation = {0};
             cLocation.dLatitude = latitude;
@@ -49,7 +46,7 @@ namespace OpenKNX
             sunpos(cTime, cLocation, &cSunCoordinates);
             _azimut = cSunCoordinates.dAzimuth;
             _elevation = 90 - cSunCoordinates.dZenithAngle;
-
+#endif
             double rise, set;
             // sunrise/sunset calculation
             SunRiseAndSet::sunRiseSet(utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday,
@@ -82,7 +79,9 @@ namespace OpenKNX
             {
                 if (isSunCalculatioValid())
                 {
+#ifdef OPENKNX_SUN_POSITION
                     logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimut);
+#endif
                     logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
                     logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.tm_hour, _sunRiseUtc.tm_min);
                     logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.tm_hour, _sunRiseLocalTime.tm_min, _sunRiseLocalTime.tm_isdst ? "Summertime" : "Wintertime");

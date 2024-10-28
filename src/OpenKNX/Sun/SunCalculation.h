@@ -18,8 +18,10 @@ namespace OpenKNX
             uint8_t _lastHour = 0;
             uint8_t _lasMinute = 0;
             bool _sunCalculationValid = false;
+#ifdef OPENKNX_SUN_POSITION
             float _azimut = 0;
             float _elevation = 0;
+#endif
             const std::string logPrefix();
             void loop();
             bool processCommand(std::string& cmd, bool diagnoseKo);
@@ -34,6 +36,7 @@ namespace OpenKNX
              * Returns true, if the sun position is calculated which requires a valid time
              */
             bool isSunCalculatioValid() { return _sunCalculationValid; }
+#ifdef OPENKNX_SUN_POSITION
             /*
              * Returns the azimut
              */
@@ -42,7 +45,7 @@ namespace OpenKNX
              * Returns the elevation
              */
             float elevation() { return _elevation; }
-
+#endif
             /*
             * Returns the sun rise time in UTC for the current day
             */

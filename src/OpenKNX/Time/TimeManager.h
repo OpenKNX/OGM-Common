@@ -48,10 +48,14 @@ namespace OpenKNX
             tm _easter = {0};
             tm _fourthAdvent = {0};
 
+#ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
+#endif
             void commandHelp();
             void commandInformation();
+#ifdef OPENKNX_TIME_DIGAGNOSTIC
             void commandSetDateTime(std::string& cmd);
+#endif
             void setup(bool configured);
             void setDaylightSavingMode(DaylightSavingMode daylightSavingMode);
             void loop();
