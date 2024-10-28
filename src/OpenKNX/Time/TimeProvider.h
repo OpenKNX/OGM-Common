@@ -53,7 +53,11 @@ namespace OpenKNX
             /*
             * Overload this function to log the name of the provider and other usefull information
             */
-             virtual void logInformation() = 0;
+            virtual void logInformation() = 0;
+            /*
+            * Overload this function to delete resources
+            */
+            virtual ~TimeProvider() {}
         };
     } // namespace Time
 } // namespace OpenKNX

@@ -1,19 +1,23 @@
 #pragma once
 #include "Arduino.h"
+#include "TimeClockMillis.h"
+#include "TimeClockSystem.h"
+#include "hardware.h"
 #include "string"
 #include "time.h"
-#include "chrono"
+// #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockMillis
+#ifndef OPENKNX_TIME_CLOCK
+    #ifndef ARDUINO_ARCH_SAMD
+        #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockSystem
+    #else
+        #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockMillis
+    #endif
+#endif
 
 class GroupObject;
 
 namespace OpenKNX
 {
-#ifdef ARDUINO_ARCH_SAMD
-struct timezone {
-	int	tz_minuteswest;	/* minutes west of Greenwich */
-	int	tz_dsttime;	/* type of dst correction */
-};
-#endif
     class Common;
     class Console;
 
@@ -30,20 +34,20 @@ struct timezone {
 
         class TimeManager
         {
-           
+            OPENKNX_TIME_CLOCK _timeClock = OPENKNX_TIME_CLOCK();
             friend Common;
             friend Console;
             friend TimeProvider;
             bool _disableKoRead = false;
+            bool _configured = false;
             TimeProvider* _timeProvider = nullptr;
-            bool _setupCalled = false;
             DaylightSavingMode _daylightSavingMode = DaylightSavingMode::AlwaysStandardTime;
             int _dayLightSavingTimeOffset = 0;
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
             tm _easter = {0};
             tm _fourthAdvent = {0};
-           
+
             void commandTest();
             void commandHelp();
             void commandInformation();
@@ -52,12 +56,11 @@ struct timezone {
             void setDaylightSavingMode(DaylightSavingMode daylightSavingMode);
             void loop();
             void processInputKo(GroupObject& ko);
-            bool processCommand(std::string& cmd, bool diagnoseKo);
+            bool processCommand(std::string& cmd, bool diagnoseKo);     
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);
             void setUtcTime(tm& tm, unsigned long miilisReceivedTimestamp);
-            void setTime(std::time_t epoch, timezone* tz, unsigned long miilisReceivedTimestamp);
             const std::string logPrefix();
-            std::string buildTimezoneString(DaylightSavingMode daylightSavingMode); 
+            std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
           public:
             /*
             Returns true, if a time provider was set
@@ -66,7 +69,7 @@ struct timezone {
             /*
             Returns the timerprovider if set, otherwise nullptr
             */
-            TimeProvider *getTimeProvder();
+            TimeProvider* getTimeProvder();
             /*
              * set a time provider, a previous set time provider will be deleted
              */
@@ -83,7 +86,7 @@ struct timezone {
              * returns true, if the time was a least one time set
              */
             bool isTimeValid();
-           
+
             /*
              * Converts a UTC time to local time
              */
@@ -111,25 +114,24 @@ struct timezone {
             int isDaylightSavingTime(tm tm);
 
             /*
-            * Calculate and set daylight saving flag. The current tm_isdst will be ignored
-            */
+             * Calculate and set daylight saving flag. The current tm_isdst will be ignored
+             */
             void calculateAndSetDstFlag(tm& tm);
 
             /*
-            * Offset daylight saving time
-            */
+             * Offset daylight saving time
+             */
             int daylightSavingTimeOffset();
 
             /*
-            * get easter
-            */
+             * get easter
+             */
             tm getEaster();
 
             /*
-            * get 4th advent
-            */
+             * get 4th advent
+             */
             tm getForthAdvent();
-     
         };
     } // namespace Time
 } // namespace OpenKNX

@@ -22,7 +22,10 @@ namespace OpenKNX
 
         void TimeManager::commandTest()
         {
-            std::string previousTimezone = getenv("TZ");
+            const char* tz = getenv("TZ");
+            if (tz == nullptr)
+                tz = "";
+            std::string previousTimezone = tz;
             const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
             setenv("TZ", timezoneString, 1);
             tzset();
@@ -96,7 +99,7 @@ namespace OpenKNX
         }
         void TimeManager::commandInformation()
         {
-            if (openknx.time.isTimeValid())
+            if (isTimeValid())
             {
                 auto time = getLocalTime();
                 logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
@@ -238,7 +241,7 @@ namespace OpenKNX
             _timeProvider = timeProvider;
             if (timeProvider != nullptr)
                 _timeProvideSupportKnxDaylightSavingTimeSwitch = timeProvider->supportKnxDaylightSavingTimeSwitch();
-            if (_setupCalled && _timeProvider != nullptr)
+            if (_configured && _timeProvider != nullptr)
                 _timeProvider->setup();
             _waitTimerReadKo = 0;
 #ifdef BASE_KoIsSummertime
@@ -248,16 +251,22 @@ namespace OpenKNX
         }
 
         void TimeManager::setup(bool configured)
-        {
-
+        { 
+            _configured = configured;
             setDaylightSavingMode(DaylightSavingMode::Calculated);
+          
+            _timeClock.setup();
             tm tm = {0};
-            tm.tm_year = 2024;
-            tm.tm_mon = 8;
+            tm.tm_year = 2024 - 1900;
+            tm.tm_mon = 6 - 1;
+            tm.tm_mday = 1;
+            tm.tm_hour = 12;
+            tm.tm_min = 0;
+            auto st = mktime(&tm);
+            tm.tm_hour = 12;
+            tm.tm_min = 0;
             tm.tm_isdst = 1;
             auto dst = mktime(&tm);
-            tm.tm_isdst = 0;
-            auto st = mktime(&tm);
             _dayLightSavingTimeOffset = dst - st;
 
             if (configured)
@@ -272,7 +281,6 @@ namespace OpenKNX
 
                 if (_timeProvider != nullptr)
                     _timeProvider->setup();
-                _setupCalled = true;
             }
         }
 
@@ -312,7 +320,7 @@ namespace OpenKNX
             // <Enumeration Text="Wellington (+12 Stunden)" Value="12" Id="%ENID%" />
 
             const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
-            if (knx.configured())
+            if (_configured)
             {
                 switch (ParamBASE_TimezoneValue)
                 {
@@ -427,15 +435,13 @@ namespace OpenKNX
 
         bool TimeManager::isTimeValid()
         {
-            time_t now;
-            time(&now);
+            time_t now = _timeClock.getTime();
             return now > 1704070800; // 2024-01-01
         }
 
         tm TimeManager::getLocalTime()
         {
-            time_t now;
-            time(&now);
+            time_t now = _timeClock.getTime();
             tm localTime;
             localtime_r(&now, &localTime);
             return localTime;
@@ -443,8 +449,7 @@ namespace OpenKNX
 
         tm TimeManager::getUtcTime()
         {
-            time_t now;
-            time(&now);
+            time_t now = _timeClock.getTime();
             tm utcTime;
             gmtime_r(&now, &utcTime);
             return utcTime;
@@ -485,31 +490,16 @@ namespace OpenKNX
             }
             logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
             std::time_t epoch = mktime(&tm);
-            setTime(epoch, nullptr, millisReceivedTimestamp);
+           _timeClock.setTime(epoch, millisReceivedTimestamp);
         }
 
         void TimeManager::setUtcTime(tm& tm, unsigned long millisReceivedTimestamp)
         {
-            timezone timezoneUtc{0};
             std::time_t epoch = mktime(&tm) - _timezone;
-            logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
-            setTime(epoch, &timezoneUtc, millisReceivedTimestamp);
-        }
+            logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
+            _timeClock.setTime(epoch, millisReceivedTimestamp);
+        }       
 
-        void TimeManager::setTime(std::time_t epoch, timezone* tz, unsigned long millisReceivedTimestamp)
-        {
-            auto now = millis();
-            auto millisOffset = now - millisReceivedTimestamp;
-            auto seconds = (long)millisOffset / 1000;
-            auto milliseconds = (long)millisOffset % 1000;
-            struct timeval tv;
-            tv.tv_sec = epoch + seconds;
-            tv.tv_usec = milliseconds * 1000;
-#ifndef ARDUINO_ARCH_SAMD
-            settimeofday(&tv, tz);
-#endif
-            getLocalTime(); // call to update _isTimeValid
-        }
         int TimeManager::isDaylightSavingTime(int year, int month, int day, int hour, int minute)
         {
             tm timeinfo = {0};
