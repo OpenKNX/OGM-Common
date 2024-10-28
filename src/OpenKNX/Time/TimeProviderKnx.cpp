@@ -50,7 +50,7 @@ namespace OpenKNX
                 case WaitStates::InitialRead:
                 case WaitStates::ReceiveMissingOtherTelegrams:
                 {
-                    auto prefix = _waitStates == InitialRead ? "initial" : "missing";
+                    const char* prefix = _waitStates == InitialRead ? "initial" : "missing";
                     if (!_hasDate)
                     {
                         if (ParamBASE_CombinedTimeDate)
@@ -159,7 +159,7 @@ namespace OpenKNX
 #ifdef BASE_KoTime
             if (ko.asap() == BASE_KoTime)
             {
-                auto receiveTimeStamp = millis();
+                unsigned long receiveTimeStamp = millis();
                 if (ParamBASE_CombinedTimeDate)
                 {
                     KNXValue value = "";
@@ -223,7 +223,7 @@ namespace OpenKNX
                 }
                 else
                 {
-                    auto receiveTimeStamp = millis();
+                    unsigned long receiveTimeStamp = millis();
                     KNXValue value = "";
                     // ensure we have a valid time content
                     if (ko.tryValue(value, DPT_TimeOfDay))
@@ -237,7 +237,7 @@ namespace OpenKNX
                         _hasTime = true;
                         if (openknx.time.isTimeValid())
                         {
-                            auto now = openknx.time.getLocalTime();
+                            tm now = openknx.time.getLocalTime();
                             if (!_hasDate)
                             {
                                 // date is already valid, use current date
@@ -282,14 +282,14 @@ namespace OpenKNX
                         if (!_hasTime)
                         {
                             // use current time
-                            auto now = openknx.time.getLocalTime();
+                            tm now = openknx.time.getLocalTime();
                             if (now.tm_year == _dateTime.tm_year && now.tm_mon == _dateTime.tm_mon && now.tm_mday == _dateTime.tm_mday)
                             {
                                 // day not changed, wait for receiving time
                             }
                             else
                             {
-                                auto next = now;
+                                tm next = now;
                                 next.tm_mday += 1;
                                 mktime(&next);
                                 if (next.tm_year == _dateTime.tm_year && next.tm_mon == _dateTime.tm_mon && next.tm_mday == _dateTime.tm_mday &&
@@ -304,7 +304,7 @@ namespace OpenKNX
                                 }
                                 else
                                 {
-                                    auto previous = now;
+                                    tm previous = now;
                                     previous.tm_mday -= 1;
                                     mktime(&previous);
                                     if (previous.tm_year == _dateTime.tm_year && previous.tm_mon == _dateTime.tm_mon && previous.tm_mday == _dateTime.tm_mday &&

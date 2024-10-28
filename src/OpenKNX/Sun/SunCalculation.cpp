@@ -15,7 +15,7 @@ namespace OpenKNX
         {
             if (openknx.time.isTimeValid())
             {
-                auto utc = openknx.time.getUtcTime();
+                tm utc = openknx.time.getUtcTime();
                 if (utc.tm_hour != _lastHour || utc.tm_min != _lasMinute)
                 {
                     _lastHour = utc.tm_hour;

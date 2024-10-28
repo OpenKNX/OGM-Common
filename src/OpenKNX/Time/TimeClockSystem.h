@@ -12,10 +12,10 @@ namespace OpenKNX
            void setup() {};
             void setTime(time_t epoch, unsigned long millisReceivedTimestamp) 
             {
-                auto now = millis();
-                auto millisOffset = now - millisReceivedTimestamp;
-                auto seconds = (long)millisOffset / 1000;
-                auto milliseconds = (long)millisOffset % 1000;
+                unsigned long now = millis();
+                unsigned long millisOffset = now - millisReceivedTimestamp;
+                long seconds = (long)millisOffset / 1000;
+                long milliseconds = (long)millisOffset % 1000;
                 struct timeval tv;
                 tv.tv_sec = epoch + seconds;
                 tv.tv_usec = milliseconds * 1000;

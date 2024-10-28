@@ -37,7 +37,7 @@ namespace OpenKNX
             tm1.tm_mday = 0;
             tm1.tm_year = 2024 - 1900;
 
-            auto time = convertUtcToLocalTime(tm1);
+            tm time = convertUtcToLocalTime(tm1);
             logDebugP("%04d-%02d-%02d %02d:%02d (%s) (17:00 DST from June, 15:00 UTC calculated)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, time.tm_isdst ? "DST" : "ST");
 
             time = convertLocalTimeToUtc(time);
@@ -105,14 +105,14 @@ namespace OpenKNX
         {
             if (isTimeValid())
             {
-                auto time = getLocalTime();
+                tm time = getLocalTime();
                 logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
                 time = getUtcTime();
                 logInfoP("%04d-%02d-%02d %02d:%02d:%02d (UTC)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
             }
             else
                 logInfoP("No valid time");
-            auto tz = getenv("TZ");
+            const char* tz = getenv("TZ");
             if (tz == nullptr)
                 logInfoP("No timezone set");
             else
@@ -134,9 +134,9 @@ namespace OpenKNX
                     break;
             }
             logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
-            auto easter = getEaster();
+            tm easter = getEaster();
             logInfoP("Easter: %04d-%02d-%02d", easter.tm_year + 1900, easter.tm_mon + 1, easter.tm_mday);
-            auto advent = getForthAdvent();
+            tm advent = getForthAdvent();
             logInfoP("4th advent: %04d-%02d-%02d", advent.tm_year + 1900, advent.tm_mon + 1, advent.tm_mday);
             if (!hasTimerProvder())
                 logErrorP("No timeprovider set");
@@ -271,11 +271,11 @@ namespace OpenKNX
             tm.tm_mday = 1;
             tm.tm_hour = 12;
             tm.tm_min = 0;
-            auto st = mktime(&tm);
+            time_t st = mktime(&tm);
             tm.tm_hour = 12;
             tm.tm_min = 0;
             tm.tm_isdst = 1;
-            auto dst = mktime(&tm);
+            time_t dst = mktime(&tm);
             _dayLightSavingTimeOffset = dst - st;
 
             if (configured)
@@ -296,7 +296,7 @@ namespace OpenKNX
         void TimeManager::setDaylightSavingMode(DaylightSavingMode daylightSavingMode)
         {
             _daylightSavingMode = daylightSavingMode;
-            auto timezoneString = buildTimezoneString(daylightSavingMode);
+            std::string timezoneString = buildTimezoneString(daylightSavingMode);
             setenv("TZ", timezoneString.c_str(), 1);
             tzset();
         }
@@ -409,7 +409,7 @@ namespace OpenKNX
             }
             if (daylightSavingMode == DaylightSavingMode::Calculated)
                 return std::string(timezoneString);
-            auto seperator = strstr(timezoneString, ",");
+            const char* seperator = strstr(timezoneString, ",");
             std::string result;
             if (seperator == nullptr)
                 result = timezoneString;
@@ -492,7 +492,7 @@ namespace OpenKNX
                 // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 if (ParamBASE_SummertimeAll != 2)
                 {
-                    auto mode = tm.tm_isdst == 1 ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime;
+                    DaylightSavingMode mode = tm.tm_isdst == 1 ? DaylightSavingMode::AlwaysDayLightSavingTime : DaylightSavingMode::AlwaysStandardTime;
                     if (mode != _daylightSavingMode)
                         setDaylightSavingMode(mode);
                 }
@@ -552,11 +552,11 @@ namespace OpenKNX
                 // switching hour in autumn, its unknown if daylight saving time or standard time because the local hour exist twice
                 if (isTimeValid())
                 {
-                    auto currentLocalTime = getLocalTime();
+                    std::tm currentLocalTime = getLocalTime();
                     tm.tm_isdst = currentLocalTime.tm_isdst; // asume same time
-                    auto currentTime = mktime(&currentLocalTime);
-                    auto newTime = mktime(&tm);
-                    auto seconds = difftime(newTime, currentTime);
+                    time_t currentTime = mktime(&currentLocalTime);
+                    time_t newTime = mktime(&tm);
+                    double seconds = difftime(newTime, currentTime);
                     if (seconds < -2700)
                     {
                         // new time is more then 45 minutes behind current time, assume switch to winter time
@@ -573,7 +573,7 @@ namespace OpenKNX
 
         tm TimeManager::convertUtcToLocalTime(tm& tmUtc)
         {
-            auto utc = mktime(&tmUtc) - _timezone;
+            time_t utc = mktime(&tmUtc) - _timezone;
             tm localTime;
             localtime_r(&utc, &localTime);
             return localTime;
@@ -581,7 +581,7 @@ namespace OpenKNX
 
         tm TimeManager::convertLocalTimeToUtc(tm& tmLocalTime)
         {
-            auto localTime = mktime(&tmLocalTime);
+            time_t localTime = mktime(&tmLocalTime);
             tm utc;
             gmtime_r(&localTime, &utc);
             return utc;
@@ -589,7 +589,7 @@ namespace OpenKNX
 
         tm TimeManager::getEaster()
         {
-            auto localTime = getLocalTime();
+            tm localTime = getLocalTime();
             if (_easter.tm_year != localTime.tm_year)
             {
                 _easter = localTime;
@@ -632,7 +632,7 @@ namespace OpenKNX
 
         tm TimeManager::getForthAdvent()
         {
-            auto localTime = getLocalTime();
+            tm localTime = getLocalTime();
             if (_fourthAdvent.tm_year != localTime.tm_year)
             {
                 _fourthAdvent = localTime;
