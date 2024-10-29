@@ -363,7 +363,7 @@ namespace OpenKNX
         openknx.sun.loop();
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
 #ifdef KoBASE_Date   // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
-        bool checkForDateRead = !openknx.time._disableKoRead;
+        bool checkForDateRead = !openknx.time._disableKoRead && knx.configured();
         if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
             checkForDateRead = false;
 #endif
