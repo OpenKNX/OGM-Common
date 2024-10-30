@@ -14,5 +14,10 @@ namespace OpenKNX
         {
             openknx.time.setUtcTime(utcTime, millisReceivedTimestamp);
         }
+
+        void TimeProvider::timeSet()
+        {
+            openknx.time.timeSet();
+        }
     }
 }

@@ -63,6 +63,7 @@ namespace OpenKNX
             bool processCommand(std::string& cmd, bool diagnoseKo);     
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);
             void setUtcTime(tm& tm, unsigned long miilisReceivedTimestamp);
+            void timeSet();
             const std::string logPrefix();
             std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
           public:

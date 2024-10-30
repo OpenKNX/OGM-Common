@@ -9,6 +9,7 @@
 #include "OpenKNX/Module.h"
 #include "OpenKNX/Watchdog.h"
 #include "OpenKNX/Time/TimeManager.h"
+#include "OpenKNX/Time/TimeProvider.h"
 #include "OpenKNX/Sun/SunCalculation.h"
 
 #ifdef OPENKNX_RUNTIME_STAT

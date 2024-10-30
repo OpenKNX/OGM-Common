@@ -507,7 +507,13 @@ namespace OpenKNX
             std::time_t epoch = mktime(&tm) - _timezone;
             logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
             _timeClock.setTime(epoch, millisReceivedTimestamp);
-        }       
+        } 
+
+        void TimeManager::timeSet()
+        {
+            tm tm = getLocalTime();
+            logInfoP("Time set %04d-%02d-%02d %02d:%02d:%02d (%s)", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST");      
+        }      
 
         int TimeManager::isDaylightSavingTime(int year, int month, int day, int hour, int minute)
         {

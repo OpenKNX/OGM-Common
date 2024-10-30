@@ -48,7 +48,10 @@ namespace OpenKNX
              * By calling this function, the local time will be calculated
              */
             void setUtcTime(tm& utcTime, unsigned long millisReceivedTimestamp = millis());
-          
+            /*
+             * The time provide implementation can use this function to notify the framework that the time was set
+             */
+            void timeSet();
           public:
             /*
             * Overload this function to log the name of the provider and other usefull information
