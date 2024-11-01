@@ -2,6 +2,7 @@
 #include "../Log/Logger.h"
 #include "TimeProvider.h"
 #include "TimeProviderKnx.h"
+#include "DPT19Flags.h"
 
 namespace OpenKNX
 {
@@ -141,7 +142,12 @@ namespace OpenKNX
             if (!hasTimerProvder())
                 logErrorP("No timeprovider set");
             else
-                _timeProvider->logInformation();
+            {
+                if (knx.configured())
+                    _timeProvider->logInformation();  
+                else
+                    logInfoP("Time provider activated because not ETS programming is missing.");
+            }
         }
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         void TimeManager::commandSetDateTime(std::string& cmd)
@@ -254,7 +260,7 @@ namespace OpenKNX
                 _timeProvider->setup();
             _waitTimerReadKo = 0;
 #ifdef BASE_KoIsSummertime
-            if (_timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/ && ParamBASE_ReadTimeDate)
+            if (!ParamBASE_InternalTime && _timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/ && ParamBASE_ReadTimeDate)
                 _waitTimerReadKo = max(millis(), 1UL) - TimeProviderKnx::InitialReadDelayInMs;
 #endif
         }
@@ -423,11 +429,78 @@ namespace OpenKNX
             return result;
         }
 
+        void TimeManager::sendTime()
+        {
+            _lastSendSecond = 255;
+        }
+
+
         void TimeManager::loop()
         {
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
 
+            if (ParamBASE_InternalTime && isTimeValid())
+            {
+                tm localTime = getLocalTime();
+                if (localTime.tm_sec != _lastSendSecond || localTime.tm_min != _lastSendMinute || localTime.tm_hour != _lastSendHour)
+                {
+                    bool forceSend = _lastSendSecond == 255;
+                    _lastSendSecond = localTime.tm_sec;
+                    _lastSendMinute = localTime.tm_min;
+                    _lastSendHour = localTime.tm_hour;  
+
+                    // update time KO
+                    tm knxTime;
+                    knxTime.tm_hour = localTime.tm_hour;
+                    knxTime.tm_min = localTime.tm_min;
+                    knxTime.tm_sec = localTime.tm_sec;  
+                    KoBASE_Time.valueNoSend(knxTime, DPT_TimeOfDay);
+
+                    // update date KO
+                    tm knxDate;
+                    knxDate.tm_year = localTime.tm_year + 1900;
+                    knxDate.tm_mon = localTime.tm_mon + 1;
+                    knxDate.tm_mday = localTime.tm_mday;
+                    knxDate.tm_wday = localTime.tm_wday;
+                    if (knxDate.tm_wday == 0)
+                        knxDate.tm_wday = 7;
+                    KoBASE_Date.valueNoSend(knxDate, DPT_Date);
+
+                    // update date/time KO
+                    knxDate.tm_hour = localTime.tm_hour;
+                    knxDate.tm_min = localTime.tm_min;
+                    knxDate.tm_sec = localTime.tm_sec;
+                    
+                    KoBASE_DateTime.valueNoSend(knxDate, DPT_DateTime);
+
+                    uint8_t *raw = KoBASE_DateTime.valueRef();
+                    if (localTime.tm_isdst)  
+                        raw[6] |= DPT19_SUMMERTIME;
+                    else
+                        raw[6] &= ~DPT19_SUMMERTIME; 
+                    
+                    raw[6] &= ~DPT19_WORKING_DAY; // not supported, always 0
+                    raw[6] |= DPT19_NO_WORKING_DAY;
+
+                    raw[6] &= ~DPT19_FAULT;
+                    raw[6] &= ~DPT19_NO_YEAR;
+                    raw[6] &= ~DPT19_NO_DATE;
+                    raw[6] &= ~DPT19_NO_DAY_OF_WEEK;
+                    raw[6] &= ~DPT19_NO_TIME;
+                    
+                    KoBASE_IsSummertime.valueNoSend(localTime.tm_isdst, DPT_Switch);
+
+                    if ((_lastSendMinute % 10 == 0 && _lastSendSecond == 0) || forceSend)
+                    {
+                        KoBASE_DateTime.objectWritten();
+                        KoBASE_Time.objectWritten();
+                        KoBASE_Date.objectWritten();
+                        KoBASE_IsSummertime.objectWritten();
+                    }         
+                }
+            }
+    
 #ifdef BASE_KoIsSummertime
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
@@ -500,6 +573,7 @@ namespace OpenKNX
             logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
             std::time_t epoch = mktime(&tm);
            _timeClock.setTime(epoch, millisReceivedTimestamp);
+           sendTime();
         }
 
         void TimeManager::setUtcTime(tm& tm, unsigned long millisReceivedTimestamp)
@@ -507,12 +581,14 @@ namespace OpenKNX
             std::time_t epoch = mktime(&tm) - _timezone;
             logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
             _timeClock.setTime(epoch, millisReceivedTimestamp);
+            sendTime();
         } 
 
         void TimeManager::timeSet()
         {
             tm tm = getLocalTime();
             logInfoP("Time set %04d-%02d-%02d %02d:%02d:%02d (%s)", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST");      
+            sendTime();
         }      
 
         int TimeManager::isDaylightSavingTime(int year, int month, int day, int hour, int minute)

@@ -1,6 +1,6 @@
 {
     "name": "OGM-Common",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "dependencies": {
         "khoih-prog/TimerInterrupt_Generic": "^1.13.0",
         "adafruit/Adafruit SleepyDog Library": "^1.6.3",

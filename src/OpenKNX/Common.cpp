@@ -230,7 +230,7 @@ namespace OpenKNX
             openknx.modules.list[i]->init();
 
 #ifdef OPENKNX_TimeProvider
-        if (!openknx.time.hasTimerProvder())
+        if (!openknx.time.hasTimerProvder() && !ParamBASE_InternalTime)
             openknx.time.setTimeProvider(new OPENKNX_TimeProvider());
 #endif
 #ifdef BASE_StartupDelayBase
@@ -363,7 +363,7 @@ namespace OpenKNX
         openknx.sun.loop();
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
 #ifdef KoBASE_Date   // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
-        bool checkForDateRead = !openknx.time._disableKoRead && knx.configured();
+        bool checkForDateRead = !openknx.time._disableKoRead && knx.configured() && !ParamBASE_InternalTime;
         if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
             checkForDateRead = false;
 #endif

@@ -39,6 +39,9 @@ namespace OpenKNX
             friend Console;
             friend TimeProvider;
             bool _disableKoRead = false;
+            uint8_t _lastSendSecond = 0;
+            uint8_t _lastSendMinute = 0;
+            uint8_t _lastSendHour = 0;
             bool _configured = false;
             TimeProvider* _timeProvider = nullptr;
             DaylightSavingMode _daylightSavingMode = DaylightSavingMode::AlwaysStandardTime;
@@ -64,6 +67,7 @@ namespace OpenKNX
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);
             void setUtcTime(tm& tm, unsigned long miilisReceivedTimestamp);
             void timeSet();
+            void sendTime();
             const std::string logPrefix();
             std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
           public:

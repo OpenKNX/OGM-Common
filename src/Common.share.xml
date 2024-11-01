@@ -227,9 +227,7 @@
               <!-- Helper with 0 An auxiliary parameter that is always 0 to make a check against it -->
               <Parameter Id="%AID%_P-%TT%00099" Name="SelectHelper" ParameterType="%AID%_PT-CheckBox" Text="" Value="0" Access="None"/>
 
-              <!-- Hidden Options for external time control -->
-              <Parameter Id="%AID%_P-%TT%00010" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Text="InternalTime" Access="None" Value="0" />
-
+           
               <!-- Extended save -->
               <Parameter Id="%AID%_P-%TT%00011" Name="ExtendedSave" ParameterType="%AID%_PT-OnOffYesNo" Text="Erweitertes Speichern" Value="%BASE_ExtendedSave%" />
 
@@ -252,7 +250,9 @@
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
+                <!-- Hidden Options for external time control -->
+                <Parameter Id="%AID%_UP-%TT%00163" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
               </Union>
 
               <!-- Location -->
@@ -286,7 +286,7 @@
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
-              <ParameterRef Id="%AID%_P-%TT%00010_R-%TT%0001001" RefId="%AID%_P-%TT%00010" />
+              <!-- Free: <ParameterRef Id="%AID%_P-%TT%00010_R-%TT%0001001" RefId="%AID%_P-%TT%00010" /> -->
               <ParameterRef Id="%AID%_P-%TT%00011_R-%TT%0001101" RefId="%AID%_P-%TT%00011" />
               <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
               <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
@@ -307,6 +307,7 @@
               <ParameterRef Id="%AID%_UP-%TT%00160_R-%TT%0016001" RefId="%AID%_UP-%TT%00160" />
               <ParameterRef Id="%AID%_UP-%TT%00161_R-%TT%0016101" RefId="%AID%_UP-%TT%00161" />
               <ParameterRef Id="%AID%_UP-%TT%00162_R-%TT%0016201" RefId="%AID%_UP-%TT%00162" />
+              <ParameterRef Id="%AID%_UP-%TT%00163_R-%TT%0016301" RefId="%AID%_UP-%TT%00163" />
               <ParameterRef Id="%AID%_UP-%TT%00090_R-%TT%0009001" RefId="%AID%_UP-%TT%00090" />
               <ParameterRef Id="%AID%_UP-%TT%00091_R-%TT%0009101" RefId="%AID%_UP-%TT%00091" />
               <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
@@ -318,8 +319,9 @@
               <ComObject Id="%AID%_O-%TT%00003" Name="Date"           Text="Datum"            Number="3"  FunctionText="Eingang" ObjectSize="3 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-11-1" />
               <ComObject Id="%AID%_O-%TT%00007" Name="Diagnose"       Text="Diagnose"         Number="7"  FunctionText="Diagnoseobjekt" ObjectSize="14 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-16-1" />
               <ComObject Id="%AID%_O-%TT%00010" Name="IsSummertime"   Text="Sommerzeit aktiv" Number="10" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%00011" Name="ManualSave"   Text="Speichern"        Number="11" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-17" />
-              <!-- ComObject-IDs 011-019 are free -->
+              <ComObject Id="%AID%_O-%TT%00011" Name="ManualSave"     Text="Speichern"        Number="11" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-17" />
+              <ComObject Id="%AID%_O-%TT%00012" Name="DateTime"       Text="Uhrzeit/Datum"    Number="12"  FunctionText="Ausgang" ObjectSize="8 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-19-1" />
+              <!-- ComObject-IDs 013-019 are free -->
             </ComObjectTable>
             <ComObjectRefs>
               <!-- Heartbeat -->
@@ -329,14 +331,22 @@
               <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000201" RefId="%AID%_O-%TT%00002" Text="Uhrzeit" ObjectSize="3 Bytes" DatapointType="DPST-10-1" />
               <!-- DateTime -->
               <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000202" RefId="%AID%_O-%TT%00002" />
+              <!-- Output Time -->
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000203" RefId="%AID%_O-%TT%00002" Text="Uhrzeit" ObjectSize="3 Bytes" DatapointType="DPST-10-1" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
               <!-- Date -->
               <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000301" RefId="%AID%_O-%TT%00003" />
+              <!-- Output Date -->
+              <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000303" RefId="%AID%_O-%TT%00003" ObjectSize="3 Bytes" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
               <!-- Diagnose-->
               <ComObjectRef Id="%AID%_O-%TT%00007_R-%TT%0000701" RefId="%AID%_O-%TT%00007" />
               <!-- Summertime -->
               <ComObjectRef Id="%AID%_O-%TT%00010_R-%TT%0001001" RefId="%AID%_O-%TT%00010" />
+              <!-- Output Summertime -->
+              <ComObjectRef Id="%AID%_O-%TT%00010_R-%TT%0001003" RefId="%AID%_O-%TT%00010" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled"  />
               <!-- ManualSave -->
               <ComObjectRef Id="%AID%_O-%TT%00011_R-%TT%0001101" RefId="%AID%_O-%TT%00011" />
+              <!-- Output DateTime -->
+              <ComObjectRef Id="%AID%_O-%TT%00012_R-%TT%0001203" RefId="%AID%_O-%TT%00012" />
             </ComObjectRefs>
             <Script>
               <op:include href="Common.script.js" prefix="BASE" type="script" />
@@ -369,7 +379,7 @@
 
               <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
-                <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00163_R-%TT%0016301" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
@@ -416,7 +426,7 @@
                 </choose>
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Uhrzeit &amp; Datum" UIHint="Headline" />
-                <choose ParamRefId="%AID%_P-%TT%00010_R-%TT%0001001">
+                <choose ParamRefId="%AID%_UP-%TT%00163_R-%TT%0016301">
                   <when test="0">
                     <!-- Combined Time/Date KO -->
                     <ParameterRefRef RefId="%AID%_UP-%TT%00156_R-%TT%0015601" HelpContext="BASE-CombinedTimeDate" IndentLevel="1" />
@@ -496,6 +506,14 @@
                   <when test="1">
                     <ParameterRefRef RefId="%AID%_UP-%TT%00144_R-%TT%0014401" HelpContext="Empty" IndentLevel="1" />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Die Zeit wird durch einen internen Zeitgeber verwaltet!" UIHint="Information" />
+                    <!-- Output Time -->
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000203" />
+                    <!-- Output Date -->
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00003_R-%TT%0000303" />       
+                    <!-- Output Summertime -->
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001003" />
+                    <!-- Output DateTime -->
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00012_R-%TT%0001203" />    
                   </when>
                 </choose>
 
