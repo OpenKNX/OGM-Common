@@ -4,46 +4,46 @@
 #include <stdint.h>
 
 #ifndef PI
-#define PI 3.1415926535897932384
+    #define PI 3.1415926535897932384
 #endif
 
 /* A macro to compute the number of days elapsed since 2000 Jan 0.0 */
 /* (which is equal to 1999 Dec 31, 0h UT)                           */
 #ifndef days_since_2000_Jan_0
-#define days_since_2000_Jan_0(y, m, d) \
-    (367L * (y) - ((7 * ((y) + (((m) + 9) / 12))) / 4) + ((275 * (m)) / 9) + (d)-730530L)
+    #define days_since_2000_Jan_0(y, m, d) \
+        (367L * (y) - ((7 * ((y) + (((m) + 9) / 12))) / 4) + ((275 * (m)) / 9) + (d) - 730530L)
 #endif
 
 #ifndef RADEG
-#define RADEG (180.0 / PI)
+    #define RADEG (180.0 / PI)
 #endif
 #ifndef DEGRAD
-#define DEGRAD (PI / 180.0)
+    #define DEGRAD (PI / 180.0)
 #endif
 
 /* The trigonometric functions in degrees */
 
 #ifndef sind
-#define sind(x) sin((x)*DEGRAD)
+    #define sind(x) sin((x) * DEGRAD)
 #endif
 #ifndef cosd
-#define cosd(x) cos((x)*DEGRAD)
+    #define cosd(x) cos((x) * DEGRAD)
 #endif
 #ifndef tand
-#define tand(x) tan((x)*DEGRAD)
+    #define tand(x) tan((x) * DEGRAD)
 #endif
 
 #ifndef atand
-#define atand(x) (RADEG * atan(x))
+    #define atand(x) (RADEG * atan(x))
 #endif
 #ifndef asind
-#define asind(x) (RADEG * asin(x))
+    #define asind(x) (RADEG * asin(x))
 #endif
 #ifndef acosd
-#define acosd(x) (RADEG * acos(x))
+    #define acosd(x) (RADEG * acos(x))
 #endif
 #ifndef atan2d
-#define atan2d(y, x) (RADEG * atan2(y, x))
+    #define atan2d(y, x) (RADEG * atan2(y, x))
 #endif
 
 namespace OpenKNX

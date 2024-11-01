@@ -10,9 +10,11 @@ namespace OpenKNX
          */
         class TimeProvider
         {
-          friend Common;
+            friend Common;
+
           protected:
             bool _disableKoRead = false;
+
           public:
             /*
              * called by the framework after the knx configuration was loaded
@@ -52,14 +54,15 @@ namespace OpenKNX
              * The time provide implementation can use this function to notify the framework that the time was set
              */
             void timeSet();
+
           public:
             /*
-            * Overload this function to log the name of the provider and other usefull information
-            */
+             * Overload this function to log the name of the provider and other usefull information
+             */
             virtual void logInformation() = 0;
             /*
-            * Overload this function to delete resources
-            */
+             * Overload this function to delete resources
+             */
             virtual ~TimeProvider() {}
         };
     } // namespace Time

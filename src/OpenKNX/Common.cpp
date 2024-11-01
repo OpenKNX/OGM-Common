@@ -3,10 +3,10 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
 
 #ifndef OPENKNX_TimeProvider
-#ifdef BASE_KoTime
-#include "OpenKNX/Time/TimeProviderKnx.h"
-#define OPENKNX_TimeProvider Time::TimeProviderKnx
-#endif
+    #ifdef BASE_KoTime
+        #include "OpenKNX/Time/TimeProviderKnx.h"
+        #define OPENKNX_TimeProvider Time::TimeProviderKnx
+    #endif
 #endif
 
 #if defined(OPENKNX_DUALCORE) && defined(ARDUINO_ARCH_ESP32)
@@ -224,7 +224,7 @@ namespace OpenKNX
     {
         bool configured = knx.configured();
         openknx.time.setup(configured);
-       
+
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
@@ -241,8 +241,6 @@ namespace OpenKNX
         // pre setup complete
         openknx.info1Led.off();
 #endif
-
-            
 
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
@@ -344,7 +342,7 @@ namespace OpenKNX
 #ifdef OPENKNX_LOOPTIME_WARNING
         uint32_t start = millis();
 #endif
-       // loop console helper
+        // loop console helper
         RUNTIME_MEASURE_BEGIN(_runtimeConsole);
         openknx.console.loop();
         RUNTIME_MEASURE_END(_runtimeConsole);
@@ -362,7 +360,7 @@ namespace OpenKNX
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
         openknx.sun.loop();
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
-#ifdef KoBASE_Date   // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
+#ifdef KoBASE_Date // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
         bool checkForDateRead = !openknx.time._disableKoRead && knx.configured() && !ParamBASE_InternalTime;
         if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
             checkForDateRead = false;
@@ -402,7 +400,7 @@ namespace OpenKNX
             _lastLooptimeWarning = millis();
         }
 #endif
-#ifdef KoBASE_Date   // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
+#ifdef KoBASE_Date // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
         if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
         {
             logErrorP("Disable time KO' reads in Common because the LogicModule is old and sent the read request");
@@ -411,7 +409,6 @@ namespace OpenKNX
                 openknx.time.getTimeProvder()->_disableKoRead = true;
         }
 #endif
-
     }
 
 #ifdef BASE_PeriodicSave

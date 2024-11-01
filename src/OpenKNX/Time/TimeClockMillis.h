@@ -4,13 +4,13 @@ namespace OpenKNX
 {
     namespace Time
     {
-        class TimeClockMillis 
+        class TimeClockMillis
         {
             unsigned long _timeSetMs = 0;
             time_t _offset = 0;
 
           public:
-          void setup() {};
+            void setup() {};
             void setTime(time_t epoch, unsigned long millisReceivedTimestamp)
             {
                 _offset = epoch;

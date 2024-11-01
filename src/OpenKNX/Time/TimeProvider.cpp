@@ -1,6 +1,5 @@
 #include "TimeProvider.h"
 
-
 namespace OpenKNX
 {
     namespace Time
@@ -19,5 +18,5 @@ namespace OpenKNX
         {
             openknx.time.timeSet();
         }
-    }
-}
+    } // namespace Time
+} // namespace OpenKNX

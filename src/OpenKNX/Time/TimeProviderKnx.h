@@ -8,7 +8,7 @@ namespace OpenKNX
         class TimeProviderKnx : public TimeProvider
         {
             const static int WaitTimeMissingOtherDelegramsInMs = 900;
-       
+
             enum WaitStates
             {
                 None,
@@ -30,29 +30,29 @@ namespace OpenKNX
             const static unsigned long InitialReadDelayInMs = 5000;
             const static int DelayInitialReadInMs = 32000;
             /*
-            * Return the prefix for logging
-            */
+             * Return the prefix for logging
+             */
             const std::string logPrefix() override;
             /*
-            * Overload this function to log the name of the provider and other usefull information
-            */
+             * Overload this function to log the name of the provider and other usefull information
+             */
             void logInformation() override;
             /*
              * called by the framework after the knx configuration was loaded
              */
             void setup() override;
             /*
-            * called by the framework in the loop for core0
-            */
+             * called by the framework in the loop for core0
+             */
             void loop() override;
             /*
              * Called on incoming/changing GroupObject
              * @param GroupObject
              */
             void processInputKo(GroupObject& ko) override;
-             /*
-            * return true, if the provider support setting daylight saving time
-            */
+            /*
+             * return true, if the provider support setting daylight saving time
+             */
             bool supportKnxDaylightSavingTimeSwitch() override;
         };
     } // namespace Time

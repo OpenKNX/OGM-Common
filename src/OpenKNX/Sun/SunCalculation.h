@@ -1,8 +1,8 @@
 #pragma once
 #include "Arduino.h"
-#include "time.h"
 #include "chrono"
 #include "string"
+#include "time.h"
 
 namespace OpenKNX
 {
@@ -47,25 +47,24 @@ namespace OpenKNX
             float elevation() { return _elevation; }
 #endif
             /*
-            * Returns the sun rise time in UTC for the current day
-            */
+             * Returns the sun rise time in UTC for the current day
+             */
             tm sunRiseUtc() { return _sunRiseUtc; }
 
             /*
-            * Returns the sun set time in UTC for the current day
-            */
-            tm sunSetUtc() {return _sunSetUtc; }
+             * Returns the sun set time in UTC for the current day
+             */
+            tm sunSetUtc() { return _sunSetUtc; }
 
             /*
-            * Returns the sun rise time in local time for the current day
-            */
-            tm sunRiseLocalTime() {return _sunRiseLocalTime; }
+             * Returns the sun rise time in local time for the current day
+             */
+            tm sunRiseLocalTime() { return _sunRiseLocalTime; }
 
             /*
-            * Returns the sun set time in local time for the current day
-            */
-            tm sunSetLocalTime() {return _sunSetLocalTime; }
-            
+             * Returns the sun set time in local time for the current day
+             */
+            tm sunSetLocalTime() { return _sunSetLocalTime; }
         };
     } // namespace Sun
 } // namespace OpenKNX

@@ -25,7 +25,7 @@ namespace OpenKNX
             }
         }
 
-        void SunCalculation::recalculateSunCalculation(tm& utc)
+        void SunCalculation::recalculateSunCalculation(tm &utc)
         {
             double latitude = ParamBASE_Latitude;
             double longitude = ParamBASE_Longitude;
@@ -70,8 +70,6 @@ namespace OpenKNX
 
             _sunCalculationValid = true;
         }
-
-      
 
         bool SunCalculation::processCommand(std::string &cmd, bool diagnoseKo)
         {

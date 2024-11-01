@@ -4,13 +4,13 @@
 namespace OpenKNX
 {
     namespace Time
-    { 
+    {
 #ifndef ARDUINO_ARCH_SAMD
         class TimeClockSystem
         {
           public:
-           void setup() {};
-            void setTime(time_t epoch, unsigned long millisReceivedTimestamp) 
+            void setup() {};
+            void setTime(time_t epoch, unsigned long millisReceivedTimestamp)
             {
                 unsigned long now = millis();
                 unsigned long millisOffset = now - millisReceivedTimestamp;

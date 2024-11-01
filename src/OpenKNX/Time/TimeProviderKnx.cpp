@@ -1,6 +1,6 @@
 #include "TimeProviderKnx.h"
-#include "OpenKNX.h"
 #include "DPT19Flags.h"
+#include "OpenKNX.h"
 
 #define TIME_TOLERANCE_CHECK_MIN 2
 
@@ -21,7 +21,7 @@ namespace OpenKNX
                 case WaitStates::InitialRead:
                 case WaitStates::ReceiveMissingOtherTelegrams:
                 {
-                    const char* prefix = _waitStates == InitialRead ? "initial" : "missing";
+                    const char *prefix = _waitStates == InitialRead ? "initial" : "missing";
                     if (!_hasDate)
                     {
                         if (ParamBASE_CombinedTimeDate)
