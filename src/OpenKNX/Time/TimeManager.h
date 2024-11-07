@@ -48,6 +48,7 @@ namespace OpenKNX
             int _dayLightSavingTimeOffset = 0;
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
+            bool _intialReadKo = false;
             tm _easter = {0};
             tm _fourthAdvent = {0};
 

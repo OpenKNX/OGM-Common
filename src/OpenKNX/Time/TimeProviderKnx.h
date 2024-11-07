@@ -13,6 +13,7 @@ namespace OpenKNX
             {
                 None,
                 InitialRead,
+                InitialReadRepeat,
                 ReceiveMissingOtherTelegrams
             };
             WaitStates _waitStates = WaitStates::None;
@@ -27,7 +28,7 @@ namespace OpenKNX
             void initReceiveDateTimeStructure();
 
           public:
-            const static unsigned long InitialReadDelayInMs = 5000;
+            const static int InitialReadAfterInMs = 5000;
             const static int DelayInitialReadInMs = 32000;
             /*
              * Return the prefix for logging

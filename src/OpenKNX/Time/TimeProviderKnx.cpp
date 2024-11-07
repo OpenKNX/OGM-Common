@@ -53,7 +53,7 @@ namespace OpenKNX
 
             if ((!_hasDate || !_hasTime || !_hasDaylightSavingFlag) && ParamBASE_ReadTimeDate)
             {
-                _waitTimerStart = millis() - DelayInitialReadInMs + InitialReadDelayInMs; // first read after 5 seconds
+                _waitTimerStart = delayTimerInit();
                 _waitStates = WaitStates::InitialRead;
             }
 #endif
@@ -65,10 +65,12 @@ namespace OpenKNX
             switch (_waitStates)
             {
                 case WaitStates::InitialRead:
+                case WaitStates::InitialReadRepeat:
                 {
                     // read on start
-                    if (_waitTimerStart != 0 && delayCheckMillis(_waitTimerStart, DelayInitialReadInMs))
+                    if (_waitTimerStart != 0 && delayCheckMillis(_waitTimerStart,  (unsigned long) (_waitStates == WaitStates::InitialRead ? InitialReadAfterInMs : DelayInitialReadInMs)))
                     {
+                        _waitStates = WaitStates::InitialReadRepeat;
                         if (_hasDate && _hasTime)
                         {
                             // Not daylight saving information, assue standard time

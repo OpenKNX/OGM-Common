@@ -261,7 +261,10 @@ namespace OpenKNX
             _waitTimerReadKo = 0;
 #ifdef BASE_KoIsSummertime
             if (!ParamBASE_InternalTime && _timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/ && ParamBASE_ReadTimeDate)
-                _waitTimerReadKo = max(millis(), 1UL) - TimeProviderKnx::InitialReadDelayInMs;
+            {    
+                _waitTimerReadKo = delayTimerInit();
+                _intialReadKo = true; // first read after 5 seconds
+            }
 #endif
         }
 
@@ -504,8 +507,9 @@ namespace OpenKNX
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
-            if (_waitTimerReadKo != 0 && delayCheckMillis(_waitTimerReadKo, TimeProviderKnx::DelayInitialReadInMs))
+            if (_waitTimerReadKo != 0 && delayCheckMillis(_waitTimerReadKo, (unsigned long) (_intialReadKo ? TimeProviderKnx::InitialReadAfterInMs : TimeProviderKnx::DelayInitialReadInMs)))
             {
+                _intialReadKo = false;
                 _waitTimerReadKo = millis();
                 // Kommunikationsobjekt 'Sommerzeit aktiv'
                 if (!_disableKoRead)
