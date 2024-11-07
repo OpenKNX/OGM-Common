@@ -110,7 +110,7 @@ namespace OpenKNX
                 }
                 case WaitStates::ReceiveMissingOtherTelegrams:
                 {
-                    if (_waitTimerStart != 0 && millis() - _waitTimerStart >= WaitTimeMissingOtherDelegramsInMs)
+                    if (_waitTimerStart != 0 && delayCheckMillis(_waitTimerStart, WaitTimeMissingOtherDelegramsInMs))
                     {
                         _waitStates = WaitStates::None;
                         // Use the already loaded internal time for all time parts
