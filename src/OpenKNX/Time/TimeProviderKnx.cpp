@@ -67,7 +67,7 @@ namespace OpenKNX
                 case WaitStates::InitialRead:
                 {
                     // read on start
-                    if (_waitTimerStart != 0 && millis() - _waitTimerStart >= DelayInitialReadInMs)
+                    if (_waitTimerStart != 0 && delayCheckMillis(_waitTimerStart, DelayInitialReadInMs))
                     {
                         if (_hasDate && _hasTime)
                         {
