@@ -87,7 +87,7 @@ namespace OpenKNX
                     logInfoP("Sun set: %02d::%02d (%s)", _sunSetLocalTime.tm_hour, _sunSetLocalTime.tm_min, _sunSetLocalTime.tm_isdst ? "Summertime" : "Wintertime");
                 }
                 else
-                    logInfoP("Sun position now valid because valid time is missing");
+                    logInfoP("Sun position not valid because valid time is missing");
                 return true;
             }
             return false;
