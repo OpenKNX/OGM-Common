@@ -222,12 +222,12 @@ namespace OpenKNX
 
     void Common::setup()
     {
-        bool configured = knx.configured();
-        openknx.time.setup(configured);
-
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
+
+        bool configured = knx.configured();
+        openknx.time.setup(configured);
 
 #ifdef OPENKNX_TimeProvider
         if (!openknx.time.hasTimerProvder() && !ParamBASE_InternalTime)

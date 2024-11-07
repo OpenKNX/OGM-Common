@@ -439,6 +439,7 @@ namespace OpenKNX
 
         void TimeManager::loop()
         {
+            _timeClock.loop();
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
 

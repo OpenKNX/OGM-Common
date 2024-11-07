@@ -11,6 +11,7 @@ namespace OpenKNX
 
           public:
             void setup() {};
+            void loop() {};
             void setTime(time_t epoch, unsigned long millisReceivedTimestamp)
             {
                 _offset = epoch;
