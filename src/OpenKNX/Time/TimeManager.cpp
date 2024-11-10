@@ -492,7 +492,7 @@ namespace OpenKNX
                     raw[6] &= ~DPT19_NO_DAY_OF_WEEK;
                     raw[6] &= ~DPT19_NO_TIME;
 
-                    KoBASE_IsSummertime.valueNoSend(localTime.tm_isdst, DPT_Switch);
+                    KoBASE_IsSummertime.valueNoSend(localTime.tm_isdst != 0, DPT_Switch);
 
                     if ((_lastSendMinute % 10 == 0 && _lastSendSecond == 0) || forceSend)
                     {
