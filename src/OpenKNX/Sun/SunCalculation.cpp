@@ -77,10 +77,10 @@ namespace OpenKNX
             {
                 if (isSunCalculatioValid())
                 {
-#ifdef OPENKNX_SUN_POSITION
+                    logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
+    #ifdef OPENKNX_SUN_POSITION
                     logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimut);
 #endif
-                    logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
                     logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.tm_hour, _sunRiseUtc.tm_min);
                     logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.tm_hour, _sunRiseLocalTime.tm_min, _sunRiseLocalTime.tm_isdst ? "Summertime" : "Wintertime");
                     logInfoP("Sun set: %02d::%02d UTC", _sunSetUtc.tm_hour, _sunSetUtc.tm_min);
