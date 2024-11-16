@@ -1,4 +1,7 @@
 #include "OpenKNX.h"
+#ifdef LOG_HolidayKo
+    #include "Logic.h"
+#endif
 
 namespace OpenKNX
 {
@@ -69,5 +72,33 @@ namespace OpenKNX
             }
             return _fourthAdvent;
         }
+
+#ifdef LOG_HolidayKo
+        // Functions are currently depending on the logic modul implementation of holiday calculation
+        bool Calendar::isHolidayToday()
+        {
+            return Timer::instance().holidayToday();
+        }
+
+        bool Calendar::isHolidayTommorow()
+        {
+            return Timer::instance().holidayTomorrow();
+        }
+
+        bool Calendar::isWorkingDayToday()
+        {
+            int wday = openknx.time.getLocalTime().tm_wday;
+            return wday > 0 && wday < 6 && // Monday to Friday
+                   !isHolidayToday();
+        }
+
+        bool Calendar::isWorkingDayTommorow()
+        {
+            int wday = openknx.time.getLocalTime().tm_wday;
+            return wday >= 0 && wday < 5 && // Sunday to Thuersday
+                   !isHolidayTommorow();
+        }
+#endif
+
     } // namespace Time
 } // namespace OpenKNX

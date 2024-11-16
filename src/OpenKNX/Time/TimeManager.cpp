@@ -106,10 +106,44 @@ namespace OpenKNX
         {
             if (isValid())
             {
-                tm time = getLocalTime();
-                logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
-                time = getUtcTime();
+                tm time = getUtcTime();
                 logInfoP("%04d-%02d-%02d %02d:%02d:%02d (UTC)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
+                time = getLocalTime();
+                logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
+                switch (time.tm_wday)
+                {
+                    case 0:
+                        logInfoP("Sunday");
+                        break;
+                    case 1:
+                        logInfoP("Monday");
+                        break;
+                    case 2:
+                        logInfoP("Tuesday");
+                        break;
+                    case 3:
+                        logInfoP("Wednesday");
+                        break;
+                    case 4:
+                        logInfoP("Thursday");
+                        break;
+                    case 5:
+                        logInfoP("Friday");
+                        break;
+                    case 6:
+                        logInfoP("Saturday");
+                        break;
+                }
+#ifdef LOG_HolidayKo
+                if (openknx.calender.isWorkingDayToday())
+                    logInfoP("Today is a working day");
+                else
+                    logInfoP("Today is a non-working day");
+                if (openknx.calender.isWorkingDayTommorow())    
+                    logInfoP("Tomorrow is a working day");
+                else
+                    logInfoP("Tomorrow is a non-working day");
+#endif
             }
             else
                 logInfoP("No valid time");
@@ -139,6 +173,7 @@ namespace OpenKNX
             logInfoP("Easter: %04d-%02d-%02d", easter.tm_year + 1900, easter.tm_mon + 1, easter.tm_mday);
             tm advent = openknx.calender.getForthAdvent();
             logInfoP("4th advent: %04d-%02d-%02d", advent.tm_year + 1900, advent.tm_mon + 1, advent.tm_mday);
+            
             if (!hasTimerProvder())
                 logErrorP("No timeprovider set");
             else
