@@ -13,7 +13,7 @@ namespace OpenKNX
         }
         void SunCalculation::loop()
         {
-            if (openknx.time.isTimeValid())
+            if (openknx.time.isValid())
             {
                 tm utc = openknx.time.getUtcTime();
                 if (utc.tm_hour != _lastHour || utc.tm_min != _lasMinute)

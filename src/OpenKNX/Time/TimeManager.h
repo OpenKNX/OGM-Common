@@ -49,9 +49,7 @@ namespace OpenKNX
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
             bool _intialReadKo = false;
-            tm _easter = {0};
-            tm _fourthAdvent = {0};
-
+   
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
 #endif
@@ -96,7 +94,7 @@ namespace OpenKNX
             /*
              * returns true, if the time was a least one time set
              */
-            bool isTimeValid();
+            bool isValid();
 
             /*
              * Converts a UTC time to local time
@@ -114,7 +112,7 @@ namespace OpenKNX
              * 0 if it is in standard time
              * -1 for the switching hour in the auntum which can be summer or winter time
              */
-            int isDaylightSavingTime(int year, int month, int day, int hour, int minute);
+            int8_t isDaylightSavingTime(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute);
 
             /*
              * Returns for the provided local time (current tm_isdst will be ignored)
@@ -122,27 +120,19 @@ namespace OpenKNX
              * 0 if it is in standard time
              * -1 for the switching hour in the auntum which can be summer or winter time
              */
-            int isDaylightSavingTime(tm tm);
+            int8_t isDaylightSavingTime(tm tm);
 
             /*
-             * Calculate and set daylight saving flag. The current tm_isdst will be ignored
+             * Calculate and set daylight saving flag 'tm_isdst' in tm struct. The current 'tm_isdst' will be ignored
              */
             void calculateAndSetDstFlag(tm& tm);
 
             /*
-             * Offset daylight saving time
+             * Offset daylight saving time, independent of the current time. 
+             * Note: this is not the offset to UTC, it is the offset between standard time and daylight saving time
              */
             int daylightSavingTimeOffset();
-
-            /*
-             * get easter
-             */
-            tm getEaster();
-
-            /*
-             * get 4th advent
-             */
-            tm getForthAdvent();
+         
         };
     } // namespace Time
 } // namespace OpenKNX

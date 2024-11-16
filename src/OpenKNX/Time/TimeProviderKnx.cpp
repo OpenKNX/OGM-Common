@@ -208,7 +208,7 @@ namespace OpenKNX
                         _dateTime.tm_min = knxTime.tm_min;
                         _dateTime.tm_sec = knxTime.tm_sec;
                         _hasTime = true;
-                        if (openknx.time.isTimeValid())
+                        if (openknx.time.isValid())
                         {
                             tm now = openknx.time.getLocalTime();
                             if (!_hasDate)
@@ -250,7 +250,7 @@ namespace OpenKNX
                     _dateTime.tm_mon = knxTime.tm_mon - 1;
                     _dateTime.tm_mday = knxTime.tm_mday;
                     _hasDate = true;
-                    if (openknx.time.isTimeValid())
+                    if (openknx.time.isValid())
                     {
                         if (!_hasTime)
                         {
@@ -309,7 +309,7 @@ namespace OpenKNX
                     if (newDaylightSaving != _dateTime.tm_isdst)
                     {
                         _dateTime.tm_isdst = newDaylightSaving;
-                        if (!_hasTime && openknx.time.isTimeValid())
+                        if (!_hasTime && openknx.time.isValid())
                         {
                             if (newDaylightSaving)
                                 _dateTime.tm_sec -= openknx.time.daylightSavingTimeOffset();
@@ -325,7 +325,7 @@ namespace OpenKNX
         }
         void TimeProviderKnx::initReceiveDateTimeStructure()
         {
-            if (openknx.time.isTimeValid() && !_hasDate && !_hasTime && !_hasDaylightSavingFlag)
+            if (openknx.time.isValid() && !_hasDate && !_hasTime && !_hasDaylightSavingFlag)
             {
                 _dateTime = openknx.time.getLocalTime();
                 _timeStampTimeReceived = millis();
@@ -352,7 +352,7 @@ namespace OpenKNX
                 _hasTime = false;
                 _hasDaylightSavingFlag = false;
             }
-            else if (openknx.time.isTimeValid() && _waitStates == WaitStates::None)
+            else if (openknx.time.isValid() && _waitStates == WaitStates::None)
             {
                 _waitTimerStart = millis();
                 _waitStates = WaitStates::ReceiveMissingOtherTelegrams;
