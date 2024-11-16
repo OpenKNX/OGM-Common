@@ -99,7 +99,9 @@ namespace OpenKNX
             openknx.console.printHelpLine("tm y", "Set time to 2024-12-01 15:00 UTC (for testing)");
             openknx.console.printHelpLine("tm hhmm", "Set time to hh:mm UTC (for testing)");
             openknx.console.printHelpLine("tm YYMMDDhhmm", "Set time to 20YY-MM-DD hh:mm UTC (for testing)");
+#ifdef OPENKNX_TIME_TESTCOMMAND
             openknx.console.printHelpLine("tm test", "Test some calculation (for testing)");
+#endif
         }
 #endif
         void TimeManager::commandInformation()
@@ -139,7 +141,7 @@ namespace OpenKNX
                     logInfoP("Today is a working day");
                 else
                     logInfoP("Today is a non-working day");
-                if (openknx.calender.isWorkingDayTommorow())    
+                if (openknx.calender.isWorkingDayTommorow())
                     logInfoP("Tomorrow is a working day");
                 else
                     logInfoP("Tomorrow is a non-working day");
@@ -173,7 +175,7 @@ namespace OpenKNX
             logInfoP("Easter: %04d-%02d-%02d", easter.tm_year + 1900, easter.tm_mon + 1, easter.tm_mday);
             tm advent = openknx.calender.getForthAdvent();
             logInfoP("4th advent: %04d-%02d-%02d", advent.tm_year + 1900, advent.tm_mon + 1, advent.tm_mday);
-            
+
             if (!hasTimerProvder())
                 logErrorP("No timeprovider set");
             else
@@ -239,13 +241,15 @@ namespace OpenKNX
                     commandInformation();
                     return true;
                 }
-#ifdef OPENKNX_TIME_TESTCOMMAND
                 if (cmd == "tm test")
                 {
-                    commandTest();
+#ifdef OPENKNX_TIME_TESTCOMMAND
                     return true;
-                }
+                    commandTest();
+#else
+                    return false;
 #endif
+                }
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
                 if (cmd == "tm ?")
                 {
@@ -296,7 +300,7 @@ namespace OpenKNX
             _waitTimerReadKo = 0;
 #ifdef BASE_KoIsSummertime
             if (!ParamBASE_InternalTime && _timeProvideSupportKnxDaylightSavingTimeSwitch && ParamBASE_SummertimeAll == 0 /*Kommunikationsobjekt 'Sommerzeit aktiv'*/ && ParamBASE_ReadTimeDate)
-            {    
+            {
                 _waitTimerReadKo = delayTimerInit();
                 _intialReadKo = true; // first read after 5 seconds
             }
@@ -543,7 +547,7 @@ namespace OpenKNX
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
-            if (_waitTimerReadKo != 0 && delayCheckMillis(_waitTimerReadKo, (unsigned long) (_intialReadKo ? TimeProviderKnx::InitialReadAfterInMs : TimeProviderKnx::DelayInitialReadInMs)))
+            if (_waitTimerReadKo != 0 && delayCheckMillis(_waitTimerReadKo, (unsigned long)(_intialReadKo ? TimeProviderKnx::InitialReadAfterInMs : TimeProviderKnx::DelayInitialReadInMs)))
             {
                 _intialReadKo = false;
                 _waitTimerReadKo = millis();
@@ -708,6 +712,5 @@ namespace OpenKNX
             return utc;
         }
 
-       
     } // namespace Time
 } // namespace OpenKNX

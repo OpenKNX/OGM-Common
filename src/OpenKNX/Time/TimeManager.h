@@ -5,6 +5,13 @@
 #include "hardware.h"
 #include "string"
 #include "time.h"
+
+#ifndef OPENKNX_TIME_DIGAGNOSTIC
+    #ifdef OPENKNX_DEBUG
+        #define OPENKNX_TIME_DIGAGNOSTIC
+    #endif
+#endif
+
 // #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockMillis
 #ifndef OPENKNX_TIME_CLOCK
     #ifndef ARDUINO_ARCH_SAMD
@@ -49,7 +56,7 @@ namespace OpenKNX
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
             bool _intialReadKo = false;
-   
+
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
 #endif
@@ -128,11 +135,10 @@ namespace OpenKNX
             void calculateAndSetDstFlag(tm& tm);
 
             /*
-             * Offset daylight saving time, independent of the current time. 
+             * Offset daylight saving time, independent of the current time.
              * Note: this is not the offset to UTC, it is the offset between standard time and daylight saving time
              */
             int daylightSavingTimeOffset();
-         
         };
     } // namespace Time
 } // namespace OpenKNX
