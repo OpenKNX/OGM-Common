@@ -70,6 +70,7 @@
     #define OKNXHW_REG2_PIPICO_V1_LED3   // LED3
     #define OKNXHW_REG2_DEVICE_DISPLAY   // Device Display Support
     #define OKNXHW_REG2_METER            // Meter Support
+    #define OKNXHW_REG2_DEVICE_RTC      // RTC Support
 #endif
 
 // REG2-Pi-Pico V1 ETH App
@@ -184,10 +185,38 @@
 // REG2-Pi-Pico FwF: Device Display Support
 #ifdef OKNXHW_REG2_DEVICE_DISPLAY
     // Default pins for the I2C bus to connect the hardware display
-    #define OKNXHW_REG2_HWDISPLAY_I2C_0_1 1  // 0: I2C0, 1: I2C1
-    #define OKNXHW_REG2_HWDISPLAY_I2C_SDA 26 // GPIO26 | SPI1 SCK | UART0 CTS | I2C1 SDA | PWM5 A | ADC0
-    #define OKNXHW_REG2_HWDISPLAY_I2C_SCL 27 // GPIO27 | SPI1 TX  | UART0 RX  | I2C0 SCL | PWM6 B | ADC1
-#endif                                       // REG2-Pi-Pico FwF: Device Display Support
+    #define OKNXHW_REG2_HWDISPLAY_I2C_0_1 1        // 0: I2C0, 1: I2C1
+    #define OKNXHW_REG2_HWDISPLAY_I2C_SDA 26       // GPIO26 | SPI1 SCK | UART0 CTS | I2C1 SDA | PWM5 A | ADC0
+    #define OKNXHW_REG2_HWDISPLAY_I2C_SCL 27       // GPIO27 | SPI1 TX  | UART0 RX  | I2C0 SCL | PWM6 B | ADC1
+    #define OKNXHW_REG2_HWDISPLAY_I2C_ADDRESS 0x3C // Set here the i2c address of the display. I.e. 0x3C, 0x3D
+    #define OKNXHW_REG2_HWRTCLOCK_I2C_ADDRESS 0x68 // Set here the i2c address of the RTC. I.e. 0x68 for DS3231. 0x57 for PCF8523. 0x51 for DS3232
+    #define OKNXHW_REG2_DEVICE_DISPLAY_WIDTH 128   // Set here the width of the device display. I.e. 128
+    #define OKNXHW_REG2_DEVICE_DISPLAY_HEIGHT 64   // Set here the height of the device display. I.e. 64
+    
+    // Set there now the generall setting definition for the OFM-DeviceDisplay
+    #define OKNXHW_DEVICE_DISPLAY_I2C_0_1 OKNXHW_REG2_HWDISPLAY_I2C_0_1
+    #define OKNXHW_DEVICE_DISPLAY_I2C_SDA OKNXHW_REG2_HWDISPLAY_I2C_SDA
+    #define OKNXHW_DEVICE_DISPLAY_I2C_SCL OKNXHW_REG2_HWDISPLAY_I2C_SCL
+    #define OKNXHW_DEVICE_DISPLAY_I2C_ADDRESS OKNXHW_REG2_HWDISPLAY_I2C_ADDRESS
+    #define OKNXHW_DEVICE_DISPLAY_WIDTH OKNXHW_REG2_DEVICE_DISPLAY_WIDTH
+    #define OKNXHW_DEVICE_DISPLAY_HEIGHT OKNXHW_REG2_DEVICE_DISPLAY_HEIGHT
+
+#endif // REG2-Pi-Pico FwF: Device Display Support
+
+// REG2-Pi-Pico FwF: Device RTC Support
+#ifdef OKNXHW_REG2_DEVICE_RTC
+    // Default pins for the I2C bus to connect the hardware RTC
+    #define OKNXHW_REG2_HWRTC_I2C_ADDRESS 0x68 // Set here the i2c address of the RTC. I.e. 0x68 for DS3231. 0x57 for PCF8523. 0x51 for DS3232
+    #define OKNXHW_REG2_HWRTC_I2C_0_1 1        // 0: I2C0, 1: I2C1
+    #define OKNXHW_REG2_HWRTC_I2C_SDA 26       // GPIO26 | SPI1 SCK | UART0 CTS | I2C1 SDA | PWM5 A | ADC0
+    #define OKNXHW_REG2_HWRTC_I2C_SCL 27       // GPIO27 | SPI1 TX  | UART0 RX  | I2C0 SCL | PWM6 B | ADC1
+    
+    // Set there now the generall setting definition for the OFM-DeviceRTC
+    #define OKNXHW_DEVICE_RTC_I2C_ADDRESS OKNXHW_REG2_HWRTC_I2C_ADDRESS
+    #define OKNXHW_DEVICE_RTC_I2C_SDA OKNXHW_REG2_HWRTC_I2C_SDA
+    #define OKNXHW_DEVICE_RTC_I2C_SCL OKNXHW_REG2_HWRTC_I2C_SCL
+    #define OKNXHW_DEVICE_RTC_I2C_0_1 OKNXHW_REG2_HWRTC_I2C_0_1
+#endif // REG2-Pi-Pico FwF: Device RTC Support
 
 // REG2-Pi-Pico FwF: Meter Support
 #ifdef OKNXHW_REG2_METER
