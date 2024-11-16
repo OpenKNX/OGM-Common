@@ -252,7 +252,7 @@
                 <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
                 <!-- Hidden Options for external time control -->
-                <Parameter Id="%AID%_UP-%TT%00163" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
               </Union>
 
               <!-- Location -->
@@ -292,6 +292,7 @@
               <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
               <ParameterRef Id="%AID%_UP-%TT%00004_R-%TT%0000401" RefId="%AID%_UP-%TT%00004" />
               <ParameterRef Id="%AID%_UP-%TT%00005_R-%TT%0000501" RefId="%AID%_UP-%TT%00005" />
+              <ParameterRef Id="%AID%_UP-%TT%00006_R-%TT%0000601" RefId="%AID%_UP-%TT%00006" />
               <ParameterRef Id="%AID%_UP-%TT%00034_R-%TT%0003401" RefId="%AID%_UP-%TT%00034" />
               <!-- The follwing 2 IDs are used by logic module for update compatibility -->
               <!-- <ParameterRef Id="%AID%_UP-%TT%00035_R-%TT%0003501" RefId="%AID%_UP-%TT%00035" /> -->
@@ -307,7 +308,6 @@
               <ParameterRef Id="%AID%_UP-%TT%00160_R-%TT%0016001" RefId="%AID%_UP-%TT%00160" />
               <ParameterRef Id="%AID%_UP-%TT%00161_R-%TT%0016101" RefId="%AID%_UP-%TT%00161" />
               <ParameterRef Id="%AID%_UP-%TT%00162_R-%TT%0016201" RefId="%AID%_UP-%TT%00162" />
-              <ParameterRef Id="%AID%_UP-%TT%00163_R-%TT%0016301" RefId="%AID%_UP-%TT%00163" />
               <ParameterRef Id="%AID%_UP-%TT%00090_R-%TT%0009001" RefId="%AID%_UP-%TT%00090" />
               <ParameterRef Id="%AID%_UP-%TT%00091_R-%TT%0009101" RefId="%AID%_UP-%TT%00091" />
               <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
@@ -379,7 +379,7 @@
 
               <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
-                <ParameterRefRef RefId="%AID%_UP-%TT%00163_R-%TT%0016301" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00006_R-%TT%0000601" />
                 <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
@@ -426,7 +426,7 @@
                 </choose>
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Uhrzeit &amp; Datum" UIHint="Headline" />
-                <choose ParamRefId="%AID%_UP-%TT%00163_R-%TT%0016301">
+                <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601">
                   <when test="0">
                     <!-- Combined Time/Date KO -->
                     <ParameterRefRef RefId="%AID%_UP-%TT%00156_R-%TT%0015601" HelpContext="BASE-CombinedTimeDate" IndentLevel="1" />
