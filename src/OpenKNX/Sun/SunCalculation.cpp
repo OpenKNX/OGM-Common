@@ -15,27 +15,26 @@ namespace OpenKNX
         {
             if (openknx.time.isValid())
             {
-                tm utc = openknx.time.getUtcTime();
-                if (utc.tm_hour != _lastHour || utc.tm_min != _lasMinute)
+                DateTime utc = openknx.time.getUtcTime();
+                if (utc.hour != _lastHour || utc.minute != _lastMinute)
                 {
-                    _lastHour = utc.tm_hour;
-                    _lasMinute = utc.tm_min;
+                    _lastHour = utc.hour;
+                    _lastMinute = utc.minute;
                     recalculateSunCalculation(utc);
                 }
             }
         }
 
-        void SunCalculation::recalculateSunCalculation(tm &utc)
+        void SunCalculation::recalculateSunCalculation(DateTime& utc)
         {
             double latitude = ParamBASE_Latitude;
             double longitude = ParamBASE_Longitude;
-#ifdef OPENKNX_SUN_POSITION
             cTime cTime = {0};
-            cTime.iYear = utc.tm_year + 1900;
-            cTime.iMonth = utc.tm_mon + 1;
-            cTime.iDay = utc.tm_mday;
-            cTime.dHours = utc.tm_hour;
-            cTime.dMinutes = utc.tm_min;
+            cTime.iYear = utc.year;
+            cTime.iMonth = utc.month;
+            cTime.iDay = utc.day;
+            cTime.dHours = utc.hour;
+            cTime.dMinutes = utc.minute;
             cTime.dSeconds = 0;
 
             cLocation cLocation = {0};
@@ -46,27 +45,22 @@ namespace OpenKNX
             sunpos(cTime, cLocation, &cSunCoordinates);
             _azimut = cSunCoordinates.dAzimuth;
             _elevation = 90 - cSunCoordinates.dZenithAngle;
-#endif
+
             double rise, set;
             // sunrise/sunset calculation
-            SunRiseAndSet::sunRiseSet(utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday,
+            SunRiseAndSet::sunRiseSet(utc.year, utc.month, utc.day,
                                       longitude, latitude, -35.0 / 60.0, 1, &rise, &set);
 
-            _sunRiseUtc.tm_year = utc.tm_year;
-            _sunRiseUtc.tm_mon = utc.tm_mon;
-            _sunRiseUtc.tm_mday = utc.tm_mday;
-            _sunRiseUtc.tm_hour = (int)floor(rise);
-            _sunRiseUtc.tm_min = (int)(60 * (rise - floor(rise)));
-            _sunRiseUtc.tm_sec = 0;
-            _sunRiseLocalTime = openknx.time.convertUtcToLocalTime(_sunRiseUtc);
+            _sunRiseUtc.hour = (int)floor(rise);
+            _sunRiseUtc.minute = (int)(60 * (rise - floor(rise)));
+            _sunRiseUtc.second = 0;
+            _sunRiseLocalTime = DateTime(utc.year, utc.month, utc.day,  _sunRiseUtc.hour ,  _sunRiseUtc.minute, _sunRiseUtc.second, DateTimeTypeUTC).toLocalTime();
 
-            _sunSetUtc.tm_year = utc.tm_year;
-            _sunSetUtc.tm_mon = utc.tm_mon;
-            _sunSetUtc.tm_mday = utc.tm_mday;
-            _sunSetUtc.tm_hour = (int)floor(set);
-            _sunSetUtc.tm_min = (int)(60 * (set - floor(set)));
-            _sunSetUtc.tm_sec = 0;
-            _sunSetLocalTime = openknx.time.convertUtcToLocalTime(_sunSetUtc);
+        
+            _sunSetUtc.hour = (int)floor(set);
+            _sunSetUtc.minute = (int)(60 * (set - floor(set)));
+            _sunSetUtc.second = 0;
+            _sunSetLocalTime = DateTime(utc.year, utc.month, utc.day,  _sunSetUtc.hour ,  _sunSetUtc.minute, _sunSetUtc.second, DateTimeTypeUTC).toLocalTime();
 
             _sunCalculationValid = true;
         }
@@ -78,13 +72,11 @@ namespace OpenKNX
                 if (isSunCalculatioValid())
                 {
                     logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
-    #ifdef OPENKNX_SUN_POSITION
                     logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimut);
-#endif
-                    logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.tm_hour, _sunRiseUtc.tm_min);
-                    logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.tm_hour, _sunRiseLocalTime.tm_min, _sunRiseLocalTime.tm_isdst ? "Summertime" : "Wintertime");
-                    logInfoP("Sun set: %02d::%02d UTC", _sunSetUtc.tm_hour, _sunSetUtc.tm_min);
-                    logInfoP("Sun set: %02d::%02d (%s)", _sunSetLocalTime.tm_hour, _sunSetLocalTime.tm_min, _sunSetLocalTime.tm_isdst ? "Summertime" : "Wintertime");
+                    logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.hour, _sunRiseUtc.minute);
+                    logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.hour, _sunRiseLocalTime.minute, _sunRiseLocalTime.isDst ? "DST" : "ST");
+                    logInfoP("Sun set: %02d::%02d UTC", _sunSetUtc.hour, _sunSetUtc.minute);
+                    logInfoP("Sun set: %02d::%02d (%s)", _sunSetLocalTime.hour, _sunSetLocalTime.minute, _sunSetLocalTime.isDst ? "DST" : "ST");
                 }
                 else
                     logInfoP("Sun position not valid because valid time is missing");

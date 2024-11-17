@@ -3,6 +3,7 @@
 #include "chrono"
 #include "string"
 #include "time.h"
+#include "../DateTime.h"
 
 namespace OpenKNX
 {
@@ -16,20 +17,19 @@ namespace OpenKNX
             friend Common;
             friend Console;
             uint8_t _lastHour = 0;
-            uint8_t _lasMinute = 0;
+            uint8_t _lastMinute = 0;
             bool _sunCalculationValid = false;
-#ifdef OPENKNX_SUN_POSITION
             float _azimut = 0;
             float _elevation = 0;
-#endif
+
             const std::string logPrefix();
             void loop();
             bool processCommand(std::string& cmd, bool diagnoseKo);
-            void recalculateSunCalculation(tm& utc);
-            tm _sunRiseUtc;
-            tm _sunSetUtc;
-            tm _sunRiseLocalTime;
-            tm _sunSetLocalTime;
+            void recalculateSunCalculation(DateTime& utc);
+            TimeOnly _sunRiseUtc;
+            TimeOnly _sunSetUtc;
+            TimeOnly _sunRiseLocalTime;
+            TimeOnly _sunSetLocalTime;
 
           public:
             /*
@@ -49,22 +49,22 @@ namespace OpenKNX
             /*
              * Returns the sun rise time in UTC for the current day
              */
-            tm sunRiseUtc() { return _sunRiseUtc; }
+            TimeOnly sunRiseUtc() { return _sunRiseUtc; }
 
             /*
              * Returns the sun set time in UTC for the current day
              */
-            tm sunSetUtc() { return _sunSetUtc; }
+            TimeOnly sunSetUtc() { return _sunSetUtc; }
 
             /*
              * Returns the sun rise time in local time for the current day
              */
-            tm sunRiseLocalTime() { return _sunRiseLocalTime; }
+            TimeOnly sunRiseLocalTime() { return _sunRiseLocalTime; }
 
             /*
              * Returns the sun set time in local time for the current day
              */
-            tm sunSetLocalTime() { return _sunSetLocalTime; }
+            TimeOnly sunSetLocalTime() { return _sunSetLocalTime; }
         };
     } // namespace Sun
 } // namespace OpenKNX

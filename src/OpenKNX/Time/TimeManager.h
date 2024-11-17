@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "string"
 #include "time.h"
+#include "../DateTime.h"
 
 #ifndef OPENKNX_TIME_DIGAGNOSTIC
     #ifdef OPENKNX_DEBUG
@@ -93,25 +94,15 @@ namespace OpenKNX
             /*
              * returns the local time
              */
-            tm getLocalTime();
+            DateTime getLocalTime();
             /*
              * returns the UTC time
              */
-            tm getUtcTime();
+            DateTime getUtcTime();
             /*
              * returns true, if the time was a least one time set
              */
             bool isValid();
-
-            /*
-             * Converts a UTC time to local time
-             */
-            tm convertUtcToLocalTime(tm& utcTime);
-
-            /*
-             * Converts a local time to UTC time
-             */
-            tm convertLocalTimeToUtc(tm& tmLocalTime);
 
             /*
              * Returns for the provided local time

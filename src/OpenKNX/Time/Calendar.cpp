@@ -12,14 +12,14 @@ namespace OpenKNX
             return openknx.time.isValid();
         }
 
-        tm Calendar::getEaster()
+        DateOnly Calendar::getEaster()
         {
-            tm localTime = openknx.time.getLocalTime();
-            if (_easter.tm_year != localTime.tm_year)
+            DateTime localTime = openknx.time.getLocalTime();
+            if (_easter.year != localTime.year)
             {
                 _easter = localTime;
                 // calculate easter
-                uint16_t lYear = localTime.tm_year + 1900;
+                uint16_t lYear = localTime.year;
                 uint8_t a = lYear % 19;
                 uint8_t b = lYear % 4;
                 uint8_t c = lYear % 7;
@@ -37,38 +37,41 @@ namespace OpenKNX
                 // calculate easter:
                 if ((22 + d + e) <= 31)
                 {
-                    _easter.tm_mday = 22 + d + e;
-                    _easter.tm_mon = 3 - 1;
+                    _easter.day = 22 + d + e;
+                    _easter.month = 3 - 1;
                 }
                 else
                 {
-                    _easter.tm_mday = d + e - 9;
-                    _easter.tm_mon = 4 - 1;
+                    _easter.day = d + e - 9;
+                    _easter.month = 4 - 1;
 
                     // handle two exceptions
-                    if (_easter.tm_mday == 26)
-                        _easter.tm_mday = 19;
-                    else if ((_easter.tm_mday == 25) && (d == 28) && (a > 10))
-                        _easter.tm_mday = 18;
+                    if (_easter.day == 26)
+                        _easter.day = 19;
+                    else if ((_easter.day == 25) && (d == 28) && (a > 10))
+                        _easter.day = 18;
                 }
             }
             return _easter;
         }
 
-        tm Calendar::getForthAdvent()
+        DateOnly Calendar::getForthAdvent()
         {
-            tm localTime = openknx.time.getLocalTime();
-            if (_fourthAdvent.tm_year != localTime.tm_year)
+            DateTime localTime = openknx.time.getLocalTime();
+            if (_fourthAdvent.year != localTime.year)
             {
-                _fourthAdvent = localTime;
-                _fourthAdvent.tm_mon = 11;
-                _fourthAdvent.tm_mday = 24;
-                _fourthAdvent.tm_hour = 12;
-                _fourthAdvent.tm_min = 0;
-                _fourthAdvent.tm_sec = 0;
-                mktime(&_fourthAdvent); //   -timezone;
-                _fourthAdvent.tm_mday = 24 - _fourthAdvent.tm_wday;
-                _fourthAdvent.tm_mon = 12 - 1;
+                tm fourthAdvent = {0};
+                fourthAdvent.tm_year = localTime.year - 1900;
+                fourthAdvent.tm_mon = 11;
+                fourthAdvent.tm_mday = 24;
+                fourthAdvent.tm_hour = 12;
+                fourthAdvent.tm_min = 0;
+                fourthAdvent.tm_sec = 0;
+                fourthAdvent.tm_isdst = 0;
+                mktime(&fourthAdvent); 
+                _fourthAdvent.year = localTime.year;
+                _fourthAdvent.month = 12;
+                _fourthAdvent.day = 24 - fourthAdvent.tm_wday;
             }
             return _fourthAdvent;
         }
@@ -87,14 +90,14 @@ namespace OpenKNX
 
         bool Calendar::isWorkingDayToday()
         {
-            int wday = openknx.time.getLocalTime().tm_wday;
+            int wday = openknx.time.getLocalTime().dayOfWeek;
             return wday > 0 && wday < 6 && // Monday to Friday
                    !isHolidayToday();
         }
 
         bool Calendar::isWorkingDayTommorow()
         {
-            int wday = openknx.time.getLocalTime().tm_wday;
+            int wday = openknx.time.getLocalTime().dayOfWeek;
             return wday >= 0 && wday < 5 && // Sunday to Thuersday
                    !isHolidayTommorow();
         }

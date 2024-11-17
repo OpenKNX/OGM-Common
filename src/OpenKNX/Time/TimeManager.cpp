@@ -99,43 +99,20 @@ namespace OpenKNX
             openknx.console.printHelpLine("tm y", "Set time to 2024-12-01 15:00 UTC (for testing)");
             openknx.console.printHelpLine("tm hhmm", "Set time to hh:mm UTC (for testing)");
             openknx.console.printHelpLine("tm YYMMDDhhmm", "Set time to 20YY-MM-DD hh:mm UTC (for testing)");
-#ifdef OPENKNX_TIME_TESTCOMMAND
+    #ifdef OPENKNX_TIME_TESTCOMMAND
             openknx.console.printHelpLine("tm test", "Test some calculation (for testing)");
-#endif
+    #endif
         }
 #endif
         void TimeManager::commandInformation()
         {
             if (isValid())
             {
-                tm time = getUtcTime();
-                logInfoP("%04d-%02d-%02d %02d:%02d:%02d (UTC)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec);
-                time = getLocalTime();
-                logInfoP("%04d-%02d-%02d %02d:%02d:%02d (%s)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, (int)time.tm_sec, time.tm_isdst ? "DST" : "ST");
-                switch (time.tm_wday)
-                {
-                    case 0:
-                        logInfoP("Sunday");
-                        break;
-                    case 1:
-                        logInfoP("Monday");
-                        break;
-                    case 2:
-                        logInfoP("Tuesday");
-                        break;
-                    case 3:
-                        logInfoP("Wednesday");
-                        break;
-                    case 4:
-                        logInfoP("Thursday");
-                        break;
-                    case 5:
-                        logInfoP("Friday");
-                        break;
-                    case 6:
-                        logInfoP("Saturday");
-                        break;
-                }
+                DateTime time = getUtcTime();
+                logInfoP("%s", time.toString().c_str());
+                time = time.toLocalTime();
+                logInfoP("%s", time.toString().c_str());
+                logInfoP("%s", time.dayOfWeekString());
 #ifdef LOG_HolidayKo
                 if (openknx.calender.isWorkingDayToday())
                     logInfoP("Today is a working day");
@@ -171,10 +148,13 @@ namespace OpenKNX
                     break;
             }
             logInfoP("Offset for daylight saving time: %ds", (int)_dayLightSavingTimeOffset);
-            tm easter = openknx.calender.getEaster();
-            logInfoP("Easter: %04d-%02d-%02d", easter.tm_year + 1900, easter.tm_mon + 1, easter.tm_mday);
-            tm advent = openknx.calender.getForthAdvent();
-            logInfoP("4th advent: %04d-%02d-%02d", advent.tm_year + 1900, advent.tm_mon + 1, advent.tm_mday);
+            if (openknx.calender.isValid())
+            {
+                DateOnly easter = openknx.calender.getEaster();
+                logInfoP("Easter: %04d-%02d-%02d", easter.year, easter.month, easter.day);
+                DateOnly advent = openknx.calender.getForthAdvent();
+                logInfoP("4th advent: %04d-%02d-%02d", advent.year, advent.month, advent.day);
+            }
 
             if (!hasTimerProvder())
                 logErrorP("No timeprovider set");
@@ -209,9 +189,9 @@ namespace OpenKNX
             }
             else if (cmd.length() == 7)
             {
-                tm.tm_year = isValid() ? getLocalTime().tm_year : 2024 - 1900;
-                tm.tm_mon = (isValid() ? getLocalTime().tm_mon : 7) - 1;
-                tm.tm_mday = isValid() ? getLocalTime().tm_mday : 1;
+                tm.tm_year = (isValid() ? getLocalTime().year : 2024) - 1900;
+                tm.tm_mon = (isValid() ? getLocalTime().month : 7) - 1;
+                tm.tm_mday = isValid() ? getLocalTime().day : 1;
                 tm.tm_hour = stoi(cmd.substr(3, 2));
                 tm.tm_min = stoi(cmd.substr(5, 2));
             }
@@ -239,6 +219,49 @@ namespace OpenKNX
                 if (cmd == "tm")
                 {
                     commandInformation();
+                    return true;
+                }
+                if (cmd == "tm unittest")
+                {
+                    DateTime dt;
+                    dt = DateTime(2024, 7, 1, 15, 2, 3, DateTimeTypeLocalTimeDST);
+                    logDebugP("2024.07.01 15:02:03 DST = %s", dt.toString().c_str());
+                    dt = dt.toUtc();
+                    logDebugP("CONVERTED 13:02:03 UTC = %s", dt.toString().c_str());
+
+                    dt = DateTime(2024, 7, 1, 15, 2, 3, DateTimeTypeUTC);
+                    logDebugP("2024.07.01 15:02:03 UTC = %s", dt.toString().c_str());
+                    dt = dt.toLocalTime();
+                    logDebugP("CONVERTED 17:02:03 DST = %s", dt.toString().c_str());
+
+                    dt.addDays(-1);
+                    logDebugP("-1d 2024.06.30 17:02:03 ST = %s", dt.toString().c_str());
+
+                    dt.addHours(-1);
+                    logDebugP("-1h 2024.06.30 16:02:03 ST = %s", dt.toString().c_str());
+
+                    dt = DateTime(2024, 12, 1, 15, 2, 3, DateTimeTypeLocalTimeST);
+                    logDebugP("2024.12.01 15:02:03 ST = %s", dt.toString().c_str());
+                    dt = dt.toUtc();
+                    logDebugP("CONVERTED 14:02:03 UTC = %s", dt.toString().c_str());
+
+                    dt.addDays(-1);
+                    logDebugP("-1d 2024.11.30 14:02:03 UTC = %s", dt.toString().c_str());
+
+                    dt.addHours(-1);
+                    logDebugP("-1h 2024.11.30 13:02:03 UTC = %s", dt.toString().c_str());
+
+                    dt = DateTime(2024, 12, 1, 15, 2, 3, DateTimeTypeUTC);
+                    logDebugP("2024.12.01 15:02:03 UTC = %s", dt.toString().c_str());
+                    dt = dt.toLocalTime();
+                    logDebugP("CONVERTED 16:02:03 ST = %s", dt.toString().c_str());
+
+                    dt.addDays(-1);
+                    logDebugP("-1d 2024.11.30 16:02:03 ST = %s", dt.toString().c_str());
+
+                    dt.addHours(-1);
+                    logDebugP("-1h 2024.11.30 15:02:03 ST = %s", dt.toString().c_str());
+
                     return true;
                 }
                 if (cmd == "tm test")
@@ -331,7 +354,7 @@ namespace OpenKNX
                 // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                 // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
                 // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
-                if (ParamBASE_SummertimeAll == 2)
+                if (ParamBASE_SummertimeAll == 2 || ParamBASE_InternalTime)
                     setDaylightSavingMode(DaylightSavingMode::Calculated);
                 else
                     setDaylightSavingMode(DaylightSavingMode::AlwaysStandardTime);
@@ -484,40 +507,40 @@ namespace OpenKNX
 
             if (ParamBASE_InternalTime && isValid())
             {
-                tm localTime = getLocalTime();
-                if (localTime.tm_sec != _lastSendSecond || localTime.tm_min != _lastSendMinute || localTime.tm_hour != _lastSendHour)
+                DateTime localTime = getLocalTime();
+                if (localTime.second != _lastSendSecond || localTime.minute != _lastSendMinute || localTime.hour != _lastSendHour)
                 {
                     bool forceSend = _lastSendSecond == 255;
-                    _lastSendSecond = localTime.tm_sec;
-                    _lastSendMinute = localTime.tm_min;
-                    _lastSendHour = localTime.tm_hour;
+                    _lastSendSecond = localTime.second;
+                    _lastSendMinute = localTime.minute;
+                    _lastSendHour = localTime.hour;
 
                     // update time KO
                     tm knxTime;
-                    knxTime.tm_hour = localTime.tm_hour;
-                    knxTime.tm_min = localTime.tm_min;
-                    knxTime.tm_sec = localTime.tm_sec;
+                    knxTime.tm_hour = localTime.hour;
+                    knxTime.tm_min = localTime.minute;
+                    knxTime.tm_sec = localTime.second;
                     KoBASE_Time.valueNoSend(knxTime, DPT_TimeOfDay);
 
                     // update date KO
                     tm knxDate;
-                    knxDate.tm_year = localTime.tm_year + 1900;
-                    knxDate.tm_mon = localTime.tm_mon + 1;
-                    knxDate.tm_mday = localTime.tm_mday;
-                    knxDate.tm_wday = localTime.tm_wday;
+                    knxDate.tm_year = localTime.year;
+                    knxDate.tm_mon = localTime.month;
+                    knxDate.tm_mday = localTime.day;
+                    knxDate.tm_wday = localTime.dayOfWeek;
                     if (knxDate.tm_wday == 0)
                         knxDate.tm_wday = 7;
                     KoBASE_Date.valueNoSend(knxDate, DPT_Date);
 
                     // update date/time KO
-                    knxDate.tm_hour = localTime.tm_hour;
-                    knxDate.tm_min = localTime.tm_min;
-                    knxDate.tm_sec = localTime.tm_sec;
+                    knxDate.tm_hour = localTime.hour;
+                    knxDate.tm_min = localTime.minute;
+                    knxDate.tm_sec = localTime.second;
 
                     KoBASE_DateTime.valueNoSend(knxDate, DPT_DateTime);
 
                     uint8_t* raw = KoBASE_DateTime.valueRef();
-                    if (localTime.tm_isdst)
+                    if (localTime.isDst)
                         raw[6] |= DPT19_SUMMERTIME;
                     else
                         raw[6] &= ~DPT19_SUMMERTIME;
@@ -531,7 +554,7 @@ namespace OpenKNX
                     raw[6] &= ~DPT19_NO_DAY_OF_WEEK;
                     raw[6] &= ~DPT19_NO_TIME;
 
-                    KoBASE_IsSummertime.valueNoSend(localTime.tm_isdst != 0, DPT_Switch);
+                    KoBASE_IsSummertime.valueNoSend(localTime.isDst != 0, DPT_Switch);
 
                     if ((_lastSendMinute % 10 == 0 && _lastSendSecond == 0) || forceSend)
                     {
@@ -564,20 +587,14 @@ namespace OpenKNX
             return now > 1704070800; // 2024-01-01
         }
 
-        tm TimeManager::getLocalTime()
+        DateTime TimeManager::getLocalTime()
         {
-            time_t now = _timeClock.getTime();
-            tm localTime;
-            localtime_r(&now, &localTime);
-            return localTime;
+            return DateTime(_timeClock.getTime());
         }
 
-        tm TimeManager::getUtcTime()
+        DateTime TimeManager::getUtcTime()
         {
-            time_t now = _timeClock.getTime();
-            tm utcTime;
-            gmtime_r(&now, &utcTime);
-            return utcTime;
+            return DateTime(_timeClock.getTime(), true);
         }
 
         void TimeManager::processInputKo(GroupObject& ko)
@@ -629,8 +646,7 @@ namespace OpenKNX
 
         void TimeManager::timeSet()
         {
-            tm tm = getLocalTime();
-            logInfoP("Time set %04d-%02d-%02d %02d:%02d:%02d (%s)", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST");
+            logInfoP("Time set %s", getLocalTime().toString().c_str());
             sendTime();
         }
 
@@ -677,9 +693,9 @@ namespace OpenKNX
                 // switching hour in autumn, its unknown if daylight saving time or standard time because the local hour exist twice
                 if (isValid())
                 {
-                    std::tm currentLocalTime = getLocalTime();
-                    tm.tm_isdst = currentLocalTime.tm_isdst; // asume same time
-                    time_t currentTime = mktime(&currentLocalTime);
+                    DateTime currentLocalTime = getLocalTime();
+                    tm.tm_isdst = currentLocalTime.isDst; // asume same time
+                    time_t currentTime = currentLocalTime.toTime_t();
                     time_t newTime = mktime(&tm);
                     double seconds = difftime(newTime, currentTime);
                     if (seconds < -2700)
@@ -694,22 +710,6 @@ namespace OpenKNX
                     tm.tm_isdst = 1;
                 }
             }
-        }
-
-        tm TimeManager::convertUtcToLocalTime(tm& tmUtc)
-        {
-            time_t utc = mktime(&tmUtc) - _timezone;
-            tm localTime;
-            localtime_r(&utc, &localTime);
-            return localTime;
-        }
-
-        tm TimeManager::convertLocalTimeToUtc(tm& tmLocalTime)
-        {
-            time_t localTime = mktime(&tmLocalTime);
-            tm utc;
-            gmtime_r(&localTime, &utc);
-            return utc;
         }
 
     } // namespace Time

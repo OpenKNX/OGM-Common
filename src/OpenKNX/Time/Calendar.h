@@ -8,8 +8,8 @@ namespace OpenKNX
     {
         class Calendar
         {
-            tm _easter = {0};
-            tm _fourthAdvent = {0};
+            DateOnly _easter = {0};
+            DateOnly _fourthAdvent = {0};
           public:
             /*
              * Returns true, if the calculation is valid
@@ -18,11 +18,11 @@ namespace OpenKNX
             /*
              * get easter
              */
-            tm getEaster();
+            DateOnly getEaster();
             /*
              * get 4th advent
              */
-            tm getForthAdvent();
+            DateOnly getForthAdvent();
 
 #ifdef LOG_HolidayKo
             // woring day functions are currently depenting on the loglic module. 

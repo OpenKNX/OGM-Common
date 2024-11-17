@@ -210,7 +210,8 @@ namespace OpenKNX
                         _hasTime = true;
                         if (openknx.time.isValid())
                         {
-                            tm now = openknx.time.getLocalTime();
+                            tm now;
+                            openknx.time.getLocalTime().toTm(now);
                             if (!_hasDate)
                             {
                                 // date is already valid, use current date
@@ -255,7 +256,8 @@ namespace OpenKNX
                         if (!_hasTime)
                         {
                             // use current time
-                            tm now = openknx.time.getLocalTime();
+                            tm now;
+                            openknx.time.getLocalTime().toTm(now);
                             if (now.tm_year == _dateTime.tm_year && now.tm_mon == _dateTime.tm_mon && now.tm_mday == _dateTime.tm_mday)
                             {
                                 // day not changed, wait for receiving time
@@ -327,7 +329,7 @@ namespace OpenKNX
         {
             if (openknx.time.isValid() && !_hasDate && !_hasTime && !_hasDaylightSavingFlag)
             {
-                _dateTime = openknx.time.getLocalTime();
+                openknx.time.getLocalTime().toTm(_dateTime);
                 _timeStampTimeReceived = millis();
             }
         }
