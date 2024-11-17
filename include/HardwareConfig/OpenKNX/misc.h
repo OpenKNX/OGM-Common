@@ -2,15 +2,15 @@
 /**
  * OpenKNX Hardware definition header file
  * 
- * File: OpenKNX-PiPico-BCU-Hardware.h
- * Hardware: OpenKNX PiPico BCU Connector
+ * File: misc.h
+ * Hardware: OpenKNX Miscellanous Hardware
  * Responsible: OpenKNX
  *
- * Defines hardware IO pins and functionalities for the OpenKNX PiPico BCU Connector.
+ * Defines hardware IO pins and functionalities for the OpenKNX Miscellanous Hardware.
  * Includes pin assignments for LEDs, buttons, serial communication, and other peripherals.
  * Ensures compatibility with various application boards and firmware features.
  *
- * More info about the Hardware visit: https://github.com/OpenKNX/OpenKNX/wiki/PiPico-BCU-Connector
+ * More info about the Hardware visit: https://www.OpenKNX.de
  *
  * ATTENTION:
  *    Do not include this file directly.

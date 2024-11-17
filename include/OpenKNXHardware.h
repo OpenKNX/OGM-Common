@@ -26,11 +26,17 @@
  * 
  */
 
-#include "OpenKNX-PiPico-BCU-Hardware.h"
-#include "OpenKNX-REG1-Hardware.h"
-#include "OpenKNX-REG2-PiPico-Hardware.h"
-#include "OpenKNX-UP1-Hardware.h"
-#include "OpenKNX-Xiao-Hardware.h"
 
-//#include "OpenKNX-XYZ-Hardware.h"
-//#include "OpenKNX-Ready-XYZ-Hardware.h"
+// OpenKNX Hardware Definitions
+#include "HardwareConfig/OpenKNX/misc.h"
+#include "HardwareConfig/OpenKNX/REG1.h"
+#include "HardwareConfig/OpenKNX/REG2-PiPico.h"
+#include "HardwareConfig/OpenKNX/UP1.h"
+#include "HardwareConfig/OpenKNX/Xiao.h"
+
+// OpenKNX Ready Hardware Definitions
+//  #include "HardwareConfig/OpenKNX-Ready/AB-SmartHouse/xyz.h"
+//  #include "HardwareConfig/OpenKNX-Ready/SMART-MF/xyz.h"
+
+// Other 3rd Party Hardware Definitions
+//  #include "HardwareConfig/Others/XYZ-Hardware.h"
