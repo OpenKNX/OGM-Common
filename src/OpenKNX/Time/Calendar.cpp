@@ -78,7 +78,7 @@ namespace OpenKNX
                 fourthAdvent.tm_min = 0;
                 fourthAdvent.tm_sec = 0;
                 fourthAdvent.tm_isdst = 0;
-                mktime(&fourthAdvent); 
+                mktime(&fourthAdvent);
                 _fourthAdvent.year = localTime.year;
                 _fourthAdvent.month = 12;
                 _fourthAdvent.day = 24 - fourthAdvent.tm_wday;

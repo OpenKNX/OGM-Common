@@ -86,44 +86,44 @@ namespace OpenKNX
             setenv("TZ", previousTimezone.c_str(), 1);
             tzset();
 
-             DateTime dt;
-                    dt = DateTime(2024, 7, 1, 15, 2, 3, DateTimeTypeLocalTimeDST);
-                    logDebugP("2024.07.01 15:02:03 DST = %s", dt.toString().c_str());
-                    dt = dt.toUtc();
-                    logDebugP("CONVERTED 13:02:03 UTC = %s", dt.toString().c_str());
+            DateTime dt;
+            dt = DateTime(2024, 7, 1, 15, 2, 3, DateTimeTypeLocalTimeDST);
+            logDebugP("2024.07.01 15:02:03 DST = %s", dt.toString().c_str());
+            dt = dt.toUtc();
+            logDebugP("CONVERTED 13:02:03 UTC = %s", dt.toString().c_str());
 
-                    dt = DateTime(2024, 7, 1, 15, 2, 3, DateTimeTypeUTC);
-                    logDebugP("2024.07.01 15:02:03 UTC = %s", dt.toString().c_str());
-                    dt = dt.toLocalTime();
-                    logDebugP("CONVERTED 17:02:03 DST = %s", dt.toString().c_str());
+            dt = DateTime(2024, 7, 1, 15, 2, 3, DateTimeTypeUTC);
+            logDebugP("2024.07.01 15:02:03 UTC = %s", dt.toString().c_str());
+            dt = dt.toLocalTime();
+            logDebugP("CONVERTED 17:02:03 DST = %s", dt.toString().c_str());
 
-                    dt.addDays(-1);
-                    logDebugP("-1d 2024.06.30 17:02:03 ST = %s", dt.toString().c_str());
+            dt.addDays(-1);
+            logDebugP("-1d 2024.06.30 17:02:03 ST = %s", dt.toString().c_str());
 
-                    dt.addHours(-1);
-                    logDebugP("-1h 2024.06.30 16:02:03 ST = %s", dt.toString().c_str());
+            dt.addHours(-1);
+            logDebugP("-1h 2024.06.30 16:02:03 ST = %s", dt.toString().c_str());
 
-                    dt = DateTime(2024, 12, 1, 15, 2, 3, DateTimeTypeLocalTimeST);
-                    logDebugP("2024.12.01 15:02:03 ST = %s", dt.toString().c_str());
-                    dt = dt.toUtc();
-                    logDebugP("CONVERTED 14:02:03 UTC = %s", dt.toString().c_str());
+            dt = DateTime(2024, 12, 1, 15, 2, 3, DateTimeTypeLocalTimeST);
+            logDebugP("2024.12.01 15:02:03 ST = %s", dt.toString().c_str());
+            dt = dt.toUtc();
+            logDebugP("CONVERTED 14:02:03 UTC = %s", dt.toString().c_str());
 
-                    dt.addDays(-1);
-                    logDebugP("-1d 2024.11.30 14:02:03 UTC = %s", dt.toString().c_str());
+            dt.addDays(-1);
+            logDebugP("-1d 2024.11.30 14:02:03 UTC = %s", dt.toString().c_str());
 
-                    dt.addHours(-1);
-                    logDebugP("-1h 2024.11.30 13:02:03 UTC = %s", dt.toString().c_str());
+            dt.addHours(-1);
+            logDebugP("-1h 2024.11.30 13:02:03 UTC = %s", dt.toString().c_str());
 
-                    dt = DateTime(2024, 12, 1, 15, 2, 3, DateTimeTypeUTC);
-                    logDebugP("2024.12.01 15:02:03 UTC = %s", dt.toString().c_str());
-                    dt = dt.toLocalTime();
-                    logDebugP("CONVERTED 16:02:03 ST = %s", dt.toString().c_str());
+            dt = DateTime(2024, 12, 1, 15, 2, 3, DateTimeTypeUTC);
+            logDebugP("2024.12.01 15:02:03 UTC = %s", dt.toString().c_str());
+            dt = dt.toLocalTime();
+            logDebugP("CONVERTED 16:02:03 ST = %s", dt.toString().c_str());
 
-                    dt.addDays(-1);
-                    logDebugP("-1d 2024.11.30 16:02:03 ST = %s", dt.toString().c_str());
+            dt.addDays(-1);
+            logDebugP("-1d 2024.11.30 16:02:03 ST = %s", dt.toString().c_str());
 
-                    dt.addHours(-1);
-                    logDebugP("-1h 2024.11.30 15:02:03 ST = %s", dt.toString().c_str());
+            dt.addHours(-1);
+            logDebugP("-1h 2024.11.30 15:02:03 ST = %s", dt.toString().c_str());
         }
 #endif
 
@@ -306,8 +306,8 @@ namespace OpenKNX
                 if (cmd == "tm test")
                 {
 #ifdef OPENKNX_TIME_TESTCOMMAND
-                    return true;
                     commandTest();
+                    return true;
 #else
                     return false;
 #endif
