@@ -32,30 +32,7 @@ namespace OpenKNX
             setenv("TZ", timezoneString, 1);
             tzset();
 
-            tm tm1 = {0};
-            tm1.tm_hour = 15;
-            tm1.tm_mon = 7;
-            tm1.tm_mday = 0;
-            tm1.tm_year = 2024 - 1900;
-
-            tm time = convertUtcToLocalTime(tm1);
-            logDebugP("%04d-%02d-%02d %02d:%02d (%s) (17:00 DST from June, 15:00 UTC calculated)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, time.tm_isdst ? "DST" : "ST");
-
-            time = convertLocalTimeToUtc(time);
-            logDebugP("%04d-%02d-%02d %02d:%02d (UTC) (15:00 converted back to localtime)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min);
-
-            tm tm2 = {0};
-            tm2.tm_hour = 15;
-            tm2.tm_mon = 11;
-            tm2.tm_mday = 0;
-            tm2.tm_year = 2024 - 1900;
-
-            time = convertUtcToLocalTime(tm2);
-            logDebugP("%04d-%02d-%02d %02d:%02d (%s) (16:00 ST from December, 15:00 UTC calculated)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min, time.tm_isdst ? "DST" : "ST");
-
-            time = convertLocalTimeToUtc(time);
-            logDebugP("%04d-%02d-%02d %02d:%02d (UTC) (15:00 converted back to localtime)", (int)time.tm_year + 1900, (int)time.tm_mon + 1, (int)time.tm_mday, (int)time.tm_hour, (int)time.tm_min);
-
+           
             logDebugP("    Calculated-> X X <- Expected");
             logDebugP("29.3.2024 23:59 %2d  0", (int)isDaylightSavingTime(2024, 3, 29, 23, 59));
             logDebugP("30.3.2024 00:00 %2d  0", (int)isDaylightSavingTime(2024, 3, 30, 0, 0));
