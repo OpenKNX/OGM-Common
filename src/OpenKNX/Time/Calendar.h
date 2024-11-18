@@ -16,6 +16,15 @@ namespace OpenKNX
              */
             bool isValid();
             /*
+             * returns the current date based on the UTC time
+             */
+            DateOnly getUtcDate();
+    
+            /*
+             * returns the current date based on the local time
+             */
+            DateOnly getLocalDate();
+            /*
              * get easter
              */
             DateOnly getEaster();

@@ -12,6 +12,16 @@ namespace OpenKNX
             return openknx.time.isValid();
         }
 
+        DateOnly Calendar::getLocalDate()
+        {
+            return openknx.time.getLocalTime();
+        }
+
+        DateOnly Calendar::getUtcDate()
+        {
+            return openknx.time.getUtcTime();
+        }
+
         DateOnly Calendar::getEaster()
         {
             DateTime localTime = openknx.time.getLocalTime();
