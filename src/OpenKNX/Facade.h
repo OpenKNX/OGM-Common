@@ -11,7 +11,9 @@
 #include "OpenKNX/Time/TimeManager.h"
 #include "OpenKNX/Time/TimeProvider.h"
 #include "OpenKNX/Time/Calendar.h"
-#include "OpenKNX/Sun/SunCalculation.h"
+#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
+        #include "OpenKNX/Sun/SunCalculation.h"
+#endif
 
 #ifdef OPENKNX_RUNTIME_STAT
     #include "OpenKNX/Stat/RuntimeStat.h"
@@ -47,7 +49,9 @@ namespace OpenKNX
         Hardware hardware;
         Watchdog watchdog;
         Time::TimeManager time;
+#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
         Sun::SunCalculation sun;
+#endif
         Time::Calendar calendar;
 
         Button progButton = Button("Prog");

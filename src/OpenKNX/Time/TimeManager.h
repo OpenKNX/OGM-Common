@@ -6,6 +6,7 @@
 #include "hardware.h"
 #include "string"
 #include "time.h"
+#include <ctime>
 
 #ifndef OPENKNX_TIME_DIGAGNOSTIC
     #ifdef OPENKNX_DEBUG

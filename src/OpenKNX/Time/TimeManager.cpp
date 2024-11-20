@@ -531,14 +531,15 @@ namespace OpenKNX
                     _lastSendSecond = localTime.second;
                     _lastSendMinute = localTime.minute;
                     _lastSendHour = localTime.hour;
-
+#ifdef KoBASE_Time
                     // update time KO
                     tm knxTime;
                     knxTime.tm_hour = localTime.hour;
                     knxTime.tm_min = localTime.minute;
                     knxTime.tm_sec = localTime.second;
                     KoBASE_Time.valueNoSend(knxTime, DPT_TimeOfDay);
-
+#endif
+#ifdef KoBASE_Date
                     // update date KO
                     tm knxDate;
                     knxDate.tm_year = localTime.year;
@@ -553,6 +554,7 @@ namespace OpenKNX
                     knxDate.tm_hour = localTime.hour;
                     knxDate.tm_min = localTime.minute;
                     knxDate.tm_sec = localTime.second;
+#endif
 #ifdef KoBASE_DateTime
                     KoBASE_DateTime.valueNoSend(knxDate, DPT_DateTime);
 
@@ -571,21 +573,29 @@ namespace OpenKNX
                     raw[6] &= ~DPT19_NO_DAY_OF_WEEK;
                     raw[6] &= ~DPT19_NO_TIME;
 #endif
+#ifdef KoBASE_IsSummertime
                     KoBASE_IsSummertime.valueNoSend(localTime.isDst != 0, DPT_Switch);
+#endif
 
                     if ((_lastSendMinute % 10 == 0 && _lastSendSecond == 0) || forceSend)
                     {
 #ifdef KoBASE_DateTime
                         KoBASE_DateTime.objectWritten();
 #endif
+#ifdef KoBASE_Time
                         KoBASE_Time.objectWritten();
+#endif
+#ifdef KoBASE_Date
                         KoBASE_Date.objectWritten();
+#endif
+#ifdef KoBASE_IsSummertime
                         KoBASE_IsSummertime.objectWritten();
+#endif
                     }
                 }
             }
 
-#ifdef BASE_KoIsSummertime
+#ifdef KoBASE_IsSummertime
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />

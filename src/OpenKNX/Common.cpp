@@ -361,7 +361,9 @@ namespace OpenKNX
         RUNTIME_MEASURE_END(_runtimeTimeManager);
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
+#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
         openknx.sun.loop();
+#endif
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
 #ifdef KoBASE_Date // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
         bool checkForDateRead = !openknx.time._disableKoRead && knx.configured() && !ParamBASE_InternalTime;

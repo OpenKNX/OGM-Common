@@ -9,7 +9,6 @@
           <Static>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
-              <Parameter Id="%AID%_P-%TT%00010" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Text="InternalTime" Access="None" Value="0" />
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00002" Name="StartupDelayBase"   ParameterType="%AID%_PT-DelayBase"        Offset="0" BitOffset="0" Text="Zeitbasis" Value="0" />
@@ -19,12 +18,27 @@
                 <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
               </Union>
+              <!-- Time & Date -->
+              <Union SizeInBit="8">
+                <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
+                <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
+                <Parameter Id="%AID%_UP-%TT%00157" Name="TimezoneSign"     ParameterType="%AID%_PT-CheckBox"         Offset="0" BitOffset="0" Text="Zeitzone-Vorzeichen" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00158" Name="TimezoneValue"    ParameterType="%AID%_PT-TimezoneValue"    Offset="0" BitOffset="1" Text="Zeitzone-Wert" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
+                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
+                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
+                <!-- Hidden Options for external time control -->
+                <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
+              </Union>
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
-              <ParameterRef Id="%AID%_P-%TT%00010_R-%TT%0001001" RefId="%AID%_P-%TT%00010" />
               <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
               <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
+              <ParameterRef Id="%AID%_UP-%TT%00006_R-%TT%0000601" RefId="%AID%_UP-%TT%00006" />
+              <ParameterRef Id="%AID%_UP-%TT%00144_R-%TT%0014401" RefId="%AID%_UP-%TT%00144" />
               <ParameterRef Id="%AID%_UP-%TT%00147_R-%TT%0014701" RefId="%AID%_UP-%TT%00147" />
             </ParameterRefs>
           </Static>
@@ -33,7 +47,7 @@
 
               <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
-                <ParameterRefRef RefId="%AID%_P-%TT%00010_R-%TT%0001001" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00006_R-%TT%0000601" />
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
                 <!-- Startup Delay pattern -->
