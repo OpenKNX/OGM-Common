@@ -1,5 +1,8 @@
-#include "SunCalculation.h"
 #include "OpenKNX.h"
+
+#ifdef ParamBASE_Latitude
+
+#include "SunCalculation.h"
 #include "SunPos.h"
 #include "SunRiseAndSet.h"
 
@@ -27,8 +30,8 @@ namespace OpenKNX
 
         void SunCalculation::recalculateSunCalculation(DateTime &utc)
         {
-            double latitude = 0;//ParamBASE_Latitude;
-            double longitude = 0;//ParamBASE_Longitude;
+            double latitude = ParamBASE_Latitude;
+            double longitude = ParamBASE_Longitude;
             cTime cTime = {0};
             cTime.iYear = utc.year;
             cTime.iMonth = utc.month;
@@ -70,7 +73,7 @@ namespace OpenKNX
             {
                 if (isSunCalculatioValid())
                 {
-                    //logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
+                    logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
                     logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimut);
                     logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.hour, _sunRiseUtc.minute);
                     logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.hour, _sunRiseLocalTime.minute, _sunRiseLocalTime.isDst ? "DST" : "ST");
@@ -86,3 +89,5 @@ namespace OpenKNX
 
     } // namespace Sun
 } // namespace OpenKNX
+
+#endif

@@ -247,7 +247,7 @@ namespace OpenKNX
         {
            return true;
         }
-#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
+#ifdef ParamBASE_Latitude
         else if (openknx.sun.processCommand(cmd, diagnoseKo))
         {
            return true;

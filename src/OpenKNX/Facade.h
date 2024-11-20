@@ -11,7 +11,7 @@
 #include "OpenKNX/Time/TimeManager.h"
 #include "OpenKNX/Time/TimeProvider.h"
 #include "OpenKNX/Time/Calendar.h"
-#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
+#ifdef ParamBASE_Latitude
         #include "OpenKNX/Sun/SunCalculation.h"
 #endif
 
@@ -49,7 +49,7 @@ namespace OpenKNX
         Hardware hardware;
         Watchdog watchdog;
         Time::TimeManager time;
-#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
+#ifdef ParamBASE_Latitude
         Sun::SunCalculation sun;
 #endif
         Time::Calendar calendar;

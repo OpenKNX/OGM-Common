@@ -361,7 +361,7 @@ namespace OpenKNX
         RUNTIME_MEASURE_END(_runtimeTimeManager);
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
-#if defined(ParamBASE_Latitude) && defined(ParamBASE_Longitude)
+#ifdef ParamBASE_Latitude
         openknx.sun.loop();
 #endif
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
