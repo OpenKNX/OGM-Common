@@ -419,7 +419,7 @@ namespace OpenKNX
             const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
             if (_configured)
             {
-                switch (ParamBASE_TimezoneValue)
+                switch (ParamBASE_Timezone)
                 {
                     case 27:
                         timezoneString = "NUT11"; // America Samoa
