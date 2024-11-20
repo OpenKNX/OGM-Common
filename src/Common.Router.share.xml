@@ -22,14 +22,10 @@
               <Union SizeInBit="8">
                 <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
-                <Parameter Id="%AID%_UP-%TT%00157" Name="TimezoneSign"     ParameterType="%AID%_PT-CheckBox"         Offset="0" BitOffset="0" Text="Zeitzone-Vorzeichen" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00158" Name="TimezoneValue"    ParameterType="%AID%_PT-TimezoneValue"    Offset="0" BitOffset="1" Text="Zeitzone-Wert" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
+
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
-                <!-- Hidden Options for external time control -->
+                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
+
                 <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
               </Union>
             </Parameters>
@@ -64,6 +60,9 @@
                   <ParameterRefRef RefId="%AID%_UP-%TT%00003_R-%TT%0000301" Cell="1,2" IndentLevel="1" />
                   <ParameterRefRef RefId="%AID%_UP-%TT%00002_R-%TT%0000201" Cell="1,3" IndentLevel="1" />
                 </ParameterBlock>
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Uhrzeit &amp; Datum" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00144_R-%TT%0014401" HelpContext="Empty" IndentLevel="1" />
                 
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text=" " />
@@ -84,6 +83,23 @@
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="BASE-Watchdog" IndentLevel="1" />
                 
+              </ParameterBlock>
+
+              <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
+						
+              	<ParameterSeparator Id="%AID%_PS-nnn" Text="Dokumentation" UIHint="Headline" />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Die Dokumentation ist als Kontextsensitive Hilfe verfügbar, siehe den Text im unteren Bereich des Bildschirms." />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Wird keine Dokumentation angezeigt, muss diese in der ETS Werkzeugleiste über die Schaltfläche&#10;'(?) Kontexhilfe' aktiviert werden." />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+	
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="ETS Tipp" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Benötigen mehrere Kanäle die gleiche Konfigurationen, können mit gedrückter STRG Taste die jeweils gleichen Seiten mit der Maus ausgewählt werden."  />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Die vorgenommen Konfigurationen werden dann auf alle gewählten Kanäle übernommen."  />
+
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Verwendung von Open Source" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX verwendet für die Sonnenstandsberechnung den PSA Algorithmus welcher unter der CC BY 4.0 Lizenz veröffentlich wurde."  />
+								<ParameterSeparator Id="%AID%_PS-nnn" Text="Mehr Information dazu sind unter https://www.sciencedirect.com/science/article/pii/S0038092X20311488?via%3Dihub zu finden."  />
+
               </ParameterBlock>
 
             </Channel>
