@@ -1,11 +1,18 @@
 // This file defines hardware properties of several reusable OpenKNX hardware
 // It is meant to be included in the project-specific xyzHardware.h
 
+#pragma region "Device Definitions REG1 (REG1 Geräte)"
 
 // REG1-Eth
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-Eth
 
-    #ifdef OKNXHW_REG1_ETH
+    #if defined(OKNXHW_REG1_ETH) || defined(DEVICE_REG1_ETH)
+        #ifdef OKNXHW_REG1_ETH
+            #pragma warn "OKNXHW_REG1_ETH is deprecated, use DEVICE_REG1_ETH"
+        #endif
+        #define DEVICE_ID "REG1-Eth"
+        #define HARDWARE_NAME DEVICE_ID
+
         #define OKNXHW_REG1_CONTROLLER2040
 
         #define ETH_SPI_INTERFACE SPI1 // SPI or SPI1, depends on the pins
@@ -19,7 +26,15 @@
         #define PIN_ETH_RES (18)
     #endif
 
-    #ifdef OKNXHW_REG1_ETH_V1
+
+
+    #if defined(OKNXHW_REG1_ETH_V1) || defined(DEVICE_REG1_ETH_V1)
+        #ifdef OKNXHW_REG1_ETH_V1
+            #pragma warn "OKNXHW_REG1_ETH_V1 is deprecated, use DEVICE_REG1_ETH_V1"
+        #endif
+        #define DEVICE_ID "REG1-Eth-V1"
+        #define HARDWARE_NAME DEVICE_ID
+
         #define OKNXHW_REG1_BASE_V1
 
         #define ETH_SPI_INTERFACE SPI1 // SPI or SPI1, depends on the pins
@@ -31,12 +46,17 @@
         #define PIN_SD_SS (16)
         #define PIN_ETH_INT (17)
         #define PIN_ETH_RES (18)
-
     #endif
 
 // REG1-Base
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-Base
-    #ifdef OKNXHW_REG1_BASE_V1
+    #if defined(OKNXHW_REG1_BASE_V1) || defined(DEVICE_REG1_BASE_V1)
+        #ifdef OKNXHW_REG1_BASE_V1
+            #pragma warn "OKNXHW_REG1_BASE_V1 is deprecated, use DEVICE_REG1_BASE_V1"
+        #endif
+        #define DEVICE_ID "REG1-Base-V1"
+        #define HARDWARE_NAME DEVICE_ID
+
         #define OKNXHW_REG1_CONTROLLER2040_V1
 
         #define INFO1_LED_PIN 6
@@ -48,17 +68,33 @@
         #define INFO3_LED_PIN 22
         #define INFO3_LED_PIN_ACTIVE_ON HIGH
 
+        #define OKNXHW_REG1_SENSOR_SDA_TX_PIN 8 // RP2040 GPIO 8 / SPI1 RX / UART1 TX / I2C0 SDA / PWM4 A
+        #define OKNXHW_REG1_SENSOR_SCL_RX_PIN 9 // RP2040 GPIO 9 / SPI1 CSn / UART1 RX / I2C0 SCL / PWM4 B
+
         #define FUNC1_BUTTON_PIN 7
 
     #endif
 
-    #ifdef OKNXHW_REG1_BASE_V0
+    #if defined(OKNXHW_REG1_BASE_V0) || defined(DEVICE_REG1_BASE_V0)
+        #ifdef OKNXHW_REG1_BASE_V0
+            #pragma warn "OKNXHW_REG1_BASE_V0 is deprecated, use DEVICE_REG1_BASE_V0"
+        #endif
+        #define DEVICE_ID "REG1-Base-V0"
         #define OKNXHW_REG1_CONTROLLER2040
+
+        #define OKNXHW_REG1_SENSOR_SDA_TX_PIN 8 // RP2040 GPIO 8 / SPI1 RX / UART1 TX / I2C0 SDA / PWM4 A
+        #define OKNXHW_REG1_SENSOR_SCL_RX_PIN 9 // RP2040 GPIO 9 / SPI1 CSn / UART1 RX / I2C0 SCL / PWM4 B
     #endif
 
 // REG1-Base-IP
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-Base-IP
-    #ifdef OKNXHW_REG1_BASE_IP
+    #if defined(OKNXHW_REG1_BASE_IP) || defined(DEVICE_REG1_BASE_IP)
+        #ifdef OKNXHW_REG1_BASE_IP
+            #pragma warn "OKNXHW_REG1_BASE_IP is deprecated, use DEVICE_REG1_BASE_IP"
+        #endif
+        #define DEVICE_ID "REG1-Base-IP"
+        #define HARDWARE_NAME DEVICE_ID
+
         #define OKNXHW_REG1_IPCONTROLLER2040
 
         #define PROG_LED_PIN 25
@@ -81,8 +117,13 @@
 
 // REG1-SEN-Multi
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-SEN-Multi
-    #ifdef OKNXHW_REG1_SEN_MULTI
-        #define HARDWARE_NAME "OpenKNX-REG1-SEN-Multi"
+    #if defined(OKNXHW_REG1_SEN_MULTI) || defined(DEVICE_REG1_SEN_MULTI)
+        #ifdef OKNXHW_REG1_SEN_MULTI
+            #pragma warn "OKNXHW_REG1_SEN_MULTI is deprecated, use DEVICE_REG1_SEN_MULTI"
+        #endif
+        #define DEVICE_ID "REG1-SEN-Multi"
+        #define HARDWARE_NAME DEVICE_ID
+
         #define OKNXHW_REG1_CONTROLLER2040_V1
 
         #define INFO1_LED_PIN 6
@@ -94,7 +135,10 @@
         #define INFO3_LED_PIN 22
         #define INFO3_LED_PIN_ACTIVE_ON HIGH
 
-        //#define FUNC1_BUTTON_PIN 7
+        #define FUNC1_BUTTON_PIN 7
+
+        #define OKNXHW_REG1_SENSOR_SDA_TX_PIN 8 // RP2040 GPIO 8 / SPI1 RX / UART1 TX / I2C0 SDA / PWM4 A
+        #define OKNXHW_REG1_SENSOR_SCL_RX_PIN 9 // RP2040 GPIO 9 / SPI1 CSn / UART1 RX / I2C0 SCL / PWM4 B
 
         #define OKNXHW_REG1_APP_SEN_MULTI
 
@@ -102,28 +146,41 @@
 
 // REG1_SA-4xSELV
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1_SA-4xSELV
-    #ifdef OKNXHW_REG1_SA_4XSELV
-        #define HARDWARE_NAME "OpenKNX-REG1_SA-4xSELV"
+    #if defined(OKNXHW_REG1_SA_4XSELV) || defined(DEVICE_REG1_SA_4XSELV)
+        #ifdef OKNXHW_REG1_SA_4XSELV
+            #pragma warn "OKNXHW_REG1_SA_4XSELV is deprecated, use DEVICE_REG1_SA_4XSELV"
+        #endif
+        #define DEVICE_ID "REG1-SA-4xSELV"
+        #define HARDWARE_NAME DEVICE_ID
+
         #define OKNXHW_REG1_CONTROLLER2040_V1
 
         #define OKNXHW_REG1_APP_SA_4XSELV
 
-        //#define INFO1_LED_PIN 6
-        //#define INFO1_LED_PIN_ACTIVE_ON HIGH
+        #define INFO1_LED_PIN 6
+        #define INFO1_LED_PIN_ACTIVE_ON HIGH
 
-        //#define INFO2_LED_PIN 24
-        //#define INFO2_LED_PIN_ACTIVE_ON HIGH
+        #define INFO2_LED_PIN 24
+        #define INFO2_LED_PIN_ACTIVE_ON HIGH
 
-        //#define INFO3_LED_PIN 22
-        //#define INFO3_LED_PIN_ACTIVE_ON HIGH
+        #define INFO3_LED_PIN 22
+        #define INFO3_LED_PIN_ACTIVE_ON HIGH
 
-        //#define FUNC1_BUTTON_PIN 7
+        #define FUNC1_BUTTON_PIN 7
+
+        #define OKNXHW_REG1_SENSOR_SDA_TX_PIN 8
+        #define OKNXHW_REG1_SENSOR_SCL_RX_PIN 9
     #endif
 
 // PiPico-BCU-Connector
 // https://github.com/OpenKNX/OpenKNX/wiki/PiPico-BCU-Connector
 
-    #ifdef OKNXHW_PIPICO_BCU_CONNECTOR
+    #if defined(OKNXHW_PIPICO_BCU_CONNECTOR) || defined(DEVICE_PIPICO_BCU_CONNECTOR)
+        #ifdef DEVICE_PIPICO_BCU_CONNECTOR
+            #define DEVICE_ID "PiPico-BCU-Connector"
+            #define HARDWARE_NAME DEVICE_ID
+        #endif
+
         #define PROG_LED_PIN 21
         #define PROG_LED_PIN_ACTIVE_ON HIGH
         #define PROG_BUTTON_PIN 22
@@ -133,6 +190,8 @@
         #define KNX_UART_RX_PIN 1
         #define KNX_UART_TX_PIN 0
     #endif
+
+#pragma endregion
 
 // REG1-Controller2040
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-Controller2040
@@ -151,8 +210,8 @@
     #endif
 
     #ifdef OKNXHW_REG1_CONTROLLER2040_V1 // V00.90 - V01.89
-        #ifndef HARDWARE_NAME
-            #define HARDWARE_NAME "OpenKNX-REG1-Controller2040-V1"
+        #ifndef DEVICE_ID
+            #define DEVICE_ID "REG1-Controller2040-V1"
         #endif
         #define PROG_LED_PIN 25
         #define PROG_LED_PIN_ACTIVE_ON HIGH
@@ -201,8 +260,8 @@
 // REG1-ControllerESP
 // https://github.com/OpenKNX/OpenKNX/wiki/REG1-ControllerESP
      #ifdef OKNXHW_REG1_CONTROLLERESP
-        #ifndef HARDWARE_NAME
-            #define HARDWARE_NAME "OpenKNX-REG1-ControllerESP"
+        #ifndef DEVICE_ID
+            #define DEVICE_ID "REG1-ControllerESP"
         #endif
 
         #define OPENKNX_SERIALLED_COLOR_RED 63, 0, 0
