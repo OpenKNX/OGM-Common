@@ -2,6 +2,7 @@
     "name": "OGM-Common",
     "version": "1.3.0",
     "dependencies": {
+        "OGM-HardwareConfig": "^1.0.0",
         "khoih-prog/TimerInterrupt_Generic": "^1.13.0",
         "adafruit/Adafruit SleepyDog Library": "^1.6.3",
         "nickgammon/Regexp": "^0.1.0",
