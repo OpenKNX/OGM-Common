@@ -38,7 +38,7 @@
  */
 
 /**
- * Section: Product configurations / use cases
+ * Section: Device configurations / use cases ( Device is a full defined hardware has documentation in openknx wiki)
  * OpenKNX REG2-Pi-Pico
  */
 
@@ -56,7 +56,7 @@
     #define OKNXHW_REG2_PIPICO_V1_LED3   // LED3
 #endif
 
-// REG2-Pi-Pico V1 (Device Display + Meter)
+// REG2-Pi-Pico V1 (Device Display + Meter) 
 #ifdef OKNXHW_REG2_PIPICO_V1_DD_METER
     #ifndef HARDWARE_NAME
         #define HARDWARE_NAME "OpenKNX-REG2-Pi-Pico-V1"
