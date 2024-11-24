@@ -1,33 +1,38 @@
 #pragma once
-
-#include "Arduino.h"
+#include "TimeClock.h"
+#include <sys/time.h>
 namespace OpenKNX
 {
     namespace Time
     {
 #ifndef ARDUINO_ARCH_SAMD
-        class TimeClockSystem
+        class TimeClockSystem : public TimeClock
         {
           public:
-            void setup() {};
-            void loop() {};
-            void setTime(time_t epoch, unsigned long millisReceivedTimestamp)
+            inline void setup() override {}
+            inline void loop() override {}
+
+            inline void setTime(time_t epoch, unsigned long millisReceivedTimestamp) override
             {
                 unsigned long now = millis();
                 unsigned long millisOffset = now - millisReceivedTimestamp;
                 long seconds = (long)millisOffset / 1000;
                 long milliseconds = (long)millisOffset % 1000;
+
                 struct timeval tv;
                 tv.tv_sec = epoch + seconds;
                 tv.tv_usec = milliseconds * 1000;
+
                 timezone tz{0};
                 settimeofday(&tv, &tz);
             }
-            time_t getTime()
+
+            inline time_t getTime() override
             {
                 time_t now;
                 return time(&now);
             }
+            inline bool isRunning() override { return true; }
         };
 #endif
     } // namespace Time

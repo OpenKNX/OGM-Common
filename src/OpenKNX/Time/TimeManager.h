@@ -1,12 +1,12 @@
 #pragma once
 #include "../DateTime.h"
 #include "Arduino.h"
+#include "TimeClock.h"
 #include "TimeClockMillis.h"
 #include "TimeClockSystem.h"
 #include "hardware.h"
 #include "string"
 #include "time.h"
-#include <ctime>
 
 #ifndef OPENKNX_TIME_DIGAGNOSTIC
     #ifdef OPENKNX_DEBUG
@@ -43,7 +43,7 @@ namespace OpenKNX
 
         class TimeManager
         {
-            OPENKNX_TIME_CLOCK _timeClock = OPENKNX_TIME_CLOCK();
+            TimeClock* _timeClock = nullptr;
             friend Common;
             friend Console;
             friend TimeProvider;
@@ -80,6 +80,11 @@ namespace OpenKNX
             std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
 
           public:
+            ~TimeManager() { delete _timeClock; } 
+            /*
+            Set the time clock, a previous set time clock will be deleted
+            */
+            void setTimeClock(TimeClock* timeClock, bool deleteOld = false);
             /*
             Returns true, if a time provider was set
             */
