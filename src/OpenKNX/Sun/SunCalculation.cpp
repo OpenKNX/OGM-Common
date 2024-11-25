@@ -43,7 +43,7 @@ namespace OpenKNX
 
             cSunCoordinates cSunCoordinates;
             sunpos(cTime, cLocation, &cSunCoordinates);
-            _azimut = cSunCoordinates.dAzimuth;
+            _azimuth = cSunCoordinates.dAzimuth;
             _elevation = 90 - cSunCoordinates.dZenithAngle;
 
             double rise, set;
@@ -71,7 +71,7 @@ namespace OpenKNX
                 if (isSunCalculatioValid())
                 {
                     logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
-                    logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimut);
+                    logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimuth);
                     logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.hour, _sunRiseUtc.minute);
                     logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.hour, _sunRiseLocalTime.minute, _sunRiseLocalTime.isDst ? "DST" : "ST");
                     logInfoP("Sun set: %02d::%02d UTC", _sunSetUtc.hour, _sunSetUtc.minute);

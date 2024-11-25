@@ -19,7 +19,7 @@ namespace OpenKNX
             uint8_t _lastHour = 0;
             uint8_t _lastMinute = 0;
             bool _sunCalculationValid = false;
-            float _azimut = 0;
+            float _azimuth = 0;
             float _elevation = 0;
 
             const std::string logPrefix();
@@ -38,9 +38,9 @@ namespace OpenKNX
             bool isSunCalculatioValid() { return _sunCalculationValid; }
 #ifdef OPENKNX_SUN_POSITION
             /*
-             * Returns the azimut
+             * Returns the azimuth
              */
-            float azimut() { return _azimut; }
+            float azimuth() { return _azimuth; }
             /*
              * Returns the elevation
              */
