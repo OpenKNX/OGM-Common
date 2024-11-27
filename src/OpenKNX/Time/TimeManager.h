@@ -14,15 +14,6 @@
     #endif
 #endif
 
-// #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockMillis
-#ifndef OPENKNX_TIME_CLOCK
-    #ifndef ARDUINO_ARCH_SAMD
-        #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockSystem
-    #else
-        #define OPENKNX_TIME_CLOCK OpenKNX::Time::TimeClockMillis
-    #endif
-#endif
-
 class GroupObject;
 
 namespace OpenKNX
