@@ -25,7 +25,12 @@ if (!$toolsExist) {
 }
 
 if ($toolsExist) {
-    $firmwareName = $args[0]
-    ~/bin/KnxFileTransferClient.exe fwupdate --connect Auto "./data/$firmwareName"
+    $firmwareName = (Resolve-Path "./data/$($args[0])").Path
+    if (Test-Path -PathType Leaf ~/bin/KnxFileTransferClient.ps1) {
+        ~/bin/KnxFileTransferClient.ps1 "$firmwareName"
+    } else {
+        Write-Output $fileName
+        ~/bin/KnxFileTransferClient.exe fwupdate --connect Search "$firmwareName"
+    }
     timeout /T -1
 }

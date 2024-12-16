@@ -282,8 +282,6 @@ namespace OpenKNX
                 delay(1);
 #endif // OPENKNX_DUALCORE
 
-        openknx.logger.logOpenKnxHeader();
-
 #ifndef OPENKNX_DUALCORE
         openknx.progLed.off();
 #endif
@@ -548,7 +546,9 @@ namespace OpenKNX
             return;
 #endif
 
-        logInfoP("processAfterStartupDelay");
+        logDebugP("processAfterStartupDelay");
+        openknx.console.showInformations();
+        openknx.logger.log("Type \"help\" to view a list of available commands.");
         logIndentUp();
 
         _afterStartupDelay = true;

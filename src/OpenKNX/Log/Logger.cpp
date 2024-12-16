@@ -9,12 +9,6 @@
     #include <Regexp.h>
 #endif
 
-// Überprüfung der Länge zur Kompilierzeit
-constexpr std::size_t constexpr_strlen(const char* str, std::size_t length = 0)
-{
-    return str[length] == '\0' ? length : constexpr_strlen(str, length + 1);
-}
-static_assert(constexpr_strlen(MAIN_OrderNumber) <= 20, "MAIN_OrderNumber is to long (max. 20 Chars)");
 
 namespace OpenKNX
 {
@@ -417,88 +411,7 @@ namespace OpenKNX
         // # KNX
         void Logger::logOpenKnxHeader()
         {
-            const u_int8_t colorLightGray = 90;
-            const u_int8_t colorWhite = 37;
-            const u_int8_t colorGreen = 32;
-
-            begin();
-
-            beforeLog();
-            afterLog();
-
-            beforeLog();
-            printMessage("+------------+-----------------------------------------------------------------+");
-            afterLog();
-
-            beforeLog();
-            printMessage("|            |                                                                 |");
-            afterLog();
-
-            // Line 1: "Open #"
-            beforeLog();
-            printMessage("|   ");
-            printColorCode(colorLightGray);
-            printMessage("Open ");
-            printColorCode(colorGreen);
-            printMessage("#");
-            printColorCode(0);
-
-            printMessage("   |   ");
-            char buffer[63];
-            snprintf(buffer, 63, "%s (%s) - Address: %s", MAIN_OrderNumber, openknx.info.humanFirmwareVersion().c_str(), openknx.info.humanIndividualAddress().c_str());
-            printMessage(buffer);
-
-            for (uint8_t i = 0; i < (uint8_t)(62 - strlen(buffer)); i++)
-                printMessage(" ");
-            printMessage("|");
-            afterLog();
-
-            // Line 2: "+----+"
-            beforeLog();
-            printMessage("|   ");
-            printColorCode(colorGreen);
-            printMessage("+----+");
-            printColorCode(0);
-#if defined(DEVICE_ID)
-            printMessage("   |   ");
-    #if defined(DEVICE_NAME)
-            memset(buffer, 53, 0x0);
-            snprintf(buffer, 63, "%s (%s)", DEVICE_NAME, DEVICE_ID);
-    #else
-            snprintf(buffer, 63, "%s", DEVICE_ID);
-    #endif
-            printMessage(buffer);
-            for (uint8_t i = 0; i < (uint8_t)(62 - strlen(buffer)); i++)
-                printMessage(" ");
-            printMessage("|");
-#else
-            printMessage("   |                                                                 |");
-#endif
-            afterLog();
-
-            // Line 3: "# KNX "
-            beforeLog();
-            printMessage("|   ");
-            printColorCode(colorGreen);
-            printMessage("#");
-            printColorCode(colorWhite);
-            printMessage(" KNX ");
-            printColorCode(0);
-            printMessage("   |   www.openknx.de - wiki.openknx.de - forum.openknx.de           |");
-            afterLog();
-
-            beforeLog();
-            printMessage("|            |                                                                 |");
-            afterLog();
-
-            beforeLog();
-            printMessage("+------------+-----------------------------------------------------------------+");
-            afterLog();
-
-            beforeLog();
-            afterLog();
-
-            end();
+            // OLD - No output
         }
 
         void Logger::printTimestamp()

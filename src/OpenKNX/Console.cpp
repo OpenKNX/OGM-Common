@@ -314,42 +314,72 @@ namespace OpenKNX
 
     void Console::showInformations()
     {
-        logBegin();
-        openknx.logger.log("");
-        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Information ===========================================");
-        openknx.logger.color(0);
-        openknx.logger.logWithPrefix("KNX Address", openknx.info.humanIndividualAddress().c_str());
-        openknx.logger.logWithPrefixAndValues("Application (ETS)", "Number: %s  Version: %s  Configured: %i", openknx.info.humanApplicationNumber().c_str(), openknx.info.humanApplicationVersion().c_str(), knx.configured());
-        openknx.logger.logWithPrefixAndValues("Firmware", "Number: %s  Version: %s", openknx.info.humanFirmwareNumber().c_str(), openknx.info.humanFirmwareVersion().c_str());
-#ifdef FIRMWARE_VARIANT
-        openknx.logger.logWithPrefixAndValues("", "Name: %s  Variant: %s", MAIN_OrderNumber, FIRMWARE_VARIANT);
-#else
-        openknx.logger.logWithPrefixAndValues("", "Name: %s", MAIN_OrderNumber);
-#endif
-#ifdef DEVICE_ID
-    #ifdef DEVICE_NAME
-        openknx.logger.logWithPrefixAndValues("Device", "%s (%s)", DEVICE_NAME, DEVICE_ID);
-    #else
-        openknx.logger.logWithPrefixAndValues("Device", "%s", DEVICE_ID);
-    #endif
-#else
-    #ifdef HARDWARE_NAME
-        openknx.logger.logWithPrefixAndValues("Device", "%s", HARDWARE_NAME);
-    #endif
-#endif
-        openknx.logger.logWithPrefix("Serial number", openknx.info.humanSerialNumber().c_str());
-
 #ifdef OPENKNX_DUALCORE
         const char* cpuMode = openknx.usesDualCore() ? "Dual-Core" : "Single-Core";
 #else
         const char* cpuMode = "Single-Core";
 #endif
 
+        logBegin();
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("================================================================================");
+        openknx.logger.color(0);
+        openknx.logger.log("");
+        openknx.logger.log("        \x1B[90mOpen \x1B[32m#\x1B[0m           OpenKNX.de");
+        openknx.logger.log("        \x1B[32m+----+\x1B[0m");
+        openknx.logger.log("        \x1B[32m# \x1B[37mKNX\x1B[0m            wiki.openknx.de - forum.openknx.de");
+        openknx.logger.log("");
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("======================== Information ===========================================");
+        openknx.logger.color(0);
+
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("Device");
+        openknx.logger.color(0);
+#ifdef DEVICE_ID
+        openknx.logger.logWithPrefix("ID", DEVICE_ID);
+#endif
+#ifdef DEVICE_NAME
+        openknx.logger.logWithPrefix("Name", DEVICE_NAME);
+#elif defined(HARDWARE_NAME)
+        openknx.logger.logWithPrefix("Name", HARDWARE_NAME);
+#endif
+        openknx.logger.logWithPrefix("Serial number", openknx.info.humanSerialNumber().c_str());
+
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("Firmware");
+        openknx.logger.color(0);
+#ifdef FIRMWARE_VARIANT
+        openknx.logger.logWithPrefixAndValues("  Name", "%s  (%s)", openknx.info.firmwareName().c_str(), FIRMWARE_VARIANT);
+#else
+        openknx.logger.logWithPrefix("Name", openknx.info.firmwareName().c_str());
+#endif
+        openknx.logger.logWithPrefix("Version", openknx.info.humanFirmwareVersion().c_str());
+        openknx.logger.logWithPrefix("Number", openknx.info.humanFirmwareNumber().c_str());
+#if MASK_VERSION == 0x07B0
+        openknx.logger.logWithPrefixAndValues("KNX-Type", "TP (%04X)", MASK_VERSION);
+#elif MASK_VERSION == 0x57B0
+        openknx.logger.logWithPrefixAndValues("KNX-Type", "IP (%04X)", MASK_VERSION);
+#elif MASK_VERSION == 0x091A
+        openknx.logger.logWithPrefixAndValues("KNX-Type", "Router (%04X)", MASK_VERSION);
+#else
+        openknx.logger.logWithPrefixAndValues("KNX-Type", "%04X", MASK_VERSION);
+#endif
         if (openknx.hardware.cpuTemperature() > 0)
             openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
         else
             openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
+
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("Programming");
+        openknx.logger.color(0);
+        openknx.logger.logWithPrefixAndValues("Address", "%s (%s)", openknx.info.humanIndividualAddress().c_str(), knx.configured() ? "Configured" : "Unconfigured");
+        openknx.logger.logWithPrefix("Version", openknx.info.humanApplicationVersion().c_str());
+        openknx.logger.logWithPrefix("Number", openknx.info.humanApplicationNumber().c_str());
+
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("Runtime");
+        openknx.logger.color(0);
 
         showMemory();
 

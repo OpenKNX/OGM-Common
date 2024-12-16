@@ -26,8 +26,8 @@ namespace OpenKNX
 
         std::string humanApplicationNumber()
         {
-            char buffer[10] = {};
-            sprintf(buffer, "0x%04X", applicationNumber());
+            char buffer[5] = {};
+            sprintf(buffer, "%04X", applicationNumber());
             return std::string(buffer);
         }
 
@@ -48,6 +48,15 @@ namespace OpenKNX
             return std::string(buffer);
         }
 
+        std::string firmwareName()
+        {
+#ifdef FIRMWARE_NAME
+            return std::string(FIRMWARE_NAME);
+#else
+            return std::string(MAIN_OrderNumber);
+#endif
+        }
+
         /**
          * Get the firmware number
          * @result a 2 byte value consisting of MAIN_OpenKnxId (uint8_t) in
@@ -60,8 +69,8 @@ namespace OpenKNX
 
         std::string humanFirmwareNumber()
         {
-            char buffer[10] = {};
-            sprintf(buffer, "0x%04X", firmwareNumber());
+            char buffer[5] = {};
+            sprintf(buffer, "%04X", firmwareNumber());
             return std::string(buffer);
         }
 
