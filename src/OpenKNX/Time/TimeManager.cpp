@@ -519,6 +519,7 @@ namespace OpenKNX
         void TimeManager::loop()
         {
             _timeClock.loop();
+            _lastTimeStamp = _timeClock.getTime();
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
 
@@ -659,23 +660,51 @@ namespace OpenKNX
                         setDaylightSavingMode(mode);
                 }
             }
-            logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
             std::time_t epoch = mktime(&tm);
             _timeClock.setTime(epoch, millisReceivedTimestamp);
-            sendTime();
+            checkChangedTime(tm, false, millisReceivedTimestamp);
         }
 
         void TimeManager::setUtcTime(tm& tm, unsigned long millisReceivedTimestamp)
         {
             std::time_t epoch = mktime(&tm) - _timezone;
-            logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
             _timeClock.setTime(epoch, millisReceivedTimestamp);
-            sendTime();
+            checkChangedTime(tm, true, millisReceivedTimestamp);
         }
 
         void TimeManager::timeSet()
         {
-            logInfoP("Time set %s", getLocalTime().toString().c_str());
+            time_t time = _timeClock.getTime();
+            tm tm;
+            localtime_r(&time, &tm);
+            checkChangedTime(tm, false, millis());
+        }
+
+        void TimeManager::checkChangedTime(tm& setTime, bool utc, unsigned long millisReceivedTimestamp)
+        {
+            std::time_t now = _timeClock.getTime();
+            double offset = difftime(now, _lastTimeStamp);
+            bool changed = offset > 2 || offset < -2;
+            if (changed)
+                logInfoP("Set: %04d-%02d-%02d %02d:%02d:%02d (%s) receive before: %lums",
+                         (int)setTime.tm_year + 1900,
+                         (int)setTime.tm_mon + 1,
+                         (int)setTime.tm_mday,
+                         (int)setTime.tm_hour,
+                         (int)setTime.tm_min,
+                         (int)setTime.tm_sec,
+                         utc ? "UTC" : (setTime.tm_isdst ? "DST" : "ST"),
+                         millis() - millisReceivedTimestamp);
+            else
+                logDebugP("Updated: %04d-%02d-%02d %02d:%02d:%02d (%s) receive before: %lums",
+                          (int)setTime.tm_year + 1900,
+                          (int)setTime.tm_mon + 1,
+                          (int)setTime.tm_mday,
+                          (int)setTime.tm_hour,
+                          (int)setTime.tm_min,
+                          (int)setTime.tm_sec, utc ? "UTC" : (setTime.tm_isdst ? "DST" : "ST"),
+                          millis() - millisReceivedTimestamp);
+            _lastTimeStamp = now;
             sendTime();
         }
 
