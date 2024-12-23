@@ -58,6 +58,7 @@ namespace OpenKNX
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
             bool _intialReadKo = false;
+            time_t _lastTimeStamp = 0;
 
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
@@ -75,6 +76,7 @@ namespace OpenKNX
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);
             void setUtcTime(tm& tm, unsigned long miilisReceivedTimestamp);
             void timeSet();
+            void checkChangedTime(tm& setTime, bool utc, unsigned long millisReceivedTimestamp);
             void sendTime();
             const std::string logPrefix();
             std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
