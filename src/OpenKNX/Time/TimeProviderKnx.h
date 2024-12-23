@@ -7,7 +7,7 @@ namespace OpenKNX
     {
         class TimeProviderKnx : public TimeProvider
         {
-            const static int WaitTimeMissingOtherDelegramsInMs = 900;
+            const static int WaitTimeMissingOtherDelegramsInMs = 10000;
 
             enum WaitStates
             {
@@ -20,6 +20,7 @@ namespace OpenKNX
             bool _configured = false;
             bool _hasDate = false;
             bool _hasTime = false;
+            bool _timeSet = false;
             unsigned long _timeStampTimeReceived = 0;
             bool _hasDaylightSavingFlag = false;
             tm _dateTime = {0};
