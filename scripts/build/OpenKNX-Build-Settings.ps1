@@ -8,7 +8,7 @@ $settings.sourceName = $args[1]    # i.e. "Templatemodul"
 $settings.targetName = $args[2]    # i.e. "TemplateModule" 
 
 if ($args.length -gt 3) {
-    $settings.useCreator = $args[3]
+    $settings.compileWith = $args[3]
 } else {
     $settings.compileWith = "openknxproducer"
 }
