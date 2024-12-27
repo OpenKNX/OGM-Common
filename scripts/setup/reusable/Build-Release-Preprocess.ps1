@@ -62,7 +62,7 @@ if($settings.compileWith -eq "openknxproducer")
     Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
   }
 }
-if($settings.compileWith -eq "kaenxcreator")
+elseif($settings.compileWith -eq "kaenxcreator")
 {
   Write-Host "Using Kaenx-Creator!"
   $KaenxCreator = "~/bin/Kaenx.Creator.Console.exe"
@@ -86,7 +86,8 @@ if($settings.compileWith -eq "kaenxcreator")
     Start-Sleep -Seconds 2
   }
   if (-not ([string]::IsNullOrEmpty($KaenxCreator))) {
-    $expr = "$KaenxCreator release $($settings.targetName).ae-manu"
+    $currentDirectory = (Get-Location).Path
+    $expr = "$KaenxCreator release $($currentDirectory)\$($settings.targetName).ae-manu"
     $expr += '; $success=$?'
     Invoke-Expression $expr
     if (!$success) {
@@ -97,6 +98,9 @@ if($settings.compileWith -eq "kaenxcreator")
   else {
     Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
   }
+}
+else {
+  Write-Host "No KNX-Tool selected. Skipping knxprod file creation." -ForegroundColor Yellow
 }
 
 
