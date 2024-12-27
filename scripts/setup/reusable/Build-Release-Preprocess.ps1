@@ -77,13 +77,11 @@ elseif($settings.compileWith -eq "kaenxcreator")
   else {
     $KaenxCreator = $null
     Write-Host "KaenxCreator not found at $KaenxCreator"
-    Write-Host -ForegroundColor Yellow "
-    OpenKNX-Tools are not Installed. Please install OpenKNX-Tools to Build KNX production file. 
-    For more Informations visit: https://github.com/OpenKNX/OpenKNX/wiki/Installation-of-OpenKNX-toolscl
-    
-    Not applicable at the moment. There is no release of Kaenx.Creator.Console
-    "
+    Write-Host -ForegroundColor Red "
+    KaenxCreator not Installed. Please install KaenxCreator to Build KNX production file. 
+    You can find the latest release here: https://github.com/OpenKNX/Kaenx-Creator-Console/releases/"
     Start-Sleep -Seconds 2
+    exit 1
   }
   if (-not ([string]::IsNullOrEmpty($KaenxCreator))) {
     $currentDirectory = (Get-Location).Path
@@ -94,9 +92,6 @@ elseif($settings.compileWith -eq "kaenxcreator")
         exit 1
     }
     Write-Host "Created release/data/$($settings.targetName).xml" -ForegroundColor Blue
-  }
-  else {
-    Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
   }
 }
 else {
