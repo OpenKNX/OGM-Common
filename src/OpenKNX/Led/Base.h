@@ -17,7 +17,6 @@ namespace OpenKNX
         {
           protected:
             volatile long _pin = -1;
-            volatile long _activeOn = HIGH;
             volatile uint32_t _lastMillis = 0;
             volatile uint8_t _maxBrightness = 100;
             volatile bool _state = false;

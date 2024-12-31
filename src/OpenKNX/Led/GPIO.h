@@ -8,6 +8,8 @@ namespace OpenKNX
         class GPIO : public Base
         {
           private:
+            volatile long _activeOn = HIGH;
+            
             void writeLed(uint8_t brightness) override;
 
           public:
