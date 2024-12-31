@@ -15,7 +15,7 @@ namespace OpenKNX
             _activeOn = activeOn;
 
             pinMode(_pin, OUTPUT);
-            digitalWrite(_pin, _activeOn == HIGH ? true : false);
+            digitalWrite(_pin, _activeOn == HIGH ? false : true);
         }
 
         /*
