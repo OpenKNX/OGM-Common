@@ -347,12 +347,35 @@ namespace OpenKNX
 #endif
         }
 
+        void TimeManager::setTimeClock(TimeClock* timeClock, bool replaceOld)
+        {
+            if (timeClock == nullptr) return;
+            if (_timeClock != nullptr && replaceOld)
+            {
+                delete _timeClock;
+                _timeClock = nullptr;
+            }
+            if (_timeClock == nullptr)
+            {
+                _timeClock = timeClock;
+                _timeClock->setup();
+            }
+        }
+
         void TimeManager::setup(bool configured)
         {
             _configured = configured;
             setDaylightSavingMode(DaylightSavingMode::Calculated);
 
-            _timeClock.setup();
+#ifdef ARDUINO_ARCH_SAMD
+            TimeClock* timeClock = new TimeClockMillis();
+#else
+            TimeClock* timeClock = new TimeClockSystem();
+#endif
+            setTimeClock(timeClock);
+            if (_timeClock != nullptr)
+                _timeClock->setup();
+
             tm tm = {0};
             tm.tm_year = 2024 - 1900;
             tm.tm_mon = 6 - 1;
@@ -419,7 +442,7 @@ namespace OpenKNX
             const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
             if (_configured)
             {
-                switch (ParamBASE_Timezone)
+                switch (ParamBASE_TimezoneValue)
                 {
                     case 27:
                         timezoneString = "NUT11"; // America Samoa
@@ -508,7 +531,8 @@ namespace OpenKNX
                 result += "0,366"; // Always daylight saving tiem
             else
                 result += "366,367"; // Always standard time
-            return result;
+
+            return result.c_str();
         }
 
         void TimeManager::sendTime()
@@ -518,7 +542,9 @@ namespace OpenKNX
 
         void TimeManager::loop()
         {
-            _timeClock.loop();
+            if (_timeClock != nullptr)
+                _timeClock->loop();
+
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
 
@@ -612,18 +638,18 @@ namespace OpenKNX
 
         bool TimeManager::isValid()
         {
-            time_t now = _timeClock.getTime();
-            return now > 1704070800; // 2024-01-01
+            if (_timeClock == nullptr) return false;
+            return _timeClock->getTime() > 1704070800; // 2024-01-01
         }
 
         DateTime TimeManager::getLocalTime()
         {
-            return DateTime(_timeClock.getTime());
+            return DateTime(_timeClock->getTime());
         }
 
         DateTime TimeManager::getUtcTime()
         {
-            return DateTime(_timeClock.getTime(), true);
+            return DateTime(_timeClock->getTime(), true);
         }
 
         void TimeManager::processInputKo(GroupObject& ko)
@@ -661,7 +687,7 @@ namespace OpenKNX
             }
             logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (%s) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, tm.tm_isdst ? "DST" : "ST", millis() - millisReceivedTimestamp);
             std::time_t epoch = mktime(&tm);
-            _timeClock.setTime(epoch, millisReceivedTimestamp);
+            _timeClock->setTime(epoch, millisReceivedTimestamp);
             sendTime();
         }
 
@@ -669,7 +695,7 @@ namespace OpenKNX
         {
             std::time_t epoch = mktime(&tm) - _timezone;
             logInfoP("Setting %04d-%02d-%02d %02d:%02d:%02d (UTC) + %lums", (int)tm.tm_year + 1900, (int)tm.tm_mon + 1, (int)tm.tm_mday, (int)tm.tm_hour, (int)tm.tm_min, (int)tm.tm_sec, millis() - millisReceivedTimestamp);
-            _timeClock.setTime(epoch, millisReceivedTimestamp);
+            _timeClock->setTime(epoch, millisReceivedTimestamp);
             sendTime();
         }
 
