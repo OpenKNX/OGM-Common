@@ -159,9 +159,9 @@ namespace OpenKNX
         // 5 bit revision, 5 bit major, 6 bit minor
         // output in ETS as [revision] major.minor
         knx.bau().deviceObject().version(openknx.info.firmwareVersion());
-#ifdef OPENKNX_CUSTOM_MASK_VERSION
+#ifdef OPENKNX_OVERRIDE_MASK_VERSION
         // set mask version returned by the stack regardless of the mask version used for the build
-        knx.bau().deviceObject().maskVersion(OPENKNX_CUSTOM_MASK_VERSION);
+        knx.bau().deviceObject().maskVersion(OPENKNX_OVERRIDE_MASK_VERSION);
 #endif
 #ifdef MAIN_OrderNumber
         knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
