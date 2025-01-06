@@ -138,6 +138,13 @@ version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"]
 for name, version in openknx_modules.items():
   define_name = "MODULE_" + name.split("-")[1]
   version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
+  versions = version.split("+")[0].split(".")
+  if len(versions) > 0:
+    version_file.write("#define {}_Version_Major {}\n".format(define_name, int(versions[0])))
+  if len(versions) > 1:
+    version_file.write("#define {}_Version_Minor {}\n".format(define_name, int(versions[1])))
+  if len(versions) > 2:
+    version_file.write("#define {}_Version_Revision {}\n".format(define_name, int(versions[2])))
 
   ets = get_ets_version(version)
   if ets != None:
