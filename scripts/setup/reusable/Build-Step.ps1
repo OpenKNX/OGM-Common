@@ -9,7 +9,7 @@
 #                   different firmware names for different hardware builds within the same release.
 #                   There should always be an "Upload-Firmware-<firmwarename>.ps1" script delivered,
 #                   which installs this firmware.
-# <binary-format>   currently supports "uf2" for RP2040 and "bin" for SAMD.
+# <binary-format>   currently supports "uf2" for RP2040, "bin" for SAMD and "esp32" for ESP32
 # <product-name>    (optional) is the name of the product. If not provided, the firmware name without
 #                   the "firmware-" prefix will be used.
 # <project-dir>     is the directory path of the project.
