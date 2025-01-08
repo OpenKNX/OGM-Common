@@ -44,6 +44,15 @@ if (!$?) {
   exit 1
 }
 
+$processor = "RP2040"
+if ($binaryFormat -eq "bin") {
+  $processor = "SAMD"
+}
+elseif ($binaryFormat -eq "esp32") {
+  $binaryFormat = "bin"
+  $processor = "ESP32"
+}
+
 # Create source and target path for firmware
 $CopyItem_Source = ".pio/build/$pioEnv/firmware.$binaryFormat"
 $CopyItem_Target_Dir = "release/data"
@@ -63,6 +72,12 @@ if ( Test-Path $CopyItem_Source ) {
   }
   # copy firmware to release/data
   Copy-Item $CopyItem_Source $CopyItem_Target
+
+  if ($processor -eq "ESP32") {
+    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
+    $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
+    Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+  }
 }
 else {
   # firmware not found
@@ -75,10 +90,6 @@ if (!$productName) {
   $productName = $firmwareName.Replace("firmware-", "")
 }
 # create Upload-Firmware-<firmwarename>.ps1 script
-$processor = "RP2040"
-if ($binaryFormat -eq "bin") {
-  $processor = "SAMD"
-}
 
 # need to do this BEFORE the USB Upload-File is created
 if ($processor -eq "RP2040") {
@@ -106,6 +117,9 @@ if (![string]::IsNullOrEmpty($ProjectDir)) {
 
 # Write the script file content to the file 
 $scriptContent = "./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.$binaryFormat"
+if ( $processor -eq "ESP32") {
+  $scriptContent = "./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
+}
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
 if (!$?) {
