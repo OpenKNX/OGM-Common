@@ -1,3 +1,35 @@
+<#
+Open ■
+┬────┴  OTA-Upload-Firmware-Generic.ps1
+■ KNX   2025 OpenKNX - Ing-Dom
+
+This script is designed to perform a console based OTA-Update of IP-capable OpenKNX-Devices
+#>
+
+function OpenKNX_ShowLogo($AddCustomText = $null) {
+    Write-Host ""
+    Write-Host "Open " -NoNewline
+    #Write-Host "■" -ForegroundColor Green
+    Write-Host "$( [char]::ConvertFromUtf32(0x25A0) )" -ForegroundColor Green
+    $unicodeString = "$( [char]::ConvertFromUtf32(0x252C) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2500) )$( [char]::ConvertFromUtf32(0x2534) ) "
+  
+    if ($AddCustomText) { 
+      #Write-Host "┬────┴  $AddCustomText" -ForegroundColor Green
+      Write-Host "$($unicodeString) $($AddCustomText)"  -ForegroundColor Green
+    }
+    else {
+      #Write-Host "┬────┴" -ForegroundColor Green
+      Write-Host "$($unicodeString)"  -ForegroundColor Green
+    }
+  
+    #Write-Host "■" -NoNewline -ForegroundColor Green
+    Write-Host "$( [char]::ConvertFromUtf32(0x25A0) )" -NoNewline -ForegroundColor Green
+    Write-Host " KNX"
+    Write-Host ""
+  }
+
+OpenKNX_ShowLogo -AddCustomText "OTA Firmware Update"
+
 #$checkVersion = "0.2.1"
 $toolsExist = Test-Path -PathType Leaf ~/bin/esptools/espota.exe
 if ($toolsExist) {
@@ -29,14 +61,14 @@ if ($toolsExist) {
 
     $validIpAddress = $false
     while (-not $validIpAddress) {
-        $ipAddress = Read-Host "IP-Addresse des Gerätes eingeben dass aktualisiert werden soll:"
+        $ipAddress = Read-Host "IP-Addresse des Update-Ziels eingeben"
         $validIpAddress = [System.Net.IPAddress]::TryParse($ipAddress, [ref]$null)
         if (-not $validIpAddress) {
-            Write-Host "Ungültige IP-Addresse. Bitte erneut eingeben."
+            Write-Host "Ungueltige IP-Addresse. Bitte erneut eingeben."
         }
     }
-    Write-Host "~/bin/esptools/espota.exe -i $ipAddress -r -f $firmwareName"
-    ~/bin/esptools/espota.exe -i $ipAddress -r -f $firmwareName
+    #Write-Host "~/bin/esptools/espota.exe -i $ipAddress -r $args[1] -f $firmwareName"
+    ~/bin/esptools/espota.exe -i $ipAddress -r $args[1] -f $firmwareName
 	
     timeout /T -1
 }
