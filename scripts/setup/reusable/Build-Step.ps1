@@ -73,9 +73,15 @@ if ( Test-Path $CopyItem_Source ) {
   # copy firmware to release/data
   Copy-Item $CopyItem_Source $CopyItem_Target
 
+  # copy second image
   if ($processor -eq "ESP32") {
     $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
     $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
+    Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+  }
+  if ($processor -eq "RP2040") {
+    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.bin"
+    $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.bin"
     Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
   }
 }
@@ -101,6 +107,25 @@ if ($processor -eq "RP2040") {
 
   # Write the script file content to the file 
   $scriptContent = "./data/KNX-Upload-Firmware-Generic.ps1 $firmwareName.$binaryFormat"
+  if (Test-Path $fileName) { Clear-Content -Path $fileName }
+  Add-Content -Path $fileName -Value $scriptContent
+  if (!$?) {
+    Write-Host "ERROR: $fileName could not be created!"
+    exit 1
+  }
+}
+
+# OTA
+if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
+  # create OTA-Upload-Firmware-<firmwarename>.ps1 script
+  $fileName = "release/OTA-Upload-Firmware-$productName.ps1"
+  if (![string]::IsNullOrEmpty($ProjectDir)) {
+    $fileName = Join-Path $ProjectDir $fileName
+  }
+  $OTAbinaryFormat = "bin"
+
+  # Write the script file content to the file 
+  $scriptContent = "./data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
