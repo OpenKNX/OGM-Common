@@ -123,9 +123,12 @@ if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
     $fileName = Join-Path $ProjectDir $fileName
   }
   $OTAbinaryFormat = "bin"
+  if ($processor -eq "RP2040") {
+    $espotaArgs = "'-p 2040'"
+  }
 
   # Write the script file content to the file 
-  $scriptContent = "./data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat"
+  $scriptContent = "./data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
