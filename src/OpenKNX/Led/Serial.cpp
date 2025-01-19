@@ -1,7 +1,8 @@
 #ifdef ARDUINO_ARCH_ESP32
+    #include <driver/rmt.h>
     #include "OpenKNX/Led/Serial.h"
     #include "OpenKNX/Facade.h"
-
+    
     #include "esp_log.h"
     #include "esp_system.h"
     #include "freertos/FreeRTOS.h"
@@ -78,10 +79,10 @@ namespace OpenKNX
             // initalize with all LEDs off
             for (int i = 0; i < BITS_PER_LED_CMD * _ledCount; i++)
             {
-                _rmtItems[i].level0 = 1;
-                _rmtItems[i].duration0 = T0H;
-                _rmtItems[i].level1 = 0;
-                _rmtItems[i].duration1 = T1H;
+                ((rmt_item32_t*)_rmtItems)[i].level0 = 1;
+                 ((rmt_item32_t*)_rmtItems)[i].duration0 = T0H;
+                 ((rmt_item32_t*)_rmtItems)[i].level1 = 0;
+                 ((rmt_item32_t*)_rmtItems)[i].duration1 = T1H;
             }
 
             // Initialize the RMT driver
@@ -157,13 +158,13 @@ namespace OpenKNX
                     {
                         if (colorbits & (1 << (23 - i)))
                         {
-                            _rmtItems[j * BITS_PER_LED_CMD + i].duration0 = T0L;
-                            _rmtItems[j * BITS_PER_LED_CMD + i].duration1 = T1L;
+                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration0 = T0L;
+                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration1 = T1L;
                         }
                         else
                         {
-                            _rmtItems[j * BITS_PER_LED_CMD + i].duration0 = T0H;
-                            _rmtItems[j * BITS_PER_LED_CMD + i].duration1 = T1H;
+                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration0 = T0H;
+                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration1 = T1H;
                         }
                     }
                 }
@@ -181,7 +182,7 @@ namespace OpenKNX
                 // uint32_t t1 = micros();
                 fillRmt();
                 // uint32_t t2 = micros();
-                rmt_write_items((rmt_channel_t)_rmtChannel, _rmtItems, _ledCount * BITS_PER_LED_CMD, false);
+                rmt_write_items((rmt_channel_t)_rmtChannel,  ((rmt_item32_t*)_rmtItems), _ledCount * BITS_PER_LED_CMD, false);
                 _dirty = 0;
                 // uint32_t t3 = micros();
 
