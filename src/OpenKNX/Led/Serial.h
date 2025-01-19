@@ -1,28 +1,29 @@
 #pragma once
 #ifdef ARDUINO_ARCH_ESP32
     #include "OpenKNX/Led/Base.h"
-
+    #include <driver/rmt_tx.h>
+    #include <stdint.h>
 
 namespace OpenKNX
 {
     namespace Led
     {
-
-
         class SerialLedManager
         {
           private:
-            void *_rmtItems = nullptr; // should be a rmt_item32_t*, but this does not build in all configuration
-            uint8_t _rmtChannel = 0;
+            rmt_symbol_word_t *_rmtItems = nullptr;
             uint8_t _ledCount = 0;
             uint32_t _lastWritten = 0;
-            uint32_t *_ledData = nullptr;
+            uint8_t* _ledData = 0;
             uint32_t _dirty = 0;
             TimerHandle_t _timer;
-            void fillRmt();
+
+            rmt_channel_handle_t _led_chan;
+            rmt_transmit_config_t _tx_config;
+            rmt_encoder_handle_t _simple_encoder;
 
           public:
-            void init(uint8_t ledPin, uint8_t rmtChannel, uint8_t ledCount);
+            void init(uint8_t ledPin, uint8_t ledCount);
             void setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b);
             void writeLeds(); // send the color data to the LEDs
         };

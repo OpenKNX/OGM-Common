@@ -55,7 +55,7 @@ namespace OpenKNX
     #ifndef PROG_LED_COLOR
         #define PROG_LED_COLOR 63, 0, 0
     #endif
-        openknx.ledManager.init(OPENKNX_SERIALLED_PIN, 0, OPENKNX_SERIALLED_NUM);
+        openknx.ledManager.init(OPENKNX_SERIALLED_PIN, OPENKNX_SERIALLED_NUM);
         openknx.progLed.init(PROG_LED_PIN, &(openknx.ledManager), PROG_LED_COLOR);
 
     #ifdef INFO1_LED_PIN

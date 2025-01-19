@@ -1,18 +1,86 @@
 #ifdef ARDUINO_ARCH_ESP32
-    #include <driver/rmt.h>
-    #include "OpenKNX/Led/Serial.h"
-    #include "OpenKNX/Facade.h"
-    
-    #include "esp_log.h"
-    #include "esp_system.h"
-    #include "freertos/FreeRTOS.h"
-    #include "freertos/task.h"
-    #include "freertos/timers.h"
+
+#include "OpenKNX/Led/Serial.h"
+#include "OpenKNX/Facade.h"
+
+#include "esp_log.h"
+#include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/timers.h"
+
+#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
+#define BITS_PER_LED_CMD 24
 
 namespace OpenKNX
 {
     namespace Led
     {
+        static const rmt_symbol_word_t ws2812_zero = {
+            .duration0 = (uint16_t)3, // T0H=0.3us
+            .level0 = 1,
+            .duration1 = (uint16_t)9, // T0L=0.9us
+            .level1 = 0,
+        };
+
+        static const rmt_symbol_word_t ws2812_one = {
+            .duration0 = (uint16_t)9, // T1L=0.9us
+            .level0 = 1,
+            .duration1 = (uint16_t)3, // T1H=0.3us
+            .level1 = 0,
+        };
+
+        //reset defaults to 50uS
+        static const rmt_symbol_word_t ws2812_reset = {
+            .duration0 = RMT_LED_STRIP_RESOLUTION_HZ / 1000000 * 50 / 2,
+            .level0 = 1,
+            .duration1 = RMT_LED_STRIP_RESOLUTION_HZ / 1000000 * 50 / 2,
+            .level1 = 0,
+        };
+
+        static size_t encoder_callback(const void *data, size_t data_size,
+                               size_t symbols_written, size_t symbols_free,
+                               rmt_symbol_word_t *symbols, bool *done, void *arg)
+        {
+            // We need a minimum of 8 symbol spaces to encode a byte. We only
+            // need one to encode a reset, but it's simpler to simply demand that
+            // there are 8 symbol spaces free to write anything.
+            if (symbols_free < 8)
+            {
+                return 0;
+            }
+
+            // We can calculate where in the data we are from the symbol pos.
+            // Alternatively, we could use some counter referenced by the arg
+            // parameter to keep track of this.
+            size_t data_pos = symbols_written / 8;
+            uint8_t *data_bytes = (uint8_t*)data;
+            if (data_pos < data_size)
+            {
+                // Encode a byte
+                size_t symbol_pos = 0;
+                for (int bitmask = 0x80; bitmask != 0; bitmask >>= 1)
+                {
+                    if (data_bytes[data_pos]&bitmask)
+                    {
+                        symbols[symbol_pos++] = ws2812_one;
+                    } else {
+                        symbols[symbol_pos++] = ws2812_zero;
+                    }
+                }
+                // We're done; we should have written 8 symbols.
+                return symbol_pos;
+            }
+            else
+            {
+                //All bytes already are encoded.
+                //Encode the reset, and we're done.
+                symbols[0] = ws2812_reset;
+                *done = 1; //Indicate end of the transaction.
+                return 1; //we only wrote one symbol
+            }
+        }
+
         void Serial::init(long num, SerialLedManager *manager, uint8_t r, uint8_t g, uint8_t b)
         {
             // no valid pin
@@ -44,15 +112,7 @@ namespace OpenKNX
             }
         }
 
-    #define BITS_PER_LED_CMD 24
 
-    // WS2812 timing parameters
-    // 0.35us and 0.90us
-    // on tick is 80MHz / divider = 0.025us
-    #define T0H 14 // 0 bit high time
-    #define T0L 36 // 0 bit low time
-    #define T1H 36 // 1 bit high time
-    #define T1L 14 // 1 bit low time
 
         /*
          * Set the color of the RGB LED
@@ -65,44 +125,40 @@ namespace OpenKNX
             _manager->setLED(_pin, (color[0] * (uint16_t)_currentLedBrightness) / 256, (color[1] * (uint16_t)_currentLedBrightness) / 256, (color[2] * (uint16_t)_currentLedBrightness) / 256);
         }
 
-        void SerialLedManager::init(uint8_t ledPin, uint8_t rmtChannel, uint8_t ledCount)
+        void SerialLedManager::init(uint8_t ledPin, uint8_t ledCount)
         {
-            _rmtChannel = rmtChannel;
+            logError("SerialLedManager", "init");
             _ledCount = ledCount;
-            rmt_config_t config = RMT_DEFAULT_CONFIG_TX((gpio_num_t)ledPin, (rmt_channel_t)rmtChannel);
-            config.clk_div = 2;
-            config.mem_block_num = ((ledCount * BITS_PER_LED_CMD) / 64) + 1; // one memblock has 64 * 32-bit values (rmt items) which represent 1 encoded bit for ws2812 led. 24bit per LED
-
-            _rmtItems = new rmt_item32_t[_ledCount * BITS_PER_LED_CMD + 1];
-            _ledData = new uint32_t[_ledCount];
-
-            // initalize with all LEDs off
-            for (int i = 0; i < BITS_PER_LED_CMD * _ledCount; i++)
+            _led_chan = NULL;
+            _ledData = new uint8_t[_ledCount*3];
+            rmt_tx_channel_config_t tx_chan_config =
+                    {
+                        .gpio_num = (gpio_num_t)ledPin,
+                        .clk_src = RMT_CLK_SRC_DEFAULT, // select source clock
+                        .resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ,
+                        .mem_block_symbols = (size_t)(ledCount * BITS_PER_LED_CMD) , // increase the block size can make the LED less flickering
+                        .trans_queue_depth = 1, // set the number of transactions that can be pending in the background
+                    };
+            rmt_new_tx_channel(&tx_chan_config, &_led_chan);
+            _simple_encoder = NULL;
+            const rmt_simple_encoder_config_t simple_encoder_cfg =
             {
-                ((rmt_item32_t*)_rmtItems)[i].level0 = 1;
-                 ((rmt_item32_t*)_rmtItems)[i].duration0 = T0H;
-                 ((rmt_item32_t*)_rmtItems)[i].level1 = 0;
-                 ((rmt_item32_t*)_rmtItems)[i].duration1 = T1H;
-            }
+                .callback = encoder_callback
+                //min_chunk_size default 64 is good
+            };
+            rmt_new_simple_encoder(&simple_encoder_cfg, &_simple_encoder);
 
-            // Initialize the RMT driver
-            if (rmt_config(&config) != ESP_OK)
-            {
-                logError("SerialLedManager", "Configuration of RMT driver failed");
-                return;
-            }
-            if (rmt_driver_install(config.channel, 0, 0) != ESP_OK)
-            {
-                logError("SerialLedManager", "Installation of RMT driver failed");
-                return;
-            }
+            rmt_enable(_led_chan);
 
-            writeLeds();
+            _tx_config =
+            {
+                .loop_count = 0, // no transfer loop
+            };            
 
             // Timer-Handle erstellen
             _timer = xTimerCreate(
                 "SerialLedManager", // Name des Timers
-                pdMS_TO_TICKS(10),  // Timer-Periode in Millisekunden (hier 1 Sekunde)
+                pdMS_TO_TICKS(10),  // Timer-Periode in Millisekunden 
                 pdTRUE,             // Auto-Reload (Wiederholung nach Ablauf)
                 (void *)0,          // Timer-ID (kann für Identifikation verwendet werden)
                 [](TimerHandle_t timer) {
@@ -135,39 +191,31 @@ namespace OpenKNX
                 logError("SerialLedManager", "Could not start Timer");
                 return;
             }
+            
         }
 
         void SerialLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)
         {
-            uint32_t newrgb = (g << 16) | (r << 8) | b;
-            if (_ledData[ledAdr] != newrgb)
+           _dirty = false;
+           if(_ledData[ledAdr*3] != g)
             {
-                _ledData[ledAdr] = newrgb;
-                _dirty |= (1 << ledAdr);
+                _ledData[ledAdr*3] = g;
+                _ledData[ledAdr*3+1] = r;
+                _ledData[ledAdr*3+2] = b;
+                _dirty = true;
+                return;
             }
-        }
-
-        void SerialLedManager::fillRmt()
-        {
-            for (int j = 0; j < _ledCount; j++)
+            if(_ledData[ledAdr*3+1] != r)
             {
-                if (_dirty & (1 << j))
-                {
-                    uint32_t colorbits = _ledData[j];
-                    for (int i = 0; i < BITS_PER_LED_CMD; i++)
-                    {
-                        if (colorbits & (1 << (23 - i)))
-                        {
-                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration0 = T0L;
-                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration1 = T1L;
-                        }
-                        else
-                        {
-                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration0 = T0H;
-                             ((rmt_item32_t*)_rmtItems)[j * BITS_PER_LED_CMD + i].duration1 = T1H;
-                        }
-                    }
-                }
+                _ledData[ledAdr*3+1] = r;
+                _ledData[ledAdr*3+2] = b;
+                _dirty = true;
+                return;
+            }
+            if(_ledData[ledAdr*3+2] != b)
+            {
+                _ledData[ledAdr*3+2] = b;
+                _dirty = true;
             }
         }
 
@@ -179,18 +227,15 @@ namespace OpenKNX
             if (delayCheckMillis(_lastWritten, 5)) // prevent calling a new rmt transmission into an running on
             {
                 _lastWritten = millis();
-                // uint32_t t1 = micros();
-                fillRmt();
-                // uint32_t t2 = micros();
-                rmt_write_items((rmt_channel_t)_rmtChannel,  ((rmt_item32_t*)_rmtItems), _ledCount * BITS_PER_LED_CMD, false);
                 _dirty = 0;
-                // uint32_t t3 = micros();
 
-                //::Serial.print("fillRmt: ");
+                // Flush RGB values to LEDs
+                //uint32_t t1 = micros();
+                rmt_transmit(_led_chan, _simple_encoder, _ledData, _ledCount*3, &_tx_config);
+                //uint32_t t2 = micros();
+
+                //::Serial.print("rmt_transmit: "); ~50us
                 //::Serial.print(t2-t1);
-                //::Serial.print("us. rmt write: ");
-                //::Serial.print(t3-t2);
-                //::Serial.println("us");
             }
         }
     } // namespace Led
