@@ -68,6 +68,7 @@ KNX_UART_TX_PIN
 | OPENKNX_TIME_CLOCK                 | arch depen. |       | Specifies the used time class. The default for SAMD21 is OpenKNX::Time::TimeClockMillis, for all other architectures  OpenKNX::Time::TimeClockSystem                                       |
 | OPENKNX_RTT                        |             |       | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240!                                                                                                            |
 | OPENKNX_LITTLE_FS                  | arch depen. |       | If true, LittleFS will be enabled. Default true for RP2040 and ESP32.                                                                                                                      |
+| OPENKNX_OVERRIDE_MASK_VERSION      |             |       | defines a mask version which will be returned regardless of the MASK_VERSION used for the build. Set this define if the used mask version does not match the media type.                   |
 | BUFFER_SIZE_UP                     |        1024 | Bytes | Using by Segger RTT                                                                                                                                                                        |
 
 ### Leds

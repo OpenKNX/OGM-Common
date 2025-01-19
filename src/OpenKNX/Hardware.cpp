@@ -23,7 +23,11 @@ void IRAM_ATTR processKnxRxTimer(void* pvParameters)
     // if (!knx.platform().uartAvailable()) return;
     while (1)
     {
+        #if MASK_VERSION == 0x091A
+        knx.bau().getSecondaryDataLinkLayer()->processRxISR();
+        #else
         knx.bau().getDataLinkLayer()->processRxISR();
+        #endif
         vTaskDelay(xFrequency);
     }
 }

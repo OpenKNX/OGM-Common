@@ -15,7 +15,7 @@ namespace OpenKNX
             _activeOn = activeOn;
 
             pinMode(_pin, OUTPUT);
-            digitalWrite(_pin, _activeOn == HIGH ? true : false);
+            digitalWrite(_pin, !_activeOn);
         }
 
         /*
@@ -36,13 +36,13 @@ namespace OpenKNX
                 pinMode(_pin, OUTPUT);
 
             if (calcBrightness == 255)
-                digitalWrite(_pin, _activeOn == HIGH ? true : false);
+                digitalWrite(_pin, _activeOn);
 
             else if (calcBrightness == 0)
-                digitalWrite(_pin, _activeOn == HIGH ? false : true);
+                digitalWrite(_pin, !_activeOn);
 
             else
-                analogWrite(_pin, _activeOn == HIGH ? calcBrightness : (255 - calcBrightness));
+                analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness));
 
             _currentLedBrightness = calcBrightness;
         }

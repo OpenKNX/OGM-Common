@@ -37,6 +37,7 @@
     #endif
 #endif
 
+#include "macros.h"
 #include "OpenKNX/Channel.h"
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
