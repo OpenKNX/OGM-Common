@@ -59,6 +59,8 @@ if (!$toolsExist) {
 if ($toolsExist) {
     $firmwareName = (Resolve-Path "./data/$($args[0])").Path
 
+    Write-Host "Hinweis: auf dem Gerät muss OTA ggf. durch aktivieren des Programmiermodus erlaubt werden"
+
     $validIpAddress = $false
     while (-not $validIpAddress) {
         $ipAddress = Read-Host "IP-Addresse des Update-Ziels eingeben"
