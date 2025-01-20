@@ -210,7 +210,7 @@ namespace OpenKNX
         while (WDT->STATUS.bit.SYNCBUSY)
             ;
     #elif defined(ARDUINO_ARCH_ESP32)
-
+        #if defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
         esp_task_wdt_config_t wdt_config = {
             .timeout_ms = OPENKNX_WATCHDOG_MAX_PERIOD * 1000,
             .idle_core_mask = 1,
@@ -220,6 +220,9 @@ namespace OpenKNX
         // Initialisiere den Watchdog mit der Konfiguration
         esp_task_wdt_deinit();
         esp_task_wdt_init(&wdt_config);
+        #else
+        esp_task_wdt_init(OPENKNX_WATCHDOG_MAX_PERIOD, true);
+        #endif
         esp_task_wdt_add(NULL);
     #endif
 #endif

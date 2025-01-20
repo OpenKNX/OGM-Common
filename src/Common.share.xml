@@ -583,7 +583,8 @@
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="ETS Tipp" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Benötigen mehrere Kanäle die gleiche Konfigurationen, können mit gedrückter STRG Taste die jeweils gleichen Seiten mit der Maus ausgewählt werden."  />
 								<ParameterSeparator Id="%AID%_PS-nnn" Text="Die vorgenommen Konfigurationen werden dann auf alle gewählten Kanäle übernommen."  />
-
+	              <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
+	
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Verwendung von Open Source" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX verwendet für die Sonnenstandsberechnung den PSA Algorithmus welcher unter der CC BY 4.0 Lizenz veröffentlich wurde."  />
 								<ParameterSeparator Id="%AID%_PS-nnn" Text="Mehr Information dazu sind unter https://www.sciencedirect.com/science/article/pii/S0038092X20311488?via%3Dihub zu finden."  />

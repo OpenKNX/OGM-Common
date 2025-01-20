@@ -10,8 +10,15 @@ namespace OpenKNX
 {
     void Console::loop()
     {
+        if (_disableConsole)
+            return;
         if (OPENKNX_LOGGER_DEVICE.available())
             processSerialInput();
+    }
+
+    void Console::disableConsole(bool disable)
+    {
+        _disableConsole = disable;
     }
 
 #ifdef BASE_KoDiagnose
@@ -546,7 +553,9 @@ namespace OpenKNX
         printHelpLine("tm test", "Test some calculation)");
     #endif
 #endif
+#ifdef ParamBASE_Latitude
         printHelpLine("sun", "Shows sun information");
+#endif
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showHelp();
