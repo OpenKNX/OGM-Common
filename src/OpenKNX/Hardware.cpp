@@ -4,36 +4,6 @@
     #include "LittleFS.h"
 #endif
 
-#if defined(USE_TP_RX_QUEUE) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
-    #if defined(ARDUINO_ARCH_RP2040) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
-void __time_critical_func(processKnxRxISR)()
-{
-    uart_get_hw(KNX_DMA_UART)->icr = UART_UARTICR_RTIC_BITS | UART_UARTICR_RXIC_BITS;
-        #if MASK_VERSION == 0x07B0
-    knx.bau().getDataLinkLayer()->processRxISR();
-        #elif MASK_VERSION == 0x091A
-    knx.bau().getSecondaryDataLinkLayer()->processRxISR();
-        #endif
-}
-    #endif
-    #if defined(ARDUINO_ARCH_ESP32)
-void IRAM_ATTR processKnxRxTimer(void* pvParameters)
-{
-    const TickType_t xFrequency = pdMS_TO_TICKS(1);
-    // if (!knx.platform().uartAvailable()) return;
-    while (1)
-    {
-        #if MASK_VERSION == 0x091A
-        knx.bau().getSecondaryDataLinkLayer()->processRxISR();
-        #else
-        knx.bau().getDataLinkLayer()->processRxISR();
-        #endif
-        vTaskDelay(xFrequency);
-    }
-}
-    #endif
-#endif
-
 namespace OpenKNX
 {
     void Hardware::init()
@@ -123,40 +93,40 @@ namespace OpenKNX
 #endif
     }
 
-    void Hardware::initKnxRxISR()
-    {
-#if defined(USE_TP_RX_QUEUE) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
-    #if defined(ARDUINO_ARCH_RP2040) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
-        irq_set_exclusive_handler(KNX_DMA_UART_IRQ, processKnxRxISR);
-        irq_set_enabled(KNX_DMA_UART_IRQ, true);
-        uart_set_irq_enables(KNX_DMA_UART, true, false);
-    #endif
+//     void Hardware::initKnxRxISR()
+//     {
+// #if defined(USE_TP_RX_QUEUE) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
+//     #if defined(ARDUINO_ARCH_RP2040) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
+//         irq_set_exclusive_handler(KNX_DMA_UART_IRQ, processKnxRxISR);
+//         irq_set_enabled(KNX_DMA_UART_IRQ, true);
+//         uart_set_irq_enables(KNX_DMA_UART, true, false);
+//     #endif
 
-    #ifdef ARDUINO_ARCH_ESP32
-        // TimerHandle_t xTimer = xTimerCreate(
-        //     "processKnxRx",   // Name des Timers
-        //     pdMS_TO_TICKS(1), // Timer-Periode
-        //     pdTRUE,           // Wiederholender Timer
-        //     (void*)0,         // Benutzerdefinierter Parameter (optional)
-        //     processKnxRxTimer // Callback-Funktion
-        // );
-        // if (xTimerStart(xTimer, 0) != pdPASS)
-        // {
-        //     logError("Hardware<KnxRx>", "Could not start timer!");
-        //     return;
-        // }
-        xTaskCreatePinnedToCore(
-            processKnxRxTimer,         // Task-Funktion
-            "KnxRx",                   // Name des Tasks
-            2048,                      // Stack-Größe in Worten
-            NULL,                      // Parameter
-            configMAX_PRIORITIES - 10, // Höchste Priorität
-            NULL,                      // Task-Handle (optional)
-            0                          // Core 0 auswählen
-        );
-    #endif
-#endif
-    }
+//     #ifdef ARDUINO_ARCH_ESP32
+//         // TimerHandle_t xTimer = xTimerCreate(
+//         //     "processKnxRx",   // Name des Timers
+//         //     pdMS_TO_TICKS(1), // Timer-Periode
+//         //     pdTRUE,           // Wiederholender Timer
+//         //     (void*)0,         // Benutzerdefinierter Parameter (optional)
+//         //     processKnxRxTimer // Callback-Funktion
+//         // );
+//         // if (xTimerStart(xTimer, 0) != pdPASS)
+//         // {
+//         //     logError("Hardware<KnxRx>", "Could not start timer!");
+//         //     return;
+//         // }
+//         xTaskCreatePinnedToCore(
+//             processKnxRxTimer,         // Task-Funktion
+//             "KnxRx",                   // Name des Tasks
+//             2048,                      // Stack-Größe in Worten
+//             NULL,                      // Parameter
+//             configMAX_PRIORITIES - 10, // Höchste Priorität
+//             NULL,                      // Task-Handle (optional)
+//             0                          // Core 0 auswählen
+//         );
+//     #endif
+// #endif
+//     }
 
     void Hardware::initFlash()
     {

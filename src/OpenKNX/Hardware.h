@@ -52,6 +52,6 @@ namespace OpenKNX
         void initFlash();
         void initLeds();
         void initButtons();
-        void initKnxRxISR();
+        // void initKnxRxISR();
     };
 } // namespace OpenKNX

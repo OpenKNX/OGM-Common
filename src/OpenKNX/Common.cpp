@@ -263,7 +263,7 @@ namespace OpenKNX
 
         // start the framework + isr if needed
         knx.start();
-        openknx.hardware.initKnxRxISR();
+        // openknx.hardware.initKnxRxISR();
 
         // register callbacks
         registerCallbacks();
