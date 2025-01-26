@@ -58,6 +58,12 @@ namespace OpenKNX
             unsigned long _waitTimerReadKo = 0;
             bool _intialReadKo = false;
             time_t _lastTimeStamp = 0;
+#ifdef OPENKNX_LED_TIME
+            uint8_t _ledState = 0;
+            uint8_t _lastSecondChange = 0;
+            unsigned long _timerLedOn = 0;
+            unsigned long _timeUpdatedActivity = 0;
+#endif
 
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
