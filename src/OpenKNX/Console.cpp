@@ -220,10 +220,17 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            logInfo("BCU<Status>", "%s", dll->isConnected() ? "Connected" : "Disconnected");
+            logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
+            TPUart::Statistics statistics = dll->getTPUart().getStatistics();
+            logInfo("BCU<Stats>", "TX Frames: % 7u | RX Frames: % 7u (% 8u B) | Discarded: % 5u B | Received: % 8u B | Load: % 3u B/s | Buffer: % 3u | Await % 3u | Repetitions % 5u | Overflow %u/%u/%u/%u\n",
+                    statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
+                    statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
+                    statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
+
             // logInfo("BCU<Received>", "Processed: %i - Ignored: %i - Invalid: %i - Unknown: %i",
             //         dll->getRxProcessdFrameCounter(), dll->getRxIgnoredFrameCounter(), dll->getRxInvalidFrameCounter(), dll->getRxUnknownControlCounter());
             // logInfo("BCU<Transmitted>", "Processed: %i/%i", dll->getTxProcessedFrameCounter(), dll->getTxFrameCounter());
+
             return true;
         }
         else if (cmd.compare("bcu mon") == 0)

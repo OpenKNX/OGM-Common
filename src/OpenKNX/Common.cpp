@@ -145,7 +145,7 @@ namespace OpenKNX
     knx.platform().setInterface(new TPUart::Interface::ESP32(KNX_UART_RX_PIN, KNX_UART_TX_PIN, UART_NUM_1));
 #endif
 #if defined(ARDUINO_ARCH_RP2040) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
-    knx.platform().setInterface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, uart0, UART1_IRQ, true));
+    knx.platform().setInterface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, uart0, -1, true));
 #endif
 
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
