@@ -10,8 +10,15 @@ namespace OpenKNX
 {
     void Console::loop()
     {
+        if (_disableConsole)
+            return;
         if (OPENKNX_LOGGER_DEVICE.available())
             processSerialInput();
+    }
+
+    void Console::disableConsole(bool disable)
+    {
+        _disableConsole = disable;
     }
 
 #ifdef BASE_KoDiagnose

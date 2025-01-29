@@ -36,6 +36,7 @@ namespace OpenKNX
         uint8_t _consoleCharRepeats = 0;
         uint8_t _consoleCharLast = 0x0;
         bool _diagnoseKoOutput = false;
+        bool _disableConsole = false;
 
         void sleep();
         uint32_t sleepTime();
@@ -58,6 +59,7 @@ namespace OpenKNX
       public:
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};
         void loop();
+        void disableConsole(bool disable);
 
         void printHelpLine(const char* command, const char* message);
         bool processCommand(std::string cmd, bool diagnoseKo = false);
