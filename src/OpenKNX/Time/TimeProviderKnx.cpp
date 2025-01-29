@@ -184,6 +184,7 @@ namespace OpenKNX
                             _dateTime.tm_min = knxDateTime.tm_min;
                             _dateTime.tm_sec = knxDateTime.tm_sec;
                             _hasTime = true;
+                            _timeSet = true;
 
                             const bool lDST = raw[6] & DPT19_SUMMERTIME;
                             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
@@ -212,6 +213,7 @@ namespace OpenKNX
                         _dateTime.tm_min = knxTime.tm_min;
                         _dateTime.tm_sec = knxTime.tm_sec;
                         _hasTime = true;
+                        _timeSet = true;
                         if (openknx.time.isValid())
                         {
                             tm now;
@@ -352,11 +354,19 @@ namespace OpenKNX
             {
                 _waitStates = WaitStates::None;
                 _waitTimerStart = 0;
-
-                setLocalTime(_dateTime, _timeStampTimeReceived);
+                bool setTimeNeeded = true;
+                if (!_timeSet) // no time set, check if set is needed
+                {                   
+                    auto now = openknx.time.getLocalTime();
+                    if (now.isDst == _dateTime.tm_isdst && now.year == _dateTime.tm_year + 1900 && now.month == _dateTime.tm_mon + 1 && now.day == _dateTime.tm_mday)
+                        setTimeNeeded = false;
+                }                   
+                if (setTimeNeeded)
+                    setLocalTime(_dateTime, _timeStampTimeReceived);
                 _hasDate = false;
                 _hasTime = false;
                 _hasDaylightSavingFlag = false;
+                _timeSet = false;
             }
             else if (openknx.time.isValid() && _waitStates == WaitStates::None)
             {
