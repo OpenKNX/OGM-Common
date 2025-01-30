@@ -41,15 +41,15 @@ $firmwareWithPath = Join-Path $firmwareWithPath $firmwareName
 
 
 
-$toolsExist = Test-Path -PathType Leaf ~/bin/esptools/esptool.exe
+$toolsExist = Test-Path -PathType Leaf ~/bin/esptool.exe
 if ($toolsExist) {
-    $helpText = ~/bin/esptools/esptool.exe version
+    $helpText = ~/bin/esptool.exe version
     #$toolsExist = $helpText -match 'Version 1.7.0'
 
     #python -m esptool write_flash 0x0 $firmwareWithPath
-    Write-Host "Now executing ~/bin/esptools/esptool.exe write_flash 0x0 $firmwareWithPath ..."
+    Write-Host "Now executing ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath ..."
     Write-Host
-    ~/bin/esptools/esptool.exe write_flash 0x0 $firmwareWithPath
+    ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath
 
     timeout /T -1
 }

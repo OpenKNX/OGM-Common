@@ -31,7 +31,7 @@ function OpenKNX_ShowLogo($AddCustomText = $null) {
 OpenKNX_ShowLogo -AddCustomText "OTA Firmware Update"
 
 #$checkVersion = "0.2.1"
-$toolsExist = Test-Path -PathType Leaf ~/bin/esptools/espota.exe
+$toolsExist = Test-Path -PathType Leaf ~/bin/espota.exe
 if ($toolsExist) {
     #$versionLine = ~/bin/espota.exe version | findstr /R /C:"Version Client: *\d*.\d*.\d*"
     #$splitted = $versionLine.split(' ')
@@ -69,8 +69,8 @@ if ($toolsExist) {
             Write-Host "Ungueltige IP-Addresse. Bitte erneut eingeben."
         }
     }
-    #Write-Host "~/bin/esptools/espota.exe -i $ipAddress -r $args[1] -f $firmwareName"
-    ~/bin/esptools/espota.exe -i $ipAddress -r $args[1] -f $firmwareName
+    #Write-Host "~/bin/espota.exe -i $ipAddress -r $args[1] -f $firmwareName"
+    ~/bin/espota.exe -i $ipAddress -r $args[1] -f $firmwareName
 	
     timeout /T -1
 }
