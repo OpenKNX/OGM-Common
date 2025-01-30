@@ -12,10 +12,12 @@ namespace OpenKNX
             DateOnly _fourthAdvent = {0};
 
           public:
+
             /*
              * Returns true, if the calculation is valid
              */
             bool isValid();
+
             /*
              * returns the current date based on the UTC time
              */
@@ -25,12 +27,24 @@ namespace OpenKNX
              * returns the current date based on the local time
              */
             DateOnly getLocalDate();
+
             /*
-             * get easter
+             * calc easter
+             */
+            static DateOnly calcEaster(uint16_t year);
+
+            /*
+             * get easter for current year
              */
             DateOnly getEaster();
+
             /*
-             * get 4th advent
+             * calc 4th advent
+             */
+            static DateOnly calcForthAdvent(uint16_t year);
+
+            /*
+             * get 4th advent for current year
              */
             DateOnly getForthAdvent();
 
