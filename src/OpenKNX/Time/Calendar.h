@@ -39,21 +39,28 @@ namespace OpenKNX
             // This will be changed in the future.
 
             /*
-             * returns true if today is a holiday
+             * Check if today is defined as holiday.
+             * @return true, if current date is a holiday enabled in configuration
              */
             bool isHolidayToday();
+
             /*
-             * returns true if the tomorrow is a holiday
+             * Check if tomorrow is defined as holiday.
+             * @return true, if the next day after current date is a holiday enabled in configuration
              */
-            bool isHolidayTommorow();
+            bool isHolidayTomorrow();
+
             /*
-             * returns true for days from Monday to Friday if there is no holiday
+             * Check if today is a working day.
+             * @return true, if the day defined by current date is within Monday to Friday and not a holiday enabled in configuration
              */
             bool isWorkingDayToday();
+
             /*
-             * returns true if the tomorrow is a day from Monday to Friday and if there is no holiday
+             * Check if tomorrow is a working day.
+             * @return true, if the next day after current date is within Monday to Friday and not a holiday enabled in configuration
              */
-            bool isWorkingDayTommorow();
+            bool isWorkingDayTomorrow();
 #endif
         };
     } // namespace Time

@@ -93,7 +93,7 @@ namespace OpenKNX
             return Timer::instance().holidayToday();
         }
 
-        bool Calendar::isHolidayTommorow()
+        bool Calendar::isHolidayTomorrow()
         {
             return Timer::instance().holidayTomorrow();
         }
@@ -105,11 +105,11 @@ namespace OpenKNX
                    !isHolidayToday();
         }
 
-        bool Calendar::isWorkingDayTommorow()
+        bool Calendar::isWorkingDayTomorrow()
         {
             int wday = openknx.time.getLocalTime().dayOfWeek;
             return wday >= 0 && wday < 5 && // Sunday to Thuersday
-                   !isHolidayTommorow();
+                   !isHolidayTomorrow();
         }
 #endif
 
