@@ -631,11 +631,11 @@ namespace OpenKNX
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave();
 #endif
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.powerSave();
-#endif
 #ifdef INFO2_LED_PIN
         openknx.info2Led.powerSave();
+#endif
+#ifdef INFO3_LED_PIN
+        openknx.info3Led.powerSave();
 #endif
 
 #if MASK_VERSION == 0x07B0
