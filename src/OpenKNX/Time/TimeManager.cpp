@@ -536,7 +536,7 @@ namespace OpenKNX
                     openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_GREEN);
                     openknx.OPENKNX_LED_TIME.on();
                     #else
-                    openknx.OPENKNX_LED_TIME.blink(100);
+                    openknx.OPENKNX_LED_TIME.blinking(100);
                     #endif
                 } 
                 if (delayCheck(_timeUpdatedActivity, 1000))
