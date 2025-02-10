@@ -135,7 +135,7 @@ namespace OpenKNX
                     logInfoP("Today is a working day");
                 else
                     logInfoP("Today is a non-working day");
-                if (openknx.calendar.isWorkingDayTommorow())
+                if (openknx.calendar.isWorkingDayTomorrow())
                     logInfoP("Tomorrow is a working day");
                 else
                     logInfoP("Tomorrow is a non-working day");
