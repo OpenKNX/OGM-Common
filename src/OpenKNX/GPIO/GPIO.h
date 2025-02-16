@@ -1,5 +1,6 @@
 #pragma once
-#include "OpenKNX.h"
+#include <Arduino.h>
+#include <string>
 #include "hardware.h"
 
 
@@ -10,7 +11,7 @@
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
         class iGPIOExpander
         {
@@ -31,11 +32,11 @@ namespace OpenKNX
         };
 
 
-        class GPIOHAL
+        class Manager
         {
         public:
-            GPIOHAL();
-            ~GPIOHAL();
+            Manager();
+            ~Manager();
 
             void init();
             void loop();

@@ -29,6 +29,7 @@ namespace OpenKNX
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
+        openknx.gpio.init();
         openknx.hardware.initLeds();
 
 #if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
@@ -362,12 +363,16 @@ namespace OpenKNX
         knx.loop();
         RUNTIME_MEASURE_END(_runtimeKnxStack);
 
+        //loop IO
+        openknx.gpio.loop();
+
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeTimeManager);
         openknx.time.loop();
         RUNTIME_MEASURE_END(_runtimeTimeManager);
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
+
 #ifdef ParamBASE_Latitude
         openknx.sun.loop();
 #endif

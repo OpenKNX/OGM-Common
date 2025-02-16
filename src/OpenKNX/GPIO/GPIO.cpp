@@ -1,4 +1,4 @@
-#include "IO.h"
+#include "GPIO.h"
 #include "OpenKNX.h"
 #include "GPIO_TCA9555.h"
 #include "GPIO_TCA6408.h"
@@ -6,22 +6,22 @@
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
         const OPENKNX_GPIO_T GPIO_TYPES[OPENKNX_GPIO_NUM+1] = {OPENKNX_GPIO_T_MCU, OPENKNX_GPIO_TYPES};
         const uint16_t GPIO_ADDRS[OPENKNX_GPIO_NUM+1] = {0, OPENKNX_GPIO_ADDRS};
         const uint8_t GPIO_INTS[OPENKNX_GPIO_NUM+1] = {0, OPENKNX_GPIO_INTS};
         iGPIOExpander* GPIOExpanders[OPENKNX_GPIO_NUM+1];
 
-        GPIOHAL::GPIOHAL()
+        Manager::Manager()
         {
         }
 
-        GPIOHAL::~GPIOHAL()
+        Manager::~Manager()
         {
         }
 
-        void GPIOHAL::init()
+        void Manager::init()
         {
             OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
             OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
@@ -72,17 +72,17 @@ namespace OpenKNX
             }
         }
 
-        void GPIOHAL::loop()
+        void Manager::loop()
         {
 
         }
 
-        std::string GPIOHAL::logPrefix()
+        std::string Manager::logPrefix()
         {
             return openknx.logger.buildPrefix("GPIOHAL", 0);
         }
 
-        void GPIOHAL::pinMode(uint16_t pin, int mode, bool preset, int status)
+        void Manager::pinMode(uint16_t pin, int mode, bool preset, int status)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
@@ -94,7 +94,7 @@ namespace OpenKNX
             GPIOExpanders[expander]->GPIOpinMode(localpin, mode, preset, status);
         }
 
-        void GPIOHAL::digitalWrite(uint16_t pin, int status)
+        void Manager::digitalWrite(uint16_t pin, int status)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
@@ -106,7 +106,7 @@ namespace OpenKNX
             GPIOExpanders[expander]->GPIOdigitalWrite(localpin, status);
         }
 
-        bool GPIOHAL::digitalRead(uint16_t pin)
+        bool Manager::digitalRead(uint16_t pin)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
