@@ -15,5 +15,7 @@ namespace OpenKNX
             OPENKNX_GPIO_T_TCA6408 = 2,
             OPENKNX_GPIO_T_PCA9557 = 3
         };
+
+        typedef uint16_t openknx_gpio_number_t;
     }
 }
