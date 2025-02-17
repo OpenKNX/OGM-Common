@@ -3,6 +3,7 @@
 #include "DriverEmbedded.h"
 #include "DriverTCA9555.h"
 #include "DriverTCA6408.h"
+#include "DriverPCA9557.h"
 
 namespace OpenKNX
 {
@@ -62,6 +63,20 @@ namespace OpenKNX
                     case OPENKNX_GPIO_T_TCA6408:
                     {
                         GPIOExpanders[i] = new DriverTCA6408(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
+                        int statuscode = GPIOExpanders[i]->init();
+                        if(statuscode)
+                        {
+                            logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], statuscode);
+                        }
+                        else
+                        {
+                            logInfoP("connected to GPIO Expander %u with address %u", i, GPIO_ADDRS[i]);
+                        }
+                    }
+                    break;
+                    case OPENKNX_GPIO_T_PCA9557:
+                    {
+                        GPIOExpanders[i] = new DriverPCA9557(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
                         int statuscode = GPIOExpanders[i]->init();
                         if(statuscode)
                         {

@@ -1,20 +1,23 @@
+#pragma once
 #include "GPIO.h"
-#include "Libs/TCA9555.h"
+#include "Libs/PCA95xx.h"
 
 namespace OpenKNX
 {
     namespace GPIO
     {
-        class DriverTCA9555 : public Base
+        class DriverPCA9557 : public Base
         {
           private:
-            TCA9555* _tca = nullptr;
+            PCA95XX* _pca = nullptr;
+
           public:
-            DriverTCA9555(uint16_t i2cAddr, TwoWire* wire);
+            DriverPCA9557(uint8_t i2cAddr, TwoWire* wire);
+            virtual ~DriverPCA9557();
             virtual int init() override;
             virtual void GPIOpinMode(uint8_t pin, int mode, bool preset, int status) override;
             virtual void GPIOdigitalWrite(uint8_t pin, int status) override;
             virtual bool GPIOdigitalRead(uint8_t pin) override;
         };
     }
-}
+} 
