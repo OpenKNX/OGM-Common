@@ -1,32 +1,32 @@
-#include "GPIO_MCU.h"
+#include "DriverEmbedded.h"
 #include "Arduino.h"
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
-        GPIO_MCU::GPIO_MCU()
+        DriverEmbedded::DriverEmbedded()
         {
         }
 
-        int GPIO_MCU::init()
+        int DriverEmbedded::init()
         {
             return 0;
         }
 
-        void GPIO_MCU::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
+        void DriverEmbedded::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
         {
             if(preset)
                 digitalWriteFast(pin, status);
             pinMode(pin, mode);
         }
 
-        void GPIO_MCU::GPIOdigitalWrite(uint8_t pin, int status)
+        void DriverEmbedded::GPIOdigitalWrite(uint8_t pin, int status)
         {
             digitalWrite(pin, status);
         }
 
-        bool GPIO_MCU::GPIOdigitalRead(uint8_t pin)
+        bool DriverEmbedded::GPIOdigitalRead(uint8_t pin)
         {
             return digitalRead(pin);
         }

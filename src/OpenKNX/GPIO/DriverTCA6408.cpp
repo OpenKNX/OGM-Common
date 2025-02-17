@@ -1,16 +1,16 @@
-#include "GPIO_TCA6408.h"
+#include "DriverTCA6408.h"
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
 
-        GPIO_TCA6408::GPIO_TCA6408(uint16_t i2cAddr, TwoWire* wire)
+        DriverTCA6408::DriverTCA6408(uint16_t i2cAddr, TwoWire* wire)
         {
             _tca = new TCA6408(i2cAddr, wire);
         }
 
-        int GPIO_TCA6408::init()
+        int DriverTCA6408::init()
         {
             if (_tca->begin())
             {
@@ -22,7 +22,7 @@ namespace OpenKNX
             }
         }
 
-        void GPIO_TCA6408::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
+        void DriverTCA6408::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
         {
             if(mode != INPUT && mode != OUTPUT || pin > 7)
             {
@@ -37,7 +37,7 @@ namespace OpenKNX
             _tca->pinMode1(pin, mode);
         }
 
-        void GPIO_TCA6408::GPIOdigitalWrite(uint8_t pin, int status)
+        void DriverTCA6408::GPIOdigitalWrite(uint8_t pin, int status)
         {
             if(pin > 7)
             {
@@ -48,7 +48,7 @@ namespace OpenKNX
             _tca->write1(pin, status);
         }
 
-        bool GPIO_TCA6408::GPIOdigitalRead(uint8_t pin)
+        bool DriverTCA6408::GPIOdigitalRead(uint8_t pin)
         {
             if(pin > 7)
             {

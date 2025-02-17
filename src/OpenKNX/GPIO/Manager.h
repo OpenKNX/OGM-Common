@@ -1,0 +1,36 @@
+#pragma once
+#include <Arduino.h>
+#include <string>
+#include "hardware.h"
+
+
+
+#ifndef OPENKNX_GPIO_CLOCK
+#define OPENKNX_GPIO_CLOCK 50000
+#endif
+
+namespace OpenKNX
+{
+    namespace GPIO
+    {
+        /// @brief OpenKNX GPIO Manager. Acts as abstraction layer for GPIOs embedded in the MCU and GPIOs provided by port expanders.
+        class Manager
+        {
+        public:
+            Manager();
+            ~Manager();
+
+            void init();
+            void loop();
+
+            std::string logPrefix();
+
+            void pinMode(uint16_t pin, int mode, bool preset=false, int status=0);
+            void digitalWrite(uint16_t pin, int status);
+            bool digitalRead(uint16_t pin);
+
+        private:
+
+        };
+    }
+}

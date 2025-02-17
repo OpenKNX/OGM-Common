@@ -1,17 +1,16 @@
-#include "IO.h"
-#include "TCA9555.h"
+#include "GPIO.h"
+#include "Libs/TCA6408.h"
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
-
-        class GPIO_TCA9555 : public iGPIOExpander
+        class DriverTCA6408 : public Base
         {
           private:
-            TCA9555* _tca = nullptr;
+            TCA6408* _tca = nullptr;
           public:
-            GPIO_TCA9555(uint16_t i2cAddr, TwoWire* wire);
+            DriverTCA6408(uint16_t i2cAddr, TwoWire* wire);
             virtual int init() override;
             virtual void GPIOpinMode(uint8_t pin, int mode, bool preset, int status) override;
             virtual void GPIOdigitalWrite(uint8_t pin, int status) override;

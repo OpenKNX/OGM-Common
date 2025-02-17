@@ -1,17 +1,22 @@
 #include "GPIO.h"
 #include "OpenKNX.h"
-#include "GPIO_TCA9555.h"
-#include "GPIO_TCA6408.h"
-#include "GPIO_MCU.h"
+#include "DriverEmbedded.h"
+#include "DriverTCA9555.h"
+#include "DriverTCA6408.h"
 
 namespace OpenKNX
 {
     namespace GPIO
     {
-        const OPENKNX_GPIO_T GPIO_TYPES[OPENKNX_GPIO_NUM+1] = {OPENKNX_GPIO_T_MCU, OPENKNX_GPIO_TYPES};
+        #ifdef OPENKNX_GPIO_NUM
+        const OPENKNX_GPIO_T GPIO_TYPES[OPENKNX_GPIO_NUM+1] = {OPENKNX_GPIO_T_EMBEDDED, OPENKNX_GPIO_TYPES};
         const uint16_t GPIO_ADDRS[OPENKNX_GPIO_NUM+1] = {0, OPENKNX_GPIO_ADDRS};
         const uint8_t GPIO_INTS[OPENKNX_GPIO_NUM+1] = {0, OPENKNX_GPIO_INTS};
-        iGPIOExpander* GPIOExpanders[OPENKNX_GPIO_NUM+1];
+        #else
+        #define OPENKNX_GPIO_NUM 0
+        const OPENKNX_GPIO_T GPIO_TYPES[1] = {OPENKNX_GPIO_T_EMBEDDED};
+        #endif
+        Base* GPIOExpanders[OPENKNX_GPIO_NUM+1];
 
         Manager::Manager()
         {
@@ -23,23 +28,26 @@ namespace OpenKNX
 
         void Manager::init()
         {
+            #if OPENKNX_GPIO_NUM > 0
             OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
             OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
             OPENKNX_GPIO_WIRE.begin();
             OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
+            #endif
 
             for(int i = 0; i < OPENKNX_GPIO_NUM+1; i++)
             {
                 switch(GPIO_TYPES[i])
                 {
-                    case OPENKNX_GPIO_T_MCU:
+                    case OPENKNX_GPIO_T_EMBEDDED:
                     {
-                        GPIOExpanders[i] = new GPIO_MCU();
+                        GPIOExpanders[i] = new DriverEmbedded();
                     }
                     break;
+                    #if OPENKNX_GPIO_NUM > 0
                     case OPENKNX_GPIO_T_TCA9555:
                     {
-                        GPIOExpanders[i] = new GPIO_TCA9555(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
+                        GPIOExpanders[i] = new DriverTCA9555(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
                         int statuscode = GPIOExpanders[i]->init();
                         if(statuscode)
                         {
@@ -53,7 +61,7 @@ namespace OpenKNX
                     break;
                     case OPENKNX_GPIO_T_TCA6408:
                     {
-                        GPIOExpanders[i] = new GPIO_TCA6408(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
+                        GPIOExpanders[i] = new DriverTCA6408(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
                         int statuscode = GPIOExpanders[i]->init();
                         if(statuscode)
                         {
@@ -65,6 +73,7 @@ namespace OpenKNX
                         }
                     }
                     break;
+                    #endif
                     default:
                         ;
                         logErrorP("GPIO_TYPE %u not found", GPIO_TYPES[i]);

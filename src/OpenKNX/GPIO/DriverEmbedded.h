@@ -1,17 +1,14 @@
-#include "IO.h"
-#include "TCA6408.h"
+#include "GPIO.h"
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
-
-        class GPIO_TCA6408 : public iGPIOExpander
+        /// @brief OpenKNX GPIO driver for GPIOs embedded into the MCU (RP2040, ESP32, ...). Wraps the digitalRead etc... arduino functions.
+        class DriverEmbedded : public Base
         {
-          private:
-            TCA6408* _tca = nullptr;
           public:
-            GPIO_TCA6408(uint16_t i2cAddr, TwoWire* wire);
+            DriverEmbedded();
             virtual int init() override;
             virtual void GPIOpinMode(uint8_t pin, int mode, bool preset, int status) override;
             virtual void GPIOdigitalWrite(uint8_t pin, int status) override;

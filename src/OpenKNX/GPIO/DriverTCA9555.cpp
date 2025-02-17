@@ -1,16 +1,16 @@
-#include "GPIO_TCA9555.h"
+#include "DriverTCA9555.h"
 
 namespace OpenKNX
 {
-    namespace IO
+    namespace GPIO
     {
 
-        GPIO_TCA9555::GPIO_TCA9555(uint16_t i2cAddr, TwoWire* wire)
+        DriverTCA9555::DriverTCA9555(uint16_t i2cAddr, TwoWire* wire)
         {
             _tca = new TCA9555(i2cAddr, wire);
         }
 
-        int GPIO_TCA9555::init()
+        int DriverTCA9555::init()
         {
             if (_tca->begin())
             {
@@ -22,7 +22,7 @@ namespace OpenKNX
             }
         }
 
-        void GPIO_TCA9555::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
+        void DriverTCA9555::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
         {
             if(mode != INPUT && mode != OUTPUT || pin > 15)
             {
@@ -37,7 +37,7 @@ namespace OpenKNX
             _tca->pinMode1(pin, mode);
         }
 
-        void GPIO_TCA9555::GPIOdigitalWrite(uint8_t pin, int status)
+        void DriverTCA9555::GPIOdigitalWrite(uint8_t pin, int status)
         {
             if(pin > 15)
             {
@@ -48,7 +48,7 @@ namespace OpenKNX
             _tca->write1(pin, status);
         }
 
-        bool GPIO_TCA9555::GPIOdigitalRead(uint8_t pin)
+        bool DriverTCA9555::GPIOdigitalRead(uint8_t pin)
         {
             if(pin > 15)
             {
