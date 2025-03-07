@@ -42,9 +42,11 @@
 #define A(CODE) " " CODE "\n\t" // Example: A("LDR R0, [R1]") --> " LDR R0, [R1]\n\t"
 #define L(CODE) CODE ":\n\t"  // Example: L("loop") --> "loop:\n\t"
 
+#ifndef ARDUINO_ARCH_ESP32
 // Macros for bit masks
 #undef _BV
 #define _BV(b) (1 << (b)) // Bit value
+#endif
 #define TEST(n,b) (!!((n)&_BV(b))) // Test bit
 #define SET_BIT_TO(N,B,TF) do{ if (TF) SBI(N,B); else CBI(N,B); }while(0) // Set bit to true or false
 #ifndef SBI
@@ -118,11 +120,11 @@
 // Makros zur Schaltoptionenprüfung
 #define _ENA_1(O)           _ISENA(CAT(_IS,CAT(ENA_, O))) // Überprüfung der Aktivierung
 #define _DIS_1(O)           NOT(_ENA_1(O))  // Überprüfung der Deaktivierung
-#define ENABLED(V...)       DO(ENA,&&,V)  // Prüft, ob alle Optionen aktiviert sind
-#define DISABLED(V...)      DO(DIS,&&,V)  // Prüft, ob alle Optionen deaktiviert sind
-#define ANY(V...)           !DISABLED(V)  // Prüft, ob eine Option aktiviert ist
-#define ALL(V...)           ENABLED(V) // Use ALL(V) to evaluate simple option switches. I.e. if all of the options are enabled
-#define NONE(V...)          DISABLED(V) // Use NONE(V) to evaluate simple option switches. I.e. if none of the options are enabled
+#define IS_ENABLED(V...)       DO(ENA,&&,V)  // Prüft, ob alle Optionen aktiviert sind
+#define IS_DISABLED(V...)      DO(DIS,&&,V)  // Prüft, ob alle Optionen deaktiviert sind
+#define ANY(V...)           !IS_DISABLED(V)  // Prüft, ob eine Option aktiviert ist
+#define ALL(V...)           IS_ENABLED(V) // Use ALL(V) to evaluate simple option switches. I.e. if all of the options are enabled
+#define NONE(V...)          IS_DISABLED(V) // Use NONE(V) to evaluate simple option switches. I.e. if none of the options are enabled
 #define COUNT_ENABLED(V...) DO(ENA,+,V) // Use COUNT_ENABLED(V) to evaluate simple option switches. Example: COUNT_ENABLED(V) --> DO(ENA,+,V)
 #define MANY(V...)          (COUNT_ENABLED(V) > 1) // Use MANY(V) to evaluate simple option switches. Example: MANY(V) --> (COUNT_ENABLED(V) > 1)
 
@@ -304,7 +306,6 @@
 // Use TWO_ARGS(__VA_ARGS__) to get whether there are 1, 2, or >2 arguments
 #define _TWO_ARGS(_,n,m,l,k,j,i,h,g,f,e,d,c,b,a,Z,Y,X,W,V,U,T,S,R,Q,P,O,N,M,L,K,J,I,H,G,F,E,D,C,B,A,OUT,...) OUT
 #define TWO_ARGS(V...) _TWO_ARGS(0,V,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,1,0)
-
 
 #define BCD2DEC(bcd) ((bcd & 0x0F) + ((bcd >> 4) * 10)) // Convert BCD to decimal
 
