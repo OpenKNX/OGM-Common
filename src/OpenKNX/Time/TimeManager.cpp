@@ -629,6 +629,10 @@ namespace OpenKNX
 
         void TimeManager::processInputKo(GroupObject& ko)
         {
+            #ifndef BASE_Share_KoOffset
+                #define BASE_Share_KoOffset 0
+            #endif
+
             if (_timeProvider != nullptr)
             {
                 _timeProvider->processInputKo(ko);
@@ -637,7 +641,7 @@ namespace OpenKNX
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
-            if (!_timeProvideSupportKnxDaylightSavingTimeSwitch && ko.asap() == BASE_KoIsSummertime && ParamBASE_SummertimeAll == 0)
+            if (!_timeProvideSupportKnxDaylightSavingTimeSwitch && ko.asap() == (BASE_KoIsSummertime + BASE_Share_KoOffset) && ParamBASE_SummertimeAll == 0)
             {
                 _waitTimerReadKo = 0;
                 bool dst = (bool)ko.value(DPT_Switch);
