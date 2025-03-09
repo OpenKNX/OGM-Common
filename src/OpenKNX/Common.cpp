@@ -743,13 +743,17 @@ namespace OpenKNX
 #if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
     void Common::processInputKo(GroupObject& ko)
     {
+    #ifndef BASE_KoManualSave
+        #define BASE_KoManualSave 0
+    #endif
+
     #ifdef BASE_KoDiagnose
-        if (ko.asap() == BASE_KoDiagnose)
+        if (ko.asap() == (BASE_KoDiagnose + BASE_KoManualSave))
             return openknx.console.processDiagnoseKo(ko);
     #endif
 
     #ifdef BASE_KoManualSave
-        if (ko.asap() == BASE_KoManualSave)
+        if (ko.asap() == (BASE_KoManualSave + BASE_KoManualSave))
             return processSaveKo(ko);
     #endif
         openknx.time.processInputKo(ko);
