@@ -26,6 +26,9 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+        #ifdef DEVICE_INIT
+            DEVICE_INIT();
+        #endif
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
