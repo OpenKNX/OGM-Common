@@ -136,10 +136,6 @@ if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
     exit 1
   }
 }
-if ($binaryFormat -eq "bin-esp") {
-  $processor = "ESP32"
-  $binaryFormat = "bin"
-}
 
 # create Upload-Firmware-<firmwarename>.ps1 script
 $fileName = "release/USB-Upload-Firmware-$productName.ps1"
