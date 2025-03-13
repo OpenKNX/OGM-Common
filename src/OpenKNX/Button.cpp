@@ -24,7 +24,11 @@ namespace OpenKNX
                 if (_doubleClickCallback == nullptr)
                 {
                     // No wait for double click for faster response
-                    if (!_processed && _holdTimer && delayCheck(_holdTimer, OPENKNX_BUTTON_DEBOUNCE))
+                    if (!_processed
+#if OPENKNX_BUTTON_DEBOUNCE > 0
+                        && delayCheck(_holdTimer, OPENKNX_BUTTON_DEBOUNCE)
+#endif
+                    )
                     {
                         callShortClickCallback();
                     }
