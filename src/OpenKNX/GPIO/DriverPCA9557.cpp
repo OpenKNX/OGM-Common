@@ -67,5 +67,11 @@ namespace OpenKNX
             }
             return _pca->digitalRead(pin);
         }
+
+        int DriverPCA9557::GPIOattachInterrupt(uint8_t pin, void (*callback)(void), PinStatus mode)
+        {
+            // not implemented
+            return -1;
+        }
     }
 }

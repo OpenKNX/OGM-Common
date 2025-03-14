@@ -62,7 +62,7 @@ namespace OpenKNX
                     break;
                     case OPENKNX_GPIO_T_TCA6408:
                     {
-                        GPIOExpanders[i] = new DriverTCA6408(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
+                        GPIOExpanders[i] = new DriverTCA6408(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE, GPIO_INTS[i]);
                         int statuscode = GPIOExpanders[i]->init();
                         if(statuscode)
                         {
@@ -106,7 +106,7 @@ namespace OpenKNX
             return openknx.logger.buildPrefix("GPIOHAL", 0);
         }
 
-        void Manager::pinMode(uint16_t pin, int mode, bool preset, int status)
+        void Manager::pinMode(openknx_gpio_number_t pin, int mode, bool preset, int status)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
@@ -118,7 +118,7 @@ namespace OpenKNX
             GPIOExpanders[expander]->GPIOpinMode(localpin, mode, preset, status);
         }
 
-        void Manager::digitalWrite(uint16_t pin, int status)
+        void Manager::digitalWrite(openknx_gpio_number_t pin, int status)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
@@ -130,7 +130,7 @@ namespace OpenKNX
             GPIOExpanders[expander]->GPIOdigitalWrite(localpin, status);
         }
 
-        bool Manager::digitalRead(uint16_t pin)
+        bool Manager::digitalRead(openknx_gpio_number_t pin)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
@@ -140,6 +140,19 @@ namespace OpenKNX
                 return 0;
             }
             return GPIOExpanders[expander]->GPIOdigitalRead(localpin);
+        }
+
+        int Manager::attachInterrupt(openknx_gpio_number_t pin, void (*callback)(void), PinStatus mode)
+        {
+            int8_t localpin = pin & 0xff;
+            uint8_t expander = pin >> 8;
+            if(expander > OPENKNX_GPIO_NUM)
+            {
+                logErrorP("GPIOModule::attachInterrupt: invalid pin id %u", pin);
+                return -1;
+            }
+
+            return GPIOExpanders[expander]->GPIOattachInterrupt(localpin, callback, mode);
         }
     }
 }
