@@ -79,7 +79,7 @@ namespace OpenKNX
             void checkChangedTime(tm& setTime, bool utc, unsigned long millisReceivedTimestamp);
             void sendTime();
             const std::string logPrefix();
-            std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
+            const char* buildTimezoneString(DaylightSavingMode daylightSavingMode);
 
           public:
             /*

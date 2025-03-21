@@ -148,7 +148,7 @@ namespace OpenKNX
                 logInfoP("No timezone set");
             else
             {
-                logInfoP("Timezone: %s", buildTimezoneString(DaylightSavingMode::Calculated).c_str());
+                logInfoP("Timezone: %s", buildTimezoneString(DaylightSavingMode::Calculated));
                 if (_daylightSavingMode != DaylightSavingMode::Calculated)
                     logInfoP("Used timezone: %s", tz);
             }
@@ -389,7 +389,7 @@ namespace OpenKNX
             tzset();
         }
 
-        std::string TimeManager::buildTimezoneString(DaylightSavingMode daylightSavingMode)
+        const char* TimeManager::buildTimezoneString(DaylightSavingMode daylightSavingMode)
         {
             // <Enumeration Text="Midway-Inseln (-11 Stunden)" Value="27" Id="%ENID%" />
             // <Enumeration Text="Honolulu (-10 Stunden)" Value="26" Id="%ENID%" />
@@ -416,7 +416,9 @@ namespace OpenKNX
             // <Enumeration Text="Nouméa (+12 Stunden)" Value="11" Id="%ENID%" />
             // <Enumeration Text="Wellington (+12 Stunden)" Value="12" Id="%ENID%" />
 
+            static char result[100];                                                 // Puffer für das Ergebnis
             const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
+
             if (_configured)
             {
                 switch (ParamBASE_Timezone)
@@ -425,7 +427,7 @@ namespace OpenKNX
                         timezoneString = "NUT11"; // America Samoa
                         break;
                     case 26:
-                        timezoneString = "HST11HDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Hawai
+                        timezoneString = "HST11HDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Hawaii
                         break;
                     case 25:
                         timezoneString = "ASKT9AKDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Alaska
@@ -495,20 +497,36 @@ namespace OpenKNX
                         break;
                 }
             }
+
             if (daylightSavingMode == DaylightSavingMode::Calculated)
-                return std::string(timezoneString);
-            const char* seperator = strstr(timezoneString, ",");
-            std::string result;
-            if (seperator == nullptr)
-                result = timezoneString;
+            {
+                strncpy(result, timezoneString, sizeof(result) - 1);
+                result[sizeof(result) - 1] = '\0'; // Sicherstellen, dass der String nullterminiert ist
+                return result;
+            }
+
+            const char* separator = strstr(timezoneString, ",");
+            if (separator == nullptr)
+            {
+                strncpy(result, timezoneString, sizeof(result) - 1);
+            }
             else
-                result = std::string(timezoneString).substr(0, seperator - timezoneString + 1);
+            {
+                size_t length = separator - timezoneString + 1;
+                strncpy(result, timezoneString, length);
+                result[length] = '\0';
+            }
 
             if (daylightSavingMode == DaylightSavingMode::AlwaysDayLightSavingTime)
-                result += "0,366"; // Always daylight saving tiem
+            {
+                strncat(result, "0,366", sizeof(result) - strlen(result) - 1);
+            }
             else
-                result += "366,367"; // Always standard time
-            return result.c_str();
+            {
+                strncat(result, "366,367", sizeof(result) - strlen(result) - 1);
+            }
+
+            return result;
         }
 
         void TimeManager::sendTime()
