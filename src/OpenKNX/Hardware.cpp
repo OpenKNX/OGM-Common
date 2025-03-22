@@ -94,33 +94,41 @@ namespace OpenKNX
 
     void Hardware::initButtons()
     {
+#define ATTACH_BUTTON_INTERRUPT(PIN, MODE)                                              \
+    pinMode(PIN, MODE);                                                                                 \
+    attachInterrupt(                                                                                    \
+        digitalPinToInterrupt(PIN),                                                                     \
+        []() -> void {                                                                                  \
+            openknx.progButton.change((MODE == INPUT_PULLUP) ? !digitalRead(PIN) : digitalRead(PIN));   \
+        }, CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
+
 #ifdef PROG_BUTTON_PIN
-        pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
-        attachInterrupt(
-            digitalPinToInterrupt(PROG_BUTTON_PIN),
-            []() -> void { openknx.progButton.change(!digitalRead(PROG_BUTTON_PIN)); }, CHANGE);
-#endif
+    #ifndef PROG_BUTTON_PIN_MODE
+        #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
+#endif // PROG_BUTTON_PIN
 
 #ifdef FUNC1_BUTTON_PIN
-        pinMode(FUNC1_BUTTON_PIN, INPUT_PULLUP);
-        attachInterrupt(
-            digitalPinToInterrupt(FUNC1_BUTTON_PIN),
-            []() -> void { openknx.func1Button.change(!digitalRead(FUNC1_BUTTON_PIN)); }, CHANGE);
-#endif
+    #ifndef FUNC1_BUTTON_MODE
+        #define FUNC1_BUTTON_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(FUNC1_BUTTON_PIN, FUNC1_BUTTON_MODE);
+#endif // FUNC1_BUTTON_PIN
 
 #ifdef FUNC2_BUTTON_PIN
-        pinMode(FUNC2_BUTTON_PIN, INPUT_PULLUP);
-        attachInterrupt(
-            digitalPinToInterrupt(FUNC2_BUTTON_PIN),
-            []() -> void { openknx.func2Button.change(!digitalRead(FUNC2_BUTTON_PIN)); }, CHANGE);
-#endif
+    #ifndef FUNC2_BUTTON_MODE
+        #define FUNC2_BUTTON_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(FUNC2_BUTTON_PIN, FUNC2_BUTTON_MODE);
+#endif // FUNC2_BUTTON_PIN
 
 #ifdef FUNC3_BUTTON_PIN
-        pinMode(FUNC3_BUTTON_PIN, INPUT_PULLUP);
-        attachInterrupt(
-            digitalPinToInterrupt(FUNC3_BUTTON_PIN),
-            []() -> void { openknx.func3Button.change(!digitalRead(FUNC3_BUTTON_PIN)); }, CHANGE);
-#endif
+    #ifndef FUNC3_BUTTON_MODE
+        #define FUNC3_BUTTON_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE);
+#endif // FUNC3_BUTTON_PIN
     }
 
     void Hardware::initKnxRxISR()
