@@ -106,6 +106,11 @@ If OPENKNX_LED_TIME is defined, the LED is representing the state of the time.
 Possible values for OPENKNX_LED_TIME: info1Led, info2Led, info3Led. 
 Recommended value: info3Led 
 
+### Buttons
+| define                          |      default | unit  | function                                                                                                                        |
+| PROG_BUTTON_PIN                 |        undef |  GPIO | to drive the OPenKNX programming button. Button supports short press (<1000ms), long press, and double press (500ms intervals). |
+| PROG_BUTTON_PIN_MODE            | INPUT_PULLUP |       | values: INPUT_PULLUP, INPUT_PULLDOWN, INPUT. Specifies the mode for the programming button pin.                                 |
+| OPENKNX_BUTTON_DEBOUNCE         |      50      |  ms   | Software debounce time for buttons to avoid false triggers. Setting to 0 disables it (i.e. to use Hardware debounce).           |
 
 | State                         | LED           | RGB-LED       | Note                                   |
 |-------------------------------|---------------|---------------|----------------------------------------|

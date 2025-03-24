@@ -62,51 +62,47 @@
 #define CBI32(n,b) (n &= ~_BV32(b)) // Clear 32-bit bit
 #define TBI32(N,B) (N ^= _BV32(B)) // Toggle 32-bit bit
 
-// Hilfs-Makro zur Verkettung ohne Klammern
-#define _CONCAT(a, b) a ## b
-#define CONCAT(a, b) _CONCAT(a, b)
-
-// Makros zur Verkettung der Bedingungen
-#define _DO_1(W,C,A)        (_CONCAT(_##W##_1, A)) // Use _DO_1(W,C,A) to chain up to 40 conditions. Example: _DO_1(W,C,A) --> (_##W##_1(A))
-#define _DO_2(W,C,A,B)      (_CONCAT(_##W##_1, A) C _CONCAT(_##W##_1, B))
-#define _DO_3(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_2(W,C,V))
-#define _DO_4(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_3(W,C,V))
-#define _DO_5(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_4(W,C,V))
-#define _DO_6(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_5(W,C,V))
-#define _DO_7(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_6(W,C,V))
-#define _DO_8(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_7(W,C,V))
-#define _DO_9(W,C,A, V...)  (_CONCAT(_##W##_1, A) C _DO_8(W,C,V))
-#define _DO_10(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_9(W,C,V))
-#define _DO_11(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_10(W,C,V))
-#define _DO_12(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_11(W,C,V))
-#define _DO_13(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_12(W,C,V))
-#define _DO_14(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_13(W,C,V))
-#define _DO_15(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_14(W,C,V))
-#define _DO_16(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_15(W,C,V))
-#define _DO_17(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_16(W,C,V))
-#define _DO_18(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_17(W,C,V))
-#define _DO_19(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_18(W,C,V))
-#define _DO_20(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_19(W,C,V))
-#define _DO_21(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_20(W,C,V))
-#define _DO_22(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_21(W,C,V))
-#define _DO_23(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_22(W,C,V))
-#define _DO_24(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_23(W,C,V))
-#define _DO_25(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_24(W,C,V))
-#define _DO_26(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_25(W,C,V))
-#define _DO_27(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_26(W,C,V))
-#define _DO_28(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_27(W,C,V))
-#define _DO_29(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_28(W,C,V))
-#define _DO_30(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_29(W,C,V))
-#define _DO_31(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_30(W,C,V))
-#define _DO_32(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_31(W,C,V))
-#define _DO_33(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_32(W,C,V))
-#define _DO_34(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_33(W,C,V))
-#define _DO_35(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_34(W,C,V))
-#define _DO_36(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_35(W,C,V))
-#define _DO_37(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_36(W,C,V))
-#define _DO_38(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_37(W,C,V))
-#define _DO_39(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_38(W,C,V))
-#define _DO_40(W,C,A,V...)  (_CONCAT(_##W##_1, A) C _DO_39(W,C,V))
+// Macros to chain up to 40 conditions
+#define _DO_1(W,C,A)       (_##W##_1(A))
+#define _DO_2(W,C,A,B)     (_##W##_1(A) C _##W##_1(B))
+#define _DO_3(W,C,A,V...)  (_##W##_1(A) C _DO_2(W,C,V))
+#define _DO_4(W,C,A,V...)  (_##W##_1(A) C _DO_3(W,C,V))
+#define _DO_5(W,C,A,V...)  (_##W##_1(A) C _DO_4(W,C,V))
+#define _DO_6(W,C,A,V...)  (_##W##_1(A) C _DO_5(W,C,V))
+#define _DO_7(W,C,A,V...)  (_##W##_1(A) C _DO_6(W,C,V))
+#define _DO_8(W,C,A,V...)  (_##W##_1(A) C _DO_7(W,C,V))
+#define _DO_9(W,C,A,V...)  (_##W##_1(A) C _DO_8(W,C,V))
+#define _DO_10(W,C,A,V...) (_##W##_1(A) C _DO_9(W,C,V))
+#define _DO_11(W,C,A,V...) (_##W##_1(A) C _DO_10(W,C,V))
+#define _DO_12(W,C,A,V...) (_##W##_1(A) C _DO_11(W,C,V))
+#define _DO_13(W,C,A,V...) (_##W##_1(A) C _DO_12(W,C,V))
+#define _DO_14(W,C,A,V...) (_##W##_1(A) C _DO_13(W,C,V))
+#define _DO_15(W,C,A,V...) (_##W##_1(A) C _DO_14(W,C,V))
+#define _DO_16(W,C,A,V...) (_##W##_1(A) C _DO_15(W,C,V))
+#define _DO_17(W,C,A,V...) (_##W##_1(A) C _DO_16(W,C,V))
+#define _DO_18(W,C,A,V...) (_##W##_1(A) C _DO_17(W,C,V))
+#define _DO_19(W,C,A,V...) (_##W##_1(A) C _DO_18(W,C,V))
+#define _DO_20(W,C,A,V...) (_##W##_1(A) C _DO_19(W,C,V))
+#define _DO_21(W,C,A,V...) (_##W##_1(A) C _DO_20(W,C,V))
+#define _DO_22(W,C,A,V...) (_##W##_1(A) C _DO_21(W,C,V))
+#define _DO_23(W,C,A,V...) (_##W##_1(A) C _DO_22(W,C,V))
+#define _DO_24(W,C,A,V...) (_##W##_1(A) C _DO_23(W,C,V))
+#define _DO_25(W,C,A,V...) (_##W##_1(A) C _DO_24(W,C,V))
+#define _DO_26(W,C,A,V...) (_##W##_1(A) C _DO_25(W,C,V))
+#define _DO_27(W,C,A,V...) (_##W##_1(A) C _DO_26(W,C,V))
+#define _DO_28(W,C,A,V...) (_##W##_1(A) C _DO_27(W,C,V))
+#define _DO_29(W,C,A,V...) (_##W##_1(A) C _DO_28(W,C,V))
+#define _DO_30(W,C,A,V...) (_##W##_1(A) C _DO_29(W,C,V))
+#define _DO_31(W,C,A,V...) (_##W##_1(A) C _DO_30(W,C,V))
+#define _DO_32(W,C,A,V...) (_##W##_1(A) C _DO_31(W,C,V))
+#define _DO_33(W,C,A,V...) (_##W##_1(A) C _DO_32(W,C,V))
+#define _DO_34(W,C,A,V...) (_##W##_1(A) C _DO_33(W,C,V))
+#define _DO_35(W,C,A,V...) (_##W##_1(A) C _DO_34(W,C,V))
+#define _DO_36(W,C,A,V...) (_##W##_1(A) C _DO_35(W,C,V))
+#define _DO_37(W,C,A,V...) (_##W##_1(A) C _DO_36(W,C,V))
+#define _DO_38(W,C,A,V...) (_##W##_1(A) C _DO_37(W,C,V))
+#define _DO_39(W,C,A,V...) (_##W##_1(A) C _DO_38(W,C,V))
+#define _DO_40(W,C,A,V...) (_##W##_1(A) C _DO_39(W,C,V))
 
 // Dynamische Auswahl des richtigen Makros basierend auf der Argumentanzahl
 #define __DO_N(W,C,N,V...)  _DO_##N(W,C,V)
@@ -116,6 +112,36 @@
 // Concatenate symbol names, ohne oder mit Vor-Expansion
 #define _CAT(a,b) a ## b
 #define CAT(a,b) _CAT(a,b)
+
+// Primitive Makros zur Expansion von Argumenten
+#define FIRST(a,...)     a
+#define SECOND(a,b,...)  b
+#define THIRD(a,b,c,...) c
+
+// Erkennt "true" Werte: leer, 1, 0x1, true
+#define _ISENA_     ~,1
+#define _ISENA_1    ~,1
+#define _ISENA_0x1  ~,1
+#define _ISENA_true ~,1
+#define _ISENA(V...)        _SECOND(V)
+
+#define _SECOND(V...) SECOND(V, 0)     // Get the second item passed, or 0
+#define _SECPASS() ~, 1                    // Second item will be 1 if this is passed
+#define _NOT_0 _SECPASS()
+#define NOT(x) _SECOND(_CAT(_NOT_, x)) //   NOT('0') gets '1'. Anything else gets '0'.
+#define _BOOL(x) NOT(NOT(x))            // _BOOL('0') gets '0'. Anything else gets '1'.
+
+#define IF_ELSE(TF) _IF_ELSE(_BOOL(TF))
+#define _IF_ELSE(TF) _CAT(_IF_, TF)
+
+#define _IF_1(V...) V _IF_1_ELSE
+#define _IF_0(...)    _IF_0_ELSE
+
+#define _IF_1_ELSE(...)
+#define _IF_0_ELSE(V...) V
+
+#define HAS_ARGS(V...) _BOOL(FIRST(_END_OF_ARGUMENTS_ V)())
+#define _END_OF_ARGUMENTS_() 0
 
 // Makros zur Schaltoptionenprüfung
 #define _ENA_1(O)           _ISENA(CAT(_IS,CAT(ENA_, O))) // Überprüfung der Aktivierung
@@ -127,6 +153,10 @@
 #define NONE(V...)          IS_DISABLED(V) // Use NONE(V) to evaluate simple option switches. I.e. if none of the options are enabled
 #define COUNT_ENABLED(V...) DO(ENA,+,V) // Use COUNT_ENABLED(V) to evaluate simple option switches. Example: COUNT_ENABLED(V) --> DO(ENA,+,V)
 #define MANY(V...)          (COUNT_ENABLED(V) > 1) // Use MANY(V) to evaluate simple option switches. Example: MANY(V) --> (COUNT_ENABLED(V) > 1)
+#define BOTH(V1,V2)         ALL(V1,V2) // Use BOTH(V1,V2) to evaluate simple option switches. Example: BOTH(V1,V2) --> ALL(V1,V2)
+#define EITHER(V1,V2)       ANY(V1,V2) // Use EITHER(V1,V2) to evaluate simple option switches. Example: EITHER(V1,V2) --> ANY(V1,V2)
+#define NEITHER(V1,V2)      NONE(V1,V2) // Use NEITHER(V1,V2) to evaluate simple option switches. Example: NEITHER(V1,V2) --> NONE(V1,V2)
+
 
 // Ternary pre-compiler macros conceal non-emitted content from the compiler
 #define TERN(O,A,B)         _TERN(_ENA_1(O),B,A)    // OPTION ? 'A' : 'B' // Use TERN(O,A,B) to conceal non-emitted content from the compiler. Example: TERN(O,A,B) --> _TERN(_ENA_1(O),B,A)
