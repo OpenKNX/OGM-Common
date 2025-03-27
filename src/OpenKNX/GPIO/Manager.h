@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <string>
 #include "hardware.h"
+#include "GPIO.h"
 
 
 
@@ -28,7 +29,8 @@ namespace OpenKNX
             void pinMode(openknx_gpio_number_t pin, int mode, bool preset=false, int status=0);
             void digitalWrite(openknx_gpio_number_t pin, int status);
             bool digitalRead(openknx_gpio_number_t pin);
-            int attachInterrupt(openknx_gpio_number_t pin, void (*callback)(void), PinStatus mode);
+            //int attachInterrupt(openknx_gpio_number_t pin, void (*callback)(void), PinStatus mode);
+            int attachInterrupt(openknx_gpio_number_t pin, std::function<void(openknx_gpio_number_t, int)> callback, PinStatus mode);
 
         private:
 

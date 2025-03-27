@@ -1,4 +1,4 @@
-#include "GPIO.h"
+#include "Manager.h"
 #include "OpenKNX.h"
 #include "DriverEmbedded.h"
 #include "DriverTCA9555.h"
@@ -142,7 +142,7 @@ namespace OpenKNX
             return GPIOExpanders[expander]->GPIOdigitalRead(localpin);
         }
 
-        int Manager::attachInterrupt(openknx_gpio_number_t pin, void (*callback)(void), PinStatus mode)
+        int Manager::attachInterrupt(openknx_gpio_number_t pin, std::function<void(openknx_gpio_number_t, int)> callback, PinStatus mode)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;

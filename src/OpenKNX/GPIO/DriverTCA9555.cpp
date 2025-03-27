@@ -58,7 +58,7 @@ namespace OpenKNX
             return _tca->read1(pin);
         }
 
-        int DriverTCA9555::GPIOattachInterrupt(uint8_t pin, void (*callback)(void), PinStatus mode)
+        int DriverTCA9555::GPIOattachInterrupt(uint8_t pin, std::function<void(openknx_gpio_number_t, int)> callback, PinStatus mode)
         {
             // not implemented
             return -1;

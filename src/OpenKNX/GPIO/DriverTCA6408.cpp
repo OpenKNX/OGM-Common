@@ -66,11 +66,5 @@ namespace OpenKNX
             }
             return _tca->read1(pin);
         }
-
-        int DriverTCA6408::GPIOattachInterrupt(uint8_t pin, void (*callback)(void), PinStatus mode)
-        {
-            // not implemented
-            return -1;
-        }
     }
 }
