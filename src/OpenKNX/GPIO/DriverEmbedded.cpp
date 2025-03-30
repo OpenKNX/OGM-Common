@@ -31,7 +31,7 @@ namespace OpenKNX
             return digitalRead(pin);
         }
 
-        int DriverEmbedded::GPIOattachInterrupt(uint8_t pin, std::function<void(openknx_gpio_number_t, int)> callback, PinStatus mode)
+        void DriverEmbedded::GPIOattachInterrupt(uint8_t pin, std::function<void(openknx_gpio_number_t, bool)> callback, PinStatus mode)
         {
             ::attachInterrupt(
                 digitalPinToInterrupt(pin),
@@ -39,7 +39,7 @@ namespace OpenKNX
                         //callback(pin,digitalRead(pin));
                     },
                 mode);
-            return 0;
+            return;
         }
     }
 }

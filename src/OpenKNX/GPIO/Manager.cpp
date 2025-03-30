@@ -142,17 +142,17 @@ namespace OpenKNX
             return GPIOExpanders[expander]->GPIOdigitalRead(localpin);
         }
 
-        int Manager::attachInterrupt(openknx_gpio_number_t pin, std::function<void(openknx_gpio_number_t, int)> callback, PinStatus mode)
+        void Manager::attachInterrupt(openknx_gpio_number_t pin, std::function<void(openknx_gpio_number_t, bool)> callback, PinStatus mode)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
             if(expander > OPENKNX_GPIO_NUM)
             {
                 logErrorP("GPIOModule::attachInterrupt: invalid pin id %u", pin);
-                return -1;
+                return;
             }
-
-            return GPIOExpanders[expander]->GPIOattachInterrupt(localpin, callback, mode);
+            GPIOExpanders[expander]->GPIOattachInterrupt(localpin, callback, mode);
+            return ;
         }
     }
 }
