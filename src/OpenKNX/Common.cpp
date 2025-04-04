@@ -1,9 +1,6 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Stat/RuntimeStat.h"
-#ifdef ARDUINO_ARCH_ESP32
-// #include "TPUart/Interface/ESP32.h"
-#endif
 
 #ifndef ParamBASE_InternalTime
     #define ParamBASE_InternalTime 0
@@ -138,16 +135,7 @@ namespace OpenKNX
         logInfoP("Init knx stack");
         logIndentUp();
 
-// #if (defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
-//         knx.platform().knxUartPins(KNX_UART_RX_PIN, KNX_UART_TX_PIN);
-// #endif
-#if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
-    knx.platform().setInterface(new TPUart::Interface::ESP32(KNX_UART_RX_PIN, KNX_UART_TX_PIN, UART_NUM_1));
-#endif
-#if defined(ARDUINO_ARCH_RP2040) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
-    knx.platform().setInterface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, uart0, -1, true));
-#endif
-
+        openknx.hardware.initKnxInterface();
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
 
         knx.ledPin(0);

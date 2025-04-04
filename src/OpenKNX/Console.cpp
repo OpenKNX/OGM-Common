@@ -227,34 +227,26 @@ namespace OpenKNX
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
                     statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
 
-            // logInfo("BCU<Received>", "Processed: %i - Ignored: %i - Invalid: %i - Unknown: %i",
-            //         dll->getRxProcessdFrameCounter(), dll->getRxIgnoredFrameCounter(), dll->getRxInvalidFrameCounter(), dll->getRxUnknownControlCounter());
-            // logInfo("BCU<Transmitted>", "Processed: %i/%i", dll->getTxProcessedFrameCounter(), dll->getTxFrameCounter());
-
             return true;
         }
         else if (cmd.compare("bcu mon") == 0)
         {
-            logInfo("KNX<BCU>", "Start BCU monitoring");
             dll->monitor();
             return true;
         }
         else if (cmd.compare("bcu rst") == 0)
         {
-            logInfo("KNX<BCU>", "Reset BCU");
             dll->reset();
             return true;
         }
     #ifdef NCN5120
         else if (cmd.compare("bcu poff") == 0)
         {
-            logInfo("KNX<BCU>", "Switch off VCC2");
             dll->powerControl(false);
             return true;
         }
         else if (cmd.compare("bcu pon") == 0)
         {
-            logInfo("KNX<BCU>", "Switch on VCC2");
             dll->powerControl(true);
             return true;
         }
