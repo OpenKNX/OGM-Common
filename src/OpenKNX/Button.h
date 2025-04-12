@@ -4,7 +4,9 @@
 #include <functional>
 #include <string>
 
-#define OPENKNX_BUTTON_DEBOUNCE 50
+#ifndef OPENKNX_BUTTON_DEBOUNCE
+    #define OPENKNX_BUTTON_DEBOUNCE 50
+#endif
 #define OPENKNX_BUTTON_DOUBLE_CLICK 500
 #define OPENKNX_BUTTON_LONG_CLICK 1000
 
@@ -38,7 +40,7 @@ namespace OpenKNX
         inline void callDoubleClickCallback();
 
       public:
-        Button(const char *id) : _id(id){};
+        Button(const char *id) : _id(id) {};
         void change(bool pressed);
         void loop();
 

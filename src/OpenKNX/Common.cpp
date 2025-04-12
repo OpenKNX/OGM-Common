@@ -26,6 +26,9 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+        #ifdef DEVICE_INIT
+            DEVICE_INIT();
+        #endif
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
@@ -106,7 +109,10 @@ namespace OpenKNX
     void Common::processRecovery()
     {
         bool erase = false;
-        pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
+        #ifndef PROG_BUTTON_PIN_MODE
+            #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
+        #endif
+        pinMode(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
         while (!digitalRead(PROG_BUTTON_PIN))
         {
             if (millis() >= OPENKNX_RECOVERY_TIME)
@@ -628,11 +634,11 @@ namespace OpenKNX
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave();
 #endif
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.powerSave();
-#endif
 #ifdef INFO2_LED_PIN
         openknx.info2Led.powerSave();
+#endif
+#ifdef INFO3_LED_PIN
+        openknx.info3Led.powerSave();
 #endif
 
 #if MASK_VERSION == 0x07B0
@@ -674,11 +680,11 @@ namespace OpenKNX
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave(false);
 #endif
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.powerSave(false);
-#endif
 #ifdef INFO2_LED_PIN
         openknx.info2Led.powerSave(false);
+#endif
+#ifdef INFO3_LED_PIN
+        openknx.info3Led.powerSave(false);
 #endif
 
 #if MASK_VERSION == 0x07B0

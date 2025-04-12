@@ -251,8 +251,6 @@
                 <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
-                <!-- Hidden Options for external time control -->
-                <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
               </Union>
 
               <!-- Location -->
@@ -272,11 +270,13 @@
                 <!-- <Parameter Id="%AID%_UP-%TT%00035" Name="BuzzerInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="1" Text="Akustischer Signalgeber vorhanden (Buzzer)?" Value="0" /> -->
                 <!-- <Parameter Id="%AID%_UP-%TT%00036" Name="LedInstalled" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="2" Text="Optischer Signalgeber vorhanden (RGB-LED)?" Value="0" /> -->
                 <Parameter Id="%AID%_UP-%TT%00037" Name="HeartbeatExtended" ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="3" Text="Erweitertes &quot;In Betrieb&quot;" Value="0" />
-                <!-- 4 Bit free  -->
+                <!-- Hidden Options for external time control -->
+                <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime"      ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="4" Text="InternalTime" Access="None" Value="0" />    
+                <!-- 3 Bit free  -->
                 <Parameter Id="%AID%_UP-%TT%00091" Name="ManualSave"        ParameterType="%AID%_PT-ManualSave" Offset="0" BitOffset="5" Text="Manuelles speichern" Value="%BASE_ManualSave%" />
                 <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches speichern" Value="%BASE_PeriodicSave%" />
                 <!--
-                
+                £
                   Reserved for new parameters
                 
                 -->

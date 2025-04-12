@@ -135,7 +135,7 @@ namespace OpenKNX
                     logInfoP("Today is a working day");
                 else
                     logInfoP("Today is a non-working day");
-                if (openknx.calendar.isWorkingDayTommorow())
+                if (openknx.calendar.isWorkingDayTomorrow())
                     logInfoP("Tomorrow is a working day");
                 else
                     logInfoP("Tomorrow is a non-working day");
@@ -508,7 +508,7 @@ namespace OpenKNX
                 result += "0,366"; // Always daylight saving tiem
             else
                 result += "366,367"; // Always standard time
-            return result;
+            return std::string(result);
         }
 
         void TimeManager::sendTime()

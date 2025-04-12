@@ -1,3 +1,8 @@
+// Implementation of Sun Rise and Set Times based on SUNRISET.C by Paul Schlyter 1989-2013.
+// Original C code available at https://www.stjarnhimlen.se/comp/sunriset.c (copy in sunriset.c.txt)
+// was modified for C++ and OpenKNX.
+// For detailed explanation/documentation see https://www.stjarnhimlen.se/comp/riset.html [accessed 2025-01-30]
+
 #include "SunRiseAndSet.h"
 #include <ctime>
 #include <math.h>

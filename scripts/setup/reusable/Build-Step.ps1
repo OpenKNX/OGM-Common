@@ -9,7 +9,7 @@
 #                   different firmware names for different hardware builds within the same release.
 #                   There should always be an "Upload-Firmware-<firmwarename>.ps1" script delivered,
 #                   which installs this firmware.
-# <binary-format>   currently supports "uf2" for RP2040 and "bin" for SAMD.
+# <binary-format>   currently supports "uf2" for RP2040, "bin" for SAMD and "esp32" for ESP32
 # <product-name>    (optional) is the name of the product. If not provided, the firmware name without
 #                   the "firmware-" prefix will be used.
 # <project-dir>     is the directory path of the project.
@@ -44,6 +44,15 @@ if (!$?) {
   exit 1
 }
 
+$processor = "RP2040"
+if ($binaryFormat -eq "bin") {
+  $processor = "SAMD"
+}
+elseif ($binaryFormat -eq "esp32") {
+  $binaryFormat = "bin"
+  $processor = "ESP32"
+}
+
 # Create source and target path for firmware
 $CopyItem_Source = ".pio/build/$pioEnv/firmware.$binaryFormat"
 $CopyItem_Target_Dir = "release/data"
@@ -63,6 +72,18 @@ if ( Test-Path $CopyItem_Source ) {
   }
   # copy firmware to release/data
   Copy-Item $CopyItem_Source $CopyItem_Target
+
+  # copy second image
+  if ($processor -eq "ESP32") {
+    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
+    $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
+    Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+  }
+  if ($processor -eq "RP2040") {
+    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.bin"
+    $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.bin"
+    Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+  }
 }
 else {
   # firmware not found
@@ -75,10 +96,6 @@ if (!$productName) {
   $productName = $firmwareName.Replace("firmware-", "")
 }
 # create Upload-Firmware-<firmwarename>.ps1 script
-$processor = "RP2040"
-if ($binaryFormat -eq "bin") {
-  $processor = "SAMD"
-}
 
 # need to do this BEFORE the USB Upload-File is created
 if ($processor -eq "RP2040") {
@@ -98,6 +115,28 @@ if ($processor -eq "RP2040") {
   }
 }
 
+# OTA
+if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
+  # create OTA-Upload-Firmware-<firmwarename>.ps1 script
+  $fileName = "release/OTA-Upload-Firmware-$productName.ps1"
+  if (![string]::IsNullOrEmpty($ProjectDir)) {
+    $fileName = Join-Path $ProjectDir $fileName
+  }
+  $OTAbinaryFormat = "bin"
+  if ($processor -eq "RP2040") {
+    $espotaArgs = "'-p 2040'"
+  }
+
+  # Write the script file content to the file 
+  $scriptContent = "./data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
+  if (Test-Path $fileName) { Clear-Content -Path $fileName }
+  Add-Content -Path $fileName -Value $scriptContent
+  if (!$?) {
+    Write-Host "ERROR: $fileName could not be created!"
+    exit 1
+  }
+}
+
 # create Upload-Firmware-<firmwarename>.ps1 script
 $fileName = "release/USB-Upload-Firmware-$productName.ps1"
 if (![string]::IsNullOrEmpty($ProjectDir)) {
@@ -106,6 +145,9 @@ if (![string]::IsNullOrEmpty($ProjectDir)) {
 
 # Write the script file content to the file 
 $scriptContent = "./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.$binaryFormat"
+if ( $processor -eq "ESP32") {
+  $scriptContent = "./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
+}
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
 if (!$?) {
