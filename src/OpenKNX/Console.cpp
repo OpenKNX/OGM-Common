@@ -222,7 +222,7 @@ namespace OpenKNX
         {
             logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
             TPUart::Statistics statistics = dll->getTPUart().getStatistics();
-            logInfo("BCU<Stats>", "TX Frames: % 7u | RX Frames: % 7u (% 8u B) | Discarded: % 5u B | Received: % 8u B | Load: % 3u B/s | Buffer: % 3u | Await % 3u | Repetitions % 5u | Overflow %u/%u/%u/%u\n",
+            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
                     statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
