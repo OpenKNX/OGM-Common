@@ -224,7 +224,7 @@ namespace OpenKNX
     #else
         #pragma error "Invalid KNX_UART_NUM defined"
     #endif
-        knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART, false, true));
+        knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART, true, true));
 #else
     #pragma error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
 #endif
