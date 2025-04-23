@@ -64,13 +64,14 @@ namespace OpenKNX
 
     void Hardware::initButtons()
     {
-#define ATTACH_BUTTON_INTERRUPT(PIN, MODE)                                              \
-    pinMode(PIN, MODE);                                                                                 \
-    attachInterrupt(                                                                                    \
-        digitalPinToInterrupt(PIN),                                                                     \
-        []() -> void {                                                                                  \
-            openknx.progButton.change((MODE == INPUT_PULLUP) ? !digitalRead(PIN) : digitalRead(PIN));   \
-        }, CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
+#define ATTACH_BUTTON_INTERRUPT(PIN, MODE)                                                            \
+    pinMode(PIN, MODE);                                                                               \
+    attachInterrupt(                                                                                  \
+        digitalPinToInterrupt(PIN),                                                                   \
+        []() -> void {                                                                                \
+            openknx.progButton.change((MODE == INPUT_PULLUP) ? !digitalRead(PIN) : digitalRead(PIN)); \
+        },                                                                                            \
+        CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
 
 #ifdef PROG_BUTTON_PIN
     #ifndef PROG_BUTTON_PIN_MODE
@@ -226,7 +227,7 @@ namespace OpenKNX
     #endif
         knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART, true, true));
 #else
-    #pragma error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
+    #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
 #endif
     }
 
