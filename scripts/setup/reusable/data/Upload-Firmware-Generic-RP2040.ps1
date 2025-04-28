@@ -24,14 +24,16 @@ function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
 }
 
-OpenKNX_ShowLogo("Firmware Uploader for RP2040")
+OpenKNX_ShowLogo("Firmware Uploader for RP2040/RP2350")
 
-Write-Host "Suche RP2040 im BOOTSEL-Modus (das kann einige Zeit dauern)..."
-$device = $(Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -match "RPI-RP2" })
+Write-Host "Suche RP2040/RP2350 im BOOTSEL-Modus (das kann einige Zeit dauern)..."
+
+$device = $(Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -match "RPI-RP2|RP2350" }) | Select-Object -First 1
+
 if (!$device) {
-    Write-Host "Keinen RP2040 im BOOTSEL-Modus gefunden."
+    Write-Host "Keinen RP2040/RP2350 im BOOTSEL-Modus gefunden."
     Write-Host
-    Write-Host "Alternative: Suche COM-Port fuer RP2040 (auch das kann etwas dauern)..."
+    Write-Host "Alternative: Suche COM-Port (auch das kann etwas dauern)..."
     $portList = get-pnpdevice -class Ports
     if ($portList) {
         foreach ($usbDevice in $portList) {
@@ -66,7 +68,7 @@ if (!$device) {
             }
             Write-Host
 
-            Write-Host "Versuche den RP2040 ueber Port $port in den BOOTSEL-Modus zu versetzen..."
+            Write-Host "Versuche ueber Port $port in den BOOTSEL-Modus zu versetzen..."
             $serial = new-Object System.IO.Ports.SerialPort $port, 1200, None, 8, 1
             try {
                 $serial.Open()
@@ -80,13 +82,13 @@ if (!$device) {
             # mode ${port}: BAUD=1200 parity=N data=8 stop=1 | Out-Null
             Start-Sleep -s 1
             # ./rp2040load.exe -v -D firmware
-            $device = $(Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -match "RPI-RP2" })
+            $device = $(Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -match "RPI-RP2|RP2350" }) | Select-Object -First 1
         }
     }
 }
 Write-Host
 if ($device) {
-    Write-Host "RP2040 gefunden, installiere Firmware..." -ForegroundColor Yellow
+    Write-Host "RP2040/RP2350 gefunden, installiere Firmware..." -ForegroundColor Yellow
     Write-Host
     # There are different options how to copy a large file, but most of them have side effects
     
@@ -109,9 +111,9 @@ if ($device) {
     timeout /T 20 
 }
 else {
-    Write-Host "Kein RP2040 gefunden!" -ForegroundColor Red
+    Write-Host "Kein RP2040/RP2350 gefunden!" -ForegroundColor Red
     Write-Host 
-    Write-Host "Versuche bitte die manuelle Setup-Methode: Den RP2040 selber im BOOTSEL-Modus zu starten"
+    Write-Host "Versuche bitte die manuelle Setup-Methode: Den RP2040/RP2350 selber im BOOTSEL-Modus zu starten"
     Write-Host "Falls die Hardware eine Reset-Taste hat, dann erst die BOOTSEL-Taste druecken und halten,"
     Write-Host "und dann zusaetzlich die Reset-Taste druecken. Dann beide Tasten loslassen."
     Write-Host "Ohne Reset-Taste das Geraet stromlos machen (USB-Stecker ziehen und vom KNX trennen),"
