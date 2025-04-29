@@ -52,6 +52,8 @@ namespace OpenKNX
         void initFlash();
         void initLeds();
         void initButtons();
+#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
         void initKnxInterface();
+#endif
     };
 } // namespace OpenKNX

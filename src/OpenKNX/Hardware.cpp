@@ -200,6 +200,7 @@ namespace OpenKNX
 #endif
     }
 
+#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
     void Hardware::initKnxInterface()
     {
 #if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
@@ -230,5 +231,6 @@ namespace OpenKNX
     #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
 #endif
     }
+#endif
 
 } // namespace OpenKNX
