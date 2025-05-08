@@ -94,40 +94,41 @@ namespace OpenKNX
 
     void Hardware::initButtons()
     {
-#define ATTACH_BUTTON_INTERRUPT(PIN, MODE)                                              \
-    pinMode(PIN, MODE);                                                                                 \
-    attachInterrupt(                                                                                    \
-        digitalPinToInterrupt(PIN),                                                                     \
-        []() -> void {                                                                                  \
-            openknx.progButton.change((MODE == INPUT_PULLUP) ? !digitalRead(PIN) : digitalRead(PIN));   \
-        }, CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
+#define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                                        \
+    pinMode(PIN, MODE);                                                                   \
+    attachInterrupt(                                                                      \
+        digitalPinToInterrupt(PIN),                                                       \
+        []() -> void {                                                                    \
+            BUTTON.change((MODE == INPUT_PULLUP) ? !digitalRead(PIN) : digitalRead(PIN)); \
+        },                                                                                \
+        CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
 
 #ifdef PROG_BUTTON_PIN
     #ifndef PROG_BUTTON_PIN_MODE
         #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
     #endif
-        ATTACH_BUTTON_INTERRUPT(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
+        ATTACH_BUTTON_INTERRUPT(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE, openknx.progButton);
 #endif // PROG_BUTTON_PIN
 
 #ifdef FUNC1_BUTTON_PIN
     #ifndef FUNC1_BUTTON_MODE
         #define FUNC1_BUTTON_MODE INPUT_PULLUP
     #endif
-        ATTACH_BUTTON_INTERRUPT(FUNC1_BUTTON_PIN, FUNC1_BUTTON_MODE);
+        ATTACH_BUTTON_INTERRUPT(FUNC1_BUTTON_PIN, FUNC1_BUTTON_MODE, openknx.func1Button);
 #endif // FUNC1_BUTTON_PIN
 
 #ifdef FUNC2_BUTTON_PIN
     #ifndef FUNC2_BUTTON_MODE
         #define FUNC2_BUTTON_MODE INPUT_PULLUP
     #endif
-        ATTACH_BUTTON_INTERRUPT(FUNC2_BUTTON_PIN, FUNC2_BUTTON_MODE);
+        ATTACH_BUTTON_INTERRUPT(FUNC2_BUTTON_PIN, FUNC2_BUTTON_MODE, openknx.func2Button);
 #endif // FUNC2_BUTTON_PIN
 
 #ifdef FUNC3_BUTTON_PIN
     #ifndef FUNC3_BUTTON_MODE
         #define FUNC3_BUTTON_MODE INPUT_PULLUP
     #endif
-        ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE);
+        ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE, openknx.func3Button);
 #endif // FUNC3_BUTTON_PIN
     }
 
