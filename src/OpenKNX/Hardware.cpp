@@ -95,10 +95,16 @@ namespace OpenKNX
     void Hardware::initButtons()
     {
 #ifdef PROG_BUTTON_PIN
+        /*
         pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
         attachInterrupt(
             digitalPinToInterrupt(PROG_BUTTON_PIN),
             []() -> void { openknx.progButton.change(!digitalRead(PROG_BUTTON_PIN)); }, CHANGE);
+        */
+        openknx.gpio.pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
+        openknx.gpio.attachInterrupt(
+            PROG_BUTTON_PIN,
+            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.progButton.change(!state); }, CHANGE);
 #endif
 
 #ifdef FUNC1_BUTTON_PIN
