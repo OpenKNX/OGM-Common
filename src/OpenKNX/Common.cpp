@@ -107,8 +107,8 @@ namespace OpenKNX
     void Common::processRecovery()
     {
         bool erase = false;
-        pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
-        while (!digitalRead(PROG_BUTTON_PIN))
+        openknx.gpio.pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
+        while (!openknx.gpio.digitalRead(PROG_BUTTON_PIN))
         {
             if (millis() >= OPENKNX_RECOVERY_TIME)
             {
@@ -819,12 +819,10 @@ namespace OpenKNX
         });
 #ifdef SAVE_INTERRUPT_PIN
         // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
-        pinMode(SAVE_INTERRUPT_PIN, INPUT);
-        attachInterrupt(
-            digitalPinToInterrupt(SAVE_INTERRUPT_PIN), []() -> void {
-                openknx.common.triggerSavePin();
-            },
-            FALLING);
+        openknx.gpio.pinMode(SAVE_INTERRUPT_PIN, INPUT);
+        openknx.gpio.attachInterrupt(
+            SAVE_INTERRUPT_PIN,
+            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.common.triggerSavePin(); }, FALLING);
 #endif
     }
 
