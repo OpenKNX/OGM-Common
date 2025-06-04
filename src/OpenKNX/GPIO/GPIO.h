@@ -4,6 +4,10 @@
 #include <functional>
 
 typedef uint16_t openknx_gpio_number_t;
+#ifdef ARDUINO_ARCH_ESP32
+    #define PinStatus uint8_t
+    #define digitalWriteFast(x,y) digitalWrite(x,y)
+#endif
 
 #include "Manager.h"
 #include "Base.h"

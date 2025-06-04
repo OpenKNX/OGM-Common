@@ -52,6 +52,7 @@ namespace OpenKNX
             InterruptData* data = new InterruptData{callback, pin};
 
             // Attach the interrupt with the handler and the parameter
+            #ifdef ARDUINO_ARCH_RP2040
             ::attachInterruptParam(
                 digitalPinToInterrupt(pin), // Pin interrupt
                 interruptHandler,           // Interrupt handler
@@ -59,6 +60,16 @@ namespace OpenKNX
                 data                        // Parameter passed to the handler
             );
             return;
+            #elif defined(ARDUINO_ARCH_ESP32)
+            ::attachInterruptArg(
+                digitalPinToInterrupt(pin), // Pin interrupt
+                interruptHandler,           // Interrupt handler          
+                data,                       // Parameter passed to the handler
+                mode                       // Interrupt mode      
+            );
+            #else
+            #pragma warning "GPIOattachInterrupt not implemented for this platform"
+            #endif
         }
     }
 }
