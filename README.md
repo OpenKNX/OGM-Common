@@ -137,6 +137,11 @@ openknx.gpio.pinMode(0x0105, OUTPUT);    // sets the GPIO 5 to OUTPUT expander 0
 openknx.gpio.digitalWrite(0x0105, HIGH); // writes digital value HIGH to GPIO 5 of the expander 0x01
 
 openknx.gpio.digitalRead(0x0105);         // reads GPIO 5 of expander 0x01.
+
+openknx.gpio.pinMode(0x0013, INPUT_PULLUP);
+openknx.gpio.attachInterrupt(
+    0x0013,
+    [this](openknx_gpio_number_t pin, bool state) -> void { openknx.func1Button.change(!state); }, CHANGE);
 ```
 
 ### Supported Hardware
@@ -151,13 +156,11 @@ PCA9557 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F )
 
 ### Features
 #### Current
-`pinMode`, `digitalRead`, `digitalWrite`
+`pinMode`, `digitalRead`, `digitalWrite`, `attachInterrupt`
 #### Planned Features
-- Interrupt handling
+- Interrupt handling on expanders
 - analogRead/Write
 - bulk setting of pins
-- access with openknx.GPIO.
 #### Further improvements
 - Multicore
-- ESP32
 - expanders on different I2C units (e.g. 0x01 on Wire, 0x02 on Wire1)
