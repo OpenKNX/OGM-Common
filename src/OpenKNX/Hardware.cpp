@@ -94,33 +94,44 @@ namespace OpenKNX
 
     void Hardware::initButtons()
     {
+#define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                                        \
+    openknx.gpio.pinMode(PIN, MODE);                                                       \
+    openknx.gpio.attachInterrupt(                                                         \
+        digitalPinToInterrupt(PIN),                                                       \
+        [this](openknx_gpio_number_t pin, bool state) -> void {                           \
+            BUTTON.change((MODE == INPUT_PULLUP) ? !state : state);                       \
+        },                                                                                \
+        CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
+
 #ifdef PROG_BUTTON_PIN
-        openknx.gpio.pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
-        openknx.gpio.attachInterrupt(
-            PROG_BUTTON_PIN,
-            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.progButton.change(!state); }, CHANGE);
-#endif
+
+    #ifndef PROG_BUTTON_PIN_MODE
+        #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE, openknx.progButton);
+#endif // PROG_BUTTON_PIN
 
 #ifdef FUNC1_BUTTON_PIN
-        openknx.gpio.pinMode(FUNC1_BUTTON_PIN, INPUT_PULLUP);
-        openknx.gpio.attachInterrupt(
-            FUNC1_BUTTON_PIN,
-            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.func1Button.change(!state); }, CHANGE);
-#endif
+    #ifndef FUNC1_BUTTON_MODE
+        #define FUNC1_BUTTON_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(FUNC1_BUTTON_PIN, FUNC1_BUTTON_MODE, openknx.func1Button);
+#endif // FUNC1_BUTTON_PIN
 
 #ifdef FUNC2_BUTTON_PIN
-        openknx.gpio.pinMode(FUNC2_BUTTON_PIN, INPUT_PULLUP);
-        openknx.gpio.attachInterrupt(
-            FUNC2_BUTTON_PIN,
-            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.func2Button.change(!state); }, CHANGE);
-#endif
+    #ifndef FUNC2_BUTTON_MODE
+        #define FUNC2_BUTTON_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(FUNC2_BUTTON_PIN, FUNC2_BUTTON_MODE, openknx.func2Button);
+#endif // FUNC2_BUTTON_PIN
 
 #ifdef FUNC3_BUTTON_PIN
-        openknx.gpio.pinMode(FUNC3_BUTTON_PIN, INPUT_PULLUP);
-        openknx.gpio.attachInterrupt(
-            FUNC3_BUTTON_PIN,
-            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.func3Button.change(!state); }, CHANGE);
-#endif
+    #ifndef FUNC3_BUTTON_MODE
+        #define FUNC3_BUTTON_MODE INPUT_PULLUP
+    #endif
+        ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE, openknx.func3Button);
+#endif // FUNC3_BUTTON_PIN
+
     }
 
     void Hardware::initKnxRxISR()

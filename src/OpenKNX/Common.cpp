@@ -26,6 +26,9 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+        #ifdef DEVICE_INIT
+            DEVICE_INIT();
+        #endif
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
@@ -107,7 +110,10 @@ namespace OpenKNX
     void Common::processRecovery()
     {
         bool erase = false;
-        openknx.gpio.pinMode(PROG_BUTTON_PIN, INPUT_PULLUP);
+        #ifndef PROG_BUTTON_PIN_MODE
+            #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
+        #endif
+        openknx.gpio.pinMode(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
         while (!openknx.gpio.digitalRead(PROG_BUTTON_PIN))
         {
             if (millis() >= OPENKNX_RECOVERY_TIME)
