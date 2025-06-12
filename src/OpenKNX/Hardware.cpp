@@ -4,36 +4,6 @@
     #include "LittleFS.h"
 #endif
 
-#if defined(USE_TP_RX_QUEUE) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
-    #if defined(ARDUINO_ARCH_RP2040) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
-void __time_critical_func(processKnxRxISR)()
-{
-    uart_get_hw(KNX_DMA_UART)->icr = UART_UARTICR_RTIC_BITS | UART_UARTICR_RXIC_BITS;
-        #if MASK_VERSION == 0x07B0
-    knx.bau().getDataLinkLayer()->processRxISR();
-        #elif MASK_VERSION == 0x091A
-    knx.bau().getSecondaryDataLinkLayer()->processRxISR();
-        #endif
-}
-    #endif
-    #if defined(ARDUINO_ARCH_ESP32)
-void IRAM_ATTR processKnxRxTimer(void* pvParameters)
-{
-    const TickType_t xFrequency = pdMS_TO_TICKS(1);
-    // if (!knx.platform().uartAvailable()) return;
-    while (1)
-    {
-        #if MASK_VERSION == 0x091A
-        knx.bau().getSecondaryDataLinkLayer()->processRxISR();
-        #else
-        knx.bau().getDataLinkLayer()->processRxISR();
-        #endif
-        vTaskDelay(xFrequency);
-    }
-}
-    #endif
-#endif
-
 namespace OpenKNX
 {
     void Hardware::init()
@@ -130,41 +100,6 @@ namespace OpenKNX
     #endif
         ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE, openknx.func3Button);
 #endif // FUNC3_BUTTON_PIN
-    }
-
-    void Hardware::initKnxRxISR()
-    {
-#if defined(USE_TP_RX_QUEUE) && (MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A)
-    #if defined(ARDUINO_ARCH_RP2040) && defined(USE_KNX_DMA_UART) && defined(USE_KNX_DMA_IRQ)
-        irq_set_exclusive_handler(KNX_DMA_UART_IRQ, processKnxRxISR);
-        irq_set_enabled(KNX_DMA_UART_IRQ, true);
-        uart_set_irq_enables(KNX_DMA_UART, true, false);
-    #endif
-
-    #ifdef ARDUINO_ARCH_ESP32
-        // TimerHandle_t xTimer = xTimerCreate(
-        //     "processKnxRx",   // Name des Timers
-        //     pdMS_TO_TICKS(1), // Timer-Periode
-        //     pdTRUE,           // Wiederholender Timer
-        //     (void*)0,         // Benutzerdefinierter Parameter (optional)
-        //     processKnxRxTimer // Callback-Funktion
-        // );
-        // if (xTimerStart(xTimer, 0) != pdPASS)
-        // {
-        //     logError("Hardware<KnxRx>", "Could not start timer!");
-        //     return;
-        // }
-        xTaskCreatePinnedToCore(
-            processKnxRxTimer,         // Task-Funktion
-            "KnxRx",                   // Name des Tasks
-            2048,                      // Stack-Größe in Worten
-            NULL,                      // Parameter
-            configMAX_PRIORITIES - 10, // Höchste Priorität
-            NULL,                      // Task-Handle (optional)
-            0                          // Core 0 auswählen
-        );
-    #endif
-#endif
     }
 
     void Hardware::initFlash()
@@ -264,4 +199,38 @@ namespace OpenKNX
         return 0.0f;
 #endif
     }
+
+#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+    void Hardware::initKnxInterface()
+    {
+#if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
+    #if KNX_UART_NUM == 0
+        #define KNX_UART UART_NUM_0
+    #elif KNX_UART_NUM == 1
+        #define KNX_UART UART_NUM_1
+    #elif KNX_UART_NUM == 2
+        #define KNX_UART UART_NUM_2
+    #elif KNX_UART_NUM == 3
+        #define KNX_UART UART_NUM_3
+    #elif KNX_UART_NUM == 4
+        #define KNX_UART UART_NUM_4
+    #else
+        #pragma error "Invalid KNX_UART_NUM defined"
+    #endif
+        knx.platform().interface(new TPUart::Interface::ESP32(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART));
+#elif defined(ARDUINO_ARCH_RP2040) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
+    #if KNX_UART_NUM == 0
+        #define KNX_UART uart0
+    #elif KNX_UART_NUM == 1
+        #define KNX_UART uart1
+    #else
+        #pragma error "Invalid KNX_UART_NUM defined"
+    #endif
+        knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART, true, true));
+#else
+    #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
+#endif
+    }
+#endif
+
 } // namespace OpenKNX

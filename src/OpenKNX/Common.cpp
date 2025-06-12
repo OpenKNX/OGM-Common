@@ -140,11 +140,9 @@ namespace OpenKNX
     {
         logInfoP("Init knx stack");
         logIndentUp();
-
-#if (defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
-        knx.platform().knxUartPins(KNX_UART_RX_PIN, KNX_UART_TX_PIN);
+#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+        openknx.hardware.initKnxInterface();
 #endif
-
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
 
         knx.ledPin(0);
@@ -269,7 +267,7 @@ namespace OpenKNX
 
         // start the framework + isr if needed
         knx.start();
-        openknx.hardware.initKnxRxISR();
+        // openknx.hardware.initKnxRxISR();
 
         // register callbacks
         registerCallbacks();
