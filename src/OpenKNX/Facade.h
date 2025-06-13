@@ -11,6 +11,7 @@
 #include "OpenKNX/Time/TimeManager.h"
 #include "OpenKNX/Time/TimeProvider.h"
 #include "OpenKNX/Time/Calendar.h"
+#include "OpenKNX/GPIO/GPIO.h"
 #ifdef ParamBASE_Latitude
         #include "OpenKNX/Sun/SunCalculation.h"
 #endif
@@ -87,6 +88,7 @@ namespace OpenKNX
         Modules modules;
         Flash::Driver openknxFlash;
         Flash::Driver knxFlash;
+        GPIO::Manager gpio;
 
         void init(uint8_t firmwareRevision);
         void loop();

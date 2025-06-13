@@ -65,15 +65,16 @@ namespace OpenKNX
     void Hardware::initButtons()
     {
 #define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                                        \
-    pinMode(PIN, MODE);                                                                   \
-    attachInterrupt(                                                                      \
+    openknx.gpio.pinMode(PIN, MODE);                                                       \
+    openknx.gpio.attachInterrupt(                                                         \
         digitalPinToInterrupt(PIN),                                                       \
-        []() -> void {                                                                    \
-            BUTTON.change((MODE == INPUT_PULLUP) ? !digitalRead(PIN) : digitalRead(PIN)); \
+        [this](openknx_gpio_number_t pin, bool state) -> void {                           \
+            BUTTON.change((MODE == INPUT_PULLUP) ? !state : state);                       \
         },                                                                                \
         CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
 
 #ifdef PROG_BUTTON_PIN
+
     #ifndef PROG_BUTTON_PIN_MODE
         #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
     #endif
@@ -100,6 +101,7 @@ namespace OpenKNX
     #endif
         ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE, openknx.func3Button);
 #endif // FUNC3_BUTTON_PIN
+
     }
 
     void Hardware::initFlash()
