@@ -51,7 +51,7 @@ namespace OpenKNX
                 processInputKo(KoBASE_Date);
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
-            // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+            // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
             if (ParamBASE_SummertimeAll == 0 && KoBASE_IsSummertime.initialized())
                 processInputKo(KoBASE_IsSummertime);
 
@@ -309,7 +309,7 @@ namespace OpenKNX
             {
                 // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                 // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
-                // <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+                // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 if (ParamBASE_SummertimeAll == 0)
                 {
                     initReceiveDateTimeStructure();
