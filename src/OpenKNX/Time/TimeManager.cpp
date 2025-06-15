@@ -605,8 +605,7 @@ namespace OpenKNX
                 _intialReadKo = false;
                 _waitTimerReadKo = millis();
                 // Kommunikationsobjekt 'Sommerzeit aktiv'
-                if (!_disableKoRead)
-                    KoBASE_IsSummertime.requestObjectRead();
+                KoBASE_IsSummertime.requestObjectRead();
             }
 #endif
         }

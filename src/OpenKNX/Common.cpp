@@ -381,11 +381,6 @@ namespace OpenKNX
         openknx.sun.loop();
 #endif
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
-#ifdef KoBASE_Date // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
-        bool checkForDateRead = !openknx.time._disableKoRead && knx.configured() && !ParamBASE_InternalTime;
-        if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
-            checkForDateRead = false;
-#endif
 
         // loop  appstack
         _loopMicros = micros();
@@ -419,15 +414,6 @@ namespace OpenKNX
         {
             logErrorP("Warning: The loop took longer than usual (%i >= %i)", (millis() - start), OPENKNX_LOOPTIME_WARNING);
             _lastLooptimeWarning = millis();
-        }
-#endif
-#ifdef KoBASE_Date // HACK to prevent read telegrams from logic and common. Can be removed if logic is updated to use the time from common
-        if (checkForDateRead && KoBASE_Date.commFlag() == ComFlag::ReadRequest)
-        {
-            logErrorP("Disable time KO' reads in Common because the LogicModule is old and sent the read request");
-            openknx.time._disableKoRead = true;
-            if (openknx.time.hasTimerProvder())
-                openknx.time.getTimeProvder()->_disableKoRead = true;
         }
 #endif
     }
