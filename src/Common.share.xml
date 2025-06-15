@@ -137,24 +137,26 @@
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown" >
                   <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                   <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-SummertimeDE" Name="SummertimeDE">
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Interne Berechnung (nur in Deutschland)" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-SummertimeWorld" Name="SummertimeWorld">
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                   <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-SummertimeKO" Name="SummertimeKO">
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
                 <ParameterType Id="%AID%_PT-Timezone" Name="Timezone">
