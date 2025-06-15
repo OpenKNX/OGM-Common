@@ -220,34 +220,33 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            logInfo("BCU<Status>", "%s", dll->isConnected() ? "Connected" : "Disconnected");
-            logInfo("BCU<Received>", "Processed: %i - Ignored: %i - Invalid: %i - Unknown: %i",
-                    dll->getRxProcessdFrameCounter(), dll->getRxIgnoredFrameCounter(), dll->getRxInvalidFrameCounter(), dll->getRxUnknownControlCounter());
-            logInfo("BCU<Transmitted>", "Processed: %i/%i", dll->getTxProcessedFrameCounter(), dll->getTxFrameCounter());
+            logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
+            TPUart::Statistics &statistics = dll->getTPUart().getStatistics();
+            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
+                    statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
+                    statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
+                    statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
+
             return true;
         }
         else if (cmd.compare("bcu mon") == 0)
         {
-            logInfo("KNX<BCU>", "Start BCU monitoring");
             dll->monitor();
             return true;
         }
         else if (cmd.compare("bcu rst") == 0)
         {
-            logInfo("KNX<BCU>", "Reset BCU");
             dll->reset();
             return true;
         }
     #ifdef NCN5120
         else if (cmd.compare("bcu poff") == 0)
         {
-            logInfo("KNX<BCU>", "Switch off VCC2");
             dll->powerControl(false);
             return true;
         }
         else if (cmd.compare("bcu pon") == 0)
         {
-            logInfo("KNX<BCU>", "Switch on VCC2");
             dll->powerControl(true);
             return true;
         }

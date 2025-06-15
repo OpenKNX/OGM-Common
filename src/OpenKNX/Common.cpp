@@ -32,6 +32,7 @@ namespace OpenKNX
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
+        openknx.gpio.init();
         openknx.hardware.initLeds();
 
 #if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
@@ -112,8 +113,8 @@ namespace OpenKNX
         #ifndef PROG_BUTTON_PIN_MODE
             #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
         #endif
-        pinMode(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
-        while (!digitalRead(PROG_BUTTON_PIN))
+        openknx.gpio.pinMode(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
+        while (!openknx.gpio.digitalRead(PROG_BUTTON_PIN))
         {
             if (millis() >= OPENKNX_RECOVERY_TIME)
             {
@@ -140,11 +141,9 @@ namespace OpenKNX
     {
         logInfoP("Init knx stack");
         logIndentUp();
-
-#if (defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN)
-        knx.platform().knxUartPins(KNX_UART_RX_PIN, KNX_UART_TX_PIN);
+#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+        openknx.hardware.initKnxInterface();
 #endif
-
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
 
         knx.ledPin(0);
@@ -269,7 +268,7 @@ namespace OpenKNX
 
         // start the framework + isr if needed
         knx.start();
-        openknx.hardware.initKnxRxISR();
+        // openknx.hardware.initKnxRxISR();
 
         // register callbacks
         registerCallbacks();
@@ -368,12 +367,16 @@ namespace OpenKNX
         knx.loop();
         RUNTIME_MEASURE_END(_runtimeKnxStack);
 
+        //loop IO
+        openknx.gpio.loop();
+
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeTimeManager);
         openknx.time.loop();
         RUNTIME_MEASURE_END(_runtimeTimeManager);
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
+
 #ifdef ParamBASE_Latitude
         openknx.sun.loop();
 #endif
@@ -820,12 +823,10 @@ namespace OpenKNX
         });
 #ifdef SAVE_INTERRUPT_PIN
         // we need to do this as late as possible, tried in constructor, but this doesn't work on RP2040
-        pinMode(SAVE_INTERRUPT_PIN, INPUT);
-        attachInterrupt(
-            digitalPinToInterrupt(SAVE_INTERRUPT_PIN), []() -> void {
-                openknx.common.triggerSavePin();
-            },
-            FALLING);
+        openknx.gpio.pinMode(SAVE_INTERRUPT_PIN, INPUT);
+        openknx.gpio.attachInterrupt(
+            SAVE_INTERRUPT_PIN,
+            [this](openknx_gpio_number_t pin, bool state) -> void { openknx.common.triggerSavePin(); }, FALLING);
 #endif
     }
 

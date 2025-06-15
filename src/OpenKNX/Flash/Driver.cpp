@@ -465,7 +465,7 @@ namespace OpenKNX
                 if (currentSize > 0)
                 {
     #if defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-                    if (esp_flash_write(NULL, (const void *)(_buffer + currentPosition), (_offset + (_bufferSector * _sectorSize) + currentPosition), currentSize) != ESP_OK)
+                    if (esp_flash_write(NULL, (const void *)((uint8_t*)_buffer + currentPosition), (_offset + (_bufferSector * _sectorSize) + currentPosition), currentSize) != ESP_OK)
                        openknx.hardware.fatalError(FATAL_FLASH_PARAMETERS, "esp_flash_write");
     #else
                     spi_flash_write((size_t)(_offset + (_bufferSector * _sectorSize) + currentPosition), _buffer + currentPosition, currentSize);
