@@ -90,7 +90,7 @@ namespace OpenKNX
                         if (ParamBASE_CombinedTimeDate)
                         {
                             // combined date and time
-                            if (!_hasTime && !_disableKoRead)
+                            if (!_hasTime)
                             {
                                 KoBASE_Time.requestObjectRead();
                             }
@@ -98,16 +98,16 @@ namespace OpenKNX
                         else
                         {
                             // date and time from separate KOs
-                            if (!_hasTime && !_disableKoRead)
+                            if (!_hasTime)
                             {
                                 KoBASE_Time.requestObjectRead();
                             }
-                            if (!_hasDate && !_disableKoRead)
+                            if (!_hasDate)
                             {
                                 KoBASE_Date.requestObjectRead();
                             }
                         }
-                        if (!_hasDaylightSavingFlag && ParamBASE_SummertimeAll == 0 && !_disableKoRead)
+                        if (!_hasDaylightSavingFlag && ParamBASE_SummertimeAll == 0)
                         {
                             KoBASE_IsSummertime.requestObjectRead();
                         }

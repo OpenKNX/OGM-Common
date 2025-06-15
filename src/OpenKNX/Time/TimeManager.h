@@ -47,7 +47,6 @@ namespace OpenKNX
             friend Common;
             friend Console;
             friend TimeProvider;
-            bool _disableKoRead = false;
             uint8_t _lastSendSecond = 0;
             uint8_t _lastSendMinute = 0;
             uint8_t _lastSendHour = 0;
