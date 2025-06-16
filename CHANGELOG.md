@@ -1,15 +1,28 @@
 # Changes
 
 ## 1.3.0:
-* Feature #34: Time Implementation and Sun Calculation 
-* Update: RP2040 Platform to Core 4.4.0 + Rpi Base Platform
-* Change: Stop build process on overlapping flash memory regions
-*   Refactor: Memory Layout-Check/Info in Build-Process
+* Feature: New KNX TPUart Implementation of KNX Stack
+* Feature: New time implementation and sun calculation 
+* Feature: Adds new GPIO abstraction layer with support for expander
+* Feature: Adds IP-OTA
+* Feature: Adds for new DEVICE_INIT() Macro
+* Feature: Adds RP2350 Support
+* Feature: Adds support for combined TP/IP in knxprod
+* Feature: ESP23 Support
+*   Update Platform to IDFv5 with Platform 54.03.20
+*   Use RTOS Timer instead TimerInterrupts
+*   Adds new Partition layouts
+*   Use LittleFS
+*   Use new RMT Library
+*   Support installscripts
 * Refactor: Watchdog handling with auto erase on too many restarts
-* ESP32 work on support 
-*   ESP32: Use RTOS Timer instead TimerInterrupts
-*   ESP32: Adds new Partition layouts
+* Update: RP2040 Platform to Core 4.5.15 + Rpi Base Platform
+* Optimizes: Stop build process on overlapping flash memory regions
+*   Refactor: Memory Layout-Check/Info in Build-Process
+* Optimizes PIO scripts
+* Optimizes led handling
 * Optimizes device console
+* Adds some icons
 
 ## 1.2.1: 2024-11-18
 * Update: RP2040 Platform to Core 4.1.1 + Rpi Base Platform
