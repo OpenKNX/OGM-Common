@@ -447,7 +447,7 @@
                     <ParameterRefRef RefId="%AID%_UP-%TT%00034_R-%TT%0003401" HelpContext="BASE-ReadTimeDate" IndentLevel="1" />
                     <ParameterRefRef RefId="%AID%_UP-%TT%00144_R-%TT%0014401" HelpContext="Empty" IndentLevel="1" />
                     <choose ParamRefId="%AID%_UP-%TT%00144_R-%TT%0014401"> <!--  Timezone-->
-                      <when default="true">
+                      <when test="0 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28">
                         <!-- Timezone is other than Germany -->
                         <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
                           <when test="0">
@@ -472,11 +472,13 @@
                           </when>
                         </choose>
                       </when>
-                      <when test="31">
-                        <!-- Timezone is Custom -->
-                        <ParameterRefRef RefId="%AID%_UP-%TT%00163_R-%TT%0016301" HelpContext="Empty" IndentLevel="2" />
-                      </when>
                       <when test="1 31">
+                        <choose ParamRefId="%AID%_UP-%TT%00144_R-%TT%0014401"> <!--  Timezone-->
+                          <when test="31">
+                            <!-- Timezone is Custom -->
+                            <ParameterRefRef RefId="%AID%_UP-%TT%00163_R-%TT%0016301" HelpContext="%DOC%" IndentLevel="2" />
+                          </when> 
+                        </choose>    
                         <!-- Timezone is Germany or Custom -->
                         <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
                           <when test="0">
@@ -506,7 +508,6 @@
                           </when>
                         </choose>
                       </when>
-                      
                     </choose>
                   </when>
                   <when test="1">
