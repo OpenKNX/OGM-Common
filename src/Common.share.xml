@@ -150,47 +150,45 @@
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
                   <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-SummertimeKO" Name="SummertimeKO">
                 <TypeRestriction Base="Value" SizeInBit="2" UIHint="DropDown">
                   <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
-                <ParameterType Id="%AID%_PT-Timezone" Name="Timezone">
+              <ParameterType Id="%AID%_PT-TimezoneCustom" Name="TimezoneCustom">
+                <TypeText SizeInBit="504" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Timezone" Name="Timezone">
                 <TypeRestriction Base="Value" SizeInBit="5">
-                  <!-- <Enumeration Text="(-12 Stunden)" Value="28" Id="%ENID%" /> -->
-                  <Enumeration Text="Midway-Inseln (-11 Stunden)" Value="27" Id="%ENID%" />
-                  <Enumeration Text="Honolulu (-10 Stunden)" Value="26" Id="%ENID%" />
-                  <Enumeration Text="Anchorage (-9 Stunden)" Value="25" Id="%ENID%" />
-                  <Enumeration Text="Los Angeles (-8 Stunden)" Value="24" Id="%ENID%" />
-                  <Enumeration Text="Denver (-7 Stunden)" Value="23" Id="%ENID%" />
-                  <Enumeration Text="Chicago (-6 Stunden)" Value="22" Id="%ENID%" />
-                  <Enumeration Text="New York (-5 Stunden)" Value="21" Id="%ENID%" />
-                  <Enumeration Text="Santo Domingo (-4 Stunden)" Value="20" Id="%ENID%" />
-                  <Enumeration Text="Rio de Janeiro (-3 Stunden)" Value="19" Id="%ENID%" />
-                  <Enumeration Text="(-2 Stunden)" Value="18" Id="%ENID%" />
-                  <Enumeration Text="Azoren (-1 Stunde)" Value="17" Id="%ENID%" />
-                  <Enumeration Text="London (+0 Stunden)" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Berlin (+1 Stunde)" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Athen (+2 Stunden)" Value="2" Id="%ENID%" />
-                  <Enumeration Text="Moskau (+3 Stunden)" Value="3" Id="%ENID%" />
-                  <Enumeration Text="Dubai (+4 Stunden)" Value="4" Id="%ENID%" />
-                  <Enumeration Text="Karatschi (+5 Stunden)" Value="5" Id="%ENID%" />
-                  <Enumeration Text="Dhaka (+6 Stunden)" Value="6" Id="%ENID%" />
-                  <Enumeration Text="Bangkok (+7 Stunden)" Value="7" Id="%ENID%" />
-                  <Enumeration Text="Peking (+8 Stunden)" Value="8" Id="%ENID%" />
-                  <Enumeration Text="Tokio (+9 Stunden)" Value="9" Id="%ENID%" />
-                  <Enumeration Text="Sydney (+10 Stunden)" Value="10" Id="%ENID%" />
-                  <Enumeration Text="Nouméa (+11 Stunden)" Value="11" Id="%ENID%" />
-                  <Enumeration Text="Wellington (+12 Stunden)" Value="12" Id="%ENID%" />
+                  <Enumeration Text="Amsterdam, Berlin, Bern, Rom, Wien (+1 Stunde)" Value="1" Id="%ENID%" />   
+                  <Enumeration Text="Benutzerdefiniert" Value="31" Id="%ENID%" />
+                  <Enumeration Text="UTC -11 Stunden" Value="27" Id="%ENID%" />
+                  <Enumeration Text="UTC -10 Stunden" Value="26" Id="%ENID%" />
+                  <Enumeration Text="UTC -9 Stunden" Value="25" Id="%ENID%" />
+                  <Enumeration Text="UTC -8 Stunden" Value="24" Id="%ENID%" />
+                  <Enumeration Text="UTC -7 Stunden" Value="23" Id="%ENID%" />
+                  <Enumeration Text="UTC -6 Stunden" Value="22" Id="%ENID%" />
+                  <Enumeration Text="UTC -5 Stunden" Value="21" Id="%ENID%" />
+                  <Enumeration Text="UTC -4 Stunden" Value="20" Id="%ENID%" />
+                  <Enumeration Text="UTC -3 Stunden" Value="19" Id="%ENID%" />
+                  <Enumeration Text="UTC -2 Stunden" Value="18" Id="%ENID%" />
+                  <Enumeration Text="UTC -1 Stunde" Value="17" Id="%ENID%" />
+                  <Enumeration Text="UTC +0 Stunden" Value="0" Id="%ENID%" />
+                  <Enumeration Text="UTC +1 Stunden" Value="28" Id="%ENID%" />
+                  <Enumeration Text="UTC +2 Stunden" Value="2" Id="%ENID%" />
+                  <Enumeration Text="UTC +3 Stunden" Value="3" Id="%ENID%" />
+                  <Enumeration Text="UTC +4 Stunden" Value="4" Id="%ENID%" />
+                  <Enumeration Text="UTC +5 Stunden" Value="5" Id="%ENID%" />
+                  <Enumeration Text="UTC +6 Stunden" Value="6" Id="%ENID%" />
+                  <Enumeration Text="UTC +7 Stunden" Value="7" Id="%ENID%" />
+                  <Enumeration Text="UTC +8 Stunden" Value="8" Id="%ENID%" />
+                  <Enumeration Text="UTC +9 Stunden" Value="9" Id="%ENID%" />
+                  <Enumeration Text="UTC +10 Stunden" Value="10" Id="%ENID%" />
+                  <Enumeration Text="UTC +11 Stunden" Value="11" Id="%ENID%" />
+                  <Enumeration Text="UTC +12 Stunden" Value="12" Id="%ENID%" />
                 </TypeRestriction>
-              </ParameterType>
-              <ParameterType Id="%AID%_PT-TimezoneValue" Name="TimezoneValue">
-                <!-- Timezone value are the 4 lowest bits from timezone -->
-                <TypeNumber SizeInBit="4" Type="unsignedInt" minInclusive="0" maxInclusive="15" />
               </ParameterType>
               <!-- Location -->
               <ParameterType Id="%AID%_PT-Latitude" Name="Latitude">
@@ -243,28 +241,28 @@
               </Union>
 
               <!-- Time & Date -->
-              <Union SizeInBit="8">
+              <Union SizeInBit="520">
                 <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
-                <Parameter Id="%AID%_UP-%TT%00157" Name="TimezoneSign"     ParameterType="%AID%_PT-CheckBox"         Offset="0" BitOffset="0" Text="Zeitzone-Vorzeichen" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00158" Name="TimezoneValue"    ParameterType="%AID%_PT-TimezoneValue"    Offset="0" BitOffset="1" Text="Zeitzone-Wert" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
+                <Parameter Id="%AID%_UP-%TT%00163" Name="TimezoneCustom"   ParameterType="%AID%_PT-TimezoneCustom"   Offset="1" BitOffset="0" Text="POSIX TZ-String" Value="" />          
+                <!-- ^^^ 63 Characters + 0 terminator = 64 bytes ^^^ -->
               </Union>
 
               <!-- Location -->
               <Union SizeInBit="64">
-                <Memory CodeSegment="%MID%" Offset="5" BitOffset="0" />
+                <Memory CodeSegment="%MID%" Offset="69" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" />
                 <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764"  />
               </Union>
 
               <!-- Extended -->
               <Union SizeInBit="256">
-                <Memory CodeSegment="%MID%" Offset="14" BitOffset="0" />
+                <Memory CodeSegment="%MID%" Offset="78" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00146" Name="Diagnose"          ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="0" Text="Diagnoseobjekt anzeigen" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"          ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00034" Name="ReadTimeDate"      ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="2" Text="Bei Neustart vom Bus lesen" Value="1" />
@@ -278,7 +276,7 @@
                 <Parameter Id="%AID%_UP-%TT%00091" Name="ManualSave"        ParameterType="%AID%_PT-ManualSave" Offset="0" BitOffset="5" Text="Manuelles speichern" Value="%BASE_ManualSave%" />
                 <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches speichern" Value="%BASE_PeriodicSave%" />
                 <!--
-                £
+                
                   Reserved for new parameters
                 
                 -->
@@ -310,6 +308,7 @@
               <ParameterRef Id="%AID%_UP-%TT%00160_R-%TT%0016001" RefId="%AID%_UP-%TT%00160" />
               <ParameterRef Id="%AID%_UP-%TT%00161_R-%TT%0016101" RefId="%AID%_UP-%TT%00161" />
               <ParameterRef Id="%AID%_UP-%TT%00162_R-%TT%0016201" RefId="%AID%_UP-%TT%00162" />
+              <ParameterRef Id="%AID%_UP-%TT%00163_R-%TT%0016301" RefId="%AID%_UP-%TT%00163" />
               <ParameterRef Id="%AID%_UP-%TT%00090_R-%TT%0009001" RefId="%AID%_UP-%TT%00090" />
               <ParameterRef Id="%AID%_UP-%TT%00091_R-%TT%0009101" RefId="%AID%_UP-%TT%00091" />
               <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
@@ -447,8 +446,8 @@
                     <!-- Read Time/Date on startup -->
                     <ParameterRefRef RefId="%AID%_UP-%TT%00034_R-%TT%0003401" HelpContext="BASE-ReadTimeDate" IndentLevel="1" />
                     <ParameterRefRef RefId="%AID%_UP-%TT%00144_R-%TT%0014401" HelpContext="Empty" IndentLevel="1" />
-                    <choose ParamRefId="%AID%_UP-%TT%00144_R-%TT%0014401">
-                      <when test="!=1">
+                    <choose ParamRefId="%AID%_UP-%TT%00144_R-%TT%0014401"> <!--  Timezone-->
+                      <when default="true">
                         <!-- Timezone is other than Germany -->
                         <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
                           <when test="0">
@@ -473,8 +472,12 @@
                           </when>
                         </choose>
                       </when>
-                      <when test="1">
-                        <!-- Timezone is Germany -->
+                      <when test="31">
+                        <!-- Timezone is Custom -->
+                        <ParameterRefRef RefId="%AID%_UP-%TT%00163_R-%TT%0016301" HelpContext="Empty" IndentLevel="2" />
+                      </when>
+                      <when test="1 31">
+                        <!-- Timezone is Germany or Custom -->
                         <choose ParamRefId="%AID%_UP-%TT%00156_R-%TT%0015601">
                           <when test="0">
                             <!-- DPT19 not active -->
@@ -503,6 +506,7 @@
                           </when>
                         </choose>
                       </when>
+                      
                     </choose>
                   </when>
                   <when test="1">

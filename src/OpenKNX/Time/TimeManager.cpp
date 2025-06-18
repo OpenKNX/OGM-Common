@@ -391,107 +391,114 @@ namespace OpenKNX
 
         std::string TimeManager::buildTimezoneString(DaylightSavingMode daylightSavingMode)
         {
-            // <Enumeration Text="Midway-Inseln (-11 Stunden)" Value="27" Id="%ENID%" />
-            // <Enumeration Text="Honolulu (-10 Stunden)" Value="26" Id="%ENID%" />
-            // <Enumeration Text="Anchorage (-9 Stunden)" Value="25" Id="%ENID%" />
-            // <Enumeration Text="Los Angeles (-8 Stunden)" Value="24" Id="%ENID%" />
-            // <Enumeration Text="Denver (-7 Stunden)" Value="23" Id="%ENID%" />
-            // <Enumeration Text="Chicago (-6 Stunden)" Value="22" Id="%ENID%" />
-            // <Enumeration Text="New York (-5 Stunden)" Value="21" Id="%ENID%" />
-            // <Enumeration Text="Santo Domingo (-4 Stunden)" Value="20" Id="%ENID%" />
-            // <Enumeration Text="Rio de Janeiro (-3 Stunden)" Value="19" Id="%ENID%" />
-            // <Enumeration Text="(-2 Stunden)" Value="18" Id="%ENID%" />
-            // <Enumeration Text="Azoren (-1 Stunde)" Value="17" Id="%ENID%" />
-            // <Enumeration Text="London (+0 Stunden)" Value="0" Id="%ENID%" />
-            // <Enumeration Text="Berlin (+1 Stunde)" Value="1" Id="%ENID%" />
-            // <Enumeration Text="Athen (+3 Stunden)" Value="2" Id="%ENID%" />
-            // <Enumeration Text="Moskau (+4 Stunden)" Value="3" Id="%ENID%" />
-            // <Enumeration Text="Dubai (+5 Stunden)" Value="4" Id="%ENID%" />
-            // <Enumeration Text="Karatschi (+6 Stunden)" Value="5" Id="%ENID%" />
-            // <Enumeration Text="Dhaka (+7 Stunden)" Value="6" Id="%ENID%" />
-            // <Enumeration Text="Bangkok (+8 Stunden)" Value="7" Id="%ENID%" />
-            // <Enumeration Text="Peking (+9 Stunden)" Value="8" Id="%ENID%" />
-            // <Enumeration Text="Tokio (+10 Stunden)" Value="9" Id="%ENID%" />
-            // <Enumeration Text="Sydney (+11 Stunden)" Value="10" Id="%ENID%" />
-            // <Enumeration Text="Nouméa (+12 Stunden)" Value="11" Id="%ENID%" />
-            // <Enumeration Text="Wellington (+12 Stunden)" Value="12" Id="%ENID%" />
-
+            // <Enumeration Text="Amsterdam, Berlin, Bern, Rom, Wien (+1 Stunde)" Value="1" Id="%ENID%" />   
+            // <Enumeration Text="Benutzerdefiniert" Value="31" Id="%ENID%" />
+            // <Enumeration Text="UTC -11 Stunden" Value="27" Id="%ENID%" />
+            // <Enumeration Text="UTC -10 Stunden" Value="26" Id="%ENID%" />
+            // <Enumeration Text="UTC -9 Stunden" Value="25" Id="%ENID%" />
+            // <Enumeration Text="UTC -8 Stunden" Value="24" Id="%ENID%" />
+            // <Enumeration Text="UTC -7 Stunden" Value="23" Id="%ENID%" />
+            // <Enumeration Text="UTC -6 Stunden" Value="22" Id="%ENID%" />
+            // <Enumeration Text="UTC -5 Stunden" Value="21" Id="%ENID%" />
+            // <Enumeration Text="UTC -4 Stunden" Value="20" Id="%ENID%" />
+            // <Enumeration Text="UTC -3 Stunden" Value="19" Id="%ENID%" />
+            // <Enumeration Text="UTC -2 Stunden" Value="18" Id="%ENID%" />
+            // <Enumeration Text="UTC -1 Stunde" Value="17" Id="%ENID%" />
+            // <Enumeration Text="UTC +0 Stunden" Value="0" Id="%ENID%" />
+            // <Enumeration Text="UTC +1 Stunden" Value="28" Id="%ENID%" />
+            // <Enumeration Text="UTC +2 Stunden" Value="2" Id="%ENID%" />
+            // <Enumeration Text="UTC +3 Stunden" Value="3" Id="%ENID%" />
+            // <Enumeration Text="UTC +4 Stunden" Value="4" Id="%ENID%" />
+            // <Enumeration Text="UTC +5 Stunden" Value="5" Id="%ENID%" />
+            // <Enumeration Text="UTC +6 Stunden" Value="6" Id="%ENID%" />
+            // <Enumeration Text="UTC +7 Stunden" Value="7" Id="%ENID%" />
+            // <Enumeration Text="UTC +8 Stunden" Value="8" Id="%ENID%" />
+            // <Enumeration Text="UTC +9 Stunden" Value="9" Id="%ENID%" />
+            // <Enumeration Text="UTC +10 Stunden" Value="10" Id="%ENID%" />
+            // <Enumeration Text="UTC +11 Stunden" Value="11" Id="%ENID%" />
+            // <Enumeration Text="UTC +12 Stunden" Value="12" Id="%ENID%" />
             const char* timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
             if (_configured)
             {
                 switch (ParamBASE_Timezone)
                 {
+                    case 1: // Germany
+                        // Use default 
+                        break;
+                     case 31: // Custom timezone    
+                        timezoneString =  (const char*) ParamBASE_TimezoneCustom; 
+                        break;
                     case 27:
-                        timezoneString = "NUT11"; // America Samoa
+                        timezoneString = "EST11"; 
                         break;
                     case 26:
-                        timezoneString = "HST11HDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Hawai
+                        timezoneString = "EST10";
                         break;
                     case 25:
-                        timezoneString = "ASKT9AKDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Alaska
+                        timezoneString = "EST9";
                         break;
                     case 24:
-                        timezoneString = "PST8PDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Los Angeles
+                        timezoneString = "EST8";
                         break;
                     case 23:
-                        timezoneString = "MST7MDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Denver
+                        timezoneString = "EST7";
                         break;
                     case 22:
-                        timezoneString = "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Chicago
+                        timezoneString = "EST6"; 
                         break;
                     case 21:
-                        timezoneString = "EST5EDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // New York
+                        timezoneString = "EST5"; 
                         break;
                     case 20:
-                        timezoneString = "GMT-4"; // GMT-4
+                        timezoneString = "EST4"; 
                         break;
                     case 19:
-                        timezoneString = "ART3"; // Argentina
+                        timezoneString = "EST3"; 
                         break;
                     case 18:
-                        timezoneString = "WGST3WGT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Greenland
+                        timezoneString = "EST2"; 
                         break;
                     case 17:
-                        timezoneString = "CVT1"; // Cabo Verde
+                        timezoneString = "EST1"; 
                         break;
                     case 0:
-                        timezoneString = "BST0GMT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // UK
+                        timezoneString = "EST0"; 
                         break;
-                    case 1:
-                        timezoneString = "CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00"; // Germany
+                    case 28:
+                        timezoneString = "CET-1"; 
                         break;
                     case 2:
-                        timezoneString = "EET-2EEST,M3.5.0/3,M10.5.0/4"; // Athen
+                        timezoneString = "CET-2";
                         break;
                     case 3:
-                        timezoneString = "MSK-3MSD,M3.5.0,M10.5.0/3"; // Moscow
+                        timezoneString = "CET-3"; 
                         break;
                     case 4:
-                        timezoneString = "UZT-4"; // Azerbaijan
+                        timezoneString = "CET-4";
                         break;
                     case 5:
-                        timezoneString = "UZT-5"; // Pakistan
+                        timezoneString = "CET-5"; 
                         break;
                     case 6:
-                        timezoneString = "BDT-6"; // Bangladesh
+                        timezoneString = "CET-6"; 
                         break;
                     case 7:
-                        timezoneString = "WIB-7"; // Indonesia
+                        timezoneString = "CET-7";
                         break;
                     case 8:
-                        timezoneString = "CST-8"; // China
+                        timezoneString = "CET-8"; 
                         break;
                     case 9:
-                        timezoneString = "JST-9"; // Japan
+                        timezoneString = "CET-9"; 
                         break;
                     case 10:
-                        timezoneString = "AEST-9AEDT,M3.2.0/2:00:00,M11.1.0/2:00:00"; // Eastern Australia
+                        timezoneString = "CET-10";
                         break;
                     case 11:
-                        timezoneString = "SBT-11"; // Solomon Islands
+                        timezoneString = "CET-11";
                         break;
                     case 12:
-                        timezoneString = "ANAT-12"; // New Zealand
+                        timezoneString = "CET-12";
                         break;
                 }
             }
