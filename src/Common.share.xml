@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
+  
   <op:config name="%BASE_ShowExtendedSave%" value="1" />
   <op:config name="%BASE_ExtendedSave%" value="0" />
   <op:config name="%BASE_PeriodicSave%" value="0" />
   <op:config name="%BASE_ManualSave%" value="0" />
   <op:config name="%BASE_StartupDelay%" value="1" />
+  <op:nowarn id="7" regex="_R-100000202"/>
+  
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
@@ -128,8 +131,8 @@
               <!-- selection of seperated or combined com-object for time and date -->
               <ParameterType Id="%AID%_PT-CombinedTimeDate" Name="CombinedTimeDate">
                 <TypeRestriction Base="Value" SizeInBit="1">
-                  <Enumeration Text="zwei getrennte KOs" Value="0" Id="%ENID%" />
                   <Enumeration Text="ein kombiniertes KO" Value="1" Id="%ENID%" />
+                  <Enumeration Text="zwei getrennte KOs" Value="0" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <!-- Time handling -->
@@ -244,7 +247,7 @@
               <Union SizeInBit="520">
                 <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
-                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
@@ -316,28 +319,27 @@
             </ParameterRefs>
             <ComObjectTable>
               <ComObject Id="%AID%_O-%TT%00001" Name="Heartbeat"      Text="In Betrieb"       Number="1"  FunctionText="Zyklisch" ObjectSize="1 Byte" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-5-5" />
-              <ComObject Id="%AID%_O-%TT%00002" Name="Time"           Text="Uhrzeit/Datum"    Number="2"  FunctionText="Eingang" ObjectSize="8 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-19-1" />
+              <ComObject Id="%AID%_O-%TT%00002" Name="Time"           Text="Uhrzeit"          Number="2"  FunctionText="Eingang" ObjectSize="3 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-10-1" />
               <ComObject Id="%AID%_O-%TT%00003" Name="Date"           Text="Datum"            Number="3"  FunctionText="Eingang" ObjectSize="3 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-11-1" />
+              <!-- Be careful, KO-Numbers are reordered and not anymore aligned with ID's -->
+              <ComObject Id="%AID%_O-%TT%00012" Name="DateTime"       Text="Uhrzeit/Datum"    Number="4"  FunctionText="Eingang" ObjectSize="8 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-19-1" />
+              <ComObject Id="%AID%_O-%TT%00010" Name="IsSummertime"   Text="Sommerzeit aktiv" Number="5"  FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
+              <ComObject Id="%AID%_O-%TT%00011" Name="ManualSave"     Text="Speichern"        Number="6"  FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-17" />
               <ComObject Id="%AID%_O-%TT%00007" Name="Diagnose"       Text="Diagnose"         Number="7"  FunctionText="Diagnoseobjekt" ObjectSize="14 Bytes" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-16-1" />
-              <ComObject Id="%AID%_O-%TT%00010" Name="IsSummertime"   Text="Sommerzeit aktiv" Number="10" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Enabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-1" />
-              <ComObject Id="%AID%_O-%TT%00011" Name="ManualSave"     Text="Speichern"        Number="11" FunctionText="Eingang" ObjectSize="1 Bit" ReadFlag="Disabled" WriteFlag="Enabled" CommunicationFlag="Enabled" TransmitFlag="Disabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-1-17" />
-              <ComObject Id="%AID%_O-%TT%00012" Name="DateTime"       Text="Uhrzeit/Datum"    Number="12"  FunctionText="Ausgang" ObjectSize="8 Bytes" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" ReadOnInitFlag="Disabled" DatapointType="DPST-19-1" />
-              <!-- ComObject-IDs 013-019 are free -->
+              <!-- ComObject-IDs 013-019 are free, ComObject-Numbers 008-014 are free -->
             </ComObjectTable>
             <ComObjectRefs>
               <!-- Heartbeat -->
               <ComObjectRef Id="%AID%_O-%TT%00001_R-%TT%0000101" RefId="%AID%_O-%TT%00001" ObjectSize="1 Bit" DatapointType="DPST-1-2" />
               <ComObjectRef Id="%AID%_O-%TT%00001_R-%TT%0000102" RefId="%AID%_O-%TT%00001" />
               <!-- Time -->
-              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000201" RefId="%AID%_O-%TT%00002" Text="Uhrzeit" ObjectSize="3 Bytes" DatapointType="DPST-10-1" />
-              <!-- DateTime -->
-              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000202" RefId="%AID%_O-%TT%00002" />
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000201" RefId="%AID%_O-%TT%00002" />
               <!-- Output Time -->
-              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000203" RefId="%AID%_O-%TT%00002" Text="Uhrzeit" ObjectSize="3 Bytes" DatapointType="DPST-10-1" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000203" RefId="%AID%_O-%TT%00002" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
               <!-- Date -->
               <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000301" RefId="%AID%_O-%TT%00003" />
               <!-- Output Date -->
-              <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000303" RefId="%AID%_O-%TT%00003" ObjectSize="3 Bytes" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
+              <ComObjectRef Id="%AID%_O-%TT%00003_R-%TT%0000303" RefId="%AID%_O-%TT%00003" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
               <!-- Diagnose-->
               <ComObjectRef Id="%AID%_O-%TT%00007_R-%TT%0000701" RefId="%AID%_O-%TT%00007" />
               <!-- Summertime -->
@@ -346,8 +348,10 @@
               <ComObjectRef Id="%AID%_O-%TT%00010_R-%TT%0001003" RefId="%AID%_O-%TT%00010" FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled"  />
               <!-- ManualSave -->
               <ComObjectRef Id="%AID%_O-%TT%00011_R-%TT%0001101" RefId="%AID%_O-%TT%00011" />
+              <!-- Input DateTime (manually modified ID for backward compatibility) -->
+              <ComObjectRef Id="%AID%_O-%TT%00002_R-%TT%0000202" RefId="%AID%_O-%TT%00012" op:noerror="true" />
               <!-- Output DateTime -->
-              <ComObjectRef Id="%AID%_O-%TT%00012_R-%TT%0001203" RefId="%AID%_O-%TT%00012" />
+              <ComObjectRef Id="%AID%_O-%TT%00012_R-%TT%0001203" RefId="%AID%_O-%TT%00012"  FunctionText="Ausgang" ReadFlag="Enabled" WriteFlag="Disabled" CommunicationFlag="Enabled" TransmitFlag="Enabled" UpdateFlag="Disabled" />
             </ComObjectRefs>
             <Script>
               <op:include href="Common.script.js" prefix="BASE" type="script" />
@@ -517,10 +521,10 @@
                     <ComObjectRefRef RefId="%AID%_O-%TT%00002_R-%TT%0000203" />
                     <!-- Output Date -->
                     <ComObjectRefRef RefId="%AID%_O-%TT%00003_R-%TT%0000303" />       
-                    <!-- Output Summertime -->
-                    <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001003" />
                     <!-- Output DateTime -->
                     <ComObjectRefRef RefId="%AID%_O-%TT%00012_R-%TT%0001203" />    
+                    <!-- Output Summertime -->
+                    <ComObjectRefRef RefId="%AID%_O-%TT%00010_R-%TT%0001003" />
                   </when>
                 </choose>
 

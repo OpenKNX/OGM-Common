@@ -45,10 +45,15 @@ namespace OpenKNX
         void TimeProviderKnx::setup()
         {
 #ifdef BASE_KoTime
-            if (KoBASE_Time.initialized())
-                processInputKo(KoBASE_Time);
-            if (!ParamBASE_CombinedTimeDate && KoBASE_Date.initialized())
-                processInputKo(KoBASE_Date);
+            if (KoBASE_DateTime.initialized())
+                processInputKo(KoBASE_DateTime);
+            else
+            {
+                if (KoBASE_Time.initialized())
+                    processInputKo(KoBASE_Time);
+                if (!ParamBASE_CombinedTimeDate && KoBASE_Date.initialized())
+                    processInputKo(KoBASE_Date);
+            }
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
@@ -90,9 +95,9 @@ namespace OpenKNX
                         if (ParamBASE_CombinedTimeDate)
                         {
                             // combined date and time
-                            if (!_hasTime)
+                            if (!_hasTime || !_hasDate)
                             {
-                                KoBASE_Time.requestObjectRead();
+                                KoBASE_DateTime.requestObjectRead();
                             }
                         }
                         else
@@ -137,109 +142,107 @@ namespace OpenKNX
             if (ko.asap() == BASE_KoTime)
             {
                 unsigned long receiveTimeStamp = millis();
-                if (ParamBASE_CombinedTimeDate)
+                KNXValue value = "";
+                // ensure we have a valid time content
+                if (ko.tryValue(value, DPT_TimeOfDay))
                 {
-                    KNXValue value = "";
-                    // first ensure we have a valid data-time content
-                    // (including the correct length)
-                    if (ko.tryValue(value, DPT_DateTime))
+                    initReceiveDateTimeStructure();
+                    _timeStampTimeReceived = receiveTimeStamp;
+                    struct tm knxTime = value;
+                    _dateTime.tm_hour = knxTime.tm_hour;
+                    _dateTime.tm_min = knxTime.tm_min;
+                    _dateTime.tm_sec = knxTime.tm_sec;
+                    _hasTime = true;
+                    _timeSet = true;
+                    if (openknx.time.isValid())
                     {
-
-                        // use raw value, as current version of knx do not provide access to all fields
-                        // TODO DPT19: check integration of extended DPT19 access into knx or OpenKNX-Commons
-                        // size is ensured to be 8 Byte
-                        uint8_t *raw = ko.valueRef();
-
-                        /*
-                        const bool flagFault = raw[6] & 0x80;
-                        // ignore working day (WD, NWD): raw[6] & 0x40, raw[6] & 0x20
-                        const bool flagNoYear = raw[6] & 0x10;
-                        const bool flagNoDate = raw[6] & 0x08;
-                        // ignore NDOW: raw[6] & 0x04
-                        const bool flagNoTime = raw[6] & 0x02;
-                        const bool flagSuti = raw[6] & 0x01;
-                        // ignore quality of clock (CLQ): raw[7] & 0x80
-                        // ignore synchronisation source reliablity (SRC): raw[7] & 0x40
-                        */
-
-                        // ignore inputs with:
-                        // * F - fault
-                        // * NY - missing year
-                        // * ND - missing date
-                        // * NT - missing time
-                        if ((raw[6] & (DPT19_FAULT | DPT19_NO_YEAR | DPT19_NO_DATE | DPT19_NO_TIME)))
+                        tm now;
+                        openknx.time.getLocalTime().toTm(now);
+                        if (!_hasDate)
                         {
-                            logErrorP("Unvalid date time received");
-                        }
-                        else
-                        {
-                            initReceiveDateTimeStructure();
-                            _timeStampTimeReceived = receiveTimeStamp;
-                            struct tm knxDateTime = value;
-                            _dateTime.tm_year = knxDateTime.tm_year - 1900;
-                            _dateTime.tm_mon = knxDateTime.tm_mon - 1;
-                            _dateTime.tm_mday = knxDateTime.tm_mday;
-                            _hasDate = true;
-                            _dateTime.tm_hour = knxDateTime.tm_hour;
-                            _dateTime.tm_min = knxDateTime.tm_min;
-                            _dateTime.tm_sec = knxDateTime.tm_sec;
-                            _hasTime = true;
-                            _timeSet = true;
-
-                            const bool lDST = raw[6] & DPT19_SUMMERTIME;
-                            // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
-                            // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
-                            // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
-                            if (ParamBASE_SummertimeAll == 1)
+                            // date is already valid, use current date
+                            if (knxTime.tm_hour == 0 && knxTime.tm_min <= TIME_TOLERANCE_CHECK_MIN &&
+                                now.tm_hour == 23 && now.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN)
                             {
-                                _dateTime.tm_isdst = lDST;
-                                _hasDaylightSavingFlag = true;
+                                // New day started, correct date to use it
+                                now.tm_mday += 1;
+                                mktime(&now); // normalize
                             }
-                            checkHasAllDateTimeParts();
+                            else if (knxTime.tm_hour == 23 && knxTime.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN &&
+                                        now.tm_hour == 0 && now.tm_min <= TIME_TOLERANCE_CHECK_MIN)
+                            {
+                                // New day started, correct date to use it
+                                now.tm_mday -= 1;
+                                mktime(&now); // normalize
+                            }
+                            _dateTime.tm_year = now.tm_year;
+                            _dateTime.tm_mon = now.tm_mon;
+                            _dateTime.tm_mday = now.tm_mday;
+                            _hasDate = true;
                         }
                     }
+                    checkHasAllDateTimeParts();
                 }
-                else
+            
+            }
+            else if (ko.asap() == BASE_KoDateTime)
+            {
+                unsigned long receiveTimeStamp = millis();
+                KNXValue value = "";
+                // first ensure we have a valid data-time content
+                // (including the correct length)
+                if (ko.tryValue(value, DPT_DateTime))
                 {
-                    unsigned long receiveTimeStamp = millis();
-                    KNXValue value = "";
-                    // ensure we have a valid time content
-                    if (ko.tryValue(value, DPT_TimeOfDay))
+
+                    // use raw value, as current version of knx do not provide access to all fields
+                    // TODO DPT19: check integration of extended DPT19 access into knx or OpenKNX-Commons
+                    // size is ensured to be 8 Byte
+                    uint8_t *raw = ko.valueRef();
+
+                    /*
+                    const bool flagFault = raw[6] & 0x80;
+                    // ignore working day (WD, NWD): raw[6] & 0x40, raw[6] & 0x20
+                    const bool flagNoYear = raw[6] & 0x10;
+                    const bool flagNoDate = raw[6] & 0x08;
+                    // ignore NDOW: raw[6] & 0x04
+                    const bool flagNoTime = raw[6] & 0x02;
+                    const bool flagSuti = raw[6] & 0x01;
+                    // ignore quality of clock (CLQ): raw[7] & 0x80
+                    // ignore synchronisation source reliablity (SRC): raw[7] & 0x40
+                    */
+
+                    // ignore inputs with:
+                    // * F - fault
+                    // * NY - missing year
+                    // * ND - missing date
+                    // * NT - missing time
+                    if ((raw[6] & (DPT19_FAULT | DPT19_NO_YEAR | DPT19_NO_DATE | DPT19_NO_TIME)))
+                    {
+                        logErrorP("Unvalid date time received");
+                    }
+                    else
                     {
                         initReceiveDateTimeStructure();
                         _timeStampTimeReceived = receiveTimeStamp;
-                        struct tm knxTime = value;
-                        _dateTime.tm_hour = knxTime.tm_hour;
-                        _dateTime.tm_min = knxTime.tm_min;
-                        _dateTime.tm_sec = knxTime.tm_sec;
+                        struct tm knxDateTime = value;
+                        _dateTime.tm_year = knxDateTime.tm_year - 1900;
+                        _dateTime.tm_mon = knxDateTime.tm_mon - 1;
+                        _dateTime.tm_mday = knxDateTime.tm_mday;
+                        _hasDate = true;
+                        _dateTime.tm_hour = knxDateTime.tm_hour;
+                        _dateTime.tm_min = knxDateTime.tm_min;
+                        _dateTime.tm_sec = knxDateTime.tm_sec;
                         _hasTime = true;
                         _timeSet = true;
-                        if (openknx.time.isValid())
+
+                        const bool lDST = raw[6] & DPT19_SUMMERTIME;
+                        // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
+                        // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
+                        // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
+                        if (ParamBASE_SummertimeAll == 1)
                         {
-                            tm now;
-                            openknx.time.getLocalTime().toTm(now);
-                            if (!_hasDate)
-                            {
-                                // date is already valid, use current date
-                                if (knxTime.tm_hour == 0 && knxTime.tm_min <= TIME_TOLERANCE_CHECK_MIN &&
-                                    now.tm_hour == 23 && now.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN)
-                                {
-                                    // New day started, correct date to use it
-                                    now.tm_mday += 1;
-                                    mktime(&now); // normalize
-                                }
-                                else if (knxTime.tm_hour == 23 && knxTime.tm_min >= 60 - TIME_TOLERANCE_CHECK_MIN &&
-                                         now.tm_hour == 0 && now.tm_min <= TIME_TOLERANCE_CHECK_MIN)
-                                {
-                                    // New day started, correct date to use it
-                                    now.tm_mday -= 1;
-                                    mktime(&now); // normalize
-                                }
-                                _dateTime.tm_year = now.tm_year;
-                                _dateTime.tm_mon = now.tm_mon;
-                                _dateTime.tm_mday = now.tm_mday;
-                                _hasDate = true;
-                            }
+                            _dateTime.tm_isdst = lDST;
+                            _hasDaylightSavingFlag = true;
                         }
                         checkHasAllDateTimeParts();
                     }
