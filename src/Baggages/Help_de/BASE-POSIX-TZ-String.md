@@ -28,13 +28,13 @@ Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwäh
 
 **Beispiel für Mitteleuropa (Deutschland):**
 
-`CET-1CEST,M3.5.0/2,M10.5.0/3`
+`CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00`
 
 - `CET` = Standardzeit (Central European Time)
 - `-1` = 1 Stunde östlich von UTC
 - `CEST` = Sommerzeit (Central European Summer Time)
-- `M3.5.0/2` = Sommerzeit beginnt am letzten Sonntag im März um 2 Uhr
-- `M10.5.0/3` = Sommerzeit endet am letzten Sonntag im Oktober um 3 Uhr
+- `M3.5.0/2:00:00` = Sommerzeit beginnt am letzten Sonntag im März um 2:00 Uhr
+- `M10.5.0/3:00:00` = Sommerzeit endet am letzten Sonntag im Oktober um 3:00 Uhr
 
 
 **Weitere Beispiele:**
