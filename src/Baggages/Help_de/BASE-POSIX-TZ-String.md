@@ -1,4 +1,4 @@
-### POSIX TZ-String
+﻿### POSIX TZ-String
 
 Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
 
@@ -44,3 +44,4 @@ Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwäh
 
 - New York (USA, mit Sommerzeit):  
   `EST5EDT,M3.2.0/2,M11.1.0/2`
+
