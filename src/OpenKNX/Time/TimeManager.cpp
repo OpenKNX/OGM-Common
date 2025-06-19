@@ -429,76 +429,76 @@ namespace OpenKNX
                         timezoneString =  (const char*) ParamBASE_TimezoneCustom; 
                         break;
                     case 27:
-                        timezoneString = "EST11"; 
+                        timezoneString = "EST11EST10,366,367"; 
                         break;
                     case 26:
-                        timezoneString = "EST10";
+                        timezoneString = "EST10EST9,366,367";
                         break;
                     case 25:
-                        timezoneString = "EST9";
+                        timezoneString = "EST9EST8,366,367";
                         break;
                     case 24:
-                        timezoneString = "EST8";
+                        timezoneString = "EST8EST7,366,367";
                         break;
                     case 23:
-                        timezoneString = "EST7";
+                        timezoneString = "EST7EST6,366,367";
                         break;
                     case 22:
-                        timezoneString = "EST6"; 
+                        timezoneString = "EST6EST5,366,367"; 
                         break;
                     case 21:
-                        timezoneString = "EST5"; 
+                        timezoneString = "EST5EST4,366,367"; 
                         break;
                     case 20:
-                        timezoneString = "EST4"; 
+                        timezoneString = "EST4EST3,366,367"; 
                         break;
                     case 19:
-                        timezoneString = "EST3"; 
+                        timezoneString = "EST3EST2,366,367"; 
                         break;
                     case 18:
-                        timezoneString = "EST2"; 
+                        timezoneString = "EST2EST1,366,367"; 
                         break;
                     case 17:
-                        timezoneString = "EST1"; 
+                        timezoneString = "EST1EST0,366,367"; 
                         break;
                     case 0:
-                        timezoneString = "EST0"; 
+                        timezoneString = "EST0CET-1,366,367"; 
                         break;
                     case 28:
-                        timezoneString = "CET-1"; 
+                        timezoneString = "CET-1CET-2,366,367"; 
                         break;
                     case 2:
-                        timezoneString = "CET-2";
+                        timezoneString = "CET-2CET-3,366,367";
                         break;
                     case 3:
-                        timezoneString = "CET-3"; 
+                        timezoneString = "CET-3CET-4,366,367"; 
                         break;
                     case 4:
-                        timezoneString = "CET-4";
+                        timezoneString = "CET-4CET-5,366,367";
                         break;
                     case 5:
-                        timezoneString = "CET-5"; 
+                        timezoneString = "CET-5CET-6,366,367"; 
                         break;
                     case 6:
-                        timezoneString = "CET-6"; 
+                        timezoneString = "CET-CET-7,366,367"; 
                         break;
                     case 7:
-                        timezoneString = "CET-7";
+                        timezoneString = "CET-7CET-8,366,367";
                         break;
                     case 8:
-                        timezoneString = "CET-8"; 
+                        timezoneString = "CET-8CET-9,366,367"; 
                         break;
                     case 9:
-                        timezoneString = "CET-9"; 
+                        timezoneString = "CET-9CET-10,366,367"; 
                         break;
                     case 10:
-                        timezoneString = "CET-10";
+                        timezoneString = "CET-10CET-11,366,367";
                         break;
                     case 11:
-                        timezoneString = "CET-11";
+                        timezoneString = "CET-11CET-12,366,367";
                         break;
                     case 12:
-                        timezoneString = "CET-12";
+                        timezoneString = "CET-12CET-13,366,367";
                         break;
                 }
             }
