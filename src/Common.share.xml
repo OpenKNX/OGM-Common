@@ -249,7 +249,7 @@
                 <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
                 <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
                 <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
-                <Parameter Id="%AID%_UP-%TT%00175" Name="TimezoneCustom"   ParameterType="%AID%_PT-TimezoneCustom"   Offset="1" BitOffset="0" Text="POSIX TZ-String" Value="" />          
+                <Parameter Id="%AID%_UP-%TT%00175" Name="TimezoneCustom"   ParameterType="%AID%_PT-TimezoneCustom"   Offset="1" BitOffset="0" Text="POSIX TZ-String" Value="CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00" />          
                 <!-- ^^^ 63 Characters + 0 terminator = 64 bytes ^^^ -->
               </Union>
 
