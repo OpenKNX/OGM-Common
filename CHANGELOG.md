@@ -9,16 +9,16 @@
 * Feature: Adds RP2350 Support
 * Feature: Adds support for combined TP/IP in knxprod
 * Feature: ESP23 Support
-*   Update Platform to IDFv5 with Platform 54.03.20
-*   Use RTOS Timer instead TimerInterrupts
-*   Adds new Partition layouts
-*   Use LittleFS
-*   Use new RMT Library
-*   Support installscripts
+  * Update Platform to IDFv5 with Platform 54.03.20
+  * Use RTOS Timer instead TimerInterrupts
+  * Adds new Partition layouts
+  * Use LittleFS
+  * Use new RMT Library
+  * Support installscripts
 * Refactor: Watchdog handling with auto erase on too many restarts
 * Update: RP2040 Platform to Core 4.5.15 + Rpi Base Platform
 * Optimizes: Stop build process on overlapping flash memory regions
-*   Refactor: Memory Layout-Check/Info in Build-Process
+  * Refactor: Memory Layout-Check/Info in Build-Process
 * Optimizes PIO scripts
 * Optimizes led handling
 * Optimizes device console
