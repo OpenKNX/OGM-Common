@@ -106,6 +106,12 @@ If OPENKNX_LED_TIME is defined, the LED is representing the state of the time.
 Possible values for OPENKNX_LED_TIME: info1Led, info2Led, info3Led. 
 Recommended value: info3Led 
 
+| State                         | LED           | RGB-LED       | Note                                   |
+|-------------------------------|---------------|---------------|----------------------------------------|
+| No valid time                 | Off           | Red           |                                        |
+| Time updated through provider | fast flashing | Green         | for one second                         |
+| Time is valid                 | slow flashing | Blue flashing | synchronized with changing of seconds  |
+
 ### Buttons
 | define                          |      default | unit  | function                                                                                                                        |
 |---------------------------------|--------------|-------|---------------------------------------------------------------------------------------------------------------------------------|
@@ -113,13 +119,6 @@ Recommended value: info3Led
 | PROG_BUTTON_PIN_MODE            | INPUT_PULLUP |       | values: INPUT_PULLUP, INPUT_PULLDOWN, INPUT. Specifies the mode for the programming button pin.                                 |
 | OPENKNX_BUTTON_DEBOUNCE         |      50      |  ms   | Software debounce time for buttons to avoid false triggers. Setting to 0 disables it (i.e. to use Hardware debounce).           |
 
-| State                         | LED           | RGB-LED       | Note                                   |
-|-------------------------------|---------------|---------------|----------------------------------------|
-| No valid time                 | Off           | Red           |                                        |
-| Time updated through provider | fast flashing | Green         | for one second                         |
-| Time is valid                 | slow flashing | Blue flashing | synchronized with changing of seconds  |
-
-       
 ### Heartbeat (Mode: Normal)
 You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs.
 
