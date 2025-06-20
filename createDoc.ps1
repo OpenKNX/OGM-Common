@@ -1,0 +1,2 @@
+OpenKNXproducer baggages -d doc/Applikationsbeschreibung-Common.md -b src/Baggages/Help_de -p BASE
+OpenKNXproducer baggages -d doc/Applikationsbeschreibung-ContextHelpOnly.md -b src/Baggages/Help_de -p BASE

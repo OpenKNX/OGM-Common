@@ -1,3 +1,4 @@
-### In Betrieb senden
+﻿### Uhrzeit & Datum
 
-Diese Option ermöglicht das periodische Senden einer Nachricht. Dadurch kann überprüft werden, ob ein Gerät noch funktioniert und erreichbar ist.
+Die Einstellungen für Uhrzeit, Datum und zeitabhängige Berechnungen werden hier vorgenommen. 
+
