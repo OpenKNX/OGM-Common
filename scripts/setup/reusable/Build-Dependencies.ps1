@@ -12,11 +12,12 @@
 # # This is a comment.
 #
 # Please note that lines starting with '-------' are ignored.
-$initContent = @"
-------- Built with -------
-"@
+$dependencies = @()
+$dependencies += "------- Built with -------"
 
-Write-Output $initContent > dependencies.txt
+
+$error = $false
+
 $subprojects = Get-ChildItem -Directory lib
 # $project = $(Split-Path $(Get-Location) -Leaf)
 $projects = @()
@@ -32,19 +33,22 @@ foreach ($subproject in $projects) {
     $branch = git --git-dir $subproject/.git branch --show-current
     if ($?) { # if the lib is no git repo, skip it
         if (!$branch) {
-            # TODO define handling for missing branch, or try keeping branch for same commit hash
-            # prevent missing column
-            $branch = "?????"
+            Write-Host "ERROR: No branch selected for '$subproject' (detached HEAD)" -ForegroundColor Red
+            $error = $true
         }
         $info1 = git --git-dir $subproject/.git log -1 --pretty=format:"%h $branch $subproject"
         $info2 = git --git-dir $subproject/.git config --get remote.origin.url
         $info = $info1 + " " + $info2
-        Write-Output $info >> dependencies.txt
+        $dependencies += $info
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
         Write-Output $info
     }
 }
 
+if ($error) {
+    Write-Host "ABORT: No update of 'dependencies.txt'" -ForegroundColor Red
+    exit 1
+}
 
-
+$dependencies | Set-Content dependencies.txt
