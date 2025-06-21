@@ -16,7 +16,7 @@ $dependencies = @()
 $dependencies += "------- Built with -------"
 
 
-$error = $false
+$failed = $false
 
 $subprojects = Get-ChildItem -Directory lib
 # $project = $(Split-Path $(Get-Location) -Leaf)
@@ -34,19 +34,20 @@ foreach ($subproject in $projects) {
     if ($?) { # if the lib is no git repo, skip it
         if (!$branch) {
             Write-Host "ERROR: No branch selected for '$subproject' (detached HEAD)" -ForegroundColor Red
-            $error = $true
+            $failed = $true
+            # TODO check; set fallback as long not ending here
+            $branch = "?????"
         }
-        $info1 = git --git-dir $subproject/.git log -1 --pretty=format:"%h $branch $subproject"
-        $info2 = git --git-dir $subproject/.git config --get remote.origin.url
-        $info = $info1 + " " + $info2
-        $dependencies += $info
+        $commitHash = git --git-dir $subproject/.git log -1 --pretty=format:"%h"
+        $remoteUrl = git --git-dir $subproject/.git config --get remote.origin.url
+        $dependencies += "$commitHash $branch $subproject $remoteUrl"
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
         Write-Output $info
     }
 }
 
-if ($error) {
+if ($failed) {
     Write-Host "ABORT: No update of 'dependencies.txt'" -ForegroundColor Red
     exit 1
 }
