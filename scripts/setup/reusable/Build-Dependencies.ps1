@@ -38,6 +38,26 @@ foreach ($subproject in $projects) {
             # TODO check; set fallback as long not ending here
             $branch = "?????"
         }
+
+        # check of all not inclueded in git
+        $status = git --git-dir $subproject/.git --work-tree=$subproject status --porcelain
+
+        # check for uncommited changes
+        $changes = $status | Where-Object { $_ -notmatch '^\?\?' -and $_ }
+        if ($changes) {
+            Write-Host "WARN: == uncommited changes == IN $subproject"
+            $changes
+            Write-Host "\     == uncommited changes =="
+        }
+
+        # check for untracked files
+        $untracked = $status | Where-Object { $_ -match '^\?\?' }
+        if ($untracked) {
+            Write-Host "WARN: == untracked files == IN $subproject"
+            $untracked
+            Write-Host "\     == untracked files =="
+        }
+
         $commitHash = git --git-dir $subproject/.git log -1 --pretty=format:"%h"
         $remoteUrl = git --git-dir $subproject/.git config --get remote.origin.url
         $dependencies += "$commitHash $branch $subproject $remoteUrl"
