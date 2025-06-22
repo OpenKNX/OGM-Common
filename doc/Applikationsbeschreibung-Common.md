@@ -1,8 +1,15 @@
-# Applikationsbeschreibung "Allgemeine Parameter"
+<!-- DOC -->
+# OpenKNX
+
+OpenKNX ist eine offene Gemeinschaft von Hobbyisten die freie und quelloffene Software für KNX-Geräte erstellen. Um eine nachhaltige und professionelle Integration ins Smarthome zu erreichen streben wir eine weitgehende Kompatibilität zum KNX-Standard an. Mit OpenKNX hast Du die Möglichkeit bereits fertige Lösungen einzusetzen, diese individuell anzupassen oder ganz neue Lösungen zu realisieren - der modulare Ansatz bietet schnelle Erfolge durch den Einsatz bewährter Softwaremodule.
+<!-- DOCEND -->
+
+Weitere Informationen findest Du unter: www.openknx.de - wiki.openknx.de - forum.openknx.de
+
+## Inhalte
 
 Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
 
-## Inhalte
 * [Allgemein](#allgemein)
   * [Startverzögerung](#startverzögerung)
   * [In Betrieb senden alle](#in-betrieb-senden-alle)
@@ -26,7 +33,7 @@ Hier werden Einstellungen getroffen, die die generelle Arbeitsweise des Gerätes
 
 Die Seite "Allgemein" wird bei fast allen OpenKNX-Applikationen verwendet. Sie dient dazu, Einstellungen vorzunehmen, die bei allen OpenKNX-Geräten gleichermaßen benötigt werden.
 
-<!-- DOC -->
+<!-- DOC  HelpContext="Startup" -->
 ### **Startverzögerung**
 
 Hier kann man festlegen, wie viel Zeit vergehen soll, bis das Gerät nach einem Neustart seine Funktion aufnimmt. Dabei ist es egal, ob der Neustart durch einen Busspannungsausfall, einen Reset über den Bus, durch ein Drücken der Reset-Taste oder durch den Watchdog ausgelöst wurde.
@@ -35,13 +42,17 @@ Da das Gerät prinzipiell (sofern parametriert) auch Lesetelegramme auf den Bus 
 
 **Anmerkung:** Auch wenn man hier technisch bis zu 16.000 Stunden Verzögerung angeben kann, sind nur Einstellungen im Sekundenbereich sinnvoll.
 
-<!-- DOC -->
+<!-- DOC HelpContext="Heartbeat" -->
 ### **In Betrieb senden alle**
 
-Das Gerät kann einen Status "Ich bin noch in Betrieb" über das KO 1 senden. Hier wird das Sendeintervall eingestellt.
+Das Gerät kann einen Status "Ich bin noch in Betrieb" über das KO 1 senden. 
+Diese Option ermöglicht das periodische Senden einer Nachricht. Dadurch kann überprüft werden, ob ein Gerät noch funktioniert und erreichbar ist.
+
+Hier wird das Sendeintervall eingestellt.
 
 Sollte hier eine 0 angegeben werden, wird kein "In Betrieb"-Signal gesendet und das KO 1 steht nicht zur Verfügung.
 
+<!-- DOC HelpContext="Heartbeat" -->
 ## **Uhrzeit & Datum**
 
 Die Einstellungen für Uhrzeit, Datum und zeitabhängige Berechnungen werden hier vorgenommen. 
@@ -72,14 +83,64 @@ Wenn dieser Parameter gesetzt ist, wird die Uhrzeit und das Datum alle 20-30 Sek
 Für die korrekte Berechnung der Zeit wird die Zeitzone des Standortes benötigt.
 
 <!-- DOC -->
+#### **POSIX TZ-String***
+
+Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
+
+**Allgemeiner Aufbau:**
+
+`STD[+/-]hh[:mm[:ss]][DST[+/-]hh[:mm[:ss]][,Start[/Time],End[/Time]]]`
+
+**Bedeutung der einzelnen Teile:**
+
+- `STD`  
+  Abkürzung der Standardzeit (z. B. `CET` für Mitteleuropäische Zeit).
+
+- `[+/-]hh[:mm[:ss]]`  
+  Zeitverschiebung zur UTC. Positive Werte sind westlich von Greenwich (z. B. USA), negative Werte östlich (z. B. Europa).  
+  Beispiel: `-1` für Mitteleuropa (eine Stunde östlich von UTC).
+
+- `DST`  
+  Abkürzung der Sommerzeit (z. B. `CEST` für Mitteleuropäische Sommerzeit).
+
+- `[+/-]hh[:mm[:ss]]`  
+  (Optional) Abweichung der Sommerzeit zur Standardzeit.
+
+- `,Start[/Time],End[/Time]`  
+  (Optional) Regeln, wann die Sommerzeit beginnt und endet.  
+  Format: `M<m>.<w>.<d>` (Monat, Woche, Wochentag), z. B. `M3.5.0` = letzter Sonntag im März.
+
+
+**Beispiel für Mitteleuropa (Deutschland):**
+
+`CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00`
+
+- `CET` = Standardzeit (Central European Time)
+- `-1` = 1 Stunde östlich von UTC
+- `CEST` = Sommerzeit (Central European Summer Time)
+- `M3.5.0/2:00:00` = Sommerzeit beginnt am letzten Sonntag im März um 2:00 Uhr
+- `M10.5.0/3:00:00` = Sommerzeit endet am letzten Sonntag im Oktober um 3:00 Uhr
+
+
+**Weitere Beispiele:**
+
+- UTC (keine Sommerzeit):  
+  `UTC0`
+
+- New York (USA, mit Sommerzeit):  
+  `EST5EDT,M3.2.0/2,M11.1.0/2`
+
+<!-- DOC -->
 ### **Sommerzeit ermitteln durch**
 
 Hier kann man eine der verfügbaren Möglichkeiten auswählen, mit der das Gerät ermitteln kann, ob gerade die Sommerzeit aktiv ist.
 
+<!-- DOC -->
 #### **Kommunikationsobjekt 'Sommerzeit aktiv'**
 
 Wird diese Option ausgewählt, muss über das Kommunikationsobjekt 'Sommerzeit aktiv' dem Gerät mitgeteilt werden, ob gerade die Sommerzeit aktiv ist.
 
+<!-- DOC -->
 #### **Kombiniertem Datum/Zeit-KO (DPT 19)**
 
 Erscheint nur, wenn der Datum- bzw. Zeitempfang über ein kombiniertes Datum/Zeit-KO (DPT 19) gewählt worden ist.
@@ -90,6 +151,7 @@ Wenn der Datum- bzw. Zeitempfang über ein kombiniertes Datum/Zeit-KO (DPT 19) g
 
 Diese Option berechnet anhand der eingestellten Zeitzone die Sommerzeit.
 
+<!-- DOC -->
 ## **Gerätestandort**
 
 Für die korrekte Berechnung der Zeit für Sonnenauf- und -untergang werden die genauen Koordinaten des Standorts benötigt sowie auch die Zeitzone und die Information, ob gerade die Sommerzeit aktiv ist.
@@ -98,12 +160,10 @@ Die Geo-Koordinaten können bei Google Maps nachgeschaut werden, indem man mit d
 
 Die Standard-Koordinaten stehen für Frankfurt am Main, Innenstadt.
 
-<!-- DOC -->
 ### **Breitengrad**
 
 In dem Feld wird der Breitengrad des Standortes eingegeben.
 
-<!-- DOC -->
 ### **Längengrad**
 
 In dem Feld wird der Längengrad des Standortes eingegeben.
@@ -134,6 +194,7 @@ Die Grundidee vom Diagnoseobjekt: Man sendet mit der ETS Kommandos an das KO 7 u
 
 Mit einem 'Ja' wird das KO 7 'Diagnoseobjekt' freigeschaltet.
 
+<!-- DOC -->
 ### **Erweitertes "In Betrieb"**
 
 Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus. Dabei wir der Status nicht mehr als Boolesch (DPT-1) gesendet, sondern als Zahl (DPT-5). Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
@@ -151,3 +212,51 @@ Daraus ergeben sich aktuell 3 Werte ohne die Bits auswerten zu müssen.
 **Tipp:** Bei Bedarf kann das Logikmodul daraus einzelne 1-Bit KOs machen.
 
 **Hinweis:** Wenn eine neue Firmware auf das Gerät übertragen wird, kommt es in manchen Fällen dazu, dass das Flag für den "Neustart durch den Watchdog" gesetzt wurde.
+
+<!-- DOC -->
+### Erweitertes Speichern
+
+Die integrierten Module können standardmäßig ihre Zustände automatisch auf dem internen Flashspeicher zwischenspeichern. Dies erfolgt beim Ausfall der Busspannung (bei TP-Geräten mit entsprechendem SAVEPIN) und bei einem Neustart des Geräts. Einige Updateskripte triggern außerdem das Speichern vor dem Aktualisieren.
+
+Bei einem Reset durch den Watchdog oder die Reset-Taste, bei einem Absturz oder bei einem Stromausfall (ohne entsprechenden SAVEPIN), kann das rechtzeitige Speichern jedoch nicht mehr durchgeführt werden. Hier bietet sich bei Bedarf an, die Daten zyklisch oder manuell (per KO) zu speichern. Folgende Punkte sind zu beachten:
+
+#### Flashspeicher
+Ein Flashspeicher unterliegt begrenzten Schreibzyklen. Ein zu häufiges Speichern führt zu einer verkürzten Lebensdauer. Die Anzahl der Schreibzyklen sind Flashspeicher abhängig. Eine pauschale Aussage zur Beständigkeit kann somit nicht getroffen werden. Allerdings kann man bei einem RP2040 davon ausgehen, dass dieser ca. 100000 Schreibzyklen verkraftet. Um den Flashspeicher zu schützen, kann man beim zyklischen Speichern maximal "Stündlich" auswählen. Unsere Empfehlung ist aber **nicht** mehr als 4x pro Tag. Beim manuellen Speichern gibt es ebenfalls einen zeitlichen Schreibschutz.
+
+#### Auswirkung beim RP2040/RP2050
+Bei einem RP2040/RP2050 wird während des Schreibvorgang die Verarbeitung pausiert. Während dieser Pause können KNX-Telegramme verloren gehen. Daher sollte man sich gut überlegen, ob ein zyklisches Schreiben nötig ist. Wir empfehlen diese Option nur zu verwenden, wenn dies tatsächlich nötig ist (z.B. beim Zählermodul). Alternativ ist auch das manuelle Speichern per KO möglich, so dass man dies erst bei einer Änderung auslöst. Außerdem kann man mithilfe einer Zeitschaltuhr das zyklische Schreiben in die Nacht verlegen.
+
+<!-- DOC -->
+#### Zyklisches speichern
+
+<!-- DOC Skip="2" -->
+Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
+
+Auswahl:
+- Deaktiviert
+- Jede Stunde
+- Alle 2 Stunden
+- Alle 4 Stunden
+- Alle 6 Stunden
+- Täglich
+- Wöchentlich
+
+<!-- DOC -->
+#### Manuelles speichern
+
+<!-- DOC Skip="2" -->
+Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
+
+Über diese Einstellung kann ein Gruppenobjekt eingeblendet werden, über das die Speicherung über Bus Telegramm mit dem Wert 1 ausgelöst werden kann.
+
+Auswahl:
+- Deaktiviert
+- Aktiv mit 5 min. Schreibschutz
+  Die Anzahl der Speicheroperation werden auf maximal einmal pro 5 Minuten begrenzt
+- Aktiv mit 15 min. Schreibschutz
+  Die Anzahl der Speicheroperation werden auf maximal einmal pro 15 Minuten begrenzt
+- Aktiv mit 60 min. Schreibschutz
+  Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
+
+
+
