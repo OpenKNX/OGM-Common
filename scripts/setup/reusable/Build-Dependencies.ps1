@@ -1,5 +1,6 @@
-# Initial Write-Output to dependencies.txt
-# This is a OpenKNX dependencies file. You can enter information about your project dependencies here.
+# Create a File "dependencies.txt" to document the _exact_ dependencies of an OpenKNX OAM project.
+
+# == Content of "dependencies.txt" ==
 # Each line represents a dependency and should contain the following information:
 # Hash value, branch, folder path, Git URL, and optionally the branch name.
 #
@@ -45,17 +46,17 @@ foreach ($subproject in $projects) {
         # check for uncommited changes
         $changes = $status | Where-Object { $_ -notmatch '^\?\?' -and $_ }
         if ($changes) {
-            Write-Host "WARN: == uncommited changes == IN $subproject"
+            Write-Host "WARN: '$subproject' contains uncommited changes! Please check following git status ..." -ForegroundColor Magenta
             $changes
-            Write-Host "\     == uncommited changes =="
+            Write-Host ""
         }
 
         # check for untracked files
         $untracked = $status | Where-Object { $_ -match '^\?\?' }
         if ($untracked) {
-            Write-Host "WARN: == untracked files == IN $subproject"
+            Write-Host "WARN: '$subproject' contains untracked files! Please check following git status ..." -ForegroundColor Magenta
             $untracked
-            Write-Host "\     == untracked files =="
+            Write-Host ""
         }
 
         $commitHash = git --git-dir $subproject/.git log -1 --pretty=format:"%h"
@@ -68,7 +69,7 @@ foreach ($subproject in $projects) {
 }
 
 if ($failed) {
-    Write-Host "ABORT: No update of 'dependencies.txt'" -ForegroundColor Red
+    Write-Host "ABORT: No update of 'dependencies.txt', ERRORs exist!" -ForegroundColor Red
     exit 1
 }
 
