@@ -68,8 +68,9 @@ if (Test-Path -Path dependencies.txt -PathType Leaf) {
 }
 lib/OGM-Common/scripts/setup/reusable/Build-Dependencies.ps1
 if (!$?) {
-  Write-Host "´nFAILED Creation of 'dependencies.txt' !" -ForegroundColor Red
-  return 1
+  Write-Host ""
+  Write-Host "FAILED Creation of 'dependencies.txt' !" -ForegroundColor Red
+  exit 1
 }
 Get-Content dependencies.txt
 
