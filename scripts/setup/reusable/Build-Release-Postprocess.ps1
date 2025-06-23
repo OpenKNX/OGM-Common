@@ -67,6 +67,10 @@ if (Test-Path -Path dependencies.txt -PathType Leaf) {
   Remove-Item dependencies.txt
 }
 lib/OGM-Common/scripts/setup/reusable/Build-Dependencies.ps1
+if (!$?) {
+  Write-Host "´nFAILED Creation of 'dependencies.txt' !" -ForegroundColor Red
+  return 1
+}
 Get-Content dependencies.txt
 
 # (re-)create restore directory
