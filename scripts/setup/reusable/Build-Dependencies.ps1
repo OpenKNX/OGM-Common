@@ -73,4 +73,4 @@ if ($failed) {
     exit 1
 }
 
-$dependencies | Set-Content dependencies.txt
+$dependencies | Set-Content dependencies.txt -Encoding Unicode
