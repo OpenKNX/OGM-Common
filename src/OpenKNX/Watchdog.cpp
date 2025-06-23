@@ -60,6 +60,7 @@ namespace OpenKNX
 
     void Watchdog::fastCheck()
     {
+        (void)__openKnxWatchdogFasts; // Suppress unused variable warning
 #if defined(OPENKNX_WATCHDOG) && !defined(ARDUINO_ARCH_SAMD)
         logTraceP("fastCheck: %i/%i/%i", _lastReset, __openKnxWatchdogResets, __openKnxWatchdogFasts);
     #ifdef OPENKNX_WATCHDOG_AUTOERASE_RESETS
