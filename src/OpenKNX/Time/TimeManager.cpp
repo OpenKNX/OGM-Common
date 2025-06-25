@@ -620,7 +620,7 @@ namespace OpenKNX
                     //           day-of-week^  ^hour    ^minute   ^second
                     uint8_t* rawDayTime = KoBASE_Time.valueRef();
                     const uint8_t dpt10dow = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
-                    rawDayTime[0] = (rawDayTime[0] & ~0xE0) | (dpt10dow & 0xE0);
+                    rawDayTime[0] = (rawDayTime[0] & ~0xE0) | ((dpt10dow << 5) & 0xE0);
 #endif
 #ifdef KoBASE_Date
                     // update date KO
