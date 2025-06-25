@@ -1,6 +1,6 @@
 # Changes
 
-## 1.3.0:
+## 1.4.0:
 * Feature: New KNX TPUart Implementation of KNX Stack
 * Feature: New time implementation and sun calculation 
 * Feature: Adds new GPIO abstraction layer with support for expander
@@ -16,7 +16,7 @@
   * Use new RMT Library
   * Support installscripts
 * Refactor: Watchdog handling with auto erase on too many restarts
-* Update: RP2040 Platform to Core 4.5.15 + Rpi Base Platform
+* Update: RP2040 Platform to Core 4.6.0 + Rpi Base Platform
 * Optimizes: Stop build process on overlapping flash memory regions
   * Refactor: Memory Layout-Check/Info in Build-Process
 * Optimizes PIO scripts
