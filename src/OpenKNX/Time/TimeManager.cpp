@@ -610,13 +610,17 @@ namespace OpenKNX
 
 #if defined(KoBASE_Time) || defined(KoBASE_Date) || defined(KoBASE_DateTime)
                     const uint8_t knxDayOfWeek = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
-#endif
-#ifdef KoBASE_Time
-                    // update time KO
+
                     tm knxTime;
+                    knxTime.tm_year = localTime.year;
+                    knxTime.tm_mon = localTime.month;
+                    knxTime.tm_mday = localTime.day;
                     knxTime.tm_hour = localTime.hour;
                     knxTime.tm_min = localTime.minute;
                     knxTime.tm_sec = localTime.second;
+#endif
+#ifdef KoBASE_Time
+                    // begin updating time KO, and set additional day-of-week after
                     KoBASE_Time.valueNoSend(knxTime, DPT_TimeOfDay);
 
                     // additional setting of the week-day
@@ -627,26 +631,11 @@ namespace OpenKNX
 #endif
 #ifdef KoBASE_Date
                     // update date KO
-                    tm knxDate;
-                    knxDate.tm_year = localTime.year;
-                    knxDate.tm_mon = localTime.month;
-                    knxDate.tm_mday = localTime.day;
-
-                    // TODO check: this day-of-week is not part of DPT_Date
-                    // TODO check: wrong value for tm_wday
-                    knxDate.tm_wday = knxDayOfWeek;
-
-                    // update date KO
-                    KoBASE_Date.valueNoSend(knxDate, DPT_Date);
-
-                    // update date/time KO
-                    knxDate.tm_hour = localTime.hour;
-                    knxDate.tm_min = localTime.minute;
-                    knxDate.tm_sec = localTime.second;
+                    KoBASE_Date.valueNoSend(knxTime, DPT_Date);
 #endif
 #ifdef KoBASE_DateTime
                     // begin updating date-time KO, and set additional fields after
-                    KoBASE_DateTime.valueNoSend(knxDate, DPT_DateTime);
+                    KoBASE_DateTime.valueNoSend(knxTime, DPT_DateTime);
                     uint8_t* raw = KoBASE_DateTime.valueRef();
 
                     // additional setting of the week-day
