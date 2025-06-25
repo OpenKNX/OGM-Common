@@ -614,6 +614,13 @@ namespace OpenKNX
                     knxTime.tm_min = localTime.minute;
                     knxTime.tm_sec = localTime.second;
                     KoBASE_Time.valueNoSend(knxTime, DPT_TimeOfDay);
+
+                    // additional setting of the week-day
+                    // DPT10.001 format: 0b DDDH_HHHH 00MM_MMMM 00SS_SSSS
+                    //           day-of-week^  ^hour    ^minute   ^second
+                    uint8_t* rawDayTime = KoBASE_Time.valueRef();
+                    const uint8_t dpt10dow = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
+                    rawDayTime[0] = (rawDayTime[0] & ~0xE0) | ((dpt10dow << 5) & 0xE0);
 #endif
 #ifdef KoBASE_Date
                     // update date KO
