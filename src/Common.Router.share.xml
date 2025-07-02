@@ -19,14 +19,14 @@
                 <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
               </Union>
               <!-- Time & Date -->
-              <Union SizeInBit="8">
+              <Union SizeInBit="520">
                 <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
-
+                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="0" />
-
-                <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime" ParameterType="%AID%_PT-OnOffYesNo" Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime"     ParameterType="%AID%_PT-OnOffYesNo"       Offset="0" BitOffset="7" Text="InternalTime" Access="None" Value="0" />
+                <Parameter Id="%AID%_UP-%TT%00175" Name="TimezoneCustom"   ParameterType="%AID%_PT-TimezoneCustom"   Offset="1" BitOffset="0" Text="POSIX TZ-String" Value="CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00" />
+                <!-- ^^^ 63 Characters + 0 terminator = 64 bytes ^^^ -->
               </Union>
             </Parameters>
             <ParameterRefs>
@@ -81,7 +81,7 @@
               <ParameterBlock Id="%AID%_PB-nnn" Name="Extended" Text="Erweitert" Icon="format-list-text" HelpContext="BASE-OpenKNX">
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="BASE-Watchdog" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="%DOC%" IndentLevel="1" />
                 
               </ParameterBlock>
 
