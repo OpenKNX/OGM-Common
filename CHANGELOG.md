@@ -1,6 +1,6 @@
 # Changes
 
-## 1.4.0:
+## 1.4.0: 2025-07-04
 * Feature: New KNX TPUart Implementation of KNX Stack
 * Feature: New time implementation and sun calculation
   * Change: Use DPT19 as new default configuration for time-input.
