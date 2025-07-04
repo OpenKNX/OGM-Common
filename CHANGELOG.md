@@ -1,8 +1,10 @@
 # Changes
 
-## 1.4.0:
+## 1.4.0: 2025-07-04
 * Feature: New KNX TPUart Implementation of KNX Stack
-* Feature: New time implementation and sun calculation 
+* Feature: New time implementation and sun calculation
+  * Change: Use DPT19 as new default configuration for time-input.
+    *Compatibility/Migration Note:* To use config-transfer from old versions without migration to new default, use "Parameterauswahl=auch Standardwerte" for export
 * Feature: Adds new GPIO abstraction layer with support for expander
 * Feature: Adds IP-OTA
 * Feature: Adds for new DEVICE_INIT() Macro

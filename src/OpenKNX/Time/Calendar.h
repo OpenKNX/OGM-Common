@@ -49,7 +49,7 @@ namespace OpenKNX
             DateOnly getForthAdvent();
 
 #ifdef LOG_HolidayKo
-            // woring day functions are currently depenting on the loglic module.
+            // Working day functions are currently depending on OFM-LogicModule.
             // This will be changed in the future.
 
             /*

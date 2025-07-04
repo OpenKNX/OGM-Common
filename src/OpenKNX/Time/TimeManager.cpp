@@ -607,41 +607,43 @@ namespace OpenKNX
                     _lastSendSecond = localTime.second;
                     _lastSendMinute = localTime.minute;
                     _lastSendHour = localTime.hour;
-#ifdef KoBASE_Time
-                    // update time KO
+
+#if defined(KoBASE_Time) || defined(KoBASE_Date) || defined(KoBASE_DateTime)
+                    const uint8_t knxDayOfWeek = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
+
                     tm knxTime;
+                    knxTime.tm_year = localTime.year;
+                    knxTime.tm_mon = localTime.month;
+                    knxTime.tm_mday = localTime.day;
                     knxTime.tm_hour = localTime.hour;
                     knxTime.tm_min = localTime.minute;
                     knxTime.tm_sec = localTime.second;
+#endif
+#ifdef KoBASE_Time
+                    // begin updating time KO, and set additional day-of-week after
                     KoBASE_Time.valueNoSend(knxTime, DPT_TimeOfDay);
 
                     // additional setting of the week-day
                     // DPT10.001 format: 0b DDDH_HHHH 00MM_MMMM 00SS_SSSS
                     //           day-of-week^  ^hour    ^minute   ^second
                     uint8_t* rawDayTime = KoBASE_Time.valueRef();
-                    const uint8_t dpt10dow = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
-                    rawDayTime[0] = (rawDayTime[0] & ~0xE0) | ((dpt10dow << 5) & 0xE0);
+                    rawDayTime[0] = (rawDayTime[0] & ~0xE0) | ((knxDayOfWeek << 5) & 0xE0);
 #endif
 #ifdef KoBASE_Date
                     // update date KO
-                    tm knxDate;
-                    knxDate.tm_year = localTime.year;
-                    knxDate.tm_mon = localTime.month;
-                    knxDate.tm_mday = localTime.day;
-                    knxDate.tm_wday = localTime.dayOfWeek;
-                    if (knxDate.tm_wday == 0)
-                        knxDate.tm_wday = 7;
-                    KoBASE_Date.valueNoSend(knxDate, DPT_Date);
-
-                    // update date/time KO
-                    knxDate.tm_hour = localTime.hour;
-                    knxDate.tm_min = localTime.minute;
-                    knxDate.tm_sec = localTime.second;
+                    KoBASE_Date.valueNoSend(knxTime, DPT_Date);
 #endif
 #ifdef KoBASE_DateTime
-                    KoBASE_DateTime.valueNoSend(knxDate, DPT_DateTime);
-
+                    // begin updating date-time KO, and set additional fields after
+                    KoBASE_DateTime.valueNoSend(knxTime, DPT_DateTime);
                     uint8_t* raw = KoBASE_DateTime.valueRef();
+
+                    // additional setting of the week-day
+                    //                      [0] [1] [2] [   3   ] [4] [5] [   6   ] [   7   ]
+                    // DPT19.001 format: 0b ... ... ... DDDH_HHHH ... ... BBBB_BBBB BB00_0000
+                    //                       day-of-week^  ^hour          ^..flags..^
+                    raw[3] = (raw[3] & ~0xE0) | ((knxDayOfWeek << 5) & 0xE0);
+
                     if (localTime.isDst)
                         raw[6] |= DPT19_SUMMERTIME;
                     else
