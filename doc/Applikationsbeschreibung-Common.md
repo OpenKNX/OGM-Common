@@ -65,13 +65,13 @@ Die Einstellungen für Uhrzeit, Datum und zeitabhängige Berechnungen werden hie
 
 Dieses Gerät kann Uhrzeit und Datum vom Bus empfangen. Dabei kann man wählen, ob man Uhrzeit über ein Kommunikationsobjekt und das Datum über ein anders empfangen will oder beides, Uhrzeit und Datum, über ein kombiniertes Kommunikationsobjekt.
 
-#### **Zwei getrennte KOs**
-
-Wählt man diesen Punkt, wird je ein Kommunikationsobjekt für Uhrzeit (DPT 10) und Datum (DPT 11) bereitgestellt. Der KNX-Zeitgeber im System muss die Uhrzeit und das Datum für die beiden Kommunikationsobjekte liefern können.
-
 #### **Ein kombiniertes KO**
 
 Wählt man diesen Punkt, wird ein kombiniertes Kommunikationsobjekt für Uhrzeit/Datum (DPT 19) bereitgestellt. Der KNX-Zeitgeber im System muss die kombinierte Uhrzeit/Datum entsprechend liefern können.
+
+#### **Zwei getrennte KOs**
+
+Wählt man diesen Punkt, wird je ein Kommunikationsobjekt für Uhrzeit (DPT 10) und Datum (DPT 11) bereitgestellt. Der KNX-Zeitgeber im System muss die Uhrzeit und das Datum für die beiden Kommunikationsobjekte liefern können.
 
 <!-- DOC -->
 ### **Bei Neustart vom Bus lesen**
@@ -88,6 +88,7 @@ Für die korrekte Berechnung der Zeit wird die Zeitzone des Standortes benötigt
 <!-- DOC -->
 #### **POSIX TZ-String***
 
+<!-- DOC Skip="2" -->
 Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
 
 **Allgemeiner Aufbau:**
@@ -198,13 +199,17 @@ Mit einem 'Ja' wird das KO 7 'Diagnoseobjekt' freigeschaltet.
 <!-- DOC -->
 ### **Erweitertes "In Betrieb"**
 
-Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus. Dabei wir der Status nicht mehr als Boolesch (DPT-1) gesendet, sondern als Zahl (DPT-5). Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
+Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus.
+Dabei wird der Status nicht mehr als einzelnes Bit (DPT-1) gesendet, sondern als Byte (DPT-5).
+Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
 
-* Das 8. Bit repräsentiert das normale Signal "In Betrieb" (immer aktiv).
-* Das 7. Bit repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
-* Das 6. Bit repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
+Struktur: `0b 0000_0WS1`
 
-Daraus ergeben sich aktuell 3 Werte ohne die Bits auswerten zu müssen.
+* Das Bit **1** (`1 << 0`) repräsentiert das normale Signal "In Betrieb" (immer aktiv).
+* Das Bit **S** (`1 << 1`) repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
+* Das Bit **W** (`1 << 2`) repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
+
+Daraus ergeben sich aktuell 3 Werte ohne die Bits auswerten zu müssen:
 
 * 1 = Normales "In Betrieb"
 * 3 oder 7 = Das Gerät ist gerade hochgefahren
@@ -229,11 +234,10 @@ Ein Flashspeicher unterliegt begrenzten Schreibzyklen. Ein zu häufiges Speicher
 Bei einem RP2040/RP2350 wird während des Schreibvorgangs die Verarbeitung pausiert.
 Während dieser Pause können KNX-Telegramme verloren gehen. Daher sollte man sich gut überlegen, ob ein zyklisches Schreiben nötig ist. Wir empfehlen diese Option nur zu verwenden, wenn dies tatsächlich nötig ist (z.B. beim Zählermodul). Alternativ ist auch das manuelle Speichern per KO möglich, so dass man dies erst bei einer Änderung auslöst. Außerdem kann man mithilfe einer Zeitschaltuhr das zyklische Schreiben in die Nacht verlegen.
 
-<!-- DOC -->
 #### Zyklisches speichern
 
 <!-- DOC Skip="2" -->
-Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
+Diese Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
 
 Auswahl:
 
@@ -245,11 +249,10 @@ Auswahl:
 - Täglich
 - Wöchentlich
 
-<!-- DOC -->
 #### Manuelles speichern
 
 <!-- DOC Skip="2" -->
-Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
+Diese Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
 
 Über diese Einstellung kann ein Gruppenobjekt eingeblendet werden, über das die Speicherung über Bus Telegramm mit dem Wert 1 ausgelöst werden kann.
 
