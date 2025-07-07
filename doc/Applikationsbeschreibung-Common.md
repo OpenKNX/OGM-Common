@@ -88,6 +88,7 @@ Für die korrekte Berechnung der Zeit wird die Zeitzone des Standortes benötigt
 <!-- DOC -->
 #### **POSIX TZ-String***
 
+<!-- DOC Skip="2" -->
 Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
 
 **Allgemeiner Aufbau:**
