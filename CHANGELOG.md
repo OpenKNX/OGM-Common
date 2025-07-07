@@ -2,13 +2,15 @@
 
 ## 1.4.1: 2025-07-07
 
-Note: No functional changes, affected documentation integrated in UI only
+Note: *No* functional changes, affects documentation integrated in UI only
 
-* Fix: Broken Context-Help-Texts in ETS App Module.
-  * Wrong Text for "In Betrieb senden"
-  * Missing Links in OpenKNX Intro
-  * Missing Value Description for "Sommerzeit ermitteln durch"
-  * Erweitertes Speichern
+* Fix: Broken Context-Help in ETS-App
+  (Wrong Text for "In Betrieb senden",
+   Missing Links in OpenKNX Intro,
+   Missing Value Description for "Sommerzeit ermitteln durch",
+   Erweitertes Speichern)
+* Improvement: Context-Help in ETS-App
+* Change: Use Standard Build Process for Context-Help
 
 ## 1.4.0: 2025-07-04
 * Feature: New KNX TPUart Implementation of KNX Stack
