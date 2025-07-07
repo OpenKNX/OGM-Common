@@ -234,11 +234,10 @@ Ein Flashspeicher unterliegt begrenzten Schreibzyklen. Ein zu häufiges Speicher
 Bei einem RP2040/RP2350 wird während des Schreibvorgangs die Verarbeitung pausiert.
 Während dieser Pause können KNX-Telegramme verloren gehen. Daher sollte man sich gut überlegen, ob ein zyklisches Schreiben nötig ist. Wir empfehlen diese Option nur zu verwenden, wenn dies tatsächlich nötig ist (z.B. beim Zählermodul). Alternativ ist auch das manuelle Speichern per KO möglich, so dass man dies erst bei einer Änderung auslöst. Außerdem kann man mithilfe einer Zeitschaltuhr das zyklische Schreiben in die Nacht verlegen.
 
-<!-- DOC -->
 #### Zyklisches speichern
 
 <!-- DOC Skip="2" -->
-Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
+Diese Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
 
 Auswahl:
 
@@ -250,11 +249,10 @@ Auswahl:
 - Täglich
 - Wöchentlich
 
-<!-- DOC -->
 #### Manuelles speichern
 
 <!-- DOC Skip="2" -->
-Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
+Diese Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
 
 Über diese Einstellung kann ein Gruppenobjekt eingeblendet werden, über das die Speicherung über Bus Telegramm mit dem Wert 1 ausgelöst werden kann.
 

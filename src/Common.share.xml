@@ -571,8 +571,8 @@
                     <choose ParamRefId="%AID%_P-%TT%00011_R-%TT%0001101">
                       <when test="1">
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitertes Speichern" UIHint="Headline" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="%DOC%" IndentLevel="1" />
-                        <ParameterRefRef RefId="%AID%_UP-%TT%00091_R-%TT%0009101" HelpContext="%DOC%" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="BASE-Erweitertes-Speichern" IndentLevel="1" />
+                        <ParameterRefRef RefId="%AID%_UP-%TT%00091_R-%TT%0009101" HelpContext="BASE-Erweitertes-Speichern" IndentLevel="1" />
                         <choose ParamRefId="%AID%_UP-%TT%00091_R-%TT%0009101">
                           <when test=">0">
                             <ComObjectRefRef RefId="%AID%_O-%TT%00011_R-%TT%0001101" />
