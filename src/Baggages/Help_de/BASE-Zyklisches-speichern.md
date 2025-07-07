@@ -1,6 +1,7 @@
 ﻿### Zyklisches speichern
 
 Auswahl:
+
 - Deaktiviert
 - Jede Stunde
 - Alle 2 Stunden

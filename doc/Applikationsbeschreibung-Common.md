@@ -2,9 +2,12 @@
 # OpenKNX
 
 OpenKNX ist eine offene Gemeinschaft von Hobbyisten die freie und quelloffene Software für KNX-Geräte erstellen. Um eine nachhaltige und professionelle Integration ins Smarthome zu erreichen streben wir eine weitgehende Kompatibilität zum KNX-Standard an. Mit OpenKNX hast Du die Möglichkeit bereits fertige Lösungen einzusetzen, diese individuell anzupassen oder ganz neue Lösungen zu realisieren - der modulare Ansatz bietet schnelle Erfolge durch den Einsatz bewährter Softwaremodule.
-<!-- DOCEND -->
 
+<!-- DOCCONTENT
 Weitere Informationen findest Du unter: www.openknx.de - wiki.openknx.de - forum.openknx.de
+DOCCONTENT -->
+
+<!-- DOCEND -->
 
 ## Inhalte
 
@@ -52,7 +55,7 @@ Hier wird das Sendeintervall eingestellt.
 
 Sollte hier eine 0 angegeben werden, wird kein "In Betrieb"-Signal gesendet und das KO 1 steht nicht zur Verfügung.
 
-<!-- DOC HelpContext="Heartbeat" -->
+<!-- DOCEND -->
 ## **Uhrzeit & Datum**
 
 Die Einstellungen für Uhrzeit, Datum und zeitabhängige Berechnungen werden hier vorgenommen. 
@@ -135,12 +138,10 @@ Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwäh
 
 Hier kann man eine der verfügbaren Möglichkeiten auswählen, mit der das Gerät ermitteln kann, ob gerade die Sommerzeit aktiv ist.
 
-<!-- DOC -->
 #### **Kommunikationsobjekt 'Sommerzeit aktiv'**
 
 Wird diese Option ausgewählt, muss über das Kommunikationsobjekt 'Sommerzeit aktiv' dem Gerät mitgeteilt werden, ob gerade die Sommerzeit aktiv ist.
 
-<!-- DOC -->
 #### **Kombiniertem Datum/Zeit-KO (DPT 19)**
 
 Erscheint nur, wenn der Datum- bzw. Zeitempfang über ein kombiniertes Datum/Zeit-KO (DPT 19) gewählt worden ist.
@@ -223,8 +224,10 @@ Bei einem Reset durch den Watchdog oder die Reset-Taste, bei einem Absturz oder 
 #### Flashspeicher
 Ein Flashspeicher unterliegt begrenzten Schreibzyklen. Ein zu häufiges Speichern führt zu einer verkürzten Lebensdauer. Die Anzahl der Schreibzyklen sind Flashspeicher abhängig. Eine pauschale Aussage zur Beständigkeit kann somit nicht getroffen werden. Allerdings kann man bei einem RP2040 davon ausgehen, dass dieser ca. 100000 Schreibzyklen verkraftet. Um den Flashspeicher zu schützen, kann man beim zyklischen Speichern maximal "Stündlich" auswählen. Unsere Empfehlung ist aber **nicht** mehr als 4x pro Tag. Beim manuellen Speichern gibt es ebenfalls einen zeitlichen Schreibschutz.
 
-#### Auswirkung beim RP2040/RP2050
-Bei einem RP2040/RP2050 wird während des Schreibvorgang die Verarbeitung pausiert. Während dieser Pause können KNX-Telegramme verloren gehen. Daher sollte man sich gut überlegen, ob ein zyklisches Schreiben nötig ist. Wir empfehlen diese Option nur zu verwenden, wenn dies tatsächlich nötig ist (z.B. beim Zählermodul). Alternativ ist auch das manuelle Speichern per KO möglich, so dass man dies erst bei einer Änderung auslöst. Außerdem kann man mithilfe einer Zeitschaltuhr das zyklische Schreiben in die Nacht verlegen.
+#### Auswirkung beim RP2040/RP2350
+
+Bei einem RP2040/RP2350 wird während des Schreibvorgangs die Verarbeitung pausiert.
+Während dieser Pause können KNX-Telegramme verloren gehen. Daher sollte man sich gut überlegen, ob ein zyklisches Schreiben nötig ist. Wir empfehlen diese Option nur zu verwenden, wenn dies tatsächlich nötig ist (z.B. beim Zählermodul). Alternativ ist auch das manuelle Speichern per KO möglich, so dass man dies erst bei einer Änderung auslöst. Außerdem kann man mithilfe einer Zeitschaltuhr das zyklische Schreiben in die Nacht verlegen.
 
 <!-- DOC -->
 #### Zyklisches speichern
@@ -233,6 +236,7 @@ Bei einem RP2040/RP2050 wird während des Schreibvorgang die Verarbeitung pausie
 Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt ist.
 
 Auswahl:
+
 - Deaktiviert
 - Jede Stunde
 - Alle 2 Stunden
@@ -250,6 +254,7 @@ Dies Option wird eingeblendet, wenn "Erweitertes Speichern" auf "Ja" gestellt is
 Über diese Einstellung kann ein Gruppenobjekt eingeblendet werden, über das die Speicherung über Bus Telegramm mit dem Wert 1 ausgelöst werden kann.
 
 Auswahl:
+
 - Deaktiviert
 - Aktiv mit 5 min. Schreibschutz
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 5 Minuten begrenzt
