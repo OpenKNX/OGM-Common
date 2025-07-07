@@ -9,6 +9,7 @@ Note: No functional changes, affected documentation integrated in UI only
   * Missing Links in OpenKNX Intro
   * Missing Value Description for "Sommerzeit ermitteln durch"
   * Erweitertes Speichern
+* Remove unused FIRMWARE_VARIANT
 
 ## 1.4.0: 2025-07-04
 * Feature: New KNX TPUart Implementation of KNX Stack

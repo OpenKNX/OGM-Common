@@ -355,11 +355,7 @@ namespace OpenKNX
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Firmware");
         openknx.logger.color(0);
-#ifdef FIRMWARE_VARIANT
-        openknx.logger.logWithPrefixAndValues("  Name", "%s  (%s)", openknx.info.firmwareName().c_str(), FIRMWARE_VARIANT);
-#else
         openknx.logger.logWithPrefix("Name", openknx.info.firmwareName().c_str());
-#endif
         openknx.logger.logWithPrefix("Version", openknx.info.humanFirmwareVersion().c_str());
         openknx.logger.logWithPrefix("Number", openknx.info.humanFirmwareNumber().c_str());
 #if MASK_VERSION == 0x07B0
