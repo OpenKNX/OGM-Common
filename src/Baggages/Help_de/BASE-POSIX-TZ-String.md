@@ -1,7 +1,5 @@
 ﻿### POSIX TZ-String
 
-Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
-
 **Allgemeiner Aufbau:**
 
 `STD[+/-]hh[:mm[:ss]][DST[+/-]hh[:mm[:ss]][,Start[/Time],End[/Time]]]`
