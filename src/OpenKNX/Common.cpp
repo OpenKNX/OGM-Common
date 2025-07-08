@@ -367,8 +367,10 @@ namespace OpenKNX
         knx.loop();
         RUNTIME_MEASURE_END(_runtimeKnxStack);
 
-        //loop IO
+        // loop IO
+        RUNTIME_MEASURE_BEGIN(_runtimeGPIO);
         openknx.gpio.loop();
+        RUNTIME_MEASURE_END(_runtimeGPIO);
 
         // loop timemanager helper
         RUNTIME_MEASURE_BEGIN(_runtimeTimeManager);
@@ -870,6 +872,7 @@ namespace OpenKNX
             _runtimeLoop.showStat("___Loop", 0, stat, hist);
             _runtimeConsole.showStat("__Console", 0, stat, hist);
             _runtimeKnxStack.showStat("__KnxStack", 0, stat, hist);
+            _runtimeGPIO.showStat("__GPIO", 0, stat, hist);
             _runtimeTimeManager.showStat("__Time", 0, stat, hist);
             _runtimeSunCalculation.showStat("__Sun", 0, stat, hist);
             _runtimeModuleLoop.showStat("_All_Modules_Loop", 0, stat, hist);

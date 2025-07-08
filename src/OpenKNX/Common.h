@@ -72,6 +72,7 @@ namespace OpenKNX
         Stat::RuntimeStat _runtimeConsole;
         Stat::RuntimeStat _runtimeKnxStack;
         Stat::RuntimeStat _runtimeModuleLoop;
+        Stat::RuntimeStat _runtimeGPIO;
         Stat::RuntimeStat _runtimeTimeManager;
         Stat::RuntimeStat _runtimeSunCalculation;
 #endif
