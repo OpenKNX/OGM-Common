@@ -64,13 +64,13 @@ namespace OpenKNX
 
     void Hardware::initButtons()
     {
-#define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                                        \
-    openknx.gpio.pinMode(PIN, MODE);                                                       \
-    openknx.gpio.attachInterrupt(                                                         \
-        digitalPinToInterrupt(PIN),                                                       \
-        [this](openknx_gpio_number_t pin, bool state) -> void {                           \
-            BUTTON.change((MODE == INPUT_PULLUP) ? !state : state);                       \
-        },                                                                                \
+#define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                  \
+    openknx.gpio.pinMode(PIN, MODE);                                \
+    openknx.gpio.attachInterrupt(                                   \
+        digitalPinToInterrupt(PIN),                                 \
+        [this](openknx_gpio_number_t pin, bool state) -> void {     \
+            BUTTON.change((MODE == INPUT_PULLUP) ? !state : state); \
+        },                                                          \
         CHANGE); // Interrupt on change only, since we will detect short, long and double or n clicks
 
 #ifdef PROG_BUTTON_PIN
@@ -101,7 +101,6 @@ namespace OpenKNX
     #endif
         ATTACH_BUTTON_INTERRUPT(FUNC3_BUTTON_PIN, FUNC3_BUTTON_MODE, openknx.func3Button);
 #endif // FUNC3_BUTTON_PIN
-
     }
 
     void Hardware::initFlash()
@@ -179,11 +178,11 @@ namespace OpenKNX
 #endif
         logIndentDown();
 
+#ifdef OPENKNX_WATCHDOG
+        openknx.watchdog.deactivate();
+#endif
         while (true)
         {
-#ifdef OPENKNX_WATCHDOG
-            openknx.watchdog.deactivate();
-#endif
             delay(2000);
             // Repeat error message
             logError("FatalError", "Code: %d (%s)", code, message);
@@ -205,33 +204,33 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
     void Hardware::initKnxInterface()
     {
-#if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
-    #if KNX_UART_NUM == 0
-        #define KNX_UART UART_NUM_0
-    #elif KNX_UART_NUM == 1
-        #define KNX_UART UART_NUM_1
-    #elif KNX_UART_NUM == 2
-        #define KNX_UART UART_NUM_2
-    #elif KNX_UART_NUM == 3
-        #define KNX_UART UART_NUM_3
-    #elif KNX_UART_NUM == 4
-        #define KNX_UART UART_NUM_4
-    #else
-        #pragma error "Invalid KNX_UART_NUM defined"
-    #endif
+    #if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
+        #if KNX_UART_NUM == 0
+            #define KNX_UART UART_NUM_0
+        #elif KNX_UART_NUM == 1
+            #define KNX_UART UART_NUM_1
+        #elif KNX_UART_NUM == 2
+            #define KNX_UART UART_NUM_2
+        #elif KNX_UART_NUM == 3
+            #define KNX_UART UART_NUM_3
+        #elif KNX_UART_NUM == 4
+            #define KNX_UART UART_NUM_4
+        #else
+            #pragma error "Invalid KNX_UART_NUM defined"
+        #endif
         knx.platform().interface(new TPUart::Interface::ESP32(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART));
-#elif defined(ARDUINO_ARCH_RP2040) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
-    #if KNX_UART_NUM == 0
-        #define KNX_UART uart0
-    #elif KNX_UART_NUM == 1
-        #define KNX_UART uart1
-    #else
-        #pragma error "Invalid KNX_UART_NUM defined"
-    #endif
+    #elif defined(ARDUINO_ARCH_RP2040) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
+        #if KNX_UART_NUM == 0
+            #define KNX_UART uart0
+        #elif KNX_UART_NUM == 1
+            #define KNX_UART uart1
+        #else
+            #pragma error "Invalid KNX_UART_NUM defined"
+        #endif
         knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART, true, true));
-#else
-    #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
-#endif
+    #else
+        #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
+    #endif
     }
 #endif
 
