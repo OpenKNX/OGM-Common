@@ -1,7 +1,9 @@
 # Changes
 
-## 1.4.1: 2025-07-07
+## 1.4.2: 2025-xx-xx
+* Feature: Enhancement for extended "In Betrieb"
 
+## 1.4.1: 2025-07-07
 Note: *No* functional changes, affects documentation integrated in UI only
 
 * Fix: Broken Context-Help in ETS-App
