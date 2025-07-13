@@ -362,10 +362,16 @@ namespace OpenKNX
         openknx.console.loop();
         RUNTIME_MEASURE_END(_runtimeConsole);
 
+#ifdef OPENKNX_LOOPTIME_WARNING
+        uint32_t startStack = millis();
+#endif
         // loop  knx stack
         RUNTIME_MEASURE_BEGIN(_runtimeKnxStack);
         knx.loop();
         RUNTIME_MEASURE_END(_runtimeKnxStack);
+#ifdef OPENKNX_LOOPTIME_WARNING
+        uint32_t endStack = millis();
+#endif
 
         // loop IO
         RUNTIME_MEASURE_BEGIN(_runtimeGPIO);
@@ -411,10 +417,10 @@ namespace OpenKNX
         RUNTIME_MEASURE_END(_runtimeLoop);
 
 #if OPENKNX_LOOPTIME_WARNING > 1
-        // loop took to long and last out is min 1ms ago
+        // loop took to long and last output is at least 1s ago
         if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
-            logErrorP("Warning: The loop took longer than usual (%i >= %i)", (millis() - start), OPENKNX_LOOPTIME_WARNING);
+            logErrorP("Warning: The loop took longer than usual (%i >= %i); stack %i", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack));
             _lastLooptimeWarning = millis();
         }
 #endif
