@@ -26,9 +26,9 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
-        #ifdef DEVICE_INIT
-            DEVICE_INIT();
-        #endif
+#ifdef DEVICE_INIT
+        DEVICE_INIT();
+#endif
         ArduinoPlatform::SerialDebug = new OpenKNX::Log::VirtualSerial("KNX");
 
         openknx.timerInterrupt.init();
@@ -110,9 +110,9 @@ namespace OpenKNX
     void Common::processRecovery()
     {
         bool erase = false;
-        #ifndef PROG_BUTTON_PIN_MODE
-            #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
-        #endif
+    #ifndef PROG_BUTTON_PIN_MODE
+        #define PROG_BUTTON_PIN_MODE INPUT_PULLUP
+    #endif
         openknx.gpio.pinMode(PROG_BUTTON_PIN, PROG_BUTTON_PIN_MODE);
         while (!openknx.gpio.digitalRead(PROG_BUTTON_PIN))
         {
@@ -576,33 +576,49 @@ namespace OpenKNX
 #ifdef BASE_HeartbeatDelayBase
     void Common::processHeartbeat()
     {
+        // check thermal warning
+    #if MASK_VERSION == 0x07B0
+        TPUart::SystemState& systemState = knx.bau().getDataLinkLayer()->getTPUart().getSystemState();
+        if (systemState.thermalWarning())
+            extendedHeartbeatValue |= (1 << 3);
+        else
+            extendedHeartbeatValue &= ~(1 << 3);
+    #endif
+
         // the first heartbeat is send directly after startup delay of the device
         if (!afterStartupDelay()) return;
 
-        if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, ParamBASE_HeartbeatDelayTimeMS))
+        uint8_t value = extendedHeartbeatValue;
+
+        // first startup
+        if (_firstStartup)
         {
-            uint8_t value = extendedHeartbeatValue;
-
-            // first startup
-            if (_firstStartup)
-            {
-                value |= (1 << 1);
-                if (openknx.watchdog.lastReset()) value |= (1 << 2);
-            }
-
-            logDebugP("Send Heartbeat %i", value);
-
-            if (ParamBASE_HeartbeatExtended)
-            {
-                KoBASE_Heartbeat.value(value, DPT_DecimalFactor);
-            }
-            else
-            {
-                KoBASE_Heartbeat.value(true, DPT_Switch);
-            }
-
+            value |= (1 << 1);
+            if (openknx.watchdog.lastReset()) value |= (1 << 2);
             _firstStartup = false;
-            _heartbeatDelay = millis();
+        }
+
+        if (ParamBASE_HeartbeatExtended)
+        {
+            if (KoBASE_Heartbeat.valueCompare(value, DPT_DecimalFactor) || delayCheck(_heartbeatDelay, ParamBASE_HeartbeatDelayTimeMS))
+            {
+                logDebugP("Send Heartbeat (0x%02X)", value);
+                KoBASE_Heartbeat.value(value, DPT_DecimalFactor);
+                knx.loop();
+                value &= ~(1 << 1); // clear first startup bit
+                value &= ~(1 << 2); // clear last reset bit
+                KoBASE_Heartbeat.valueNoSend(value, DPT_DecimalFactor);
+                _heartbeatDelay = millis();
+            }
+        }
+        else
+        {
+            if (_heartbeatDelay == 0 || delayCheck(_heartbeatDelay, ParamBASE_HeartbeatDelayTimeMS))
+            {
+                logDebugP("Send Heartbeat");
+                KoBASE_Heartbeat.value(true, DPT_Switch);
+                _heartbeatDelay = millis();
+            }
         }
     }
 #endif
