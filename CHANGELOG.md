@@ -1,7 +1,8 @@
 # Changes
 
-## 1.4.2: 2025-xx-xx
+## 1.4.2: 2025-07-14
 * Feature: Enhancement for extended "In Betrieb"
+* See also changes of 1.4.0 especially the new KO-numbers.
 
 ## 1.4.1: 2025-07-07
 Note: *No* functional changes, affects documentation integrated in UI only
@@ -14,7 +15,6 @@ Note: *No* functional changes, affects documentation integrated in UI only
 * Improvement: Context-Help in ETS-App
 * Change: Use Standard Build Process for Context-Help
 * Remove unused FIRMWARE_VARIANT
-* See also changes of 1.4.0 especially the new KO-numbers.
 
 ## 1.4.0: 2025-07-04
 * Breaking: Changes in KO-Numbers 2 to 19. See table below.
