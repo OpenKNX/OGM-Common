@@ -14,8 +14,10 @@ Note: *No* functional changes, affects documentation integrated in UI only
 * Improvement: Context-Help in ETS-App
 * Change: Use Standard Build Process for Context-Help
 * Remove unused FIRMWARE_VARIANT
+* See also changes of 1.4.0 especially the new KO-numbers.
 
 ## 1.4.0: 2025-07-04
+* Breaking: Changes in KO-Numbers 2 to 19. See table below.
 * Feature: New KNX TPUart Implementation of KNX Stack
 * Feature: New time implementation and sun calculation
   * Change: Use DPT19 as new default configuration for time-input.
@@ -40,6 +42,26 @@ Note: *No* functional changes, affects documentation integrated in UI only
 * Optimizes led handling
 * Optimizes device console
 * Adds some icons
+
+### Änderung von zentralen KO-Nummern mit v1.4.x
+
+| KO                               | alt | NEU (ab 1.4.0) | Kommentar                                |
+|----------------------------------|-----|----------------|------------------------------------------|
+| In Betrieb                       | 1   | 1              | (unverändert)                            |
+| **Uhrzeit**                      | 2 * | 2              | KO war bislang geteilt mit Uhrzeit/Datum |
+| Datum                            | 3   | 3              | (unverändert)                            |
+| **Uhrzeit/Datum**                | 2 * | 4              | Separiert von KO 2 Uhrzeit.              |
+| **Sommerzeit aktiv**             | 10  | 5              |                                          |
+| **Speichern**                    | 11  | 6              |                                          |
+| Diagnose                         | 7   | 7              | (unverändert)                            |
+| **Urlaub**                       | 4   | 15             |                                          |
+| **Welcher Feiertag ist heute?**  | 5   | 16             |                                          |
+| **Welcher Feiertag ist morgen?** | 6   | 17             |                                          |
+| **LED sperren**                  | 8   | 18             | (nicht in allen Applikationen vorhanden) |
+| **Buzzer sperren**               | 9   | 19             | (nicht in allen Applikationen vorhanden)        |
+
+
+\*: Doppelbelegung der KO-Nummer. Einblendung war abhängig von Konfiguration.
 
 ## 1.2.1: 2024-11-18
 * Update: RP2040 Platform to Core 4.1.1 + Rpi Base Platform
