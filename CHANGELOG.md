@@ -1,5 +1,10 @@
 # Changes
 
+## 1.4.3: 2025-07-16
+* Hotfix: Day-of-week was not set in `DateTime::toTm(..)` provided by *new time implementation* of v1.4.0
+  * *Impact:* This resulted in malfunction of timer-switches in Logikmodul (Kanaltype "ZEITSCHALTUHR") depending on day
+* See also changes of 1.4.0 especially the new KO-numbers.
+
 ## 1.4.2: 2025-07-14
 * Feature: Enhancement for extended "In Betrieb"
 * See also changes of 1.4.0 especially the new KO-numbers.
@@ -17,7 +22,7 @@ Note: *No* functional changes, affects documentation integrated in UI only
 * Remove unused FIRMWARE_VARIANT
 
 ## 1.4.0: 2025-07-04
-* Breaking: Changes in KO-Numbers 2 to 19. See table below.
+* Breaking: Changes in KO-Numbers 2 to 19. See [table below](#änderung-von-zentralen-ko-nummern-mit-v14x).
 * Feature: New KNX TPUart Implementation of KNX Stack
 * Feature: New time implementation and sun calculation
   * Change: Use DPT19 as new default configuration for time-input.
@@ -44,6 +49,9 @@ Note: *No* functional changes, affects documentation integrated in UI only
 * Adds some icons
 
 ### Änderung von zentralen KO-Nummern mit v1.4.x
+
+> ***Tipp:*** Referenzen auf KO-Nummern im Logikmodul können leicht 
+> auf der Seite "*Übersicht interne Verknüpfungen*" angepasst werden.
 
 | KO                               | alt | NEU (ab 1.4.0) | Kommentar                                |
 |----------------------------------|-----|----------------|------------------------------------------|
