@@ -97,6 +97,7 @@ namespace OpenKNX
         tm.tm_year = year - 1900;
         tm.tm_mon = month - 1;
         tm.tm_mday = day;
+        tm.tm_wday = dayOfWeek;
         tm.tm_hour = hour;
         tm.tm_min = minute;
         tm.tm_sec = second;
