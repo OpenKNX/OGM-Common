@@ -239,7 +239,6 @@ namespace OpenKNX
             dll->reset();
             return true;
         }
-    #ifdef NCN5120
         else if (cmd.compare("bcu poff") == 0)
         {
             dll->powerControl(false);
@@ -250,7 +249,6 @@ namespace OpenKNX
             dll->powerControl(true);
             return true;
         }
-    #endif
 #endif
         else if (openknx.time.processCommand(cmd, diagnoseKo))
         {

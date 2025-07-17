@@ -170,11 +170,9 @@ namespace OpenKNX
         openknx.progLed.errorCode(code);
 
 #if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
-        ddl->stop(true);
-    #ifdef NCN5120
-        ddl->powerControl(false);
-    #endif
+        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+        dll->stop(true);
+        dll->powerControl(false);
 #endif
         logIndentDown();
 
