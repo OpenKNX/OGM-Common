@@ -1,8 +1,9 @@
-#ifdef ARDUINO_ARCH_ESP32
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040)
 
 #include "OpenKNX/Led/Serial.h"
 #include "OpenKNX/Facade.h"
 
+#if defined(ARDUINO_ARCH_ESP32)
 #include "esp_log.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -11,11 +12,17 @@
 
 #define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
 #define BITS_PER_LED_CMD 24
+#else // RP2040
+#include "hardware/pio.h"
+#include "hardware/clocks.h"
+#include "ws2812.pio.h" // Include the PIO program header
+#endif
 
 namespace OpenKNX
 {
     namespace Led
     {
+        #if defined(ARDUINO_ARCH_ESP32)
         static const rmt_symbol_word_t ws2812_zero = {
             .duration0 = (uint16_t)3, // T0H=0.3us
             .level0 = 1,
@@ -80,6 +87,7 @@ namespace OpenKNX
                 return 1; //we only wrote one symbol
             }
         }
+        #endif
 
         void Serial::init(long num, SerialLedManager *manager, uint8_t r, uint8_t g, uint8_t b)
         {
@@ -128,6 +136,9 @@ namespace OpenKNX
         void SerialLedManager::init(uint8_t ledPin, uint8_t ledCount)
         {
             logError("SerialLedManager", "init");
+
+            #if defined(ARDUINO_ARCH_ESP32)
+
             _ledCount = ledCount;
             _led_chan = NULL;
             _ledData = new uint8_t[_ledCount*3];
@@ -191,7 +202,20 @@ namespace OpenKNX
                 logError("SerialLedManager", "Could not start Timer");
                 return;
             }
-            
+            #else
+            // Initialize PIO for WS2812 LED control
+            pio_sm_config c = pio_get_default_sm_config();
+            sm_config_set_clkdiv(&c, 4.0f); // Set clock divider
+            sm_config_set_out_pins(&c, ledPin, 3); // Set output pins
+            sm_config_set_in_pins(&c, ledPin); // Set input pins if needed
+
+            // Load the WS2812 program into the PIO
+            uint offset = pio_add_program(pio0, &ws2812_program);
+            ws2812_program_init(pio0, 0, offset, ledPin, 800000); // Initialize program with desired frequency
+
+            // Start the state machine
+            pio_sm_set_enabled(pio0, 0, true);
+            #endif
         }
 
         void SerialLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)
@@ -230,12 +254,12 @@ namespace OpenKNX
                 _dirty = 0;
 
                 // Flush RGB values to LEDs
-                //uint32_t t1 = micros();
+                #if defined(ARDUINO_ARCH_ESP32)
                 rmt_transmit(_led_chan, _simple_encoder, _ledData, _ledCount*3, &_tx_config);
-                //uint32_t t2 = micros();
+                #else
+                
+                #endif
 
-                //::Serial.print("rmt_transmit: "); ~50us
-                //::Serial.print(t2-t1);
             }
         }
     } // namespace Led
