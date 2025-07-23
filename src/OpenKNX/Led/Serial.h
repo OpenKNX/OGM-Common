@@ -1,10 +1,12 @@
 #pragma once
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040)
-    #include "OpenKNX/Led/Base.h"
+#include "OpenKNX/Led/Base.h"
 #if defined(ARDUINO_ARCH_ESP32)
     #include <driver/rmt_tx.h>
+#else
+    #include "hardware/pio.h"
 #endif
-    #include <stdint.h>
+#include <stdint.h>
 
 namespace OpenKNX
 {
@@ -21,7 +23,9 @@ namespace OpenKNX
             rmt_transmit_config_t _tx_config;
             rmt_encoder_handle_t _simple_encoder;
           #else
-          
+            PIO _pio;
+            uint _sm;
+            uint _offset;
           #endif
             uint8_t _ledCount = 0;
             uint32_t _lastWritten = 0;
