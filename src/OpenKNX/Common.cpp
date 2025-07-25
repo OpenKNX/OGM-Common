@@ -33,6 +33,10 @@ namespace OpenKNX
 
         openknx.timerInterrupt.init();
         openknx.gpio.init();
+#if defined(POWER_SAVE_PIN) && POWER_SAVE_PIN >= 0
+        openknx.gpio.pinMode(POWER_SAVE_PIN, OUTPUT);
+        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON); 
+#endif
         openknx.hardware.initLeds();
 
 #if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
