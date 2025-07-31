@@ -1,5 +1,8 @@
 # Changes
 
+## (upcoming) 1.4.4 
+* Fix: Error-output for overlapping memory areas was broken/mixed with layout output  
+
 ## 1.4.3: 2025-07-16
 * Hotfix: Day-of-week was not set in `DateTime::toTm(..)` provided by *new time implementation* of v1.4.0
   * *Impact:* This resulted in malfunction of timer-switches in Logikmodul (Kanaltype "ZEITSCHALTUHR") depending on day
