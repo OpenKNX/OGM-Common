@@ -1,6 +1,7 @@
 # Changes
 
-## 1.4.4: 2025-07-xx
+## (upcoming) 1.4.4 
+* Fix: Error-output for overlapping memory areas was broken/mixed with layout output
 * Refactor: Rename variable 'ddl' to 'dll' for consistency and clarity in data link layer operations and remove unnecessary NCN5120 check
 
 ## 1.4.3: 2025-07-16

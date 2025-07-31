@@ -12,9 +12,6 @@ class console_color:
     RED = '\033[91m'
     END = '\033[0m'
 
-class OversizedError(Exception):
-    pass
-
 class FlashRegion:
     def __init__(self, name, start, end, container=False):
         self.name = name
@@ -234,8 +231,16 @@ def show_flash_partitioning(source, target, env):
         print("* This value is an estimate")
     if found_oversized:
         print("")
-        print("{} ERROR OVERSIZED {}".format(console_color.RED, console_color.END))
-        raise OversizedError()
+        print("{}=> ERROR OVERSIZED <={}".format(console_color.RED, console_color.END))
+        print("")
+
+        import sys
+        import time
+        sys.stdout.flush()
+        sys.stderr.flush()
+        # Note: Q&D Fix: flushing does not work within PIO
+        time.sleep(1)
+        sys.exit(1)        
     print("")
 
 
