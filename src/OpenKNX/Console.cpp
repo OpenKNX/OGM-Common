@@ -221,7 +221,7 @@ namespace OpenKNX
         else if (cmd.compare("bcu") == 0)
         {
             logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
-            TPUart::Statistics &statistics = dll->getTPUart().getStatistics();
+            TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
             logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
@@ -247,6 +247,16 @@ namespace OpenKNX
         else if (cmd.compare("bcu pon") == 0)
         {
             dll->powerControl(true);
+            return true;
+        }
+        else if (cmd.compare("bcu debug") == 0)
+        {
+            if (_bcuDebug)
+                _bcuDebug = false;
+            else
+                _bcuDebug = true;
+
+            openknx.logger.logWithPrefix("BCU<Debug>", _bcuDebug ? "Enabled" : "Disabled");
             return true;
         }
 #endif

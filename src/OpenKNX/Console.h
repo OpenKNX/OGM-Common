@@ -37,6 +37,9 @@ namespace OpenKNX
         uint8_t _consoleCharLast = 0x0;
         bool _diagnoseKoOutput = false;
         bool _disableConsole = false;
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+        bool _bcuDebug = false;
+#endif
 
         void sleep();
         uint32_t sleepTime();
@@ -72,6 +75,13 @@ namespace OpenKNX
         void showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart);
 
         void showHelp();
+
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+        bool bcuDebug()
+        {
+            return _bcuDebug;
+        }
+#endif
 
 #ifdef BASE_KoDiagnose
         void processDiagnoseKo(GroupObject& ko);

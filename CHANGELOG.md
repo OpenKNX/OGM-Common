@@ -4,6 +4,7 @@
 * Fix: Error-output for overlapping memory areas was broken/mixed with layout output
 * Refactor: Rename variable 'ddl' to 'dll' for consistency and clarity in data link layer operations and remove unnecessary NCN5120 check
 * Update platform for ESP
+* Add new intern bcu debug mode
 
 ## 1.4.3: 2025-07-16
 * Hotfix: Day-of-week was not set in `DateTime::toTm(..)` provided by *new time implementation* of v1.4.0
