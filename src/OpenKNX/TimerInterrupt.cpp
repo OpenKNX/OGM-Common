@@ -167,8 +167,11 @@ namespace OpenKNX
     #ifdef INFO2_LED_PIN
             openknx.info2Led.loop();
     #endif
+    #if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_RP2040)
+             openknx.ledManager.writeLeds();
+    #endif
         }
-        else
+        else if ((_time + 5) % 10)
         {
     #ifdef INFO1_LED_PIN
             openknx.info1Led.loop();
@@ -176,11 +179,12 @@ namespace OpenKNX
     #ifdef INFO3_LED_PIN
             openknx.info3Led.loop();
     #endif
+    #if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_RP2040)
+             openknx.ledManager.writeLeds();
+    #endif
         }
 #endif
-#if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_RP2040)
-             openknx.ledManager.writeLeds();
-#endif
+
     }
 
 #ifdef ARDUINO_ARCH_RP2040

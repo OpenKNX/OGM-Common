@@ -259,10 +259,13 @@ namespace OpenKNX
                 #if defined(ARDUINO_ARCH_ESP32)
                 rmt_transmit(_led_chan, _simple_encoder, _ledData, _ledCount*3, &_tx_config);
                 #else
-                for (int i = 0; i < _ledCount; ++i)
+                if(pio_sm_get_tx_fifo_level(_pio, _sm) == 0 )
                 {
-                    uint32_t pixel_grb = _ledData[i*3+2] | (_ledData[i*3+1] << 8u) | (_ledData[i*3] << 16u);
-                    pio_sm_put_blocking(_pio, _sm, pixel_grb << 8u);
+                    for (int i = 0; i < _ledCount; ++i)
+                    {
+                        uint32_t pixel_grb = _ledData[i*3+2] | (_ledData[i*3+1] << 8u) | (_ledData[i*3] << 16u);
+                        pio_sm_put(_pio, _sm, pixel_grb << 8u);
+                    }
                 }
                 #endif
 
