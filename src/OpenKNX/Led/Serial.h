@@ -1,8 +1,12 @@
 #pragma once
-#ifdef ARDUINO_ARCH_ESP32
-    #include "OpenKNX/Led/Base.h"
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040)
+#include "OpenKNX/Led/Base.h"
+#if defined(ARDUINO_ARCH_ESP32)
     #include <driver/rmt_tx.h>
-    #include <stdint.h>
+#else
+    #include "hardware/pio.h"
+#endif
+#include <stdint.h>
 
 namespace OpenKNX
 {
@@ -11,16 +15,23 @@ namespace OpenKNX
         class SerialLedManager
         {
           private:
+          #if defined(ARDUINO_ARCH_ESP32)
             rmt_symbol_word_t *_rmtItems = nullptr;
-            uint8_t _ledCount = 0;
-            uint32_t _lastWritten = 0;
-            uint8_t* _ledData = 0;
-            uint32_t _dirty = 0;
             TimerHandle_t _timer;
 
             rmt_channel_handle_t _led_chan;
             rmt_transmit_config_t _tx_config;
             rmt_encoder_handle_t _simple_encoder;
+          #else
+            PIO _pio;
+            uint _sm;
+            uint _offset;
+          #endif
+            uint8_t _ledCount = 0;
+            uint32_t _lastWritten = 0;
+            uint8_t* _ledData = 0;
+            uint32_t _dirty = 0;
+
 
           public:
             void init(uint8_t ledPin, uint8_t ledCount);

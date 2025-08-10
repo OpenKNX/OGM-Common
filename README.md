@@ -83,9 +83,9 @@ KNX_UART_TX_PIN
 | OPENKNX_HEARTBEAT_FREQ          |     200 |  ms   |                                                                                                                                      |
 | OPENKNX_HEARTBEAT_PRIO_ON_FREQ  |     200 |  ms   |                                                                                                                                      |
 | OPENKNX_HEARTBEAT_PRIO_OFF_FREQ |    1000 |  ms   |                                                                                                                                      |
-| OPENKNX_SERIALLED_ENABLE        |   undef |       | activate the usage of Serial LEDs (WS2812, Neopixel)                                                                                 |
+| OPENKNX_SERIALLED_ENABLE        |   undef |       | activate the usage of Serial LEDs (WS2812, Neopixel, ARGB-LEDs), only on ESP32 and RP2040                                            |
 | OPENKNX_SERIALLED_PIN           |   undef |       | the GPIO to drive the Serial LEDs                                                                                                    |
-| OPENKNX_SERIALLED_NUM           |   undef |       | the number of Serial LEDs to control (max: 24, if no other RMT is needed)                                                            |
+| OPENKNX_SERIALLED_NUM           |   undef |       | the number of Serial LEDs to control (ESP32:max: 24, if no other RMT is needed, RP2040: max: 8)                                      |
 | PROG_LED_PIN                    |   undef |       | the GPIO to drive the LED, if SERIALLED is enabled, the number of the LED in the strip (zero-based)                                  |
 | PROG_LED_PIN_ACTIVE_ON          |   undef |       | values: LOW or HIGH, indicates at which GPIO state the LED is active (no function with SERIALLED)                                    |
 | PROG_LED_COLOR                  |  63,0,0 |       | set the color for the LED, default: 50% Red - only for SERIALLED                                                                     |
