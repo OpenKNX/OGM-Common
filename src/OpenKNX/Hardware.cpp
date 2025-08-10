@@ -229,8 +229,11 @@ namespace OpenKNX
     #else
         #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
     #endif
-
+#if MASK_VERSION == 0x091A
+        knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerReceivedFrame(
+#else
         knx.bau().getDataLinkLayer()->getTPUart().registerReceivedFrame(
+#endif
             [](TPUart::Frame& tpFrame) {
                 // Process received frame
                 if (openknx.console.bcuDebug())
