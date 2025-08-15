@@ -1,0 +1,7 @@
+@startebnf
+title "Function Properties: Command Structure"
+
+data = 0x00 | 0x10 , (((0x00 | 0x02 | 0x03 | 0x05), ko_hi, ko_lo) | 0x04, ko_hi, ko_lo, len);
+Get_Current_Value_response  = 0x00 , len , {value}  | 0x01 ;
+
+@endebnf

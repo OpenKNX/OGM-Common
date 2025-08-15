@@ -862,7 +862,221 @@ namespace OpenKNX
             if (openknx.modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
 
+        if (objectIndex == 160 && propertyId == 8 && length >= 1) //  => BASE
+            return _processFunctionProperty(length, data, resultData, resultLength);
+
         return false;
+    }
+
+    bool Common::_processFunctionProperty(uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
+    {
+
+        if (data[0] == 0x00 && length >= 2) // => Status
+        {
+            switch (data[1])
+            {
+                case 0x00: // => getUptime()
+                {
+                    logDebugP("FuncProp: getUptime");
+                    uint32_t u = uptime(true);
+                    resultData[0] = 0x00; // success
+                    resultData[1] = (u >> 24) & 0xff;
+                    resultData[2] = (u >> 16) & 0xff;
+                    resultData[3] = (u >> 8) & 0xff;
+                    resultData[4] = (u >> 0) & 0xff;
+                    resultLength = 5;
+                    return true;
+                }
+                case 0x01: // => isConfigured()
+                {
+                    logDebugP("FuncProp: isConfigured");
+                    resultData[0] = 0x00; // success
+                    resultData[1] = knx.configured();
+                    resultLength = 2;
+                    return true;
+                }
+                case 0x02: // => usesDualCore()
+                {
+                    logDebugP("FuncProp: usesDualCore()");
+                    resultData[0] = 0x00; // success
+                    resultData[1] = openknx.usesDualCore();
+                    resultLength = 2;
+                    return true;
+                }
+                case 0x03: // => DEVICE_ID
+                {
+                    logDebugP("FuncProp: DEVICE_ID");
+                    resultData[0] = 0x00; // success
+                    resultData[1] = strlen(DEVICE_ID);
+                    memcpy(&resultData[2], DEVICE_ID, resultData[1]);
+                    resultLength = 2 + resultData[1];
+                    return true;
+                }
+                case 0x10: // => openknx.hardware.cpuTemperature()
+                {
+                    logDebugP("FuncProp: openknx.hardware.cpuTemperature()");
+                    float temp = openknx.hardware.cpuTemperature();
+                    resultData[0] = 0x00; // success
+                    resultData[1] = (uint8_t)ceil(temp);
+                    resultData[2] = (uint8_t)(temp * 100) % 100;
+                    resultLength = 3;
+                    return true;
+                }
+                case 0x11: // => getFreeMemory
+                {
+                    logDebugP("FuncProp: getFreeMemory");
+                    const uint32_t freeMem = freeMemory();
+                    const uint32_t freeMemMin = freeMemoryMin();
+                    resultData[0] = 0x00; // success
+                    resultData[0+1] = (freeMem >> 24) & 0xff;
+                    resultData[0+2] = (freeMem >> 16) & 0xff;
+                    resultData[0+3] = (freeMem >> 8) & 0xff;
+                    resultData[0+4] = (freeMem >> 0) & 0xff;
+                    resultData[4+1] = (freeMemMin >> 24) & 0xff;
+                    resultData[4+2] = (freeMemMin >> 16) & 0xff;
+                    resultData[4+3] = (freeMemMin >> 8) & 0xff;
+                    resultData[4+4] = (freeMemMin >> 0) & 0xff;
+                    resultLength = 9;
+                    return true;
+                }
+                case 0x12: // => getFreeStackSize
+                {
+                    logDebugP("FuncProp: getFreeStackSize");
+                    const uint32_t freeStack0 = openknx.common.freeStackMin();
+                    resultData[0] = 0x00; // success
+                    resultData[0+1] = (freeStack0 >> 24) & 0xff;
+                    resultData[0+2] = (freeStack0 >> 16) & 0xff;
+                    resultData[0+3] = (freeStack0 >> 8) & 0xff;
+                    resultData[0+4] = (freeStack0 >> 0) & 0xff;
+                    resultLength = 5;
+    #ifdef OPENKNX_DUALCORE
+                    const uint32_t freeStack1 = openknx.common.freeStackMin1();
+                    resultData[4+1] = (freeStack1 >> 24) & 0xff;
+                    resultData[4+2] = (freeStack1 >> 16) & 0xff;
+                    resultData[4+3] = (freeStack1 >> 8) & 0xff;
+                    resultData[4+4] = (freeStack1 >> 0) & 0xff;
+                    resultLength = 9;
+    #endif
+                    return true;
+                }
+                // TODO case  0x13: // => PSRAM
+                case 0x40: // => openknx.modules.count()
+                {
+                    logDebugP("FuncProp: getModuleCount()");
+                    resultData[0] = 0x00; // success
+                    resultData[1] = openknx.modules.count;
+                    resultLength = 2;
+                    return true;
+                }
+                case 0x41: // => getModuleName(midx)
+                case 0x42: // => getModuleVersion(midx)
+                {
+                    if (length ==3 && data[2] < openknx.modules.count)
+                    {
+                        const uint8_t i = data[2];
+                        logDebugP("FuncProp: %s(%d)", (data[1]==0x41 ? "getModuleName":"getModuleVersion"), i);
+                        resultData[0] = 0x00; // success
+                        const char *moduleName = (data[1]==0x41 ? openknx.modules.list[i]->name().c_str() : openknx.modules.list[i]->version().c_str());
+                        resultData[1] = strlen(moduleName);
+                        memcpy(&resultData[2], moduleName, resultData[1]);
+                        resultLength = 2 + resultData[1];
+                        return true;
+                    }
+                }                
+            }
+        }
+        else if (data[0] == 0x10 && length >= 4) // => KO-Access
+        {
+            const uint16_t koNumber = (data[2] << 8) | data[3];
+            GroupObject *ko = &knx.getGroupObject(koNumber);
+            if (ko == nullptr)
+            {
+                logErrorP("KO %04d not found", koNumber);
+                resultData[0] = 0xFF; // error
+                resultLength = 1;
+                return true;
+            }
+            switch (data[1])
+            {
+                case 0x00: // => Get Flags
+                {
+                    uint8_t flags = 0x00;
+                    flags |= (ko->communicationEnable() << 7);
+                    flags |= (ko->readEnable() << 6);
+                    flags |= (ko->writeEnable() << 5);
+                    flags |= (ko->transmitEnable() << 4);
+                    flags |= (ko->responseUpdateEnable() << 3);
+                    flags |= (ko->valueReadOnInit() << 2);
+                    flags |= (ko->priority() & 0x11);
+                    logDebugP("Flags for KO %04d: %02X", koNumber, flags);
+                    resultData[0] = 0x00; // success
+                    resultData[1] = flags;
+                    resultLength = 2;
+                    return true;
+                }
+                case 0x02: // => Get Current Value
+                    if (!ko->initialized())
+                    {
+                        logDebugP("KO %04d not initialized", koNumber);
+                        resultData[0] = 0x01; // error
+                        resultLength = 1;
+                    }
+                    else
+                    {
+                        const uint8_t valueSize = ko->valueSize();
+                        resultData[0] = 0x00; // success
+                        resultData[1] = valueSize;
+                        memcpy(&resultData[2], ko->valueRef(), valueSize);
+                        resultLength = 2 + valueSize;
+                    }
+                    return true;
+                case 0x03: // => Read from Bus
+                    ko->requestObjectRead();
+                    resultData[0] = 0x00; // success
+                    resultLength = 1;
+                    return true;
+                case 0x04: // => Set Value
+                {
+                    const uint8_t valueSize = ko->valueSize();
+                    if (length > 4 && data[4] == valueSize && data[4] == length - 5) // check if value size is correct
+                    {
+                        memcpy(ko->valueRef(), &data[5], valueSize);
+                        if (!ko->initialized())
+                            ko->commFlag(Ok);
+                        resultData[0] = 0x00; // success
+                    }
+                    else
+                    {
+                        logErrorP("Invalid value size for KO %04d: expected %d, got %d", koNumber, valueSize, length >= 5 ? data[4] : 0);
+                        resultData[0] = 0x02; // error - invalid value size
+                    }
+                    resultLength = 1;
+                    return true;
+                }
+                case 0x05: // => Write to Bus
+                    ko->objectWritten();
+                    resultData[0] = 0x00; // success
+                    resultLength = 1;
+                    return true;
+            }
+        }
+        /*
+        if (length == 1 && data[0] == 0x01)
+        {
+            logInfoP("BASE_StartupDelayBase enabled, will wait for %dms", ParamBASE_StartupDelayTimeMS);
+            _startupDelay = millis();
+            _firstStartup = true;
+            return true;
+        }
+        else if (length == 1 && data[0] == 0x00)
+        {
+            logInfoP("BASE_StartupDelayBase disabled");
+            _startupDelay = 0;
+            _firstStartup = false;
+            return true;
+        }
+        */
+       return false;
     }
 
     bool Common::processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)

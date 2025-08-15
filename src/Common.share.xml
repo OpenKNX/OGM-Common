@@ -287,6 +287,21 @@
                 <!-- Set dummy for last Byte to reserve Space-->
                 <Parameter Id="%AID%_UP-%TT%00098" Name="Dummy"  ParameterType="%AID%_PT-ValueDpt5" Offset="31" BitOffset="0" Text="" Value="0" />
               </Union>
+
+              <!--
+              <Parameter Id="%AID%_P-%TT%00100" Name="FuncPropLen"   ParameterType="%AID%_PT-ValueDpt5"   Text="FuncPropLen"    Value="0" />
+              -->
+              <Parameter Id="%AID%_P-%TT%00101" Name="FuncPropIn"    ParameterType="%AID%_PT-Text512Byte" Text="FuncPropIn"     Value=""  />
+              <Parameter Id="%AID%_P-%TT%00102" Name="FuncPropOut"   ParameterType="%AID%_PT-TextMaxLen"  Text="FuncPropOut"    Value=""  />
+              <!--
+              <Parameter Id="%AID%_P-%TT%00110" Name="FuncPropByte0" ParameterType="%AID%_PT-ValueDpt5"   Text="FuncPropByte0"  Value="0" />
+              <Parameter Id="%AID%_P-%TT%00111" Name="FuncPropByte1" ParameterType="%AID%_PT-ValueDpt5"   Text="FuncPropByte1"  Value="0" />
+              <Parameter Id="%AID%_P-%TT%00112" Name="FuncPropByte2" ParameterType="%AID%_PT-ValueDpt5"   Text="FuncPropByte2"  Value="0" />
+              <Parameter Id="%AID%_P-%TT%00113" Name="FuncPropByte3" ParameterType="%AID%_PT-ValueDpt5"   Text="FuncPropByte3"  Value="0" />
+              <Parameter Id="%AID%_P-%TT%00114" Name="FuncPropByte4" ParameterType="%AID%_PT-ValueDpt5"   Text="FuncPropByte4"  Value="0" />
+              -->
+
+
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
@@ -316,6 +331,19 @@
               <ParameterRef Id="%AID%_UP-%TT%00090_R-%TT%0009001" RefId="%AID%_UP-%TT%00090" />
               <ParameterRef Id="%AID%_UP-%TT%00091_R-%TT%0009101" RefId="%AID%_UP-%TT%00091" />
               <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
+
+              <!--
+              <ParameterRef Id="%AID%_P-%TT%00100_R-%TT%0010001" RefId="%AID%_P-%TT%00100" />
+              -->
+              <ParameterRef Id="%AID%_P-%TT%00101_R-%TT%0010101" RefId="%AID%_P-%TT%00101" />
+              <ParameterRef Id="%AID%_P-%TT%00102_R-%TT%0010201" RefId="%AID%_P-%TT%00102" />
+              <!-- 
+              <ParameterRef Id="%AID%_P-%TT%00110_R-%TT%0011001" RefId="%AID%_P-%TT%00110" />
+              <ParameterRef Id="%AID%_P-%TT%00111_R-%TT%0011101" RefId="%AID%_P-%TT%00111" />
+              <ParameterRef Id="%AID%_P-%TT%00112_R-%TT%0011201" RefId="%AID%_P-%TT%00112" />
+              <ParameterRef Id="%AID%_P-%TT%00113_R-%TT%0011301" RefId="%AID%_P-%TT%00113" />
+              <ParameterRef Id="%AID%_P-%TT%00114_R-%TT%0011401" RefId="%AID%_P-%TT%00114" />
+              -->
 
             </ParameterRefs>
             <ComObjectTable>
@@ -601,6 +629,25 @@
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX verwendet für die Sonnenstandsberechnung den PSA Algorithmus welcher unter der CC BY 4.0 Lizenz veröffentlich wurde."  />
 								<ParameterSeparator Id="%AID%_PS-nnn" Text="Mehr Information dazu sind unter https://www.sciencedirect.com/science/article/pii/S0038092X20311488?via%3Dihub zu finden."  />
 
+         	      <ParameterBlock Id="%AID%_PB-nnn" Name="Device" Text="Geräte-Zugriff" Icon="toolbox-outline" HelpContext="BASE-OpenKNX">
+                	<ParameterSeparator Id="%AID%_PS-nnn" Text="Hardware-/Firmware-Info" UIHint="Headline" />
+
+                  <ParameterRefRef RefId="%AID%_P-%TT%00101_R-%TT%0010101" />
+                  <Button Id="%AID%_MD-%TT%00002_B-%TT%00002" Text="BASE Function Prop" EventHandler="BASE_funcPropInfo" EventHandlerOnline="ConnectionOriented" />
+                  <Button Id="%AID%_MD-%TT%00003_B-%TT%00003" Text="KO-Info"            EventHandler="BASE_funcPropKOs" EventHandlerOnline="ConnectionOriented" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00102_R-%TT%0010201" />
+
+                  <!--
+                	<ParameterSeparator Id="%AID%_PS-nnn" Text="FunctionProp Num" UIHint="Headline" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00100_R-%TT%0010001" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00110_R-%TT%0011001" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00111_R-%TT%0011101" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00112_R-%TT%0011201" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00113_R-%TT%0011301" />
+                  <ParameterRefRef RefId="%AID%_P-%TT%00114_R-%TT%0011401" />                  
+                  -->
+                </ParameterBlock>
+                
               </ParameterBlock>
 
             </Channel>

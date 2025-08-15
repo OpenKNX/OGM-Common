@@ -65,6 +65,7 @@ namespace OpenKNX
 #endif
 
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
+        bool _processFunctionProperty(uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 
 #ifdef OPENKNX_RUNTIME_STAT
