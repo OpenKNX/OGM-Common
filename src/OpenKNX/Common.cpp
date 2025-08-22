@@ -47,7 +47,7 @@ namespace OpenKNX
         openknx.info1Led.on();
     #endif
 #else
-        openknx.progLed.pulsing();
+        openknx.progLed->pulsing();
     #ifdef INFO1_LED_PIN
         openknx.info1Led.pulsing();
     #endif
@@ -120,7 +120,7 @@ namespace OpenKNX
             {
                 if (!erase)
                 {
-                    openknx.progLed.blinking(200);
+                    openknx.progLed->blinking(200);
                     erase = true;
                 }
             }
@@ -133,7 +133,7 @@ namespace OpenKNX
             restart();
         }
 
-        openknx.progLed.off();
+        openknx.progLed->off();
     }
 #endif
 
@@ -147,8 +147,8 @@ namespace OpenKNX
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
 
         knx.ledPin(0);
-        knx.setProgLedOnCallback([] { openknx.progLed.forceOn(true); });
-        knx.setProgLedOffCallback([] { openknx.progLed.forceOn(false); });
+        knx.setProgLedOnCallback([] { openknx.progLed->forceOn(true); });
+        knx.setProgLedOffCallback([] { openknx.progLed->forceOn(false); });
 
         uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, 0x00};
 
@@ -210,7 +210,7 @@ namespace OpenKNX
         openknx.info1Led.blinking();
     #endif
 #else
-        openknx.progLed.pulsing(500);
+        openknx.progLed->pulsing(500);
     #ifdef INFO1_LED_PIN
         openknx.info1Led.pulsing(500);
     #endif
@@ -231,7 +231,7 @@ namespace OpenKNX
         openknx.info1Led.on();
     #endif
 #else
-        openknx.progLed.pulsing();
+        openknx.progLed->pulsing();
     #ifdef INFO1_LED_PIN
         openknx.info1Led.pulsing();
     #endif
@@ -294,7 +294,7 @@ namespace OpenKNX
 #endif // OPENKNX_DUALCORE
 
 #ifndef OPENKNX_DUALCORE
-        openknx.progLed.off();
+        openknx.progLed->off();
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
@@ -348,7 +348,7 @@ namespace OpenKNX
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT
-        openknx.progLed.debugLoop();
+        openknx.progLed->debugLoop();
 #endif
 #ifdef OPENKNX_WATCHDOG
         openknx.watchdog.loop();
@@ -646,7 +646,7 @@ namespace OpenKNX
         logInfoP("Save power");
         logIndentUp();
 
-        openknx.progLed.powerSave();
+        openknx.leds.powerSave();
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave();
 #endif
@@ -692,7 +692,7 @@ namespace OpenKNX
         logInfoP("Restore power (after 1s)");
         logIndentUp();
 
-        openknx.progLed.powerSave(false);
+        openknx.progLed->powerSave(false);
 #ifdef INFO1_LED_PIN
         openknx.info1Led.powerSave(false);
 #endif

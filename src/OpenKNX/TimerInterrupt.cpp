@@ -160,6 +160,9 @@ namespace OpenKNX
 
     void TimerInterrupt::processLeds()
     {
+#ifdef LEDMANAGER
+        openknx.leds.timer();
+#else
 #if !defined(OPENKNX_SERIALLED_ENABLE) || !defined(ARDUINO_ARCH_ESP32)
         if (_time % 10)
         {
@@ -184,7 +187,7 @@ namespace OpenKNX
     #endif
         }
 #endif
-
+#endif
     }
 
 #ifdef ARDUINO_ARCH_RP2040

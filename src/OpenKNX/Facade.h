@@ -12,6 +12,7 @@
 #include "OpenKNX/Time/TimeProvider.h"
 #include "OpenKNX/Time/Calendar.h"
 #include "OpenKNX/GPIO/GPIO.h"
+#include "OpenKNX/Led/Manager.h"
 #ifdef ParamBASE_Latitude
         #include "OpenKNX/Sun/SunCalculation.h"
 #endif
@@ -66,6 +67,11 @@ namespace OpenKNX
         Button func3Button = Button("Func3");
 #endif
 
+#ifdef LEDMANAGER
+        Led::Manager leds;
+        Led::Base *progLed = leds.getProgLed();
+#else
+
 #ifdef OPENKNX_SERIALLED_ENABLE
         Led::SerialLedManager ledManager;
     #define LEDCLASS Led::Serial
@@ -83,6 +89,7 @@ namespace OpenKNX
 #endif
 #ifdef INFO3_LED_PIN
         LEDCLASS info3Led;
+#endif
 #endif
 
         Modules modules;

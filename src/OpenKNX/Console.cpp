@@ -289,7 +289,7 @@ namespace OpenKNX
         if (current == 0x7)
         {
             OPENKNX_LOGGER_DEVICE.write(0x7);
-            openknx.progLed.forceOn();
+            openknx.progLed->forceOn();
             openknx.flash.save(true);
             OPENKNX_LOGGER_DEVICE.write(0x7);
             delay(10000);
@@ -682,7 +682,7 @@ namespace OpenKNX
     {
         openknx.watchdog.deactivate();
 
-        openknx.progLed.blinking();
+        openknx.progLed->blinking();
 #ifdef INFO1_LED_PIN
         openknx.info1Led.off();
 #endif
@@ -724,7 +724,7 @@ namespace OpenKNX
         }
 #endif // ARDUINO_ARCH_RP2040
 
-        openknx.progLed.forceOn();
+        openknx.progLed->forceOn();
         openknx.logger.logWithPrefix("Erase", "Completed");
         delay(1000);
         openknx.restart();

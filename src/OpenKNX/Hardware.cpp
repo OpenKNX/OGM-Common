@@ -21,6 +21,9 @@ namespace OpenKNX
 
     void Hardware::initLeds()
     {
+#ifdef LEDMANAGER
+        openknx.leds.init();
+#else
 #ifdef OPENKNX_SERIALLED_ENABLE
     #ifndef PROG_LED_COLOR
         #define PROG_LED_COLOR 63, 0, 0
@@ -59,6 +62,7 @@ namespace OpenKNX
     #ifdef INFO3_LED_PIN
         openknx.info3Led.init(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON);
     #endif
+#endif
 #endif
     }
 
@@ -167,7 +171,7 @@ namespace OpenKNX
 #ifdef INFO1_LED_PIN
         openknx.info1Led.on();
 #endif
-        openknx.progLed.errorCode(code);
+        openknx.progLed->errorCode(code);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
