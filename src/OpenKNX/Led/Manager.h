@@ -15,10 +15,17 @@ namespace OpenKNX
 {
     namespace Led
     {
+        enum LedType
+        {
+            LED_TYPE_PROG = 0,
+            LED_TYPE_INFO1 = 1,
+            LED_TYPE_USER = 10
+        };
+
         class Manager
         {
           protected:
-            Led::GPIO _progLed;
+            Led::Base* _progLed;
 
           public:
 

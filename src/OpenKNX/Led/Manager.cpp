@@ -22,7 +22,7 @@ namespace OpenKNX
 
         Led::Base* Manager::getProgLed()
         {
-            return &_progLed;
+            return _progLed;
         }
 
         void Manager::powerSave(bool active)
