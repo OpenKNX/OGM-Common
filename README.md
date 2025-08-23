@@ -166,11 +166,13 @@ openknx.gpio.attachInterrupt(
 ### Supported Hardware
 
 #### TCA6408
-TCA6408 8bit I2C port expander
+TCA6408 8-bit I2C port expander
 #### TCA9555
-TCA9555 16bit I2C port expander
+TCA9555 16-bit I2C port expander
+#### PCA9554
+PCA9554 8-bit I2C-bus expander (I2C slave address range 0x20 to 0x27)
 #### PCA9557
-PCA9557 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F )
+PCA9557 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F)
 
 
 ### Features
