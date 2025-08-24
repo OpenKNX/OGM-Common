@@ -93,20 +93,20 @@ if ($device) {
     # There are different options how to copy a large file, but most of them have side effects
     
     # the following one prints very often errors AFTER the file was copied 
-    # Start-BitsTransfer -Source data/$firmwareName -Destination $device.DeviceID.ToString() -Description "Installiere" -DisplayName "Installiere Firmware..."
+    # Start-BitsTransfer -Source $firmwareName -Destination $device.DeviceID.ToString() -Description "Installiere" -DisplayName "Installiere Firmware..."
 
     # the following has no progress bar
-    # Copy-Item data/$firmwareName $device.DeviceID.ToString()
+    # Copy-Item $firmwareName $device.DeviceID.ToString()
 
     # the following is just Windows based, not pure PowerShell
-    # cmd /c copy /z data\$firmwareName $device.DeviceID.ToString()
+    # cmd /c copy /z $firmwareName $device.DeviceID.ToString()
 
     # the following is just windows but looks best...
     $FOF_CREATEPROGRESSDLG = "&H0&"
     $currentDir = (Get-Item .).FullName
     $objShell = New-Object -ComObject "Shell.Application"
     $objFolder = $objShell.NameSpace($device.DeviceID.ToString()) 
-    $objFolder.CopyHere("$currentDir\data\$firmwareName", $FOF_CREATEPROGRESSDLG)
+    $objFolder.CopyHere("$currentDir\$firmwareName", $FOF_CREATEPROGRESSDLG)
     Write-Host "Fertig!" -ForegroundColor Green
     timeout /T 20 
 }
