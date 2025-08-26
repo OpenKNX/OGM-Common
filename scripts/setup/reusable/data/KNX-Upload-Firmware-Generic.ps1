@@ -25,7 +25,7 @@ if (!$toolsExist) {
 }
 
 if ($toolsExist) {
-    $firmwareName = (Resolve-Path "./$($args[0])").Path
+    $firmwareName = (Resolve-Path "./data/$($args[0])").Path
     if (Test-Path -PathType Leaf ~/bin/KnxFileTransferClient.ps1) {
         ~/bin/KnxFileTransferClient.ps1 "$firmwareName"
     } else {

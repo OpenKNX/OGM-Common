@@ -55,11 +55,11 @@ if ($toolsExist) {
             $serial.Open()
             $serial.Close()
             Start-Sleep -s 1
-            ~/bin/bossac --info --write --verify --reset --erase --port=$port $firmwareName
+            ~/bin/bossac --info --write --verify --reset --erase --port=$port data/$firmwareName
             if (!$?) {
                 if (!($isRecursive -eq "1")) {
                     Write-Host "Mit COM-Port $port hat es nicht funktioniert, versuche einen weiteren..."
-                    ../data/Upload-Firmware-Generic-SAMD.ps1 $firmwareName 1
+                    ../data/Upload-Firmware-Generic-SAMD.ps1 data/$firmwareName 1
                 }
             }			
             if (!($isRecursive -eq "1")) {

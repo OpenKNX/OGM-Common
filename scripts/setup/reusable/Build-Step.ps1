@@ -75,18 +75,19 @@ if (![string]::IsNullOrEmpty($ProjectDir)) {
   $CopyItem_Target_Data = Join-Path $ProjectDir $CopyItem_Target_Data
   $CopyItem_Target_Dir = Join-Path $ProjectDir $CopyItem_Target_Dir
 }
-$CopyItem_Target = Join-Path $CopyItem_Target_Dir "$CopyItem_Target_Name"
+$CopyItem_Target = Join-Path $CopyItem_Target_Dir "data/$CopyItem_Target_Name"
 
 # Check if firmware is available and copy it to release
 Write-Host "The $PioEnv firmware is available as $CopyItem_Source"
 if ( Test-Path $CopyItem_Source ) {
   Write-Host "Copy-Item: $CopyItem_Source to $CopyItem_Target"
   # create target directories if not exists
+  if (!(Test-Path -Path $CopyItem_Target_Dir)) {
+    New-Item -ItemType Directory -Force -Path "$CopyItem_Target_Dir/data"
+  }
+  Write-Host "DEBUG: vor Copy-Item $CopyItem_Target"
   if (!(Test-Path -Path $CopyItem_Target_Data)) {
     New-Item -ItemType Directory -Force -Path $CopyItem_Target_Data
-  }
-  if (!(Test-Path -Path $CopyItem_Target_Dir)) {
-    New-Item -ItemType Directory -Force -Path $CopyItem_Target_Dir
   }
   
   # copy firmware to release
@@ -97,13 +98,13 @@ if ( Test-Path $CopyItem_Source ) {
   if ($withOTA) {    
     if ($processor -eq "ESP32") {
       $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
-      $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
-      Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+      $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "data/$firmwareName.factory.$binaryFormat"
+      Copy-Item $CopyItem2_Source $CopyItem2_Target
     }
     elseif ($processor -eq "RP2040") {
       $CopyItem2_Source = ".pio/build/$pioEnv/firmware.bin"
-      $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.bin"
-      Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+      $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "data/$firmwareName.bin"
+      Copy-Item $CopyItem2_Source $CopyItem2_Target
     }
   }
 }
@@ -170,7 +171,7 @@ $releaseTarget = "$CopyItem_Target_Data/content.xml"
 #check if file exists content.xml exists if not create it
 if ((Test-Path -Path $releaseTarget -PathType Leaf)) {
   # Add entry to content.xml. If entry already exists, do nothing. If not, add it. If file does not exist, create it.
-  $XMLContent = "         <Product Name=""$productName"" Firmware=""../$productName/$CopyItem_Target_Name"" Processor=""$processor"" />"
+  $XMLContent = "         <Product Name=""$productName"" Firmware=""../$CopyItem_Target_Device/data/$CopyItem_Target_Name"" Processor=""$processor"" />"
   $lineExists = Select-String -Path $fileName -Pattern $XMLContent -Quiet
   if (-not $lineExists) { Add-Content -Path $releaseTarget -Value $XMLContent }
 }
