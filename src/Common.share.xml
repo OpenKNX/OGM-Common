@@ -287,6 +287,12 @@
                 <!-- Set dummy for last Byte to reserve Space-->
                 <Parameter Id="%AID%_UP-%TT%00098" Name="Dummy"  ParameterType="%AID%_PT-ValueDpt5" Offset="31" BitOffset="0" Text="" Value="0" />
               </Union>
+
+              <!-- Local parameters for module visibility -->
+              <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
+              <!-- <Parameter Id="%AID%_P-%TT%999%MM%" Name="Module%MM%" ParameterType="%AID%_PT-Checkbox" Text="%Modulname%" Value="1" /> -->
+              <Parameter Id="OpenKNXproducer" Name="Module%MM%" ParameterType="%AID%_PT-CheckBox" Text="%Modulname%" Value="1" />
+
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
@@ -316,6 +322,10 @@
               <ParameterRef Id="%AID%_UP-%TT%00090_R-%TT%0009001" RefId="%AID%_UP-%TT%00090" />
               <ParameterRef Id="%AID%_UP-%TT%00091_R-%TT%0009101" RefId="%AID%_UP-%TT%00091" />
               <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
+
+              <!-- Local parameters for module visibility -->
+              <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
+              <ParameterRef Id="OpenKNXproducer" RefId="OpenKNXproducer" />
 
             </ParameterRefs>
             <ComObjectTable>
@@ -602,7 +612,13 @@
 								<ParameterSeparator Id="%AID%_PS-nnn" Text="Mehr Information dazu sind unter https://www.sciencedirect.com/science/article/pii/S0038092X20311488?via%3Dihub zu finden."  />
 
               </ParameterBlock>
+       	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-OpenKNX">
+                <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Enthaltene Module" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation beinhaltet die folgenden Module. Diese können bei Bedarf ein- oder ausgeblendet werden, um die Übersichtlichkeit der Applikation zu erhöhen" />
+						    <ParameterRefRef RefId="OpenKNXproducer" />
 
+              </ParameterBlock>
             </Channel>
             <!-- </ChannelIndependentBlock> -->
           </Dynamic>
