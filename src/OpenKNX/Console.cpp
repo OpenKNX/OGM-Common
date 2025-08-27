@@ -192,6 +192,39 @@ namespace OpenKNX
             file.close();
             showFilesystem();
         }
+        else if (!diagnoseKo && cmd.rfind("fs dmp ", 0) == 0 && cmd.length() > 7)
+        {
+            auto fileName = cmd.substr(7, cmd.length() - 7);
+            if (fileName[0] != '/')
+                fileName = "/" + fileName;
+            File file = LittleFS.open(fileName.c_str(), "r");
+            if (file.isFile())
+            {
+                logInfo("Filesystem", "Dump of file %s (%u bytes):", fileName.c_str(), file.size());
+                uint8_t buffer[16] = {};
+                size_t readBytes;
+                while ((readBytes = file.readBytes((char*)buffer, sizeof(buffer))) > 0)
+                {
+                     openknx.logger.logHexWithPrefix("Filesystem", buffer, readBytes);
+                }
+                openknx.logger.logDividingLine();
+            }
+            else
+            {
+                logError("Filesystem", "File %s not found", fileName.c_str());
+            }
+            file.close();
+        }
+        else if (!diagnoseKo && cmd.rfind("fs del ", 0) == 0 && cmd.length() > 7)
+        {
+            auto fileName = cmd.substr(7, cmd.length() - 7);
+            if (fileName[0] != '/')
+                fileName = "/" + fileName;
+            if (LittleFS.remove(fileName.c_str()))
+                logInfo("Filesystem", "File %s deleted", fileName.c_str());
+            else
+                logError("Filesystem", "File %s not found", fileName.c_str());
+        }
 #endif
 #ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "bootloader"))
@@ -328,7 +361,7 @@ namespace OpenKNX
 
         logBegin();
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("================================================================================");
+        openknx.logger.logHeader("");
         openknx.logger.color(0);
         openknx.logger.log("");
         openknx.logger.log("        \x1B[90mOpen \x1B[32m#\x1B[0m           OpenKNX.de");
@@ -336,7 +369,7 @@ namespace OpenKNX
         openknx.logger.log("        \x1B[32m# \x1B[37mKNX\x1B[0m            wiki.openknx.de - forum.openknx.de");
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Information ===========================================");
+        openknx.logger.logHeader("Information");
         openknx.logger.color(0);
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
@@ -403,7 +436,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showInformations();
 
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         openknx.logger.log("");
         logEnd();
     }
@@ -433,11 +466,11 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Filesystem ============================================");
+        openknx.logger.logHeader("Filesystem");
 
         openknx.logger.color(0);
         showFilesystemDirectory("/");
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         logEnd();
     }
 
@@ -468,7 +501,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Versions ==============================================");
+        openknx.logger.logHeader("Versions");
         openknx.logger.color(0);
 
         openknx.logger.logWithPrefix("This Firmware", openknx.info.humanFirmwareVersion(true));
@@ -480,10 +513,10 @@ namespace OpenKNX
 
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         openknx.logger.logWithPrefix("Builddate", __DATE__);
         openknx.logger.logWithPrefix("Buildtime", __TIME__);
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         logEnd();
     }
 
@@ -492,7 +525,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Help ==================================================");
+        openknx.logger.logHeader("Help");
         openknx.logger.color(0);
         openknx.logger.log("Command(s)               Description");
         printHelpLine("help, h", "Show this help");
@@ -505,6 +538,8 @@ namespace OpenKNX
         printHelpLine("flash openknx", "Show openknx flash content");
 #if OPENKNX_LITTLE_FS
         printHelpLine("files, fs", "Show files on filesystem");
+        printHelpLine("fs del <file>", "Delete a file");
+        printHelpLine("fs dmp <file>", "Dump a file");
 #endif
 #ifdef OPENKNX_RUNTIME_STAT
         printHelpLine("runtime", "Show runtime statistics (Short statistic)");
@@ -559,7 +594,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showHelp();
 
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         logEnd();
     }
 
