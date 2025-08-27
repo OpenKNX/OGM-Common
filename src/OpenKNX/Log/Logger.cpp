@@ -233,6 +233,28 @@ namespace OpenKNX
             color(0);
         }
 
+        void Logger::logHeader(const char* header)
+        {
+            beforeLog();
+            printMessage("========================");
+            auto len = strlen(header);
+            if (len > 0)
+            {
+                printMessage(" ");
+                printMessage(header);
+                printMessage(" ");
+                len += 2;
+            }
+            for (int i = 55 - len; i >= 0; i--)
+                printMessage("=");
+            afterLog();
+        }
+
+        void Logger::logDividingLine()
+        {
+            log("--------------------------------------------------------------------------------");
+        }
+
         bool Logger::isColorSet()
         {
             return STATE_BY_CORE(_color) != 0;
