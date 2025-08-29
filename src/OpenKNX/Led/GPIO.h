@@ -13,7 +13,8 @@ namespace OpenKNX
             void writeLed(uint8_t brightness) override;
 
           public:
-            void init(long pin = -1, long activeOn = HIGH);
+            GPIO(long pin = -1, long activeOn = HIGH);
+            void init() override;
         };
     } // namespace Led
 } // namespace OpenKNX

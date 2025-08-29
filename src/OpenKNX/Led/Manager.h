@@ -11,6 +11,10 @@
 #include <Arduino.h>
 #include <string>
 
+#ifndef OPENKNX_LEDS_MAX
+    #define OPENKNX_LEDS_MAX 8
+#endif
+
 namespace OpenKNX
 {
     namespace Led
@@ -25,7 +29,11 @@ namespace OpenKNX
         class Manager
         {
           protected:
-            Led::Base* _progLed;
+            Led::Base* _dummyLed = new GPIO(-1);
+            Led::Base* _progLed = _dummyLed;
+            Led::Base* _leds[OPENKNX_LEDS_MAX];
+            uint8_t _ledCount = 0;
+            bool _init = false;
 
           public:
 
@@ -38,7 +46,11 @@ namespace OpenKNX
              */
             void loop();
 
+            bool addLed(Led::Base*, Led::LedType);
+
             Led::Base* getProgLed();
+
+            Led::Base* getLed(uint8_t);
 
 
             /*

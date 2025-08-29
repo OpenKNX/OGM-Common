@@ -69,7 +69,6 @@ namespace OpenKNX
 
 #ifdef LEDMANAGER
         Led::Manager leds;
-        Led::Base *progLed = leds.getProgLed();
 #else
 
 #ifdef OPENKNX_SERIALLED_ENABLE

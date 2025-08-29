@@ -36,6 +36,7 @@ namespace OpenKNX
             Led::Effects::Blink *_debugEffect = nullptr;
 #endif
 
+
             /*
              * write led state based on bool
              */
@@ -46,6 +47,9 @@ namespace OpenKNX
             virtual void writeLed(uint8_t brightness) = 0;
 
           public:
+
+            virtual void init() = 0;
+
             /*
              * use in normal loop or loop1
              */

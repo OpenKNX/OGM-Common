@@ -5,14 +5,17 @@ namespace OpenKNX
 {
     namespace Led
     {
-        void GPIO::init(long pin /* = -1 */, long activeOn /* = HIGH */)
+        GPIO::GPIO(long pin /*= -1*/, long activeOn /*= HIGH*/)
         {
-            // no valid pin
-            if (pin < 0)
-                return;
-
             _pin = pin;
             _activeOn = activeOn;
+        }
+
+        void GPIO::init()
+        {
+            // no valid pin
+            if (_pin < 0)
+                return;
 
             pinMode(_pin, OUTPUT);
             digitalWrite(_pin, !_activeOn);

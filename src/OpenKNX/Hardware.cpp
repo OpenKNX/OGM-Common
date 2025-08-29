@@ -171,7 +171,7 @@ namespace OpenKNX
 #ifdef INFO1_LED_PIN
         openknx.info1Led.on();
 #endif
-        openknx.progLed->errorCode(code);
+        openknx.leds.getProgLed()->errorCode(code);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
