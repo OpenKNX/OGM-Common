@@ -198,7 +198,7 @@ namespace OpenKNX
             if (fileName[0] != '/')
                 fileName = "/" + fileName;
             File file = LittleFS.open(fileName.c_str(), "r");
-            if (file.isFile())
+            if (file.available() && !file.isDirectory())
             {
                 logInfo("Filesystem", "Dump of file %s (%u bytes):", fileName.c_str(), file.size());
                 uint8_t buffer[16] = {};
