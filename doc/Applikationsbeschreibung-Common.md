@@ -170,7 +170,7 @@ In dem Feld wird der Breitengrad des Standortes eingegeben.
 
 In dem Feld wird der Längengrad des Standortes eingegeben.
 
-## Erweitert
+## **Erweitert**
 
 Im folgenden können Einstellungen vorgenommen werden, die eher für erfahrene Benutzer sind.
 
@@ -266,5 +266,15 @@ Auswahl:
 - Aktiv mit 60 min. Schreibschutz
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
 
+<!-- DOC -->
+## **Module**
 
+Hier wird eine Liste aller in dieser Applikation enthaltenen OpenKNX-Module und deren Version angezeigt. Standardmäßig sind alle Module aktiv. Mit der Checkbox kann man ein Modul deaktivieren. Es erscheint dann nicht mehr zur Auswahl in der ETS-Applikation und wird auf dem Gerät nicht ausgeführt.
+
+<!-- DOC -->
+### **Modul aktivieren**
+
+Ist die Checkbox ausgewählt, ist das entsprechende Modul aktiv und dessen Parameterseite erscheint in der ETS.
+
+Wird die Checkbox ausgeschaltet, wird das Module deaktiviert und alles Grupppenadressenzuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos. 
 

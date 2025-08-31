@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   
   <op:config name="%BASE_ShowExtendedSave%" value="1" />
@@ -63,6 +63,12 @@
                 <TypeRestriction Base="Value" SizeInBit="1">
                   <Enumeration Text="Nein" Value="1" Id="%ENID%" />
                   <Enumeration Text="Ja" Value="0" Id="%ENID%" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-ActiveInactive" Name="ActiveInactive">
+                <TypeRestriction Base="Value" SizeInBit="1">
+                  <Enumeration Text="Aktiv" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Inaktiv" Value="0" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
               <!-- KO numbers -->
@@ -291,7 +297,7 @@
               <!-- Local parameters for module visibility -->
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
               <!-- <Parameter Id="%AID%_P-%TT%999%MM%" Name="Module%MM%" ParameterType="%AID%_PT-Checkbox" Text="%Modulname%" Value="1" /> -->
-              <Parameter Id="OpenKNXproducer" Name="Module%MM%" ParameterType="%AID%_PT-CheckBox" Text="%Modulname%" Value="1" />
+              <Parameter Id="OpenKNXproducer" Name="Module_%ProducerModulePrefix%" ParameterType="%AID%_PT-CheckBox" Text="%ProducerModuleName%" Value="1" />
 
             </Parameters>
             <ParameterRefs>
@@ -595,6 +601,28 @@
                   </when>
                 </choose>
               </ParameterBlock>
+       	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-Module">
+                <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Enthaltene Module" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation beinhaltet die folgenden Module. Diese können bei Bedarf deaktiviert werden, um die Übersichtlichkeit der Applikation zu erhöhen" />
+                <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerModules" Inline="true" Layout="Grid">
+                  <Rows>
+                    <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
+                    <Row Id="%AID%_PB-nnn_R-%ModuleCount+1%" Name="Row%ModuleCount+1%" />
+                  </Rows>
+                  <Columns>
+                    <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="5%" />
+                    <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
+                    <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
+                  </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Modul" Cell="1,3" UIHint="Headline" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="Version" Cell="1,4" UIHint="Headline" />
+                  <ParameterRefRef RefId="%ProducerModuleParameter%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleName%" Cell="%ModuleCount+1%,3" />
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleVersion%" Cell="%ModuleCount+1%,4" />
+                </ParameterBlock>
+              </ParameterBlock>
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
 						
               	<ParameterSeparator Id="%AID%_PS-nnn" Text="Dokumentation" UIHint="Headline" />
@@ -610,13 +638,6 @@
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Verwendung von Open Source" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="OpenKNX verwendet für die Sonnenstandsberechnung den PSA Algorithmus welcher unter der CC BY 4.0 Lizenz veröffentlich wurde."  />
 								<ParameterSeparator Id="%AID%_PS-nnn" Text="Mehr Information dazu sind unter https://www.sciencedirect.com/science/article/pii/S0038092X20311488?via%3Dihub zu finden."  />
-
-              </ParameterBlock>
-       	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-OpenKNX">
-                <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Enthaltene Module" UIHint="Headline" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation beinhaltet die folgenden Module. Diese können bei Bedarf ein- oder ausgeblendet werden, um die Übersichtlichkeit der Applikation zu erhöhen" />
-						    <ParameterRefRef RefId="OpenKNXproducer" />
 
               </ParameterBlock>
             </Channel>
