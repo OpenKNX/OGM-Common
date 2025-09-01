@@ -106,7 +106,7 @@ if ($device) {
     $currentDir = (Get-Item .).FullName
     $objShell = New-Object -ComObject "Shell.Application"
     $objFolder = $objShell.NameSpace($device.DeviceID.ToString()) 
-    $objFolder.CopyHere("$currentDir\data\$firmwareName", $FOF_CREATEPROGRESSDLG)
+    $objFolder.CopyHere("$currentDir\$firmwareName", $FOF_CREATEPROGRESSDLG)
     Write-Host "Fertig!" -ForegroundColor Green
     timeout /T 20 
 }

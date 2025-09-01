@@ -66,16 +66,17 @@ if (!$productName) {
 
 # Create source and target path for firmware
 $CopyItem_Source = ".pio/build/$pioEnv/firmware.$binaryFormat"
-$CopyItem_Target_Data = "release/data"
-$CopyItem_Target_Device = "Device-$productName"
-$CopyItem_Target_Dir = "release/$CopyItem_Target_Device"
+$CopyItem_Target_Root = "release"
+$CopyItem_Target_Data = "$CopyItem_Target_Root/data"
+$CopyItem_Target_Device = "$productName"
+$CopyItem_Target_Dir = "$CopyItem_Target_Root/Firmware/$CopyItem_Target_Device"
 $CopyItem_Target_Name = "$firmwareName.$binaryFormat"
 if (![string]::IsNullOrEmpty($ProjectDir)) {
   $CopyItem_Source = Join-Path $ProjectDir $CopyItem_Source
   $CopyItem_Target_Data = Join-Path $ProjectDir $CopyItem_Target_Data
   $CopyItem_Target_Dir = Join-Path $ProjectDir $CopyItem_Target_Dir
 }
-$CopyItem_Target = Join-Path $CopyItem_Target_Dir "data/$CopyItem_Target_Name"
+$CopyItem_Target = Join-Path $CopyItem_Target_Dir $CopyItem_Target_Name
 
 # Check if firmware is available and copy it to release
 Write-Host "The $PioEnv firmware is available as $CopyItem_Source"
@@ -83,7 +84,7 @@ if ( Test-Path $CopyItem_Source ) {
   Write-Host "Copy-Item: $CopyItem_Source to $CopyItem_Target"
   # create target directories if not exists
   if (!(Test-Path -Path $CopyItem_Target_Dir)) {
-    New-Item -ItemType Directory -Force -Path "$CopyItem_Target_Dir/data"
+    New-Item -ItemType Directory -Force -Path $CopyItem_Target_Dir
   }
   Write-Host "DEBUG: vor Copy-Item $CopyItem_Target"
   if (!(Test-Path -Path $CopyItem_Target_Data)) {
@@ -122,7 +123,7 @@ if ($processor -eq "RP2040") {
   $fileName = "$CopyItem_Target_Dir/KNX-Upload-Firmware.ps1"
 
   # Write the script file content to the file 
-  $scriptContent = "../data/KNX-Upload-Firmware-Generic.ps1 $CopyItem_Target_Name"
+  $scriptContent = "../../data/KNX-Upload-Firmware-Generic.ps1 $CopyItem_Target_Name"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
@@ -141,7 +142,7 @@ if ($withOTA) {
   }
 
   # Write the script file content to the file 
-  $scriptContent = "../data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
+  $scriptContent = "../../data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
@@ -154,9 +155,9 @@ if ($withOTA) {
 $fileName = "$CopyItem_Target_Dir/USB-Upload-Firmware.ps1"
 
 # Write the script file content to the file 
-$scriptContent = "../data/Upload-Firmware-Generic-$processor.ps1 $CopyItem_Target_Name"
+$scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $CopyItem_Target_Name"
 if ( $processor -eq "ESP32") {
-  $scriptContent = "../data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
+  $scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
 }
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
@@ -171,7 +172,7 @@ $releaseTarget = "$CopyItem_Target_Data/content.xml"
 #check if file exists content.xml exists if not create it
 if ((Test-Path -Path $releaseTarget -PathType Leaf)) {
   # Add entry to content.xml. If entry already exists, do nothing. If not, add it. If file does not exist, create it.
-  $XMLContent = "         <Product Name=""$productName"" Firmware=""../$CopyItem_Target_Device/data/$CopyItem_Target_Name"" Processor=""$processor"" />"
+  $XMLContent = "         <Product Name=""$productName"" Firmware=""../Firmware/$CopyItem_Target_Device/$CopyItem_Target_Name"" Processor=""$processor"" />"
   $lineExists = Select-String -Path $fileName -Pattern $XMLContent -Quiet
   if (-not $lineExists) { Add-Content -Path $releaseTarget -Value $XMLContent }
 }
