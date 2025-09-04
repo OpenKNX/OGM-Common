@@ -114,6 +114,7 @@ namespace OpenKNX
             if (_manager == nullptr)
                 return;
 
+            _initialized = true;
             setColor(_color[0], _color[1], _color[2]);
         }
         

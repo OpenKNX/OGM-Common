@@ -16,7 +16,8 @@ namespace OpenKNX
             // no valid pin
             if (_pin < 0)
                 return;
-
+            
+            _initialized = true;
             pinMode(_pin, OUTPUT);
             digitalWrite(_pin, !_activeOn);
         }

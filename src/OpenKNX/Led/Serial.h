@@ -62,7 +62,6 @@ namespace OpenKNX
             void init();
 
           public:
-            long getPin() { return _pin; }
             long getAddr() { return _addr; }
 
           public:
