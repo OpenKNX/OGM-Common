@@ -21,49 +21,7 @@ namespace OpenKNX
 
     void Hardware::initLeds()
     {
-#ifdef LEDMANAGER
         openknx.leds.init();
-#else
-#ifdef OPENKNX_SERIALLED_ENABLE
-    #ifndef PROG_LED_COLOR
-        #define PROG_LED_COLOR 63, 0, 0
-    #endif
-        openknx.ledManager.init(OPENKNX_SERIALLED_PIN, OPENKNX_SERIALLED_NUM);
-        openknx.progLed.init(PROG_LED_PIN, &(openknx.ledManager), PROG_LED_COLOR);
-
-    #ifdef INFO1_LED_PIN
-        #ifndef INFO1_LED_COLOR
-            #define INFO1_LED_COLOR 0, 63, 0
-        #endif
-        openknx.info1Led.init(INFO1_LED_PIN, &(openknx.ledManager), INFO1_LED_COLOR);
-    #endif
-    #ifdef INFO2_LED_PIN
-        #ifndef INFO2_LED_COLOR
-            #define INFO2_LED_COLOR 0, 63, 0
-        #endif
-        openknx.info2Led.init(INFO2_LED_PIN, &(openknx.ledManager), INFO2_LED_COLOR);
-    #endif
-    #ifdef INFO3_LED_PIN
-        #ifndef INFO3_LED_COLOR
-            #define INFO3_LED_COLOR 0, 63, 0
-        #endif
-        openknx.info3Led.init(INFO3_LED_PIN, &(openknx.ledManager), INFO3_LED_COLOR);
-    #endif
-
-#else
-
-        openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.init(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON);
-    #endif
-    #ifdef INFO2_LED_PIN
-        openknx.info2Led.init(INFO2_LED_PIN, INFO2_LED_PIN_ACTIVE_ON);
-    #endif
-    #ifdef INFO3_LED_PIN
-        openknx.info3Led.init(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON);
-    #endif
-#endif
-#endif
     }
 
     void Hardware::initButtons()
@@ -168,9 +126,8 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.on();
-#endif
+        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
         openknx.leds.getProgLed()->errorCode(code);
 
 #if MASK_VERSION == 0x07B0

@@ -683,14 +683,14 @@ namespace OpenKNX
         openknx.watchdog.deactivate();
 
         openknx.leds.getProgLed()->blinking();
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.off();
-#endif
+        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->off();
+
 #ifdef INFO2_LED_PIN
-        openknx.info2Led.off();
+        //openknx.info2Led.off();
 #endif
 #ifdef INFO3_LED_PIN
-        openknx.info3Led.off();
+        //openknx.info3Led.off();
 #endif
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)

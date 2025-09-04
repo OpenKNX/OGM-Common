@@ -67,29 +67,7 @@ namespace OpenKNX
         Button func3Button = Button("Func3");
 #endif
 
-#ifdef LEDMANAGER
         Led::Manager leds;
-#else
-
-#ifdef OPENKNX_SERIALLED_ENABLE
-        Led::SerialLedManager ledManager;
-    #define LEDCLASS Led::Serial
-#else
-    #define LEDCLASS Led::GPIO
-#endif
-
-        LEDCLASS progLed;
-#ifdef INFO1_LED_PIN
-        LEDCLASS info1Led;
-        LEDCLASS& infoLed = info1Led;
-#endif
-#ifdef INFO2_LED_PIN
-        LEDCLASS info2Led;
-#endif
-#ifdef INFO3_LED_PIN
-        LEDCLASS info3Led;
-#endif
-#endif
 
         Modules modules;
         Flash::Driver openknxFlash;

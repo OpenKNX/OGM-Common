@@ -27,6 +27,7 @@ namespace OpenKNX
             uint _sm;
             uint _offset;
           #endif
+            long _ledPin = -1;
             uint8_t _ledCount = 0;
             uint32_t _lastWritten = 0;
             uint8_t* _ledData = 0;
@@ -34,23 +35,35 @@ namespace OpenKNX
 
 
           public:
-            void init(uint8_t ledPin, uint8_t ledCount);
-            void setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b);
+            SerialLedManager(long ledPin) : _ledPin(ledPin){}
+            void init(uint8_t ledCount);
+            void setLED(uint8_t ledAddr, uint8_t r, uint8_t g, uint8_t b);
             void writeLeds(); // send the color data to the LEDs
+            long getPin() { return _ledPin; }
         };
 
         class Serial : public Base
         {
-          private:
+          protected:
             SerialLedManager *_manager = nullptr;
+            uint8_t _color[3] = {0, 0, 0}; // R, G, B
+            long _addr = -1;
 
-          private:
-            uint8_t color[3] = {0, 0, 0}; // R, G, B
-          private:
+          protected:
             void writeLed(uint8_t brightness) override;
 
           public:
-            void init(long num, SerialLedManager *manager, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
+            Serial(long num, long pin, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
+
+          public:
+            void setManager(SerialLedManager *manager);
+
+          public:
+            void init();
+
+          public:
+            long getPin() { return _pin; }
+            long getAddr() { return _addr; }
 
           public:
             void setColor(uint8_t r, uint8_t g, uint8_t b);

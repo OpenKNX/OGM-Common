@@ -90,16 +90,33 @@ namespace OpenKNX
         }
         #endif
 
-        void Serial::init(long num, SerialLedManager *manager, uint8_t r, uint8_t g, uint8_t b)
+        Serial::Serial(long num, long pin, uint8_t r, uint8_t g, uint8_t b)
         {
-            // no valid pin
-            if (num < 0 || manager == nullptr)
+            _addr = num;
+            _pin = pin;
+            _color[0] = r;
+            _color[1] = g;
+            _color[2] = b;
+        }
+
+        void Serial::setManager(SerialLedManager *manager)
+        {
+            // no valid manager
+            if (manager == nullptr)
                 return;
 
-            _pin = num;
             _manager = manager;
-            setColor(r, g, b);
         }
+
+        void Serial::init()
+        {
+            // no valid manager
+            if (_manager == nullptr)
+                return;
+
+            setColor(_color[0], _color[1], _color[2]);
+        }
+        
 
         /*
          * write led state based on bool and _brightness
@@ -107,15 +124,15 @@ namespace OpenKNX
         void Serial::writeLed(uint8_t brightness)
         {
             // no valid pin
-            if (_pin < 0 || _manager == nullptr) return;
+            if (_addr < 0 || _manager == nullptr) return;
 
             if (_currentLedBrightness != brightness)
             {
                 _manager->setLED(
-                    _pin,
-                    ((uint32_t)color[0] * brightness * _maxBrightness / 100 / 256),
-                    ((uint32_t)color[1] * brightness * _maxBrightness / 100 / 256),
-                    ((uint32_t)color[2] * brightness * _maxBrightness / 100 / 256));
+                    _addr,
+                    ((uint32_t)_color[0] * brightness * _maxBrightness / 100 / 256),
+                    ((uint32_t)_color[1] * brightness * _maxBrightness / 100 / 256),
+                    ((uint32_t)_color[2] * brightness * _maxBrightness / 100 / 256));
 
                 _currentLedBrightness = brightness;
             }
@@ -128,15 +145,17 @@ namespace OpenKNX
          */
         void Serial::setColor(uint8_t r, uint8_t g, uint8_t b)
         {
-            color[0] = r;
-            color[1] = g;
-            color[2] = b;
-            _manager->setLED(_pin, (color[0] * (uint16_t)_currentLedBrightness) / 256, (color[1] * (uint16_t)_currentLedBrightness) / 256, (color[2] * (uint16_t)_currentLedBrightness) / 256);
+            _color[0] = r;
+            _color[1] = g;
+            _color[2] = b;
+            _manager->setLED(_addr, (_color[0] * (uint16_t)_currentLedBrightness) / 256, (_color[1] * (uint16_t)_currentLedBrightness) / 256, (_color[2] * (uint16_t)_currentLedBrightness) / 256);
         }
 
-        void SerialLedManager::init(uint8_t ledPin, uint8_t ledCount)
+        void SerialLedManager::init(uint8_t ledCount)
         {
             logInfo("SerialLedManager", "init");
+
+            //LED-Todo: check max led count based on platform
 
             _ledCount = ledCount;
             _ledData = new uint8_t[_ledCount*3];
@@ -146,7 +165,7 @@ namespace OpenKNX
             _led_chan = NULL;
             rmt_tx_channel_config_t tx_chan_config =
                     {
-                        .gpio_num = (gpio_num_t)ledPin,
+                        .gpio_num = (gpio_num_t)_ledPin,
                         .clk_src = RMT_CLK_SRC_DEFAULT, // select source clock
                         .resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ,
                         .mem_block_symbols = (size_t)(ledCount * BITS_PER_LED_CMD) , // increase the block size can make the LED less flickering
@@ -208,7 +227,7 @@ namespace OpenKNX
             // This will find a free pio and state machine for our program and load it for us
             // We use pio_claim_free_sm_and_add_program_for_gpio_range (for_gpio_range variant)
             // so we will get a PIO instance suitable for addressing gpios >= 32 if needed and supported by the hardware
-            bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&ws2812_program, &_pio, &_sm, &_offset, ledPin, 1, true);
+            bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&ws2812_program, &_pio, &_sm, &_offset, _ledPin, 1, true);
             logInfo("SerialLedManager", "PIO init %d", success);
             if(!success)
             {
@@ -216,31 +235,31 @@ namespace OpenKNX
                 return;
             }
 
-            ws2812_program_init(_pio, _sm, _offset, ledPin, 800000, false);
+            ws2812_program_init(_pio, _sm, _offset, _ledPin, 800000, false);
             #endif
         }
 
-        void SerialLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)
+        void SerialLedManager::setLED(uint8_t ledAddr, uint8_t r, uint8_t g, uint8_t b)
         {
            _dirty = false;
-           if(_ledData[ledAdr*3] != g)
+           if(_ledData[ledAddr*3] != g)
             {
-                _ledData[ledAdr*3] = g;
-                _ledData[ledAdr*3+1] = r;
-                _ledData[ledAdr*3+2] = b;
+                _ledData[ledAddr*3] = g;
+                _ledData[ledAddr*3+1] = r;
+                _ledData[ledAddr*3+2] = b;
                 _dirty = true;
                 return;
             }
-            if(_ledData[ledAdr*3+1] != r)
+            if(_ledData[ledAddr*3+1] != r)
             {
-                _ledData[ledAdr*3+1] = r;
-                _ledData[ledAdr*3+2] = b;
+                _ledData[ledAddr*3+1] = r;
+                _ledData[ledAddr*3+2] = b;
                 _dirty = true;
                 return;
             }
-            if(_ledData[ledAdr*3+2] != b)
+            if(_ledData[ledAddr*3+2] != b)
             {
-                _ledData[ledAdr*3+2] = b;
+                _ledData[ledAddr*3+2] = b;
                 _dirty = true;
             }
         }
