@@ -778,7 +778,12 @@ namespace OpenKNX
         auto _pos = cmd.find(' ');
         if (_pos != std::string::npos)
         {
-            pin_size_t pin = std::stoi(cmd.substr(_pos + 1));
+            uint16_t pin;
+            if (cmd.length() <= 7)
+                pin = std::stoi(cmd.substr(_pos + 1));
+            else
+                pin = std::stoi(cmd.substr(_pos + 1), nullptr, 16);
+
             if (cmd.compare(0, 2, "dw") == 0 || cmd.compare(0, 2, "aw") == 0)
             {
                 auto __pos = cmd.find(' ', _pos + 1);
@@ -787,23 +792,23 @@ namespace OpenKNX
                     int value = std::stoi(cmd.substr(__pos + 1));
                     if (cmd.compare(0, 2, "dw") == 0 && value <= HIGH)
                     {
-                        digitalWrite(pin, value);
+                        openknx.gpio.digitalWrite((pin_size_t)pin, value);
                         openknx.logger.logWithPrefixAndValues("PinCommand", "Write pin %i to %i", pin, value);
                     }
                     else if (cmd.compare(0, 2, "aw") == 0 && value <= 4095)
                     {
-                        analogWrite(pin, value);
+                        analogWrite((pin_size_t)pin, value);
                         openknx.logger.logWithPrefixAndValues("PinCommand", "Write pin %i to %i", pin, value);
                     }
                 }
             }
             else if (cmd.compare(0, 2, "dr") == 0)
             {
-                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, digitalRead(pin));
+                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, openknx.gpio.digitalRead((openknx_gpio_number_t)pin));
             }
             else if (cmd.compare(0, 2, "ar") == 0)
             {
-                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead(pin));
+                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead((pin_size_t)pin));
             }
         }
     }
