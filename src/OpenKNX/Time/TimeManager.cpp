@@ -532,73 +532,9 @@ namespace OpenKNX
             
             DateTime localTime = getLocalTime();
             bool isValidState = isValid();
-#ifdef OPENKNX_LED_TIME
-            if (_timeUpdatedActivity != 0)
-            {
-                // time was updated
-                if (_ledState != 2)
-                {
-                    _ledState = 2;
-                    #ifdef OPENKNX_SERIALLED_ENABLE
-                    openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_GREEN);
-                    openknx.OPENKNX_LED_TIME.on();
-                    #else
-                    openknx.OPENKNX_LED_TIME.blinking(100);
-                    #endif
-                } 
-                if (delayCheck(_timeUpdatedActivity, 1000))
-                {
-                    _timeUpdatedActivity = 0;
-                }
-            }
-            else if (isValidState)
-            {       
-                // time is valid
-                uint8_t lastChange = localTime.second / 2;
-                if (_lastSecondChange != lastChange)
-                {
-                    _lastSecondChange = lastChange;
-                    _timerLedOn = millis();
-                }
-                if (delayCheck(_timerLedOn, 1000))
-                {
-                    _timerLedOn = 0;
-                    if (_ledState != 3)
-                    {
-                        _ledState = 3;
-                        #ifdef OPENKNX_SERIALLED_ENABLE
-                        openknx.OPENKNX_LED_TIME.off();
-                        #else
-                        openknx.OPENKNX_LED_TIME.off();
-                        #endif
-                    }
-                }
-                else if (_ledState != 4)
-                {
-                    _ledState = 4;
-                    #ifdef OPENKNX_SERIALLED_ENABLE
-                    openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_BLUE);
-                    openknx.OPENKNX_LED_TIME.on();
-                    #else
-                    openknx.OPENKNX_LED_TIME.on();
-                    #endif
-                }
-            }
-            else
-            {
-                // time is invalid
-                if (_ledState != 1)   
-                {
-                    _ledState = 1;
-                    #ifdef OPENKNX_SERIALLED_ENABLE
-                    openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_RED);
-                    openknx.OPENKNX_LED_TIME.on();
-                    #else
-                    openknx.OPENKNX_LED_TIME.off();
-                    #endif
-                }
-            }
-#endif
+
+            loopLed();
+
             if (ParamBASE_InternalTime && isValidState)
             {
                 if (localTime.second != _lastSendSecond || localTime.minute != _lastSendMinute || localTime.hour != _lastSendHour)
@@ -694,6 +630,84 @@ namespace OpenKNX
 #endif
         }
 
+        void TimeManager::loopLed()
+        {
+            if(_timeLed == nullptr)
+                return;
+            
+            //Led::RGB* _timeledRGB = dynamic_cast<Led::RGB*>(_timeLed);
+            bool _RGB = false;
+            
+            if (_timeUpdatedActivity != 0)
+            {
+                // time was updated
+                if (_ledState != 2)
+                {
+                    _ledState = 2;
+                    if(_RGB)
+                    {
+                        ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_GREEN);
+                        _timeLed->on();
+                    }
+                    else
+                    {
+                        _timeLed->blinking(100);
+                    }
+                } 
+                if (delayCheck(_timeUpdatedActivity, 1000))
+                {
+                    _timeUpdatedActivity = 0;
+                }
+            }
+            // else if (isValid())
+            // {       
+            //     // time is valid
+            //     uint8_t lastChange = getLocalTime().second / 2;
+            //     if (_lastSecondChange != lastChange)
+            //     {
+            //         _lastSecondChange = lastChange;
+            //         _timerLedOn = millis();
+            //     }
+            //     if (delayCheck(_timerLedOn, 1000))
+            //     {
+            //         _timerLedOn = 0;
+            //         if (_ledState != 3)
+            //         {
+            //             _ledState = 3;
+            //             #ifdef OPENKNX_SERIALLED_ENABLE
+            //             openknx.OPENKNX_LED_TIME.off();
+            //             #else
+            //             openknx.OPENKNX_LED_TIME.off();
+            //             #endif
+            //         }
+            //     }
+            //     else if (_ledState != 4)
+            //     {
+            //         _ledState = 4;
+            //         #ifdef OPENKNX_SERIALLED_ENABLE
+            //         openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_BLUE);
+            //         openknx.OPENKNX_LED_TIME.on();
+            //         #else
+            //         openknx.OPENKNX_LED_TIME.on();
+            //         #endif
+            //     }
+            // }
+            // else
+            // {
+            //     // time is invalid
+            //     if (_ledState != 1)   
+            //     {
+            //         _ledState = 1;
+            //         #ifdef OPENKNX_SERIALLED_ENABLE
+            //         openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_RED);
+            //         openknx.OPENKNX_LED_TIME.on();
+            //         #else
+            //         openknx.OPENKNX_LED_TIME.off();
+            //         #endif
+            //     }
+            // }
+        }
+        
         bool TimeManager::isValid()
         {
             time_t now = _timeClock.getTime();

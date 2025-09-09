@@ -685,13 +685,11 @@ namespace OpenKNX
         openknx.leds.getProgLed()->blinking();
         if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->off();
+        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2) != nullptr)
+            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2)->off();
+        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3) != nullptr)
+            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3)->off();
 
-#ifdef INFO2_LED_PIN
-        //openknx.info2Led.off();
-#endif
-#ifdef INFO3_LED_PIN
-        //openknx.info3Led.off();
-#endif
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {

@@ -1,6 +1,6 @@
 #pragma once
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040)
-#include "OpenKNX/Led/Base.h"
+#include "OpenKNX/Led/RGB.h"
 #if defined(ARDUINO_ARCH_ESP32)
     #include <driver/rmt_tx.h>
 #else
@@ -42,12 +42,13 @@ namespace OpenKNX
             long getPin() { return _ledPin; }
         };
 
-        class Serial : public Base
+        class Serial : public RGB
         {
           protected:
             SerialLedManager *_manager = nullptr;
             uint8_t _color[3] = {0, 0, 0}; // R, G, B
             long _addr = -1;
+            long _pin = -1;
 
           protected:
             void writeLed(uint8_t brightness) override;
@@ -63,9 +64,10 @@ namespace OpenKNX
 
           public:
             long getAddr() { return _addr; }
+            long getPin() { return _pin; }
 
           public:
-            void setColor(uint8_t r, uint8_t g, uint8_t b);
+            void setColor(uint8_t r, uint8_t g, uint8_t b) override;
         };
     } // namespace Led
 } // namespace OpenKNX

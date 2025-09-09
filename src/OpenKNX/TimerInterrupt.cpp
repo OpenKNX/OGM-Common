@@ -160,6 +160,11 @@ namespace OpenKNX
 
     void TimerInterrupt::processLeds()
     {
+#ifdef OPENKNX_SERIALLED_ENABLE
+    #ifdef ARDUINO_ARCH_ESP32
+        return;
+    #endif
+#endif
         openknx.leds.timer();
     }
 

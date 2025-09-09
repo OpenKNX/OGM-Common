@@ -7,7 +7,6 @@ namespace OpenKNX
     {
         GPIO_RGB::GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, uint8_t r, uint8_t g, uint8_t b)
         {
-            _pin = pin_r;
             _pins[0] = pin_r;
             _pins[1] = pin_g;
             _pins[2] = pin_b;

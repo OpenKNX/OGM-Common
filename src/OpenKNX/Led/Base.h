@@ -16,7 +16,7 @@ namespace OpenKNX
         class Base
         {
           protected:
-            volatile long _pin = -1;
+            //volatile long _pin = -1;
             volatile bool _initialized = false;
             volatile uint32_t _lastMillis = 0;
             volatile uint8_t _maxBrightness = 100;
@@ -50,8 +50,6 @@ namespace OpenKNX
           public:
 
             virtual void init() = 0;
-
-            long getPin() { return _pin; }
 
             /*
              * use in normal loop or loop1

@@ -8,8 +8,8 @@ namespace OpenKNX
         void __time_critical_func(Base::loop)()
         {
             // IMPORTANT!!! The method millis() and micros() are not incremented further in the interrupt!
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             _lastMillis = millis();
 
@@ -73,8 +73,9 @@ namespace OpenKNX
 
         void Base::brightness(uint8_t brightness)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
+
             if (brightness > 100) brightness = 100;
 
             logTraceP("brightness %i", brightness);
@@ -83,8 +84,8 @@ namespace OpenKNX
 
         void Base::powerSave(bool active /* = true */)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("powerSave %i", active);
             _powerSave = active;
@@ -92,8 +93,8 @@ namespace OpenKNX
 
         void Base::forceOn(bool active /* = true */)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("forceOn %i", active);
             _forceOn = active;
@@ -105,8 +106,8 @@ namespace OpenKNX
 
         void Base::errorCode(uint8_t code /* = 0 */)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             _errorMode = false;
             if (_errorMode) delete _errorEffect;
@@ -121,8 +122,8 @@ namespace OpenKNX
 
         void Base::on(bool active /* = true */)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("on");
             unloadEffect();
@@ -131,8 +132,8 @@ namespace OpenKNX
 
         void Base::pulsing(uint16_t frequency)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("pulsing (frequency %i)", frequency);
             loadEffect(new Led::Effects::Pulse(frequency));
@@ -141,8 +142,8 @@ namespace OpenKNX
 
         void Base::blinking(uint16_t frequency)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("blinking (frequency %i)", frequency);
             loadEffect(new Led::Effects::Blink(frequency));
@@ -151,8 +152,8 @@ namespace OpenKNX
 
         void Base::flash(uint16_t duration)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("flash (duration %i ms)", duration);
             loadEffect(new Led::Effects::Flash(duration));
@@ -161,8 +162,8 @@ namespace OpenKNX
 
         void Base::activity(uint32_t &lastActivity, bool inverted)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("activity");
             loadEffect(new Led::Effects::Activity(lastActivity, inverted));
@@ -171,8 +172,8 @@ namespace OpenKNX
 
         void Base::off()
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (!_initialized) return;
 
             logTraceP("off");
             unloadEffect();
@@ -225,6 +226,8 @@ namespace OpenKNX
 
         std::string Base::logPrefix()
         {
+            //LED-ToDo
+            int _pin = -1;
             return openknx.logger.buildPrefix("LED", _pin);
         }
     } // namespace Led

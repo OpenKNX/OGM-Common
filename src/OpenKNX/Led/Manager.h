@@ -54,7 +54,10 @@ namespace OpenKNX
 
             void init();
 
-            void timer();
+            /*
+             * Must be called by TimerInterrupt every 1ms
+             */
+            void timer(bool distribute = true);
 
             /*
              * use in normal loop or loop1

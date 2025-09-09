@@ -111,7 +111,7 @@ namespace OpenKNX
         void Serial::init()
         {
             // no valid manager
-            if (_manager == nullptr)
+            if (_manager == nullptr || _addr < 0)
                 return;
 
             _initialized = true;
@@ -195,19 +195,7 @@ namespace OpenKNX
                 pdTRUE,             // Auto-Reload (Wiederholung nach Ablauf)
                 (void *)0,          // Timer-ID (kann für Identifikation verwendet werden)
                 [](TimerHandle_t timer) {
-                    openknx.progLed.loop();
-    #ifdef INFO2_LED_PIN
-                    openknx.info2Led.loop();
-    #endif
-    #ifdef INFO1_LED_PIN
-                    openknx.info1Led.loop();
-    #endif
-    #ifdef INFO3_LED_PIN
-                    openknx.info3Led.loop();
-    #endif
-    #ifdef OPENKNX_SERIALLED_ENABLE
-                    openknx.ledManager.writeLeds();
-    #endif
+                    openknx.leds.timer();
                 } // Callback-Funktion, die beim Timeout aufgerufen wird
             );
 
@@ -267,11 +255,13 @@ namespace OpenKNX
 
         void SerialLedManager::writeLeds()
         {
+            //logDebug("SerialLedManager", "writeLeds");
             if (!_dirty)
                 return;
-
+            //logDebug("SerialLedManager", "writeLeds2");
             if (delayCheckMillis(_lastWritten, 5)) // prevent calling a new rmt transmission into an running on
             {
+                logDebug("SerialLedManager", "writeLeds3");
                 _lastWritten = millis();
                 _dirty = 0;
 

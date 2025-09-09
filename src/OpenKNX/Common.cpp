@@ -42,7 +42,7 @@ namespace OpenKNX
         openknx.hardware.initButtons();
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.progLed.on();
+        openknx.leds.getLed(Led::LedType::LED_TYPE_PROG)->on();
         if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
 #else
@@ -317,7 +317,7 @@ namespace OpenKNX
             openknx.modules.list[i]->setup1(configured);
 
         _setup1Ready = true;
-        openknx.progLed.off();
+        openknx.leds.getProgLed()->off();
     }
 #endif
 

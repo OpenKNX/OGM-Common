@@ -7,6 +7,8 @@
 #include "string"
 #include "time.h"
 #include <ctime>
+#include "OpenKNX/Led/Base.h"
+#include "OpenKNX/Led/RGB.h"
 
 #ifndef OPENKNX_TIME_DIGAGNOSTIC
     #ifdef OPENKNX_DEBUG
@@ -63,6 +65,7 @@ namespace OpenKNX
             uint8_t _lastSecondChange = 0;
             unsigned long _timerLedOn = 0;
             unsigned long _timeUpdatedActivity = 0;
+            OpenKNX::Led::Base* _timeLed = nullptr;
 #endif
 
 #ifdef OPENKNX_TIME_TESTCOMMAND
@@ -76,6 +79,7 @@ namespace OpenKNX
             void setup(bool configured);
             void setDaylightSavingMode(DaylightSavingMode daylightSavingMode);
             void loop();
+            void loopLed();
             void processInputKo(GroupObject& ko);
             bool processCommand(std::string& cmd, bool diagnoseKo);
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);

@@ -27,26 +27,28 @@ namespace OpenKNX
          */
         void GPIO::writeLed(uint8_t brightness)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (_initialized < 0) return;
 
             uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 100;
 
             if (calcBrightness == _currentLedBrightness)
                 return;
 
-            // Need to reset pinMode after using analogWrite
-            if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
-                pinMode(_pin, OUTPUT);
-
             if (calcBrightness == 255)
+            {
+                pinMode(_pin, OUTPUT);
                 digitalWrite(_pin, _activeOn);
-
+            }
             else if (calcBrightness == 0)
+            {
+                pinMode(_pin, OUTPUT);
                 digitalWrite(_pin, !_activeOn);
-
+            }
             else
+            {
                 analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness));
+            }
 
             _currentLedBrightness = calcBrightness;
         }
