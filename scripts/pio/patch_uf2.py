@@ -14,7 +14,7 @@ class console_color:
 
 def post_program_action(source, target, env):
     print()
-    print("{}Patching {}.u2f for KnxUpdater:{}".format(console_color.YELLOW, source[0].get_path()[0:-4], console_color.END))
+    print("{}Patching {}.u2f for KnxFileTransferClient:{}".format(console_color.YELLOW, source[0].get_path()[0:-4], console_color.END))
     content = open("include/knxprod.h", 'r').read()
 
     m = re.search("#define MAIN_OpenKnxId (0x)?([0-9A-Fa-f]{1,2})", content)

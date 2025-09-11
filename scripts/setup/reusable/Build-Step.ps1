@@ -43,17 +43,22 @@ if (!$?) {
   exit 1
 }
 
-# featureSet replaces the old biryryFormat setting in a compatible way
+# featureSet replaces the old binaryFormat setting in a compatible way
 # it is interpreted as an enum with some depricated values (for compatibility)
-# bin (depricated) - old SAMD processor
-# uf2 (depricated) - RP2040 without OTA
-# esp32 - ESP32 with OTA
-# rp2040 - (new) RP2040/2350 without OTA
-# rp2040-ota - (new) RP2040/2350 with OTA
+# bin (deprecated) - old SAMD processor
+# uf2 (deprecated) - RP2040 without OTA
+# esp32 - (deprecated) ESP32 with OTA
+# esp32-ip (new) esp32 with OTA
+# esp32-tp (new) esp32 with KNX
+# rp2040-ip (new) rp2040 with OTA
+# rp2040-tp (new) rp2040 with KNX
+# rp2350-ip (new) rp2350 with OTA
+# rp2350-tp (new) rp2350 with KNX
 # inherent logic: 
 # - a device with OTA does not need a KNX-Upload
 # - esp is always IP and OTA is always possible
 # - RP2040/2350 needs to distinguish 
+
 
 # binaryFormat uf2 means rp2040 without OTA
 $binaryFormat = "uf2"
@@ -62,16 +67,19 @@ $withOTA = $false;
 if ($featureSet -eq "bin") {
   $processor = "SAMD"
   $binaryFormat = "bin"
-}
-elseif ($featureSet -eq "esp32") {
+} elseif ($featureSet -eq "esp32" -or $featureSet -eq "esp32-ip") {
   $binaryFormat = "bin"
   $processor = "ESP32"
   $withOTA = $true;
-}
-elseif ($featureSet -eq "rp2040-ota") {
+} elseif ($featureSet -eq "esp32-tp") {
+  $binaryFormat = "bin"
+  $processor = "ESP32"
+  $withOTA = $false;
+} elseif ($featureSet -eq "rp2040-ip" -or $featureSet -eq "rp2350-ip") {
   $withOTA = $true;
-}
-elseif ($featureSet -ne "uf2" -and $featureSet -ne "rp2040") {
+} elseif ($featureSet -ne "uf2" -or $featureSet -eq "rp2040-tp" -or $featureSet -eq "rp2350-tp") {
+  $withOTA = $false;
+} else {
   Write-Host "ERROR: Wrong featureset $featureSet in Build-Step!"
   exit 1
 }
