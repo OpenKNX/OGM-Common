@@ -861,11 +861,12 @@ namespace OpenKNX
         // Unsupported ETS Modules
         if (objectIndex == 0x9E && propertyId == 2)
         {
-            resultData[0] = (_unsupportedEtsModules >> 0) & 0xFF;
-            resultData[1] = (_unsupportedEtsModules >> 8) & 0xFF;
-            resultData[2] = (_unsupportedEtsModules >> 16) & 0xFF;
-            resultData[3] = (_unsupportedEtsModules >> 24) & 0xFF;
-            resultLength = 4;
+            resultData[0] = 0; // status OK
+            resultData[1] = (_unsupportedEtsModules >> 0) & 0xFF;
+            resultData[2] = (_unsupportedEtsModules >> 8) & 0xFF;
+            resultData[3] = (_unsupportedEtsModules >> 16) & 0xFF;
+            resultData[4] = (_unsupportedEtsModules >> 24) & 0xFF;
+            resultLength = 5;
             return true; // handled
         }
 

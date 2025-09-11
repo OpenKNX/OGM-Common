@@ -7,6 +7,7 @@
   <op:config name="%BASE_PeriodicSave%" value="0" />
   <op:config name="%BASE_ManualSave%" value="0" />
   <op:config name="%BASE_StartupDelay%" value="1" />
+  <op:config name="%BASE_ShowSyncModulesButton%" value="0" />
   <op:nowarn id="7" regex="_R-100000202"/>
   
   <ManufacturerData>
@@ -290,8 +291,11 @@
 
               <!-- Local parameters for module visibility -->
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
-              <!-- <Parameter Id="%AID%_P-%TT%999%MM%" Name="Module%MM%" ParameterType="%AID%_PT-Checkbox" Text="%Modulname%" Value="1" /> -->
-              <Parameter Id="OpenKNXproducer" Name="Module_%ProducerModulePrefix%" ParameterType="%AID%_PT-CheckBox" Text="%ProducerModuleName%" Value="1" />
+              <Parameter Id="%AID%_P-0099900" Name="ShowModuleSyncButton" ParameterType="%AID%_PT-CheckBox" Text="Module abgleichen zeigen?" Value="1" Access="None" />
+              <Union SizeInBit="32">
+                <Memory CodeSegment="%MID%" Offset="110" BitOffset="0" />
+                <Parameter Id="%AID%_UP-00999%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" />
+              </Union>
 
             </Parameters>
             <ParameterRefs>
@@ -325,7 +329,8 @@
 
               <!-- Local parameters for module visibility -->
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
-              <ParameterRef Id="OpenKNXproducer" RefId="OpenKNXproducer" />
+              <ParameterRef Id="%AID%_P-0099900_R-009990001" RefId="%AID%_P-0099900" />
+              <ParameterRef Id="%AID%_UP-00999%ProducerModuleRefId%" RefId="%AID%_UP-00999%ProducerModuleId%" />
 
             </ParameterRefs>
             <ComObjectTable>
@@ -612,10 +617,20 @@
                   </Columns>
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Modul" Cell="1,3" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Version" Cell="1,4" UIHint="Headline" />
-                  <ParameterRefRef RefId="%ProducerModuleParameter%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
+                  <ParameterRefRef RefId="%AID%_UP-00999%ProducerModuleRefId%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleName%" Cell="%ModuleCount+1%,3" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleVersion%" Cell="%ModuleCount+1%,4" />
                 </ParameterBlock>
+                <!-- following parameter is always hidden -->
+                <ParameterRefRef RefId="%AID%_P-0099900_R-009990001" />
+                <choose ParamRefId="%AID%_P-0099900_R-009990001">
+                  <when test="%BASE_ShowSyncModulesButton%">
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Abgleich mit dem Gerät" UIHint="Headline" />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Die vorliegende Applikation ist generisch gehalten. Die angeschlossene Hardware unterstützt möglicherweise einige der oben angezeigten Module nicht." />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Mit dem Button unten kann die Modulliste mit dem Gerät abgeglichen werden. Der Button funktioniert erst, nachdem das Gerät programmiert wurde (PA + Applikation)." />
+                    <Button Id="%AID%_B-%TT%00001" Text="Modulliste abgleichen" Name="UnsupportedModules" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerOnline="ConnectionOriented" />
+                  </when>
+                </choose>
               </ParameterBlock>
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
 						
