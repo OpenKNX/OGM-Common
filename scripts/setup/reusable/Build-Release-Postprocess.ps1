@@ -25,7 +25,7 @@ else {
 }
 # Create ETS-Applikation directory and copy Build-knxprod.ps1
 if (!(Test-Path -Path release/ETS-Applikation -PathType Container)) {
-  New-Item -ItemType Directory -Force -Path release/ETS-Applikation
+  New-Item -ItemType Directory -Force -Path release/ETS-Applikation | Out-Null
 }
 if (Test-Path -Path scripts/Build-knxprod.ps1 -PathType Leaf) {
   Copy-Item scripts/Build-knxprod.ps1 release/ETS-Applikation/
