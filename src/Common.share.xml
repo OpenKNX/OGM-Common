@@ -294,7 +294,7 @@
               <Parameter Id="%AID%_P-0099900" Name="ShowModuleSyncButton" ParameterType="%AID%_PT-CheckBox" Text="Module abgleichen zeigen?" Value="1" Access="None" />
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="110" BitOffset="0" />
-                <Parameter Id="%AID%_UP-00999%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" />
+                <Parameter Id="%AID%_UP-00999%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" op:configTransfer="never" />
               </Union>
 
             </Parameters>
@@ -627,8 +627,22 @@
                   <when test="%BASE_ShowSyncModulesButton%">
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Abgleich mit dem Gerät" UIHint="Headline" />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Die vorliegende Applikation ist generisch gehalten. Die angeschlossene Hardware unterstützt möglicherweise einige der oben angezeigten Module nicht." />
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Mit dem Button unten kann die Modulliste mit dem Gerät abgeglichen werden. Der Button funktioniert erst, nachdem das Gerät programmiert wurde (PA + Applikation)." />
-                    <Button Id="%AID%_B-%TT%00001" Text="Modulliste abgleichen" Name="UnsupportedModules" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerOnline="ConnectionOriented" />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Mit den Buttons unten kann die Modulliste mit dem Gerät abgeglichen werden. Die Buttons funktionieren erst, nachdem das Gerät programmiert wurde (PA + Applikation)." />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Linker Button: Die nicht unterstützten Module werden ausgeblendet. Die vom Benutzer ausgeblendeten Module bleiben ausgeblendet." />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Rechter Button: Es werden sowohl die unterstützten wie auch die nicht unterstützten Module abgeglichen. Die vom Benutzer vorgenommene Auswahl wird überschrieben." />
+                    <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
+                      <Rows>
+                        <Row Id="%AID%_PB-nnn_R-1" />
+                      </Rows>
+                      <Columns>
+                        <Column Id="%AID%_PB-nnn_C-1" Width="2%" />
+                        <Column Id="%AID%_PB-nnn_C-2" Width="49%" />
+                        <Column Id="%AID%_PB-nnn_C-3" Width="49%" />
+                      </Columns>
+                      <Button Id="%AID%_B-%TT%00001" Text="Nicht unterstützte Module ausblenden" Name="UnsupportedModules" Cell="1,2" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 0}" EventHandlerOnline="ConnectionOriented" />
+                      <Button Id="%AID%_B-%TT%00002" Text="Komplettabgleich aller Module" Name="SyncModules" Cell="1,3" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 1}" EventHandlerOnline="ConnectionOriented" />
+                    </ParameterBlock>
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="&#10;" />
                   </when>
                 </choose>
               </ParameterBlock>

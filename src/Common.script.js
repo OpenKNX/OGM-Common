@@ -8,6 +8,7 @@ function newline(device, online, progress, context) {
 
 function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     progress.setText("Common: Frage Hardware nach unterstützten Modulen...");
+    var sync = context.Sync;
     online.connect();
     progress.setProgress(50);
     
@@ -23,11 +24,13 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     progress.setText("Common: Nicht unterstützte Module wurden ausgeblendet.");
     var modulesBitfield = resp[1] + (resp[2] << 8) + (resp[3] << 16) + (resp[4] << 24);
     for (var i = 0; i < baseModuleIdPrefix.length - 1; i++) {
-        if (((modulesBitfield >> i) & 1) != 0) {
-            var paramName = "BASE_ModuleEnabled_" + baseModuleIdPrefix[i + 1];
-            var parModuleId = device.getParameterByName(paramName);
-            if (parModuleId) 
+        var moduleActive = ((modulesBitfield >> i) & 1) == 0;
+        var paramName = "BASE_ModuleEnabled_" + baseModuleIdPrefix[i + 1];
+        var parModuleId = device.getParameterByName(paramName);
+        if (parModuleId) 
+            if (sync)
+                parModuleId.value = moduleActive;
+            else if (!moduleActive)
                 parModuleId.value = 0;
-        }
     }
 }
