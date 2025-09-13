@@ -92,6 +92,7 @@ namespace OpenKNX
         bool freeLoopTime();
         bool freeLoopIterate(uint8_t size, uint8_t& position, uint8_t& processed);
         void restart();
+        void unsupportedEtsModule(uint8_t etsModuleId);
     };
 } // namespace OpenKNX
 

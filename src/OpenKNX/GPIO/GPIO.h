@@ -22,7 +22,8 @@ namespace OpenKNX
             OPENKNX_GPIO_T_EMBEDDED = 0,
             OPENKNX_GPIO_T_TCA9555 = 1,
             OPENKNX_GPIO_T_TCA6408 = 2,
-            OPENKNX_GPIO_T_PCA9557 = 3
+            OPENKNX_GPIO_T_PCA9557 = 3,
+            OPENKNX_GPIO_T_PCA9554 = 4
         };
     }
 }

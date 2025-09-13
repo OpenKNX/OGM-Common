@@ -188,6 +188,9 @@ namespace OpenKNX
             void logWithValues(const std::string& message, ...);
             void logWithValues(const char* message, ...);
 
+            void logHeader(const char* header);
+            void logDividingLine();
+       
             void logHex(const uint8_t* data, size_t size);
             void logHexWithPrefix(const char* prefix, const uint8_t* data, size_t size);
             void logHexWithPrefix(const std::string& prefix, const uint8_t* data, size_t size);

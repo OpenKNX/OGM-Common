@@ -38,4 +38,3 @@ Auswahl:
 - Aktiv mit 60 min. Schreibschutz
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
 
-

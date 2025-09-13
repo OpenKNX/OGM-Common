@@ -86,5 +86,14 @@ namespace OpenKNX
 
         return nullptr;
     }
+
+    /*
+     * Declare a ets module as unsupported. The ets can then automatically disable the unsupported modules via a manual sync.
+     * Allowed ets module id from 2 to 33 (BASE is not allowed to disabled so we start with 2)
+     */
+    void Facade::unsupportedEtsModule(uint8_t etsModuleId)
+    {
+        common.unsupportedEtsModule(etsModuleId);
+    }
 } // namespace OpenKNX
 OpenKNX::Facade openknx;
