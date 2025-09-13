@@ -13,6 +13,8 @@
 #include "OpenKNX/Time/Calendar.h"
 #include "OpenKNX/GPIO/GPIO.h"
 #include "OpenKNX/Led/Manager.h"
+#include "OpenKNX/Led/Functions.h"
+
 #ifdef ParamBASE_Latitude
         #include "OpenKNX/Sun/SunCalculation.h"
 #endif
@@ -68,6 +70,7 @@ namespace OpenKNX
 #endif
 
         Led::Manager leds;
+        Led::Functions ledFunctions;
 
         Modules modules;
         Flash::Driver openknxFlash;

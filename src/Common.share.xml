@@ -219,6 +219,20 @@
                   <Enumeration Text="Aktiv mit 60 min. Schreibschutz" Value="3" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
+              <!-- Status LEDs-->
+              <ParameterType Id="%AID%_PT-SLEDType" Name="SLEDType">
+                <TypeRestriction Base="Value" SizeInBit="4" UIHint="DropDown">
+                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" DisplayOrder="0"/>
+                  <Enumeration Text="einfarbig" Value="1" Id="%ENID%" DisplayOrder="1" />
+                  <Enumeration Text="RGB" Value="2" Id="%ENID%" DisplayOrder="2" />
+                  <Enumeration Text="RGB (einfarbig)" Value="3" Id="%ENID%" DisplayOrder="3" />
+                </TypeRestriction>
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-SLEDFunc" Name="SLEDFunc">
+                <TypeRestriction Base="Value" SizeInBit="16" UIHint="DropDown">
+                  <Enumeration Text="Zeitstatus" Value="1" Id="%ENID%" DisplayOrder="0"/>
+                </TypeRestriction>
+              </ParameterType>
             </ParameterTypes>
             <Parameters>
               <!-- Parameter ID-Namespace 001-099 / Namespace is shared with LogicModule (historical reason) -->
@@ -287,6 +301,12 @@
                 <!-- Set dummy for last Byte to reserve Space-->
                 <Parameter Id="%AID%_UP-%TT%00098" Name="Dummy"  ParameterType="%AID%_PT-ValueDpt5" Offset="31" BitOffset="0" Text="" Value="0" />
               </Union>
+
+              <!-- Info Leds -->
+              <Union SizeInBit="256">
+                <Memory CodeSegment="%MID%" Offset="114" BitOffset="0" />
+              </Union>
+
             </Parameters>
             <ParameterRefs>
               <ParameterRef Id="%AID%_P-%TT%00001_R-%TT%0000101" RefId="%AID%_P-%TT%00001" />
@@ -584,6 +604,11 @@
                     </choose>
                   </when>
                 </choose>
+              </ParameterBlock>
+              <ParameterBlock Id="%AID%_PB-nnn" Name="InfoLeds" Text="Info LEDs" Icon="format-list-text" HelpContext="BASE-Info-Leds">
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Info LEDs" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="%DOC%" IndentLevel="1" />
+                <ParameterRefRef RefId="%AID%_UP-%TT%00146_R-%TT%0014601" HelpContext="%DOC%" IndentLevel="1" />
               </ParameterBlock>
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
 						

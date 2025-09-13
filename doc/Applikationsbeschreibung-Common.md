@@ -13,20 +13,38 @@ DOCCONTENT -->
 
 Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
 
-* [Allgemein](#allgemein)
-  * [Startverzögerung](#startverzögerung)
-  * [In Betrieb senden alle](#in-betrieb-senden-alle)
-* [Uhrzeit & Datum](#uhrzeit--datum)
-  * [Empfangen über](#empfangen-über)
-  * [Bei Neustart vom Bus lesen](#bei-neustart-vom-bus-lesen)
-  * [Zeitzone](#zeitzone)
-  * [Sommerzeit ermitteln durch](#sommerzeit-ermitteln-durch)
-* [Gerätestandort](#gerätestandort)
-  * [Breitengrad](#breitengrad)
-  * [Längengrad](#längengrad)
-* [Erweitert](#erweitert)
-  * [Watchdog aktivieren](#watchdog-aktivieren)
-  * [Diagnoseobjekt anzeigen](#diagnoseobjekt-anzeigen)
+- [OpenKNX](#openknx)
+  - [Inhalte](#inhalte)
+  - [**Allgemein**](#allgemein)
+    - [**Startverzögerung**](#startverzögerung)
+    - [**In Betrieb senden alle**](#in-betrieb-senden-alle)
+  - [**Uhrzeit \& Datum**](#uhrzeit--datum)
+    - [**Empfangen über**](#empfangen-über)
+      - [**Ein kombiniertes KO**](#ein-kombiniertes-ko)
+      - [**Zwei getrennte KOs**](#zwei-getrennte-kos)
+    - [**Bei Neustart vom Bus lesen**](#bei-neustart-vom-bus-lesen)
+    - [**Zeitzone**](#zeitzone)
+      - [**POSIX TZ-String**\*](#posix-tz-string)
+    - [**Sommerzeit ermitteln durch**](#sommerzeit-ermitteln-durch)
+      - [**Kommunikationsobjekt 'Sommerzeit aktiv'**](#kommunikationsobjekt-sommerzeit-aktiv)
+      - [**Kombiniertem Datum/Zeit-KO (DPT 19)**](#kombiniertem-datumzeit-ko-dpt-19)
+      - [**Interne Berechnung**](#interne-berechnung)
+  - [**Gerätestandort**](#gerätestandort)
+    - [**Breitengrad**](#breitengrad)
+    - [**Längengrad**](#längengrad)
+  - [Erweitert](#erweitert)
+    - [**Watchdog aktivieren**](#watchdog-aktivieren)
+    - [**Diagnoseobjekt anzeigen**](#diagnoseobjekt-anzeigen)
+    - [**Erweitertes "In Betrieb"**](#erweitertes-in-betrieb)
+    - [Erweitertes Speichern](#erweitertes-speichern)
+      - [Flashspeicher](#flashspeicher)
+      - [Auswirkung beim RP2040/RP2350](#auswirkung-beim-rp2040rp2350)
+      - [Zyklisches speichern](#zyklisches-speichern)
+      - [Manuelles speichern](#manuelles-speichern)
+  - [Info LEDs](#info-leds)
+    - [Type](#type)
+    - [Modus](#modus)
+    - [Funktion](#funktion)
 
 ## **Allgemein**
 
@@ -267,4 +285,34 @@ Auswahl:
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
 
 
+<!-- DOC -->
+## Info LEDs
 
+Einstellungen für die auf vielen OpenKNX Geräten verfügbaren Info LEDs
+
+<!-- DOC -->
+### Type
+
+Hier muss der korrekte LED Typ eingestellt werden
+
+- einfarbig
+  herkömmliche LED, Farbe ist durch die Hardware bestimmt
+- RGB
+  farbige RGB-LED, Farbe kann per Software bestimmt werden
+- RGB (einfarbig)
+  farbige RGB-LED, verhält sich wie eine einfarbige LED. Farbe wird in der ETS bestimmt
+
+<!-- DOC -->
+### Modus
+
+Betriebsmodus der LED
+
+- Deaktiviert
+  LED wird nicht angesteuert und bleibt aus
+- LED-Funktion
+  LED wird durch eine auszuwählende LED-Funktion angesteuert
+
+<!-- DOC -->
+### Funktion
+
+Auswahl der konkreten LED-Funtion

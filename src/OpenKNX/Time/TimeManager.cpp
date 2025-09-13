@@ -366,6 +366,9 @@ namespace OpenKNX
             time_t dst = mktime(&tm);
             _dayLightSavingTimeOffset = dst - st;
 
+            // LED-ToDo: id
+            openknx.ledFunctions.RegisterLedFunction(1, _timeLed);
+
             if (configured)
             {
                 // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
@@ -635,8 +638,7 @@ namespace OpenKNX
             if(_timeLed == nullptr)
                 return;
             
-            //Led::RGB* _timeledRGB = dynamic_cast<Led::RGB*>(_timeLed);
-            bool _RGB = false;
+            bool RGB = _timeLed->isRGB();
             
             if (_timeUpdatedActivity != 0)
             {
@@ -644,7 +646,7 @@ namespace OpenKNX
                 if (_ledState != 2)
                 {
                     _ledState = 2;
-                    if(_RGB)
+                    if(RGB)
                     {
                         ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_GREEN);
                         _timeLed->on();
@@ -659,53 +661,52 @@ namespace OpenKNX
                     _timeUpdatedActivity = 0;
                 }
             }
-            // else if (isValid())
-            // {       
-            //     // time is valid
-            //     uint8_t lastChange = getLocalTime().second / 2;
-            //     if (_lastSecondChange != lastChange)
-            //     {
-            //         _lastSecondChange = lastChange;
-            //         _timerLedOn = millis();
-            //     }
-            //     if (delayCheck(_timerLedOn, 1000))
-            //     {
-            //         _timerLedOn = 0;
-            //         if (_ledState != 3)
-            //         {
-            //             _ledState = 3;
-            //             #ifdef OPENKNX_SERIALLED_ENABLE
-            //             openknx.OPENKNX_LED_TIME.off();
-            //             #else
-            //             openknx.OPENKNX_LED_TIME.off();
-            //             #endif
-            //         }
-            //     }
-            //     else if (_ledState != 4)
-            //     {
-            //         _ledState = 4;
-            //         #ifdef OPENKNX_SERIALLED_ENABLE
-            //         openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_BLUE);
-            //         openknx.OPENKNX_LED_TIME.on();
-            //         #else
-            //         openknx.OPENKNX_LED_TIME.on();
-            //         #endif
-            //     }
-            // }
-            // else
-            // {
-            //     // time is invalid
-            //     if (_ledState != 1)   
-            //     {
-            //         _ledState = 1;
-            //         #ifdef OPENKNX_SERIALLED_ENABLE
-            //         openknx.OPENKNX_LED_TIME.setColor(OPENKNX_SERIALLED_COLOR_RED);
-            //         openknx.OPENKNX_LED_TIME.on();
-            //         #else
-            //         openknx.OPENKNX_LED_TIME.off();
-            //         #endif
-            //     }
-            // }
+            else if (isValid())
+            {       
+                // time is valid
+                uint8_t lastChange = getLocalTime().second / 2;
+                if (_lastSecondChange != lastChange)
+                {
+                    _lastSecondChange = lastChange;
+                    _timerLedOn = millis();
+                }
+                if (delayCheck(_timerLedOn, 1000))
+                {
+                    _timerLedOn = 0;
+                    if (_ledState != 3)
+                    {
+                        _ledState = 3;
+                        _timeLed->off();
+                    }
+                }
+                else if (_ledState != 4)
+                {
+                    _ledState = 4;
+
+                    if(RGB)
+                    {
+                        ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_BLUE);
+                    }
+                    _timeLed->on();
+                }
+            }
+            else
+            {
+                // time is invalid
+                if (_ledState != 1)   
+                {
+                    _ledState = 1;
+                    if(RGB)
+                    {
+                        ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_RED);
+                        _timeLed->on();
+                    }
+                    else
+                    {
+                        _timeLed->off();
+                    }
+                }
+            }
         }
         
         bool TimeManager::isValid()
