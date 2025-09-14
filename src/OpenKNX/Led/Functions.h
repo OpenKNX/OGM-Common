@@ -27,7 +27,7 @@ namespace OpenKNX
              * Make a LedFunction known so a LED can be assigned to it
              * Meant to be called by Modules providing LED functions
              */
-            bool RegisterLedFunction(uint32_t functionId, Led::Base* led);
+            bool RegisterLedFunction(uint32_t functionId, Led::Base** led);
 
             /*
              * Assign a led to a function, return true if successful
