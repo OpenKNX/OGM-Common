@@ -9,15 +9,9 @@
   <op:config name="%BASE_StartupDelay%" value="1" />
   <op:config name="%BASE_ShowSyncModulesButton%" value="0" />
   <op:nowarn id="7" regex="_R-100000202"/>
-  <op:config name="%BASE_Info1LedType%" value="0"></op:config>
   <op:config name="%BASE_Info1LedFunc%" value="0"></op:config>
-  <op:config name="%BASE_Info2LedType%" value="0"></op:config>
   <op:config name="%BASE_Info2LedFunc%" value="0"></op:config>
-  <op:config name="%BASE_Info3LedType%" value="0"></op:config>
   <op:config name="%BASE_Info3LedFunc%" value="0"></op:config>
-  <op:config name="%BASE_Info1LedType_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info2LedType_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info3LedType_Access" value="ReadWrite"></op:config>
   <op:config name="%BASE_Info1LedFunc_Access" value="ReadWrite"></op:config>
   <op:config name="%BASE_Info2LedFunc_Access" value="ReadWrite"></op:config>
   <op:config name="%BASE_Info3LedFunc_Access" value="ReadWrite"></op:config>
@@ -233,17 +227,9 @@
                 </TypeRestriction>
               </ParameterType>
               <!-- Status LEDs-->
-              <ParameterType Id="%AID%_PT-SLEDType" Name="SLEDType">
-                <TypeRestriction Base="Value" SizeInBit="4" UIHint="DropDown">
-                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" DisplayOrder="0"/>
-                  <Enumeration Text="einfarbig" Value="1" Id="%ENID%" DisplayOrder="1" />
-                  <Enumeration Text="RGB" Value="2" Id="%ENID%" DisplayOrder="2" />
-                  <Enumeration Text="RGB (einfarbig)" Value="3" Id="%ENID%" DisplayOrder="3" />
-                </TypeRestriction>
-              </ParameterType>
               <ParameterType Id="%AID%_PT-SLEDFunc" Name="SLEDFunc">
                 <TypeRestriction Base="Value" SizeInBit="16" UIHint="DropDown">
-                  <Enumeration Text="keine" Value="0" Id="%ENID%" DisplayOrder="0"/>
+                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" DisplayOrder="0"/>
                   <Enumeration Text="Zeitstatus" Value="1" Id="%ENID%" DisplayOrder="0"/>
                 </TypeRestriction>
               </ParameterType>
@@ -307,12 +293,9 @@
                 <!-- 3 Bit free  -->
                 <Parameter Id="%AID%_UP-%TT%00091" Name="ManualSave"        ParameterType="%AID%_PT-ManualSave"   Offset="0" BitOffset="5" Text="Manuelles speichern" Value="%BASE_ManualSave%"/>
                 <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches speichern" Value="%BASE_PeriodicSave%" />
-                <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedType"      ParameterType="%AID%_PT-SLEDType"     Offset="2" BitOffset="0" Text="LED-Typ" Value="%BASE_Info1LedType%" Access="%BASE_Info1LedType_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedType"      ParameterType="%AID%_PT-SLEDType"     Offset="2" BitOffset="4" Text="LED-Typ" Value="%BASE_Info2LedType%" Access="%BASE_Info2LedType_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedType"      ParameterType="%AID%_PT-SLEDType"     Offset="3" BitOffset="0" Text="LED-Typ" Value="%BASE_Info3LedType%" Access="%BASE_Info3LedType_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00023" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="LED-Funktion" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00024" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="6" BitOffset="0" Text="LED-Funktion" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00025" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="8" BitOffset="0" Text="LED-Funktion" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="2" BitOffset="0" Text="Info1" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="Info2" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="6" BitOffset="0" Text="Info3" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
                 <!--
                 
                   Reserved for new parameters
@@ -343,9 +326,6 @@
               <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" />
               <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
               <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" />
-              <ParameterRef Id="%AID%_UP-%TT%00023_R-%TT%0002301" RefId="%AID%_UP-%TT%00023" />
-              <ParameterRef Id="%AID%_UP-%TT%00024_R-%TT%0002401" RefId="%AID%_UP-%TT%00024" />
-              <ParameterRef Id="%AID%_UP-%TT%00025_R-%TT%0002501" RefId="%AID%_UP-%TT%00025" />
               <ParameterRef Id="%AID%_UP-%TT%00034_R-%TT%0003401" RefId="%AID%_UP-%TT%00034" />
               <!-- The follwing 2 IDs are used by logic module for update compatibility -->
               <!-- <ParameterRef Id="%AID%_UP-%TT%00035_R-%TT%0003501" RefId="%AID%_UP-%TT%00035" /> -->
@@ -640,15 +620,10 @@
                 </choose>
               </ParameterBlock>
               <ParameterBlock Id="%AID%_PB-nnn" Name="InfoLeds" Text="Info LEDs" Icon="led-on" HelpContext="BASE-Info-LEDs">
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Info1 LED" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Funktion der Info LEDs" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00023_R-%TT%0002301" IndentLevel="1" />
-                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Info2 LED" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00024_R-%TT%0002401" IndentLevel="1" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Info3 LED" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00025_R-%TT%0002501" IndentLevel="1" />
               </ParameterBlock>
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-Module">
                 <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->

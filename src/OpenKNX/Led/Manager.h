@@ -28,7 +28,6 @@ namespace OpenKNX
             LED_TYPE_INFO1,
             LED_TYPE_INFO2,
             LED_TYPE_INFO3,
-            LED_TYPE_INFO4,
             LED_TYPE_USER,
             LED_TYPE_MAX
         };

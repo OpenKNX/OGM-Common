@@ -9,35 +9,56 @@
 #include "knx.h"
 #include <Arduino.h>
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 
 namespace OpenKNX
 {
     namespace Led
     {
+        enum Capability
+        {
+            ALL = 0xFF,
+            MONOCHROME = 1,
+            COLOR = 2,
+        };
+
+        class FunctionGroup
+        {
+            private:
+              std::vector<Led::Base*> _leds;
+            public:
+            // manage the FunctionGroup itself
+              void addLed(Led::Base* led);
+            // control the leds assigned to this function
+              void on(bool state, Capability capability = ALL);
+              void on(Capability capability = ALL);
+              void off(Capability capability = ALL);
+              void setColor(uint8_t r, uint8_t g, uint8_t b);
+              void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ, Capability capability = ALL);
+              void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = ALL);
+              void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = ALL);
+        };
+
         class Functions
         {
+          private:
+            std::unordered_map<uint32_t, FunctionGroup> _functionGroups;
+            //std::vector<std::pair<uint32_t, FunctionGroup>> _functionGroups;
           public:
             Functions();
             void setup();
 
-            void loop();
-
-            /*
-             * Make a LedFunction known so a LED can be assigned to it
-             * Meant to be called by Modules providing LED functions
-             */
-            bool RegisterLedFunction(uint32_t functionId, Led::Base** led);
-
             /*
              * Assign a led to a function, return true if successful
              */
-            bool AssignLed2Function(Led::Base* led, uint32_t functionId);
+            void AssignLed2Function(Led::Base* led, uint32_t functionId);
 
             /*
-             * Process a GroupObject for LED functions
+             * returns a pointer to a function group representing all leds assigned to the functionId
              */
-            void processInputKo(GroupObject& ko);
+            FunctionGroup* get(uint32_t functionId);
         };
     }
 }

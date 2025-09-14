@@ -12,51 +12,98 @@ namespace OpenKNX
         void Functions::setup()
         {
             // setup the info1-3 led according to knx parameters
-            if(ParamBASE_Info1LedType)
+            AssignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
+            AssignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
+            AssignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
+        }
+
+        void Functions::AssignLed2Function(Led::Base* led, uint32_t functionId)
+        {
+            _functionGroups[functionId].addLed(led);
+        }
+
+        FunctionGroup* Functions::get(uint32_t functionId)
+        {
+            return &_functionGroups[functionId];
+        }
+
+
+        void FunctionGroup::addLed(Led::Base* led)
+        {
+            _leds.push_back(led);
+        }
+
+        void FunctionGroup::on(bool state, Capability capability)
+        {
+            for (auto led : _leds)
             {
-                if(!AssignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc))
+                if (capability == ALL ||
+                    (capability == MONOCHROME && !led->isRGB()) ||
+                    (capability == COLOR && led->isRGB()))
                 {
-                    logDebug("Led::Functions", "Could not assign Info1 LED to function %d", ParamBASE_Info1LedFunc);
+                    led->on(state);
                 }
             }
-            if(ParamBASE_Info2LedType)
+        }
+
+        void FunctionGroup::on(Capability capability)
+        {
+            on(true, capability);
+        }
+
+        void FunctionGroup::off(Capability capability)
+        {
+            on(false, capability);
+        }
+
+        void FunctionGroup::setColor(uint8_t r, uint8_t g, uint8_t b)
+        {
+            for (auto led : _leds)
             {
-                if(!AssignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc))
+                if (led->isRGB())
                 {
-                    logDebug("Led::Functions", "Could not assign Info2 LED to function %d", ParamBASE_Info2LedFunc);
+                    ((RGB*)led)->setColor(r, g, b);
                 }
             }
-            if(ParamBASE_Info3LedType)
+        }
+
+        void FunctionGroup::pulsing(uint16_t duration, Capability capability)
+        {
+            for (auto led : _leds)
             {
-                if(!AssignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc))
+                if (capability == ALL ||
+                    (capability == MONOCHROME && !led->isRGB()) ||
+                    (capability == COLOR && led->isRGB()))
                 {
-                    logDebug("Led::Functions", "Could not assign Info3 LED to function %d", ParamBASE_Info3LedFunc);
+                    led->pulsing(duration);
                 }
             }
         }
 
-        void Functions::loop()
+        void FunctionGroup::blinking(uint16_t frequency, Capability capability)
         {
-            // maybe do some periodic led stuff here
-            // not needed currently
+            for (auto led : _leds)
+            {
+                if (capability == ALL ||
+                    (capability == MONOCHROME && !led->isRGB()) ||
+                    (capability == COLOR && led->isRGB()))
+                {
+                    led->blinking(frequency);
+                }
+            }
         }
 
-        void Functions::processInputKo(GroupObject& ko)
+        void FunctionGroup::flash(uint16_t duration, Capability capability)
         {
-            // process info1-3 led input ko
-            // no Ko control in common currently
-        }
-
-        bool Functions::RegisterLedFunction(uint32_t functionId, Led::Base** led)
-        {
-            // add id/pointer to list
-            return false;
-        }
-
-        bool Functions::AssignLed2Function(Led::Base* led, uint32_t functionId)
-        {
-            // assign the led pointer to the pointer that was registered with the functionId
-            return false;
+            for (auto led : _leds)
+            {
+                if (capability == ALL ||
+                    (capability == MONOCHROME && !led->isRGB()) ||
+                    (capability == COLOR && led->isRGB()))
+                {
+                    led->flash(duration);
+                }
+            }
         }
     }
 }

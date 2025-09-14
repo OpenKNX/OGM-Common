@@ -366,9 +366,6 @@ namespace OpenKNX
             time_t dst = mktime(&tm);
             _dayLightSavingTimeOffset = dst - st;
 
-            // LED-ToDo: id
-            openknx.ledFunctions.RegisterLedFunction(1, _timeLed);
-
             if (configured)
             {
                 // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
@@ -635,26 +632,15 @@ namespace OpenKNX
 
         void TimeManager::loopLed()
         {
-            if(_timeLed == nullptr)
-                return;
-            
-            bool RGB = _timeLed->isRGB();
-            
             if (_timeUpdatedActivity != 0)
             {
                 // time was updated
                 if (_ledState != 2)
                 {
                     _ledState = 2;
-                    if(RGB)
-                    {
-                        ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_GREEN);
-                        _timeLed->on();
-                    }
-                    else
-                    {
-                        _timeLed->blinking(100);
-                    }
+                    openknx.ledFunctions.get(1)->setColor(OPENKNX_SERIALLED_COLOR_GREEN);
+                    openknx.ledFunctions.get(1)->on(Led::Capability::COLOR);
+                    openknx.ledFunctions.get(1)->blinking(100, Led::Capability::MONOCHROME);
                 } 
                 if (delayCheck(_timeUpdatedActivity, 1000))
                 {
@@ -676,18 +662,14 @@ namespace OpenKNX
                     if (_ledState != 3)
                     {
                         _ledState = 3;
-                        _timeLed->off();
+                        openknx.ledFunctions.get(1)->off();
                     }
                 }
                 else if (_ledState != 4)
                 {
                     _ledState = 4;
-
-                    if(RGB)
-                    {
-                        ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_BLUE);
-                    }
-                    _timeLed->on();
+                    openknx.ledFunctions.get(1)->setColor(OPENKNX_SERIALLED_COLOR_BLUE);
+                    openknx.ledFunctions.get(1)->on();
                 }
             }
             else
@@ -696,15 +678,9 @@ namespace OpenKNX
                 if (_ledState != 1)   
                 {
                     _ledState = 1;
-                    if(RGB)
-                    {
-                        ((Led::RGB*)_timeLed)->setColor(OPENKNX_SERIALLED_COLOR_RED);
-                        _timeLed->on();
-                    }
-                    else
-                    {
-                        _timeLed->off();
-                    }
+                    openknx.ledFunctions.get(1)->setColor(OPENKNX_SERIALLED_COLOR_RED);
+                    openknx.ledFunctions.get(1)->on(Led::Capability::COLOR);
+                    openknx.ledFunctions.get(1)->off(Led::Capability::MONOCHROME);
                 }
             }
         }

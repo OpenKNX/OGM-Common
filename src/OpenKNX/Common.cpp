@@ -744,7 +744,6 @@ namespace OpenKNX
             return processSaveKo(ko);
     #endif
         openknx.time.processInputKo(ko);
-        openknx.ledFunctions.processInputKo(ko);
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
