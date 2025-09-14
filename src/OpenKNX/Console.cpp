@@ -595,8 +595,9 @@ namespace OpenKNX
         printHelpLine("sun", "Shows sun information");
 #endif
 
+        bool configured = knx.configured();
         for (uint8_t i = 0; i < openknx.modules.count; i++)
-            openknx.modules.list[i]->showHelp(knx.configured());
+            openknx.modules.list[i]->showHelp(configured);
 
         openknx.logger.logDividingLine();
         logEnd();
