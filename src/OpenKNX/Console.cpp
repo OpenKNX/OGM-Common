@@ -306,8 +306,9 @@ namespace OpenKNX
         else
         {
             // check modules for command
+            bool configured = knx.configured();
             for (uint8_t i = 0; i < openknx.modules.count; i++)
-                if (openknx.modules.list[i]->processCommand(cmd, diagnoseKo))
+                if (openknx.modules.list[i]->processCommand(configured, cmd, diagnoseKo))
                     return true;
             return false;
         }

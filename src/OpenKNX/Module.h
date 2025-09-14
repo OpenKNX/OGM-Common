@@ -92,12 +92,28 @@ namespace OpenKNX
 
         /**
          * This method is called when a command is entered in the console or the diagnoseKo.
-         * The first argument is the command, and the second argument indicates whether the call was made via diagnoseKo or the console.
-         *
-         * If a module feels responsible for this command, it returns true, and the processing will terminated.
          *
          * If a command is entered that requires an output, the module itself is responsible for handling it.
          * It must then determine based on the arguments whether to display the output on the console or send a message via diagnoseKo.
+         * 
+         * @param configured indicates whether the device is configured by ETS
+         * @param cmd the command string
+         * @param diagnoseKo true if called via diagnoseKo, false if called via console
+         * @return returns true if the module feels responsible for this command, to indicate the processing has to be terminated.
+         */
+        virtual bool processCommand(bool configured, const std::string cmd, bool diagnoseKo);
+
+        /**
+         * This method is called when a command is entered in the console or the diagnoseKo.
+         *
+         * If a command is entered that requires an output, the module itself is responsible for handling it.
+         * It must then determine based on the arguments whether to display the output on the console or send a message via diagnoseKo.
+         *
+         * Will be called for knx.configured()==true by processCommand(bool configured, ...)
+         * Should be overwritten in module implementation, when dependant on configured state.
+         *
+         * @param cmd the command string
+         * @param diagnoseKo true if called via diagnoseKo, false if called via console
          */
         virtual bool processCommand(const std::string cmd, bool diagnoseKo);
 
