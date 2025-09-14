@@ -46,6 +46,11 @@ namespace OpenKNX
         return false;
     }
 
+    void Module::showHelp(bool configured)
+    {
+        if (configured) showHelp();
+    }
+
     void Module::showHelp()
     {
         // Example usage:

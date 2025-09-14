@@ -104,6 +104,7 @@ namespace OpenKNX
         /**
          * This method prints out information over the command it can handle
          */
+        virtual void showHelp(bool configured);
         virtual void showHelp();
 
         /**
