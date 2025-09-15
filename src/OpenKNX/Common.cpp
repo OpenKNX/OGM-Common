@@ -239,6 +239,7 @@ namespace OpenKNX
             openknx.modules.list[i]->init();
 
         bool configured = knx.configured();
+        openknx.ledFunctions.setup();
         openknx.time.setup(configured);
 
 #ifdef OPENKNX_TimeProvider

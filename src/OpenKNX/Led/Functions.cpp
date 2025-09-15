@@ -19,12 +19,22 @@ namespace OpenKNX
 
         void Functions::AssignLed2Function(Led::Base* led, uint32_t functionId)
         {
-            _functionGroups[functionId].addLed(led);
+            FunctionGroup* fg = get(functionId);
+            fg->addLed(led);
+            logDebug("", "Functions::AssignLed2Function led pointer value: %p to functionId %u", led, functionId);
         }
 
         FunctionGroup* Functions::get(uint32_t functionId)
         {
-            return &_functionGroups[functionId];
+            auto it = _functionGroups.find(functionId);
+            if (it == _functionGroups.end())
+            {
+                // construct a new FunctionGroup with the correct id
+                auto [insertIt, _] = _functionGroups.emplace(functionId, FunctionGroup(functionId));
+                it = insertIt;
+            }
+
+            return &it->second;
         }
 
 

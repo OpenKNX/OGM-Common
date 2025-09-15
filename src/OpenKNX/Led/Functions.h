@@ -27,9 +27,11 @@ namespace OpenKNX
         class FunctionGroup
         {
             private:
+              uint32_t _functionId = 0;
               std::vector<Led::Base*> _leds;
             public:
             // manage the FunctionGroup itself
+              FunctionGroup(uint32_t functionId) : _functionId(functionId) {}
               void addLed(Led::Base* led);
             // control the leds assigned to this function
               void on(bool state, Capability capability = ALL);
@@ -45,13 +47,12 @@ namespace OpenKNX
         {
           private:
             std::unordered_map<uint32_t, FunctionGroup> _functionGroups;
-            //std::vector<std::pair<uint32_t, FunctionGroup>> _functionGroups;
           public:
             Functions();
             void setup();
 
             /*
-             * Assign a led to a function, return true if successful
+             * Assign a led to a LED function
              */
             void AssignLed2Function(Led::Base* led, uint32_t functionId);
 

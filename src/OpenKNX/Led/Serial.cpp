@@ -255,13 +255,10 @@ namespace OpenKNX
 
         void SerialLedManager::writeLeds()
         {
-            //logDebug("SerialLedManager", "writeLeds");
             if (!_dirty)
                 return;
-            //logDebug("SerialLedManager", "writeLeds2");
             if (delayCheckMillis(_lastWritten, 5)) // prevent calling a new rmt transmission into an running on
             {
-                logDebug("SerialLedManager", "writeLeds3");
                 _lastWritten = millis();
                 _dirty = 0;
 

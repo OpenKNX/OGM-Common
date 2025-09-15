@@ -649,27 +649,11 @@ namespace OpenKNX
             }
             else if (isValid())
             {       
-                // time is valid
-                uint8_t lastChange = getLocalTime().second / 2;
-                if (_lastSecondChange != lastChange)
+                if (_ledState != 3)
                 {
-                    _lastSecondChange = lastChange;
-                    _timerLedOn = millis();
-                }
-                if (delayCheck(_timerLedOn, 1000))
-                {
-                    _timerLedOn = 0;
-                    if (_ledState != 3)
-                    {
-                        _ledState = 3;
-                        openknx.ledFunctions.get(1)->off();
-                    }
-                }
-                else if (_ledState != 4)
-                {
-                    _ledState = 4;
+                    _ledState = 3;
                     openknx.ledFunctions.get(1)->setColor(OPENKNX_SERIALLED_COLOR_BLUE);
-                    openknx.ledFunctions.get(1)->on();
+                    openknx.ledFunctions.get(1)->blinking(1000, Led::Capability::ALL);
                 }
             }
             else
@@ -756,9 +740,7 @@ namespace OpenKNX
 
         void TimeManager::checkChangedTime(tm& setTime, bool utc, unsigned long millisReceivedTimestamp)
         {
-#ifdef OPENKNX_LED_TIME
             _timeUpdatedActivity = millis();
-#endif
             std::time_t now = _timeClock.getTime();
             double offset = difftime(now, _lastTimeStamp);
             bool changed = offset > 2 || offset < -2;
