@@ -39,6 +39,7 @@ namespace OpenKNX
               void on(Capability capability = ALL);
               void off(Capability capability = ALL);
               void setColor(uint8_t r, uint8_t g, uint8_t b);
+              void setColor(uint32_t rgb);
               void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ, Capability capability = ALL);
               void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = ALL);
               void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = ALL);

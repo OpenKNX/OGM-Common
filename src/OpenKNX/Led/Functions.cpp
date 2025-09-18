@@ -82,6 +82,17 @@ namespace OpenKNX
             }
         }
 
+        void FunctionGroup::setColor(uint32_t rgb)
+        {
+            for (auto led : _leds)
+            {
+                if (led->isRGB())
+                {
+                    ((RGB*)led)->setColor(rgb);
+                }
+            }
+        }
+
         void FunctionGroup::pulsing(uint16_t duration, Capability capability)
         {
             for (auto led : _leds)
