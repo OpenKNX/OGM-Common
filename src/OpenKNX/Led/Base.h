@@ -16,7 +16,7 @@ namespace OpenKNX
         class Base
         {
           protected:
-            //volatile long _pin = -1;
+            volatile uint8_t _identifier = -1;
             volatile bool _initialized = false;
             volatile uint32_t _lastMillis = 0;
             volatile uint8_t _maxBrightness = 100;
@@ -141,6 +141,11 @@ namespace OpenKNX
              * Call unloadEffect() and load new normal effect
              */
             void loadEffect(Led::Effects::Base *effect);
+
+            /*
+             * Set the identifier for logging
+             */
+            void setIdentifier(uint8_t identifier) { _identifier = identifier; }
 
             /*
              * Get a logPrefix as string

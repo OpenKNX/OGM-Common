@@ -40,15 +40,15 @@ namespace OpenKNX
         #endif
     #endif
 #endif
-            logInfo("LED", "Init LED Manager with %d Leds", _ledCount);
+            logInfoP("Init %d Leds", _leds.size());
 #ifdef OPENKNX_SERIALLED_ENABLE
             if(_serialLedManager)
                 _serialLedManager->init(_serialLedCount);
 #endif
-            for(uint8_t i = 0; i < _ledCount; i++)
-            {
-                _leds[i]->init();
-            }
+            
+            for (const auto& pair : _leds)
+                pair.second->init();
+
             _init = true;
         }
 
@@ -57,35 +57,31 @@ namespace OpenKNX
 
         }
 
-        uint8_t Manager::addLed(Led::Base* led, Led::LedType type)
+        void Manager::addLed(Led::Base* led, uint8_t identifier)
         {
             if (led == nullptr || _init)
-                return 0xFF;
-            
-            _leds[_ledCount] = led;
-            _ledCount++;
+            {
+                logErrorP("Cannot add LED after init or led is null");
+                return;
+            }
 
-            _specialLeds[type] = led;
-
-            return _ledCount - 1;
+            _leds[identifier] = led;
         }
         
 #ifdef OPENKNX_SERIALLED_ENABLE
-        uint8_t Manager::addLed(Led::Serial* led, Led::LedType type)
+        void Manager::addLed(Led::Serial* led, uint8_t identifier)
         {
             if (led == nullptr || _init)
-                return 0xFF;
+            {
+                logErrorP("Cannot add LED after init or led is null");
+                return;
+            }
             
             led->setManager(getSerialLedManager(led->getPin()));
             if(led->getAddr() >= _serialLedCount)
                 _serialLedCount = led->getAddr()+1;
-            
-            _leds[_ledCount] = led;
-            _ledCount++;
-
-            _specialLeds[type] = led;
-
-            return _ledCount - 1;
+            led->setIdentifier(identifier);
+            _leds[identifier] = led;
         }
         
         Led::SerialLedManager* Manager::getSerialLedManager(long pin)
@@ -96,7 +92,7 @@ namespace OpenKNX
             }
             else if(_serialLedManager->getPin() != pin)
             {
-                logErrorP("", "Only one Serial LED Manager supported!");
+                logErrorP("Only one Serial LED Manager supported!");
                 return nullptr;
             }
             return _serialLedManager;
@@ -107,16 +103,18 @@ namespace OpenKNX
         {
             if(!_init)
                 return;
+            
             if(!distribute)
             {
                 // distribute the 1ms timer evenly to all leds
                 // 100Hz frequency
                 uint32_t time = millis();
-                for(uint8_t i = 0; i < _ledCount; i++)
+                uint8_t i = 0;
+                for (const auto& pair : _leds)
                 {
                     if(i%10 == time%10)
-                        if (_leds[i] != nullptr)
-                            _leds[i]->loop();
+                        pair.second->loop();
+                    i++;
                 }
 #ifdef OPENKNX_SERIALLED_ENABLE
                 if(_serialLedManager && time % 10) // 100Hz frequency
@@ -125,11 +123,9 @@ namespace OpenKNX
             }
             else
             {
-                for(uint8_t i = 0; i < _ledCount; i++)
-                {
-                    if (_leds[i] != nullptr)
-                        _leds[i]->loop();
-                }
+                for (const auto& pair : _leds)
+                    pair.second->loop();
+
 #ifdef OPENKNX_SERIALLED_ENABLE
                 if(_serialLedManager)
                     _serialLedManager->writeLeds();
@@ -142,27 +138,15 @@ namespace OpenKNX
             return getLed(LED_TYPE_PROG);
         }
 
-        Led::Base* Manager::getLed(uint8_t index)
+        Led::Base* Manager::getLed(uint8_t identifier)
         {
-            if (index >= _ledCount)
-                return _dummyLed;
-            return _leds[index];
-        }
-
-        Led::Base* Manager::getLed(LedType type)
-        {
-            if (type >= LED_TYPE_MAX)
-                return _dummyLed;
-            return _specialLeds[type];
+            return _leds.find(identifier) != _leds.end() ? _leds[identifier] : _dummyLed;
         }
 
         void Manager::powerSave(bool active)
         {
-            for(uint8_t i = 0; i < _ledCount; i++)
-            {
-                if (_leds[i] != nullptr)
-                    _leds[i]->powerSave(active);
-            }
+            for (const auto& pair : _leds)
+                pair.second->powerSave(active);
         }
 
         std::string Manager::logPrefix()

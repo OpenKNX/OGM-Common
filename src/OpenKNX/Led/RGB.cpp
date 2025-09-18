@@ -4,6 +4,12 @@ namespace OpenKNX
 {
     namespace Led
     {
-
+        void RGB::setColor(uint32_t rgb)
+        {
+            uint8_t r = (rgb >> 16) & 0xFF;
+            uint8_t g = (rgb >> 8) & 0xFF;
+            uint8_t b = rgb & 0xFF;
+            setColor(r, g, b);
+        }
     } // namespace Led
 } // namespace OpenKNX

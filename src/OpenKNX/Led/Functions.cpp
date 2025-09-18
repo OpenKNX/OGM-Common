@@ -21,7 +21,12 @@ namespace OpenKNX
         {
             FunctionGroup* fg = get(functionId);
             fg->addLed(led);
-            logDebug("", "Functions::AssignLed2Function led pointer value: %p to functionId %u", led, functionId);
+            logDebugP("AssignLed2Function led pointer value: %p to functionId %u", led, functionId);
+        }
+
+        std::string Functions::logPrefix()
+        {
+            return "LED-Functions";
         }
 
         FunctionGroup* Functions::get(uint32_t functionId)
@@ -114,6 +119,11 @@ namespace OpenKNX
                     led->flash(duration);
                 }
             }
+        }
+
+        std::string FunctionGroup::logPrefix()
+        {
+            return "LED-FunctionGroup";
         }
     }
 }

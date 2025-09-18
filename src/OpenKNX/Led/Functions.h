@@ -29,6 +29,7 @@ namespace OpenKNX
             private:
               uint32_t _functionId = 0;
               std::vector<Led::Base*> _leds;
+              std::string logPrefix();
             public:
             // manage the FunctionGroup itself
               FunctionGroup(uint32_t functionId) : _functionId(functionId) {}
@@ -47,6 +48,7 @@ namespace OpenKNX
         {
           private:
             std::unordered_map<uint32_t, FunctionGroup> _functionGroups;
+            std::string logPrefix();
           public:
             Functions();
             void setup();
