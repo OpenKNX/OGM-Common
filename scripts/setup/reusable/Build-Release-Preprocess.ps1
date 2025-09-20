@@ -59,7 +59,7 @@ if($settings.compileWith -eq "openknxproducer")
     Copy-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
   }
   if (Test-Path -Path "src/$($settings.releaseName).baggages") {
-    Copy-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
+    Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
   }
 }
 elseif($settings.compileWith -eq "kaenxcreator")
