@@ -56,10 +56,10 @@ if($settings.compileWith -eq "openknxproducer")
     Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
   }
   if (Test-Path -Path "src/$($settings.releaseName).debug.xml") {
-    Move-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
+    Copy-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
   }
   if (Test-Path -Path "src/$($settings.releaseName).baggages") {
-    Move-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
+    Copy-Item "src/$($settings.releaseName).baggages" "release/data/$($settings.targetName).baggages"
   }
 }
 elseif($settings.compileWith -eq "kaenxcreator")
