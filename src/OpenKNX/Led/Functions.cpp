@@ -19,6 +19,9 @@ namespace OpenKNX
 
         void Functions::AssignLed2Function(Led::Base* led, uint32_t functionId)
         {
+            if(functionId == 0)
+                return;
+            
             FunctionGroup* fg = get(functionId);
             fg->addLed(led);
             logDebugP("AssignLed2Function led pointer value: %p to functionId %u", led, functionId);

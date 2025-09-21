@@ -29,6 +29,7 @@ namespace OpenKNX
                 pinMode(_pins[i], OUTPUT);
                 digitalWrite(_pins[i], !_activeOn);
             }
+            logDebugP("GPIO_RGB::init set pins %d %d %d to %d", _pins[0], _pins[1], _pins[2], !_activeOn);
         }
 
         /*
@@ -48,7 +49,8 @@ namespace OpenKNX
             uint8_t pwmValues[3];
             for(int i = 0; i < 3; i++)
             {
-                pwmValues[i] = ((uint32_t)_color[i] * calcBrightness / 256);
+                pwmValues[i] = ((uint32_t)_color[i] * calcBrightness / 255);
+
 
                 if(pwmValues[i] == 255)
                 {
@@ -66,6 +68,7 @@ namespace OpenKNX
                 }
             }
             _currentLedBrightness = calcBrightness;
+            _colorDirty = false;
         }
 
         void GPIO_RGB::setColor(uint8_t r, uint8_t g, uint8_t b)

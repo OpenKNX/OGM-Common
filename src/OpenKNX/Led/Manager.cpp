@@ -64,7 +64,7 @@ namespace OpenKNX
                 logErrorP("Cannot add LED after init or led is null");
                 return;
             }
-
+            led->setIdentifier(identifier);
             _leds[identifier] = led;
         }
         
