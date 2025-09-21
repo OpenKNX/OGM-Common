@@ -69,12 +69,12 @@ namespace OpenKNX
 
         bool SunCalculation::processCommand(std::string &cmd, bool diagnoseKo)
         {
-            if (cmd == "sun")
+            if (cmd == "sun" && !diagnoseKo)
             {
                 if (isSunCalculatioValid())
                 {
                     logInfoP("Used cordinates: %lf %lf", (double)ParamBASE_Latitude, (double)ParamBASE_Longitude);
-                    logInfoP("Elevation: %f, Azimut: %f", _elevation, _azimuth);
+                    logInfoP("Elevation: %f, Azimuth: %f", _elevation, _azimuth);
                     logInfoP("Sun rise: %02d::%02d UTC", _sunRiseUtc.hour, _sunRiseUtc.minute);
                     logInfoP("Sun rise: %02d::%02d (%s)", _sunRiseLocalTime.hour, _sunRiseLocalTime.minute, _sunRiseLocalTime.isDst ? "DST" : "ST");
                     logInfoP("Sun set: %02d::%02d UTC", _sunSetUtc.hour, _sunSetUtc.minute);
@@ -83,6 +83,32 @@ namespace OpenKNX
                 else
                     logInfoP("Sun position not valid because valid time is missing");
                 return true;
+            } 
+            else if (diagnoseKo && cmd.rfind("sun") == 0)
+            {
+                if (cmd.rfind("sun h") == 0)
+                {
+                    openknx.console.writeDiagnoseKo("-> help");
+                    openknx.console.writeDiagnoseKo("");
+                    openknx.console.writeDiagnoseKo("-> elevation");
+                    openknx.console.writeDiagnoseKo("");
+                    openknx.console.writeDiagnoseKo("-> azimuth");
+                    openknx.console.writeDiagnoseKo("");
+                    return true;
+                }
+                if (isSunCalculatioValid())
+                {
+                    if (cmd.rfind("sun e") == 0) 
+                    {
+                        openknx.console.writeDiagnoseKo("E: %2.5f", _elevation);
+                        return true;
+                    }
+                    else if (cmd.rfind("sun a") == 0) 
+                    {
+                        openknx.console.writeDiagnoseKo("A: %3.5f", _azimuth);
+                        return true;
+                    } 
+                }
             }
             return false;
         }
