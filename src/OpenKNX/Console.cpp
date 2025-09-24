@@ -27,9 +27,6 @@ namespace OpenKNX
         char buffer[15] = {}; // Last byte must be zero!
         uint8_t len = vsnprintf(buffer, 15, message, values);
 
-        if (len >= 15)
-            openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: writeDiagnoseKo message too long");
-
         _diagnoseKoOutput = true;
         KoBASE_Diagnose.value(buffer, Dpt(16, 1));
         knx.loop();
