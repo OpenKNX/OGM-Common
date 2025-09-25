@@ -19,6 +19,7 @@
 * Fix: Prevent issues with ADC usage, after showing console info;
        use "analogReadTemp()" to read CPU temperature.
 * Change: Use UTF8-encoding for dependencies.txt file
+* Fix: Console help-line for `aw` presented wrong value range (maximum is 4095)  
 
 
 ## 1.4.3: 2025-07-16

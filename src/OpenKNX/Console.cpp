@@ -575,7 +575,7 @@ namespace OpenKNX
         printHelpLine("dwoff <pin>", "Write digital pin to LOW");
         printHelpLine("dw <pin> 0-1", "Write digital pin");
         printHelpLine("dr <pin>", "Read digital pin");
-        printHelpLine("aw <pin> 0-4096", "Write analog pin");
+        printHelpLine("aw <pin> 0-4095", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
