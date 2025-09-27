@@ -420,7 +420,7 @@ namespace OpenKNX
         // loop took to long and last output is at least 1s ago
         if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
-            logErrorP("Warning: The loop took longer than usual (%i >= %i); stack %i", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack));
+            logWarningP("Warning: The loop took longer than usual (%i >= %i); stack %i", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack));
             _lastLooptimeWarning = millis();
         }
 #endif

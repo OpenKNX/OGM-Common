@@ -31,6 +31,11 @@
 #define logHexError(...) openknx.logger.logHexMacroWrapper(31, __VA_ARGS__)
 #define logHexErrorP(...) openknx.logger.logHexMacroWrapper(31, logPrefix().c_str(), __VA_ARGS__)
 
+#define logWarning(...) openknx.logger.logMacroWrapper(33, __VA_ARGS__)
+#define logWarningP(...) openknx.logger.logMacroWrapper(33, logPrefix().c_str(), __VA_ARGS__)
+#define logHexWarning(...) openknx.logger.logHexMacroWrapper(33, __VA_ARGS__)
+#define logHexWarningP(...) openknx.logger.logHexMacroWrapper(33, logPrefix().c_str(), __VA_ARGS__)
+
 #define logInfo(...) openknx.logger.logMacroWrapper(0, __VA_ARGS__)
 #define logInfoP(...) openknx.logger.logMacroWrapper(0, logPrefix().c_str(), __VA_ARGS__)
 #define logHexInfo(...) openknx.logger.logHexMacroWrapper(0, __VA_ARGS__)
