@@ -348,18 +348,18 @@ namespace OpenKNX
                 return;
             }
 
-            memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
-            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
-            OPENKNX_LOGGER_DEVICE.print(_buffer);
+            memset(_buffer.output, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
+            uint16_t len = vsnprintf(_buffer.output, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
+            OPENKNX_LOGGER_DEVICE.print(_buffer.output);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
             {
                 // check if buffer overflow really happened
                 for (uint8_t i = 0; i < 4; i++)
-                    if (_wall[i] != _magic[i])
+                    if (_buffer.wall[i] != _buffer.magic[i])
                         openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
 #ifdef OPENKNX_DEBUG
                 // if there was no buffer overflow, we warn the developer to shorten the message to prevent a potential overflow
-                printColorCode(33);
+                printColorCode(33); // yellow
                 OPENKNX_LOGGER_DEVICE.print("<-- Potential buffer overflow, please shorten your message");
                 printColorCode(0);
 #endif
