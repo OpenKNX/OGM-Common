@@ -22,25 +22,14 @@ namespace OpenKNX
     }
 
 #ifdef BASE_KoDiagnose
-    void Console::writeDiagnoseKo(const char* message, va_list& values)
-    {
-        char buffer[15] = {}; // Last byte must be zero!
-        uint8_t len = vsnprintf(buffer, 15, message, values);
-
-        if (len >= 15)
-            openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: writeDiagnoseKo message too long");
-
-        _diagnoseKoOutput = true;
-        KoBASE_Diagnose.value(buffer, Dpt(16, 1));
-        knx.loop();
-        _diagnoseKoOutput = false;
-    }
-
     void Console::writeDiagnoseKo(const char* message, ...)
     {
         va_list values;
         va_start(values, message);
-        writeDiagnoseKo(message, values);
+        _diagnoseKoOutput = true;
+        writeDpt16Ko(KoBASE_Diagnose, message, values);
+        knx.loop();
+        _diagnoseKoOutput = false;
         va_end(values);
     }
 
@@ -49,7 +38,10 @@ namespace OpenKNX
     {
         va_list values;
         va_start(values, message);
-        writeDiagnoseKo(message, values);
+        _diagnoseKoOutput = true;
+        writeDpt16Ko(KoBASE_Diagnose, message, values);
+        knx.loop();
+        _diagnoseKoOutput = false;
         va_end(values);
     }
 

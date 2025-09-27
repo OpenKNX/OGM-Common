@@ -122,7 +122,11 @@ namespace OpenKNX
         class Logger
         {
           private:
-            char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
+            struct {
+                const char magic[4] = {0x06, 0x9F, 0xFD, 0xCC}; // magic values for comparison of _wall
+                char output[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
+                char wall[4] = {0x06, 0x9F, 0xFD, 0xCC};
+            } _buffer;
 #ifdef ARDUINO_ARCH_RP2040
             // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
