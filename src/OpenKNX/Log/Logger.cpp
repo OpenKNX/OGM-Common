@@ -352,9 +352,19 @@ namespace OpenKNX
             uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
             OPENKNX_LOGGER_DEVICE.print(_buffer);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
-                openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
+            {
+                // check if buffer overflow really happened
+                for (uint8_t i = 0; i < 4; i++)
+                    if (_wall[i] != _magic[i])
+                        openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
+#ifdef OPENKNX_DEBUG
+                // if there was no buffer overflow, we warn the developer to shorten the message to prevent a potential overflow
+                printColorCode(33);
+                OPENKNX_LOGGER_DEVICE.print("<-- Potential buffer overflow, please shorten your message");
+                printColorCode(0);
+#endif
+            }
         }
-
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
         bool Logger::checkTrace(const std::string& prefix)
         {

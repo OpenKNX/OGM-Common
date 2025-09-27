@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string>
+#include "knx.h"
 
 #define delayCheckMillis(last, duration) (millis() - last >= duration)
 #define delayCheckMicros(last, duration) (micros() - last >= duration)
@@ -24,6 +25,9 @@ uint32_t uptime(bool result = true);
  * Free Memory
  */
 int freeMemory();
+
+void writeDpt16Ko(GroupObject &ko, const char* message, va_list& values);
+void writeDpt16Ko(GroupObject &ko, const char* message, ...);
 
 /*
  * Nuker

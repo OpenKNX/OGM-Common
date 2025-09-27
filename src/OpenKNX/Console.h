@@ -55,9 +55,6 @@ namespace OpenKNX
 #ifndef ARDUINO_ARCH_SAMD
         void processPinCommand(const std::string& cmd);
 #endif
-#ifdef BASE_KoDiagnose
-        void writeDiagnoseKo(const char* message, va_list& values);
-#endif
 
       public:
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};
