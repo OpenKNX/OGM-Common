@@ -170,7 +170,7 @@ In dem Feld wird der Breitengrad des Standortes eingegeben.
 
 In dem Feld wird der Längengrad des Standortes eingegeben.
 
-## Erweitert
+## **Erweitert**
 
 Im folgenden können Einstellungen vorgenommen werden, die eher für erfahrene Benutzer sind.
 
@@ -270,5 +270,38 @@ Auswahl:
 - Aktiv mit 60 min. Schreibschutz
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
 
+<!-- DOC -->
+## **Module**
+
+Hier wird eine Liste aller in dieser Applikation enthaltenen OpenKNX-Module und deren Version angezeigt. Standardmäßig sind alle Module aktiv. Mit der Checkbox kann man ein Modul deaktivieren. Es erscheint dann nicht mehr zur Auswahl in der ETS-Applikation und wird auf dem Gerät nicht ausgeführt.
+
+<!-- DOC -->
+### **Modul aktivieren**
+
+Ist die Checkbox ausgewählt, ist das entsprechende Modul aktiv und dessen Parameterseite erscheint in der ETS.
+
+Wird die Checkbox ausgeschaltet, wird das Module deaktiviert und alles Grupppenadressenzuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos, da das Modul auf dem Gerät nicht ausgeführt wird.
+
+### **Abgleich mit dem Gerät**
+
+Die vorliegende ETS-Applikation ist generisch gehalten und läuft auf viel unterschiedlicher Hardware. Dadurch kann es passieren, dass in der Applikation Module angezeigt werden, die mit der gegebenen Hardware keine Funktion haben. 
+
+>Beispiel: Wenn die Hardware keine Binäreingänge hat, dann kann man noch so viele Einstellungen zu Binäreingängen in der ETS machen, es wird nicht funktionieren. 
+
+Mit Hilfe der beiden Schaltflächen auf dieser Seite kann man die Liste der vorhandenen Module in der ETS-Applikation mit der Liste der funktionierenden Module der angeschlossenen Hardware abgleichen.
+
+>Wichtig: Die Schaltflächen funktionieren nur, wenn das Gerät angeschlossen und mit der Applikation programmiert ist.
+
+Es stehen 2 Schaltflächen zur Verfügung:
+
+#### **Nicht unterstützte Module ausblenden**
+
+Das Gerät wird nach den Modulen gefragt, die es nicht unterstützt. Diese werden ausgeblendet. Falls der Benutzer vorher schon Module manuell ausgeblendet hat, wird diese Auswahl nicht verändert.
+
+Mit dieser Funktion werden Module nur ausgeblendet, nicht eingeblendet.
+
+#### **Komplettabgleich aller Module**
+
+Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die vom Gerät unterstützten Module werden eingeblendet, die nicht unterstützten ausgeblendet. Eine vom Benutzer vorher getroffene Auswahl wird überschrieben.
 
 
