@@ -32,9 +32,9 @@ namespace OpenKNX
 
         void DriverEmbedded::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
         {
+            pinMode(pin, mode);
             if(preset)
                 digitalWriteFast(pin, status);
-            pinMode(pin, mode);
         }
 
         void DriverEmbedded::GPIOdigitalWrite(uint8_t pin, int status)
