@@ -6,10 +6,17 @@ extern void setup1() __attribute__((weak));
 namespace OpenKNX
 {
 
+#ifdef FIRMWARE_REVISION
+    void Facade::init()
+    {
+        common.init(FIRMWARE_REVISION);
+    }
+#else
     void Facade::init(uint8_t firmwareRevision)
     {
         common.init(firmwareRevision);
     }
+#endif
     void Facade::setup()
     {
         common.setup();
