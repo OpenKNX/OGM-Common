@@ -26,8 +26,13 @@ uint32_t uptime(bool result = true);
  */
 int freeMemory();
 
+/*
+ * Write DPT 16 KO Helper
+ */
+#if MASK_VERSION != 0x091A
 void writeDpt16Ko(GroupObject &ko, const char* message, va_list& values);
 void writeDpt16Ko(GroupObject &ko, const char* message, ...);
+#endif
 
 /*
  * Nuker
