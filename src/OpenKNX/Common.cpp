@@ -298,7 +298,10 @@ namespace OpenKNX
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
+        {
+            openknx.gpio.showInitResults();
             openknx.console.showInformations();
+        }
     }
 
 #ifdef OPENKNX_DUALCORE
@@ -559,6 +562,7 @@ namespace OpenKNX
 #endif
 
         logDebugP("processAfterStartupDelay");
+        openknx.gpio.showInitResults();
         openknx.console.showInformations();
         openknx.logger.log("Type \"help\" to view a list of available commands.");
         logIndentUp();
