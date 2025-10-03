@@ -19,6 +19,7 @@ namespace OpenKNX
         const OPENKNX_GPIO_T GPIO_TYPES[1] = {OPENKNX_GPIO_T_EMBEDDED};
         #endif
         Base* GPIOExpanders[OPENKNX_GPIO_NUM+1];
+        int GPIOInitResults[OPENKNX_GPIO_NUM+1]; // 0 = OK, INT_MIN = type not found, else error code from init()
 
         Manager::Manager()
         {
@@ -50,63 +51,49 @@ namespace OpenKNX
                     case OPENKNX_GPIO_T_TCA9555:
                     {
                         GPIOExpanders[i] = new DriverTCA9555(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
-                        int statuscode = GPIOExpanders[i]->init();
-                        if(statuscode)
-                        {
-                            logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], statuscode);
-                        }
-                        else
-                        {
-                            logInfoP("connected to GPIO Expander %u with address %u", i, GPIO_ADDRS[i]);
-                        }
+                        GPIOInitResults[i] = GPIOExpanders[i]->init();
                     }
                     break;
                     case OPENKNX_GPIO_T_TCA6408:
                     {
                         GPIOExpanders[i] = new DriverTCA6408(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE, GPIO_INTS[i]);
-                        int statuscode = GPIOExpanders[i]->init();
-                        if(statuscode)
-                        {
-                            logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], statuscode);
-                        }
-                        else
-                        {
-                            logInfoP("connected to GPIO Expander %u with address %u", i, GPIO_ADDRS[i]);
-                        }
+                        GPIOInitResults[i] = GPIOExpanders[i]->init();
                     }
                     break;
                     case OPENKNX_GPIO_T_PCA9557:
                     {
                         GPIOExpanders[i] = new DriverPCA9557(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
-                        int statuscode = GPIOExpanders[i]->init();
-                        if(statuscode)
-                        {
-                            logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], statuscode);
-                        }
-                        else
-                        {
-                            logInfoP("connected to GPIO Expander %u with address %u", i, GPIO_ADDRS[i]);
-                        }
+                        GPIOInitResults[i] = GPIOExpanders[i]->init();
                     }
                     break;
                     case OPENKNX_GPIO_T_PCA9554:
                     {
                         GPIOExpanders[i] = new DriverPCA9554(GPIO_ADDRS[i], &OPENKNX_GPIO_WIRE);
-                        int statuscode = GPIOExpanders[i]->init();
-                        if(statuscode)
-                        {
-                            logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], statuscode);
-                        }
-                        else
-                        {
-                            logInfoP("connected to GPIO Expander %u with address %u", i, GPIO_ADDRS[i]);
-                        }
+                        GPIOInitResults[i] = GPIOExpanders[i]->init();
                     }
                     break;
                     #endif
                     default:
-                        ;
-                        logErrorP("GPIO_TYPE %u not found", GPIO_TYPES[i]);
+                        GPIOInitResults[i] = INT_MAX;
+                }
+            }
+        }
+
+        void Manager::showInitResults()
+        {
+            for(int i = 1; i < OPENKNX_GPIO_NUM+1; i++)
+            {
+                if (GPIOInitResults[i] == 0)
+                {
+                    logInfoP("connected to GPIO Expander %u with address %u", i, GPIO_ADDRS[i]);
+                }
+                else if (GPIOInitResults[i] == INT_MIN)
+                {
+                    logErrorP("GPIO_TYPE %u not found", GPIO_TYPES[i]);
+                }
+                else
+                {
+                    logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], GPIOInitResults[i]);
                 }
             }
         }

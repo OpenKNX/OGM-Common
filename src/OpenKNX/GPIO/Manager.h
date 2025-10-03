@@ -22,6 +22,7 @@ namespace OpenKNX
             ~Manager();
 
             void init();
+            void showInitResults();
             void loop();
 
             std::string logPrefix();
