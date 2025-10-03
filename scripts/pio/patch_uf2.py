@@ -44,12 +44,16 @@ def post_program_action(source, target, env):
     else:
         application_version = int(m.group(2))
 
-    content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()
-
-    m = re.search("const uint8_t firmwareRevision = ([0-9]+);", content)
+    m = re.search("#define MAIN_FirmwareRevision ([0-9]{1,2})", content)
     if m is None:
-        print("{}  {}{}".format(console_color.RED, "Error: FirmwareRevision not readable", console_color.END))
-        return
+        # Old style, read from main.cpp
+        content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()
+        m = re.search("const uint8_t firmwareRevision = ([0-9]+);", content)
+        if m is None:
+            print("{}  {}{}".format(console_color.RED, "Error: FirmwareRevision not readable", console_color.END))
+            return
+        else:
+            firmware_revision = int(m.group(1))
     else:
         firmware_revision = int(m.group(1))
 
