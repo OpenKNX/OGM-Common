@@ -11,6 +11,9 @@ on:
       oam:
         required: true
         type: string
+      ref:
+        required: true
+        type: string
       target:
         required: true
         type: string
@@ -42,7 +45,7 @@ jobs:
       #   with:
       #     path: OFM-DFA
 
-      - name: Check for Same Name Branch in Reference OAM
+      - name: ((IGNORED)) Check for Same Name Branch in Reference OAM
         id: oam_branch
         run: |
           BRANCH="v1dev"
@@ -59,6 +62,7 @@ jobs:
           repository: openknx/${{ inputs.oam }}
           # TODO fixme: branch-handling
           # ref: ${{ steps.oam_branch.outputs.ref_name }}
+          ref: ${{ inputs.ref }}
           path: ${{ inputs.oam }}
 
       # - name: DEBUG paths
