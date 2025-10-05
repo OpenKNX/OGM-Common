@@ -170,11 +170,9 @@ namespace OpenKNX
         openknx.progLed.errorCode(code);
 
 #if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
-        ddl->stop(true);
-    #ifdef NCN5120
-        ddl->powerControl(false);
-    #endif
+        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+        dll->stop(true);
+        dll->powerControl(false);
 #endif
         logIndentDown();
 
@@ -192,10 +190,7 @@ namespace OpenKNX
     float Hardware::cpuTemperature()
     {
 #if defined(ARDUINO_ARCH_RP2040)
-        adc_select_input(4);
-        const float conversionFactor = 3.3f / (1 << 12);
-        float adc = (float)adc_read() * conversionFactor;
-        return 27.0f - (adc - 0.706f) / 0.001721f; // Conversion from Datasheet
+        return analogReadTemp();
 #else
         return 0.0f;
 #endif
@@ -231,6 +226,16 @@ namespace OpenKNX
     #else
         #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
     #endif
+#if MASK_VERSION == 0x091A
+        knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerReceivedFrame(
+#else
+        knx.bau().getDataLinkLayer()->getTPUart().registerReceivedFrame(
+#endif
+            [](TPUart::Frame& tpFrame) {
+                // Process received frame
+                if (openknx.console.bcuDebug())
+                    openknx.logger.logWithPrefixAndValues("BCU<Debug>", "Received frame: %s", tpFrame.printFrame().c_str());
+            });
     }
 #endif
 

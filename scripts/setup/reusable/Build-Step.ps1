@@ -27,7 +27,7 @@ param (
 
   [Parameter(Mandatory = $true)]
   [ValidateNotNullOrEmpty()]
-  [string]$binaryFormat,
+  [string]$featureSet,
   
   [Parameter(Mandatory = $false)]
   [string]$productName,
@@ -36,7 +36,6 @@ param (
   [string]$ProjectDir
 )
 
-
 if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio run -e $pioEnv }
 else { ~/.platformio/penv/Scripts/pio.exe run -e $pioEnv }
 if (!$?) {
@@ -44,45 +43,101 @@ if (!$?) {
   exit 1
 }
 
+# featureSet replaces the old binaryFormat setting in a compatible way
+# it is interpreted as an enum with some depricated values (for compatibility)
+# bin (deprecated) - old SAMD processor
+# uf2 (deprecated) - RP2040 without OTA
+# esp32 - (deprecated) ESP32 with OTA
+# esp32-ip (new) esp32 with OTA
+# esp32-tp (new) esp32 with KNX
+# rp2040-ip (new) rp2040 with OTA
+# rp2040-tp (new) rp2040 with KNX
+# rp2350-ip (new) rp2350 with OTA
+# rp2350-tp (new) rp2350 with KNX
+# inherent logic: 
+# - a device with OTA does not need a KNX-Upload
+# - esp is always IP and OTA is always possible
+# - RP2040/2350 needs to distinguish 
+
+
+# binaryFormat uf2 means rp2040 without OTA
+$binaryFormat = "uf2"
 $processor = "RP2040"
-if ($binaryFormat -eq "bin") {
+$withOTA = $false;
+if ($featureSet -eq "bin") {
   $processor = "SAMD"
-}
-elseif ($binaryFormat -eq "esp32") {
+  $binaryFormat = "bin"
+} elseif ($featureSet -eq "esp32" -or $featureSet -eq "esp32-ip") {
   $binaryFormat = "bin"
   $processor = "ESP32"
+  $withOTA = $true;
+} elseif ($featureSet -eq "esp32-tp") {
+  $binaryFormat = "bin"
+  $processor = "ESP32"
+  $withOTA = $false;
+} elseif ($featureSet -eq "rp2040-ip" -or $featureSet -eq "rp2350-ip") {
+  $withOTA = $true;
+} elseif ($featureSet -ne "uf2" -or $featureSet -eq "rp2040-tp" -or $featureSet -eq "rp2350-tp") {
+  $withOTA = $false;
+} else {
+  Write-Host "ERROR: Wrong featureset $featureSet in Build-Step!"
+  exit 1
+}
+
+# if no product name is given, use firmware name without "firmware-" prefix
+if (!$productName) {
+  $productName = $firmwareName.Replace("firmware-", "")
 }
 
 # Create source and target path for firmware
 $CopyItem_Source = ".pio/build/$pioEnv/firmware.$binaryFormat"
-$CopyItem_Target_Dir = "release/data"
+$CopyItem_Target_Root = "release"
+$CopyItem_Target_Data = "$CopyItem_Target_Root/data"
+$CopyItem_Target_Device = "$productName"
+$CopyItem_Target_Dir = "$CopyItem_Target_Root/Firmware/$CopyItem_Target_Device"
+$CopyItem_Target_Name = "$firmwareName.$binaryFormat"
 if (![string]::IsNullOrEmpty($ProjectDir)) {
   $CopyItem_Source = Join-Path $ProjectDir $CopyItem_Source
+  $CopyItem_Target_Data = Join-Path $ProjectDir $CopyItem_Target_Data
   $CopyItem_Target_Dir = Join-Path $ProjectDir $CopyItem_Target_Dir
 }
-$CopyItem_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.$binaryFormat"
+$CopyItem_Target = Join-Path $CopyItem_Target_Dir $CopyItem_Target_Name
 
-# Check if firmware is available and copy it to release/data
+# Check if firmware is available and copy it to release
 Write-Host "The $PioEnv firmware is available as $CopyItem_Source"
 if ( Test-Path $CopyItem_Source ) {
   Write-Host "Copy-Item: $CopyItem_Source to $CopyItem_Target"
-  # create target directory if not exists
+  # create target directories if not exists
   if (!(Test-Path -Path $CopyItem_Target_Dir)) {
-    New-Item -ItemType Directory -Force -Path $CopyItem_Target_Dir
+    New-Item -ItemType Directory -Force -Path $CopyItem_Target_Dir | Out-Null
   }
-  # copy firmware to release/data
-  Copy-Item $CopyItem_Source $CopyItem_Target
+  if (!(Test-Path -Path $CopyItem_Target_Data)) {
+    New-Item -ItemType Directory -Force -Path $CopyItem_Target_Data | Out-Null
+  }
+  
+  # copy firmware to release
+  Copy-Item $CopyItem_Source $CopyItem_Target 
+  if (!$?) {
+    Write-Host "ERROR: Firmware could noch be copied!"
+    exit 1
+  }
 
-  # copy second image
-  if ($processor -eq "ESP32") {
-    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
-    $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
-    Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
-  }
-  if ($processor -eq "RP2040") {
-    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.bin"
-    $CopyItem2_Target_Dir = Join-Path $CopyItem_Target_Dir "$firmwareName.bin"
-    Copy-Item $CopyItem2_Source $CopyItem2_Target_Dir
+  # copy OTA image
+  if ($withOTA) {    
+    if ($processor -eq "ESP32") {
+      $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
+      $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
+      Copy-Item $CopyItem2_Source $CopyItem2_Target
+    }
+    elseif ($processor -eq "RP2040") {
+      $CopyItem2_Source = ".pio/build/$pioEnv/firmware.bin"
+      $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.bin"
+      Copy-Item $CopyItem2_Source $CopyItem2_Target
+    }
+    if (!$?) {
+      Write-Host "ERROR: Firmware could noch be copied!"
+      exit 1
+    }
   }
 }
 else {
@@ -91,44 +146,33 @@ else {
   exit 1
 }
 
-# if no product name is given, use firmware name without "firmware-" prefix
-if (!$productName) {
-  $productName = $firmwareName.Replace("firmware-", "")
-}
 # create Upload-Firmware-<firmwarename>.ps1 script
 
 # need to do this BEFORE the USB Upload-File is created
-if ($processor -eq "RP2040") {
-  # create KNX-Upload-Firmware-<firmwarename>.ps1 script
-  $fileName = "release/KNX-Upload-Firmware-$productName.ps1"
-  if (![string]::IsNullOrEmpty($ProjectDir)) {
-    $fileName = Join-Path $ProjectDir $fileName
-  }
-
-  # Write the script file content to the file 
-  $scriptContent = "./data/KNX-Upload-Firmware-Generic.ps1 $firmwareName.$binaryFormat"
-  if (Test-Path $fileName) { Clear-Content -Path $fileName }
-  Add-Content -Path $fileName -Value $scriptContent
-  if (!$?) {
-    Write-Host "ERROR: $fileName could not be created!"
-    exit 1
-  }
-}
-
-# OTA
-if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
+# OTA-Upload
+if ($withOTA) {
   # create OTA-Upload-Firmware-<firmwarename>.ps1 script
-  $fileName = "release/OTA-Upload-Firmware-$productName.ps1"
-  if (![string]::IsNullOrEmpty($ProjectDir)) {
-    $fileName = Join-Path $ProjectDir $fileName
-  }
+  $fileName = "$CopyItem_Target_Dir/OTA-Upload-Firmware.ps1"
   $OTAbinaryFormat = "bin"
   if ($processor -eq "RP2040") {
     $espotaArgs = "'-p 2040'"
   }
 
   # Write the script file content to the file 
-  $scriptContent = "./data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
+  $scriptContent = "../../data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
+  if (Test-Path $fileName) { Clear-Content -Path $fileName }
+  Add-Content -Path $fileName -Value $scriptContent
+  if (!$?) {
+    Write-Host "ERROR: $fileName could not be created!"
+    exit 1
+  }
+# KNX-Upload
+} else {
+  # create KNX-Upload-Firmware-<firmwarename>.ps1 script
+  $fileName = "$CopyItem_Target_Dir/KNX-Upload-Firmware.ps1"
+
+  # Write the script file content to the file 
+  $scriptContent = "../../data/KNX-Upload-Firmware-Generic.ps1 $CopyItem_Target_Name"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
@@ -137,16 +181,14 @@ if ($processor -eq "RP2040" -or $processor -eq "ESP32") {
   }
 }
 
+# USB-Upload
 # create Upload-Firmware-<firmwarename>.ps1 script
-$fileName = "release/USB-Upload-Firmware-$productName.ps1"
-if (![string]::IsNullOrEmpty($ProjectDir)) {
-  $fileName = Join-Path $ProjectDir $fileName
-}
+$fileName = "$CopyItem_Target_Dir/USB-Upload-Firmware.ps1"
 
 # Write the script file content to the file 
-$scriptContent = "./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.$binaryFormat"
+$scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $CopyItem_Target_Name"
 if ( $processor -eq "ESP32") {
-  $scriptContent = "./data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
+  $scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
 }
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
@@ -156,15 +198,12 @@ if (!$?) {
 }
 
 #check if file exists content.xml exists then add the closing tags
-$releaseTarget = "release/data/content.xml"
-if (![string]::IsNullOrEmpty($ProjectDir)) {
-  $releaseTarget = Join-Path $ProjectDir $releaseTarget
-}
+$releaseTarget = "$CopyItem_Target_Data/content.xml"
 
 #check if file exists content.xml exists if not create it
-if ((Test-Path -Path $releaseTarget -PathType Leaf)) {
+if (Test-Path -Path $releaseTarget -PathType Leaf) {
   # Add entry to content.xml. If entry already exists, do nothing. If not, add it. If file does not exist, create it.
-  $XMLContent = "         <Product Name=""$productName"" Firmware=""$firmwareName.$binaryFormat"" Processor=""$processor"" />"
+  $XMLContent = "         <Product Name=""$productName"" Firmware=""../Firmware/$CopyItem_Target_Device/$CopyItem_Target_Name"" Processor=""$processor"" />"
   $lineExists = Select-String -Path $fileName -Pattern $XMLContent -Quiet
   if (-not $lineExists) { Add-Content -Path $releaseTarget -Value $XMLContent }
 }

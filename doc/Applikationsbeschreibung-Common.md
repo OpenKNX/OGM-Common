@@ -170,7 +170,7 @@ In dem Feld wird der Breitengrad des Standortes eingegeben.
 
 In dem Feld wird der Längengrad des Standortes eingegeben.
 
-## Erweitert
+## **Erweitert**
 
 Im folgenden können Einstellungen vorgenommen werden, die eher für erfahrene Benutzer sind.
 
@@ -199,25 +199,29 @@ Mit einem 'Ja' wird das KO 7 'Diagnoseobjekt' freigeschaltet.
 <!-- DOC -->
 ### **Erweitertes "In Betrieb"**
 
-Der erweiterte "In Betrieb"-Modus liefert zusätzliche Informationen zum Gerätestatus.
-Dabei wird der Status nicht mehr als einzelnes Bit (DPT-1) gesendet, sondern als Byte (DPT-5).
-Mittels Bitmaske können so verschiedene Informationen ausgewertet werden.
+Der erweiterte ‚In-Betrieb‘-Modus liefert zusätzliche Informationen zum Gerätestatus.
+Statt als einzelnes Bit (DPT-1) wird der Status nun als Byte (DPT-5) übertragen.
+Der erweiterte Status wird nicht nur zyklisch, sondern auch bei Änderungen gesendet – so können Probleme wie Netzwerkfehler oder Übertemperatur sofort gemeldet werden.
+Durch eine Bitmaske lassen sich dabei verschiedene Zustandsinformationen gezielt auswerten.
 
-Struktur: `0b 0000_0WS1`
+Struktur: `0b NRRR_TWSB`
 
-* Das Bit **1** (`1 << 0`) repräsentiert das normale Signal "In Betrieb" (immer aktiv).
-* Das Bit **S** (`1 << 1`) repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
-* Das Bit **W** (`1 << 2`) repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
-
-Daraus ergeben sich aktuell 3 Werte ohne die Bits auswerten zu müssen:
-
-* 1 = Normales "In Betrieb"
-* 3 oder 7 = Das Gerät ist gerade hochgefahren
-* 7 = Es gab einen Neustart, verursacht durch den Watchdog
-
-**Tipp:** Bei Bedarf kann das Logikmodul daraus einzelne 1-Bit KOs machen.
+* Das Bit **B** (`1`) repräsentiert das normale Signal "In Betrieb" (immer aktiv).
+* Das Bit **S** (`2`) repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
+* Das Bit **W** (`4`) repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
+* Das Bit **T** (`8`) repräsentiert, ob die BCU einen Übertemperaturalarm hat.
+* Das Bit **R** (`16`) repräsentiert, eine Reserve.
+* Das Bit **R** (`32`) repräsentiert, eine Reserve.
+* Das Bit **R** (`64`) repräsentiert, eine Reserve.
+* Das Bit **N** (`128`) repräsentiert, ob eine Netzwerkverbindung besteht.
 
 **Hinweis:** Wenn eine neue Firmware auf das Gerät übertragen wird, kommt es in manchen Fällen dazu, dass das Flag für den "Neustart durch den Watchdog" gesetzt wurde.
+
+**Tipp:** Bei Bedarf kann das Logikmodul daraus einzelne 1-Bit-KOs erzeugen. Ein entsprechendes Beispiel lässt sich über den Konfigurationstransfer importieren und anschließend über Eingang 2 anpassen.
+
+```
+OpenKNX,cv1,*/LOG/*§f~Name=Bit%20aus%20erweitertem%20Betrieb%20ausmakieren§f~Logic=1§f~Calculate=1§f~Trigger=1§f~TriggerE1=1§f~NameInput1=Erweiterter%20Betriebsstatus§f~E1=1§f~E1Dpt=2§f~E1OtherKO:2=1§f~E1UseOtherKO=1§f~E1LowDpt5:1=0§f~NameInput2=Bitmaske%20(dezimal)§f~E2ConvertInt=5§f~E2=1§f~E2Dpt=2§f~E2LowDpt5Fix=128§f~NameOutput=ausmaskiertes%20Bit§f~OOn=8§f~OOnAll=8§f~OOnFunction=9§>Wert für Eingang 2 passend setzen!§;OpenKNX
+```
 
 <!-- DOC -->
 ### Erweitertes Speichern
@@ -266,5 +270,38 @@ Auswahl:
 - Aktiv mit 60 min. Schreibschutz
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
 
+<!-- DOC -->
+## **Module**
+
+Hier wird eine Liste aller in dieser Applikation enthaltenen OpenKNX-Module und deren Version angezeigt. Standardmäßig sind alle Module aktiv. Mit der Checkbox kann man ein Modul deaktivieren. Es erscheint dann nicht mehr zur Auswahl in der ETS-Applikation und wird auf dem Gerät nicht ausgeführt.
+
+<!-- DOC -->
+### **Modul aktivieren**
+
+Ist die Checkbox ausgewählt, ist das entsprechende Modul aktiv und dessen Parameterseite erscheint in der ETS.
+
+Wird die Checkbox ausgeschaltet, wird das Module deaktiviert und alles Grupppenadressenzuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos, da das Modul auf dem Gerät nicht ausgeführt wird.
+
+### **Abgleich mit dem Gerät**
+
+Die vorliegende ETS-Applikation ist generisch gehalten und läuft auf viel unterschiedlicher Hardware. Dadurch kann es passieren, dass in der Applikation Module angezeigt werden, die mit der gegebenen Hardware keine Funktion haben. 
+
+>Beispiel: Wenn die Hardware keine Binäreingänge hat, dann kann man noch so viele Einstellungen zu Binäreingängen in der ETS machen, es wird nicht funktionieren. 
+
+Mit Hilfe der beiden Schaltflächen auf dieser Seite kann man die Liste der vorhandenen Module in der ETS-Applikation mit der Liste der funktionierenden Module der angeschlossenen Hardware abgleichen.
+
+>Wichtig: Die Schaltflächen funktionieren nur, wenn das Gerät angeschlossen und mit der Applikation programmiert ist.
+
+Es stehen 2 Schaltflächen zur Verfügung:
+
+#### **Nicht unterstützte Module ausblenden**
+
+Das Gerät wird nach den Modulen gefragt, die es nicht unterstützt. Diese werden ausgeblendet. Falls der Benutzer vorher schon Module manuell ausgeblendet hat, wird diese Auswahl nicht verändert.
+
+Mit dieser Funktion werden Module nur ausgeblendet, nicht eingeblendet.
+
+#### **Komplettabgleich aller Module**
+
+Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die vom Gerät unterstützten Module werden eingeblendet, die nicht unterstützten ausgeblendet. Eine vom Benutzer vorher getroffene Auswahl wird überschrieben.
 
 

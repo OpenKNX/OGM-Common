@@ -22,25 +22,14 @@ namespace OpenKNX
     }
 
 #ifdef BASE_KoDiagnose
-    void Console::writeDiagnoseKo(const char* message, va_list& values)
-    {
-        char buffer[15] = {}; // Last byte must be zero!
-        uint8_t len = vsnprintf(buffer, 15, message, values);
-
-        if (len >= 15)
-            openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: writeDiagnoseKo message too long");
-
-        _diagnoseKoOutput = true;
-        KoBASE_Diagnose.value(buffer, Dpt(16, 1));
-        knx.loop();
-        _diagnoseKoOutput = false;
-    }
-
     void Console::writeDiagnoseKo(const char* message, ...)
     {
         va_list values;
         va_start(values, message);
-        writeDiagnoseKo(message, values);
+        _diagnoseKoOutput = true;
+        writeDpt16Ko(KoBASE_Diagnose, message, values);
+        knx.loop();
+        _diagnoseKoOutput = false;
         va_end(values);
     }
 
@@ -49,7 +38,10 @@ namespace OpenKNX
     {
         va_list values;
         va_start(values, message);
-        writeDiagnoseKo(message, values);
+        _diagnoseKoOutput = true;
+        writeDpt16Ko(KoBASE_Diagnose, message, values);
+        knx.loop();
+        _diagnoseKoOutput = false;
         va_end(values);
     }
 
@@ -192,6 +184,39 @@ namespace OpenKNX
             file.close();
             showFilesystem();
         }
+        else if (!diagnoseKo && cmd.rfind("fs dmp ", 0) == 0 && cmd.length() > 7)
+        {
+            auto fileName = cmd.substr(7, cmd.length() - 7);
+            if (fileName[0] != '/')
+                fileName = "/" + fileName;
+            File file = LittleFS.open(fileName.c_str(), "r");
+            if (file.available() && !file.isDirectory())
+            {
+                logInfo("Filesystem", "Dump of file %s (%u bytes):", fileName.c_str(), file.size());
+                uint8_t buffer[16] = {};
+                size_t readBytes;
+                while ((readBytes = file.readBytes((char*)buffer, sizeof(buffer))) > 0)
+                {
+                     openknx.logger.logHexWithPrefix("Filesystem", buffer, readBytes);
+                }
+                openknx.logger.logDividingLine();
+            }
+            else
+            {
+                logError("Filesystem", "File %s not found", fileName.c_str());
+            }
+            file.close();
+        }
+        else if (!diagnoseKo && cmd.rfind("fs del ", 0) == 0 && cmd.length() > 7)
+        {
+            auto fileName = cmd.substr(7, cmd.length() - 7);
+            if (fileName[0] != '/')
+                fileName = "/" + fileName;
+            if (LittleFS.remove(fileName.c_str()))
+                logInfo("Filesystem", "File %s deleted", fileName.c_str());
+            else
+                logError("Filesystem", "File %s not found", fileName.c_str());
+        }
 #endif
 #ifdef ARDUINO_ARCH_RP2040
         else if (!diagnoseKo && (cmd == "bootloader"))
@@ -221,7 +246,7 @@ namespace OpenKNX
         else if (cmd.compare("bcu") == 0)
         {
             logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
-            TPUart::Statistics &statistics = dll->getTPUart().getStatistics();
+            TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
             logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
@@ -239,7 +264,6 @@ namespace OpenKNX
             dll->reset();
             return true;
         }
-    #ifdef NCN5120
         else if (cmd.compare("bcu poff") == 0)
         {
             dll->powerControl(false);
@@ -250,7 +274,16 @@ namespace OpenKNX
             dll->powerControl(true);
             return true;
         }
-    #endif
+        else if (cmd.compare("bcu debug") == 0)
+        {
+            if (_bcuDebug)
+                _bcuDebug = false;
+            else
+                _bcuDebug = true;
+
+            openknx.logger.logWithPrefix("BCU<Debug>", _bcuDebug ? "Enabled" : "Disabled");
+            return true;
+        }
 #endif
         else if (openknx.time.processCommand(cmd, diagnoseKo))
         {
@@ -328,7 +361,7 @@ namespace OpenKNX
 
         logBegin();
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("================================================================================");
+        openknx.logger.logHeader("");
         openknx.logger.color(0);
         openknx.logger.log("");
         openknx.logger.log("        \x1B[90mOpen \x1B[32m#\x1B[0m           OpenKNX.de");
@@ -336,7 +369,7 @@ namespace OpenKNX
         openknx.logger.log("        \x1B[32m# \x1B[37mKNX\x1B[0m            wiki.openknx.de - forum.openknx.de");
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Information ===========================================");
+        openknx.logger.logHeader("Information");
         openknx.logger.color(0);
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
@@ -399,7 +432,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showInformations();
 
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         openknx.logger.log("");
         logEnd();
     }
@@ -429,11 +462,11 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Filesystem ============================================");
+        openknx.logger.logHeader("Filesystem");
 
         openknx.logger.color(0);
         showFilesystemDirectory("/");
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         logEnd();
     }
 
@@ -464,7 +497,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Versions ==============================================");
+        openknx.logger.logHeader("Versions");
         openknx.logger.color(0);
 
         openknx.logger.logWithPrefix("This Firmware", openknx.info.humanFirmwareVersion(true));
@@ -476,10 +509,10 @@ namespace OpenKNX
 
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         openknx.logger.logWithPrefix("Builddate", __DATE__);
         openknx.logger.logWithPrefix("Buildtime", __TIME__);
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         logEnd();
     }
 
@@ -488,7 +521,7 @@ namespace OpenKNX
         logBegin();
         openknx.logger.log("");
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-        openknx.logger.log("======================== Help ==================================================");
+        openknx.logger.logHeader("Help");
         openknx.logger.color(0);
         openknx.logger.log("Command(s)               Description");
         printHelpLine("help, h", "Show this help");
@@ -501,6 +534,8 @@ namespace OpenKNX
         printHelpLine("flash openknx", "Show openknx flash content");
 #if OPENKNX_LITTLE_FS
         printHelpLine("files, fs", "Show files on filesystem");
+        printHelpLine("fs del <file>", "Delete a file");
+        printHelpLine("fs dmp <file>", "Dump a file");
 #endif
 #ifdef OPENKNX_RUNTIME_STAT
         printHelpLine("runtime", "Show runtime statistics (Short statistic)");
@@ -532,7 +567,7 @@ namespace OpenKNX
         printHelpLine("dwoff <pin>", "Write digital pin to LOW");
         printHelpLine("dw <pin> 0-1", "Write digital pin");
         printHelpLine("dr <pin>", "Read digital pin");
-        printHelpLine("aw <pin> 0-4096", "Write analog pin");
+        printHelpLine("aw <pin> 0-4095", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
@@ -555,7 +590,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->showHelp();
 
-        openknx.logger.log("--------------------------------------------------------------------------------");
+        openknx.logger.logDividingLine();
         logEnd();
     }
 
@@ -735,7 +770,12 @@ namespace OpenKNX
         auto _pos = cmd.find(' ');
         if (_pos != std::string::npos)
         {
-            pin_size_t pin = std::stoi(cmd.substr(_pos + 1));
+            uint16_t pin;
+            if (cmd.length() <= 7)
+                pin = std::stoi(cmd.substr(_pos + 1));
+            else
+                pin = std::stoi(cmd.substr(_pos + 1), nullptr, 16);
+
             if (cmd.compare(0, 2, "dw") == 0 || cmd.compare(0, 2, "aw") == 0)
             {
                 auto __pos = cmd.find(' ', _pos + 1);
@@ -744,23 +784,23 @@ namespace OpenKNX
                     int value = std::stoi(cmd.substr(__pos + 1));
                     if (cmd.compare(0, 2, "dw") == 0 && value <= HIGH)
                     {
-                        digitalWrite(pin, value);
+                        openknx.gpio.digitalWrite((pin_size_t)pin, value);
                         openknx.logger.logWithPrefixAndValues("PinCommand", "Write pin %i to %i", pin, value);
                     }
                     else if (cmd.compare(0, 2, "aw") == 0 && value <= 4095)
                     {
-                        analogWrite(pin, value);
+                        analogWrite((pin_size_t)pin, value);
                         openknx.logger.logWithPrefixAndValues("PinCommand", "Write pin %i to %i", pin, value);
                     }
                 }
             }
             else if (cmd.compare(0, 2, "dr") == 0)
             {
-                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, digitalRead(pin));
+                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, openknx.gpio.digitalRead((openknx_gpio_number_t)pin));
             }
             else if (cmd.compare(0, 2, "ar") == 0)
             {
-                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead(pin));
+                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead((pin_size_t)pin));
             }
         }
     }

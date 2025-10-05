@@ -13,6 +13,7 @@ namespace OpenKNX
     class Common
     {
       private:
+        uint32_t _unsupportedEtsModules = 0;
 #if OPENKNX_LOOPTIME_WARNING > 1
         uint32_t _lastLooptimeWarning = 0;
         bool _skipLooptimeWarning = false;
@@ -122,6 +123,7 @@ namespace OpenKNX
 #endif
         bool freeLoopTime();
         bool freeLoopIterate(uint8_t size, uint8_t& position, uint8_t& processed);
+        void unsupportedEtsModule(uint8_t etsModuleId);
 
         void processSavePin();
         void processBeforeRestart();

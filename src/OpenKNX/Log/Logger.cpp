@@ -233,6 +233,28 @@ namespace OpenKNX
             color(0);
         }
 
+        void Logger::logHeader(const char* header)
+        {
+            beforeLog();
+            printMessage("========================");
+            auto len = strlen(header);
+            if (len > 0)
+            {
+                printMessage(" ");
+                printMessage(header);
+                printMessage(" ");
+                len += 2;
+            }
+            for (int i = 55 - len; i >= 0; i--)
+                printMessage("=");
+            afterLog();
+        }
+
+        void Logger::logDividingLine()
+        {
+            log("--------------------------------------------------------------------------------");
+        }
+
         bool Logger::isColorSet()
         {
             return STATE_BY_CORE(_color) != 0;
@@ -326,13 +348,23 @@ namespace OpenKNX
                 return;
             }
 
-            memset(_buffer, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
-            uint16_t len = vsnprintf(_buffer, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
-            OPENKNX_LOGGER_DEVICE.print(_buffer);
+            memset(_buffer.output, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
+            uint16_t len = vsnprintf(_buffer.output, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
+            OPENKNX_LOGGER_DEVICE.print(_buffer.output);
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
-                openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
+            {
+                // check if buffer overflow really happened
+                for (uint8_t i = 0; i < 4; i++)
+                    if (_buffer.wall[i] != _buffer.magic[i])
+                        openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
+#ifdef OPENKNX_DEBUG
+                // if there was no buffer overflow, we warn the developer to shorten the message to prevent a potential overflow
+                printColorCode(33); // yellow
+                OPENKNX_LOGGER_DEVICE.print("<-- Potential buffer overflow, please shorten your message");
+                printColorCode(0);
+#endif
+            }
         }
-
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
         bool Logger::checkTrace(const std::string& prefix)
         {

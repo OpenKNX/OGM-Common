@@ -53,6 +53,28 @@ uint32_t uptime(bool result)
     return ((uint64_t)uptimeRolloverCount << 32 | uptimeCurrentMillis) / 1000UL;
 }
 
+#if MASK_VERSION != 0x091A
+void writeDpt16Ko(GroupObject &ko, const char *message, va_list &values)
+{
+    char buffer[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x06,0x9F,0xFD,0xCC}; // Last byte must be zero!
+    uint8_t len = vsnprintf(buffer, 15, message, values); 
+    if (len >= 15)
+        if (buffer[15] != 0x06 || buffer[16] != 0x9F || buffer[17] != 0xFD || buffer[18] != 0xCC) 
+            openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: writeDpt16Ko message too long");
+        else
+            logDebug("writeDpt16Ko", "BufferOverflow: Diagnose length is %u (exceeds 14)", len);
+    ko.value(buffer, Dpt(16, 1));
+}
+
+void writeDpt16Ko(GroupObject &ko, const char *message, ...)
+{
+    va_list values;
+    va_start(values, message);
+    writeDpt16Ko(ko, message, values);
+    va_end(values);
+}
+#endif
+
 /*
  * Nuker
  */

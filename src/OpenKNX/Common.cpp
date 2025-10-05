@@ -298,7 +298,10 @@ namespace OpenKNX
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
+        {
+            openknx.gpio.showInitResults();
             openknx.console.showInformations();
+        }
     }
 
 #ifdef OPENKNX_DUALCORE
@@ -420,7 +423,7 @@ namespace OpenKNX
         // loop took to long and last output is at least 1s ago
         if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
-            logErrorP("Warning: The loop took longer than usual (%i >= %i); stack %i", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack));
+            logWarningP("Warning: The loop took longer than usual (%i >= %i); stack %i", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack));
             _lastLooptimeWarning = millis();
         }
 #endif
@@ -559,6 +562,7 @@ namespace OpenKNX
 #endif
 
         logDebugP("processAfterStartupDelay");
+        openknx.gpio.showInitResults();
         openknx.console.showInformations();
         openknx.logger.log("Type \"help\" to view a list of available commands.");
         logIndentUp();
@@ -658,16 +662,16 @@ namespace OpenKNX
 #endif
 
 #if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
-        ddl->stop(true);
+        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+        dll->stop(true);
 #endif
 
         // first save all modules to save power before...
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->savePower();
 
-#if MASK_VERSION == 0x07B0 && defined(NCN5120)
-        ddl->powerControl(false);
+#if MASK_VERSION == 0x07B0
+        dll->powerControl(false);
 #endif
 
         logInfoP("Completed (%ims)", millis() - start);
@@ -704,11 +708,9 @@ namespace OpenKNX
 #endif
 
 #if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* ddl = knx.bau().getDataLinkLayer();
-    #ifdef NCN5120
-        ddl->powerControl(true);
-    #endif
-        ddl->stop(false);
+        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+        dll->powerControl(true);
+        dll->stop(false);
 #endif
 
         bool reboot = false;
@@ -860,6 +862,18 @@ namespace OpenKNX
 
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
+        // Unsupported ETS Modules
+        if (objectIndex == 0x9E && propertyId == 2)
+        {
+            resultData[0] = 0; // status OK
+            resultData[1] = (_unsupportedEtsModules >> 0) & 0xFF;
+            resultData[2] = (_unsupportedEtsModules >> 8) & 0xFF;
+            resultData[3] = (_unsupportedEtsModules >> 16) & 0xFF;
+            resultData[4] = (_unsupportedEtsModules >> 24) & 0xFF;
+            resultLength = 5;
+            return true; // handled
+        }
+
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             if (openknx.modules.list[i]->processFunctionProperty(objectIndex, propertyId, length, data, resultData, resultLength))
                 return true;
@@ -881,6 +895,12 @@ namespace OpenKNX
         logInfoP("System will restart now");
         delay(10);
         knx.platform().restart();
+    }
+
+    void Common::unsupportedEtsModule(uint8_t etsModuleId)
+    {
+        if (etsModuleId > 33) return;
+        _unsupportedEtsModules |= (1 << etsModuleId - 2);
     }
 
 #ifdef OPENKNX_RUNTIME_STAT
