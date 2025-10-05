@@ -94,8 +94,8 @@ jobs:
       - name: Patch OAM to Current OFM-Version ${{ env.VERSION_MAJOR_MINOR }}
         run: |
           cd ${{ inputs.oam }}
-          sed -i 's/\(<op:config name="%DFA_VerifyVersion%"[ ]*value="\)[^"]*\(".*\/>\)/\1'"$VERSION_MAJOR_MINOR"'\2/' src/${{inputs.KNXPROD_PREFIX}}.conf.xml
-          echo "Set %DFA_VerifyVersion% to $VERSION_MAJOR_MINOR"
+          sed -i 's/\(<op:config name="%BASE_VerifyVersion%"[ ]*value="\)[^"]*\(".*\/>\)/\1'"$VERSION_MAJOR_MINOR"'\2/' src/${{inputs.KNXPROD_PREFIX}}.conf.xml
+          echo "Set %BASE_VerifyVersion% to $VERSION_MAJOR_MINOR"
 
       - name: Download OpenKNXproducer ${{ env.PRODUCER_VERSION }} and Verify
         run: |
