@@ -57,7 +57,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: openknx/${{ inputs.oam }}
-          ref: ${{ steps.oam_branch.outputs.ref_name }}
+          # TODO fixme: branch-handling
+          # ref: ${{ steps.oam_branch.outputs.ref_name }}
           path: ${{ inputs.oam }}
 
       # - name: DEBUG paths

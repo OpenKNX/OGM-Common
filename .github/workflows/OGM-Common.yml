@@ -16,7 +16,20 @@ jobs:
         include:
           - oam: OAM-StateEngine
             # knxprod_xml: StateEngine-DFA16-Release
+            prefix: StateEngine
             target: DFA16-Release
+
+          - oam: OAM-SensorModule
+            # ref: v1
+            prefix: Sensormodul
+            target: Big
+            # knxprod_xml: Sensormodul-Big
+
+          - oam: OAM-PresenceModule
+            # ref: v1
+            prefix: PMmodul
+            target: Big
+            # knxprod_xml: PMmodul-Big
 
         # # [BUILD]: all build targets
         # target:
@@ -30,7 +43,7 @@ jobs:
 
     uses: ./.github/workflows/openknx-ofm-check.yml
     with:
-      KNXPROD_PREFIX: StateEngine
+      KNXPROD_PREFIX: ${{ matrix.prefix}}
       oam: ${{ matrix.oam }}
       target: ${{ matrix.target }}
       # restore_branch: ${{ matrix.restore_branch }}
