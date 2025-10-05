@@ -20,17 +20,17 @@ jobs:
             prefix: StateEngine
             target: DFA16-Release
 
-          - oam: OAM-SensorModule
-            ref: v1dev
-            prefix: Sensormodul
-            target: Big
-            # knxprod_xml: Sensormodul-Big
+          # - oam: OAM-SensorModule
+          #   ref: v1dev
+          #   prefix: Sensormodul
+          #   target: Big
+          #   # knxprod_xml: Sensormodul-Big
 
-          - oam: OAM-PresenceModule
-            ref: v1dev
-            prefix: PMmodul
-            target: Big
-            # knxprod_xml: PMmodul-Big
+          # - oam: OAM-PresenceModule
+          #   ref: v1dev
+          #   prefix: PMmodul
+          #   target: Big
+          #   # knxprod_xml: PMmodul-Big
 
         # # [BUILD]: all build targets
         # target:
