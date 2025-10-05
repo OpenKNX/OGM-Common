@@ -81,6 +81,7 @@ namespace OpenKNX
 
         void Manager::showInitResults()
         {
+            #if OPENKNX_GPIO_NUM > 0
             for(int i = 1; i < OPENKNX_GPIO_NUM+1; i++)
             {
                 if (GPIOInitResults[i] == 0)
@@ -96,6 +97,7 @@ namespace OpenKNX
                     logErrorP("no connection to GPIO Expander %u with address %u (Errorcode: %u)", i, GPIO_ADDRS[i], GPIOInitResults[i]);
                 }
             }
+            #endif
         }
 
         void Manager::loop()
