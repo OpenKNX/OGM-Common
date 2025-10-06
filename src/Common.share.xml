@@ -602,7 +602,7 @@
               </ParameterBlock>
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-Module">
                 <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Enthaltene Module" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Module" UIHint="Headline" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Nicht benötigte Module können deaktiviert werden, um die Übersichtlichkeit zu erhöhen." />
                 <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerModules" Inline="true" Layout="Grid">
                   <Rows>
