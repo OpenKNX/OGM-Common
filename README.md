@@ -145,22 +145,29 @@ OpenKNX Common includes an abstraction layer for GPIOs to seamlessly access GPIO
 
 #define OPENKNX_xxx_PINS 0x010D, 0x010B, 0x0102, 0x0104
 ```
+**Note:** 
+>If you use one or more GPIO expanders (`OPENKNX_GPIO_NUM` ≥ 1), the lists >`OPENKNX_GPIO_TYPES`, `OPENKNX_GPIO_ADDRS`, and `OPENKNX_GPIO_INTS` must contain exactly as >many entries as specified. The order of entries determines the assignment of expander >addresses and types in the system.
+
+**GPIO Numbering:**  
+For expander 1, the IOs are addressed as `0x0100` to `0x01FF`, for expander 2 as `0x0200` to `0x02FF`, and so on, where `XX` stands for the IO number on the respective expander (usually 0–7 or 0–15, depending on the expander type).  
+For MCU-internal GPIOs, use the plain pin number (e.g., `24`).
+
+**Example:**  
+- `0x0105` means IO 5 on expander 1  
+- `0x0202` means IO 2 on expander 2
 
 ### Sample code
 
-```
-openknx.gpio.pinMode(24, OUTPUT);      // set MCU-GPIO 24 to OUTPUT
-openknx.gpio.digitalWrite(24, HIGH);   // writes MCU-GPIO 24 to HIGH
+```cpp
+openknx.gpio.pinMode(24, OUTPUT);        // Set MCU-GPIO 24 to OUTPUT
+openknx.gpio.digitalWrite(24, HIGH);     // Write MCU-GPIO 24 to HIGH
 
-openknx.gpio.pinMode(0x0105, OUTPUT);    // sets the GPIO 5 to OUTPUT expander 0x01.
-openknx.gpio.digitalWrite(0x0105, HIGH); // writes digital value HIGH to GPIO 5 of the expander 0x01
+openknx.gpio.pinMode(0x0105, OUTPUT);    // Set IO 5 on expander 1 (addressed as 0x01) to OUTPUT
+openknx.gpio.digitalWrite(0x0105, HIGH); // Write HIGH to IO 5 on expander 1
 
-openknx.gpio.digitalRead(0x0105);         // reads GPIO 5 of expander 0x01.
+openknx.gpio.digitalRead(0x0105);        // Read IO 5 on expander 1
 
-openknx.gpio.pinMode(0x0013, INPUT_PULLUP);
-openknx.gpio.attachInterrupt(
-    0x0013,
-    [this](openknx_gpio_number_t pin, bool state) -> void { openknx.func1Button.change(!state); }, CHANGE);
+openknx.gpio.pinMode(0x0202, INPUT_PULLUP); // Set IO 2 on expander 2 (addressed as 0x02) to INPUT_PULLUP
 ```
 
 ### Supported Hardware
