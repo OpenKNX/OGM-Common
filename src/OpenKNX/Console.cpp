@@ -22,25 +22,14 @@ namespace OpenKNX
     }
 
 #ifdef BASE_KoDiagnose
-    void Console::writeDiagnoseKo(const char* message, va_list& values)
-    {
-        char buffer[15] = {}; // Last byte must be zero!
-        uint8_t len = vsnprintf(buffer, 15, message, values);
-
-        if (len >= 15)
-            openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: writeDiagnoseKo message too long");
-
-        _diagnoseKoOutput = true;
-        KoBASE_Diagnose.value(buffer, Dpt(16, 1));
-        knx.loop();
-        _diagnoseKoOutput = false;
-    }
-
     void Console::writeDiagnoseKo(const char* message, ...)
     {
         va_list values;
         va_start(values, message);
-        writeDiagnoseKo(message, values);
+        _diagnoseKoOutput = true;
+        writeDpt16Ko(KoBASE_Diagnose, message, values);
+        knx.loop();
+        _diagnoseKoOutput = false;
         va_end(values);
     }
 
@@ -49,7 +38,10 @@ namespace OpenKNX
     {
         va_list values;
         va_start(values, message);
-        writeDiagnoseKo(message, values);
+        _diagnoseKoOutput = true;
+        writeDpt16Ko(KoBASE_Diagnose, message, values);
+        knx.loop();
+        _diagnoseKoOutput = false;
         va_end(values);
     }
 
@@ -575,7 +567,7 @@ namespace OpenKNX
         printHelpLine("dwoff <pin>", "Write digital pin to LOW");
         printHelpLine("dw <pin> 0-1", "Write digital pin");
         printHelpLine("dr <pin>", "Read digital pin");
-        printHelpLine("aw <pin> 0-4096", "Write analog pin");
+        printHelpLine("aw <pin> 0-4095", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
@@ -776,7 +768,12 @@ namespace OpenKNX
         auto _pos = cmd.find(' ');
         if (_pos != std::string::npos)
         {
-            pin_size_t pin = std::stoi(cmd.substr(_pos + 1));
+            uint16_t pin;
+            if (cmd.length() <= 7)
+                pin = std::stoi(cmd.substr(_pos + 1));
+            else
+                pin = std::stoi(cmd.substr(_pos + 1), nullptr, 16);
+
             if (cmd.compare(0, 2, "dw") == 0 || cmd.compare(0, 2, "aw") == 0)
             {
                 auto __pos = cmd.find(' ', _pos + 1);
@@ -785,23 +782,23 @@ namespace OpenKNX
                     int value = std::stoi(cmd.substr(__pos + 1));
                     if (cmd.compare(0, 2, "dw") == 0 && value <= HIGH)
                     {
-                        digitalWrite(pin, value);
+                        openknx.gpio.digitalWrite((pin_size_t)pin, value);
                         openknx.logger.logWithPrefixAndValues("PinCommand", "Write pin %i to %i", pin, value);
                     }
                     else if (cmd.compare(0, 2, "aw") == 0 && value <= 4095)
                     {
-                        analogWrite(pin, value);
+                        analogWrite((pin_size_t)pin, value);
                         openknx.logger.logWithPrefixAndValues("PinCommand", "Write pin %i to %i", pin, value);
                     }
                 }
             }
             else if (cmd.compare(0, 2, "dr") == 0)
             {
-                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, digitalRead(pin));
+                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, openknx.gpio.digitalRead((openknx_gpio_number_t)pin));
             }
             else if (cmd.compare(0, 2, "ar") == 0)
             {
-                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead(pin));
+                openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead((pin_size_t)pin));
             }
         }
     }

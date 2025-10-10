@@ -151,10 +151,7 @@ namespace OpenKNX
     float Hardware::cpuTemperature()
     {
 #if defined(ARDUINO_ARCH_RP2040)
-        adc_select_input(4);
-        const float conversionFactor = 3.3f / (1 << 12);
-        float adc = (float)adc_read() * conversionFactor;
-        return 27.0f - (adc - 0.706f) / 0.001721f; // Conversion from Datasheet
+        return analogReadTemp();
 #else
         return 0.0f;
 #endif

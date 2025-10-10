@@ -35,7 +35,7 @@ $firmwareName = $args[0]
 
 
 $currentDir = (Get-Item .).FullName
-$firmwareWithPath = Join-Path $currentDir "data"
+# $firmwareWithPath = Join-Path $currentDir "data"
 $firmwareWithPath = Join-Path $firmwareWithPath $firmwareName
 
 

@@ -1,6 +1,6 @@
 {
     "name": "OGM-Common",
-    "version": "1.4.3",
+    "version": "1.5.0",
     "dependencies": {
         "khoih-prog/TimerInterrupt_Generic": "^1.13.0",
         "nickgammon/Regexp": "^0.1.0",

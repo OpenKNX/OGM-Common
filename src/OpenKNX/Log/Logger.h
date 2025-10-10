@@ -31,6 +31,11 @@
 #define logHexError(...) openknx.logger.logHexMacroWrapper(31, __VA_ARGS__)
 #define logHexErrorP(...) openknx.logger.logHexMacroWrapper(31, logPrefix().c_str(), __VA_ARGS__)
 
+#define logWarning(...) openknx.logger.logMacroWrapper(33, __VA_ARGS__)
+#define logWarningP(...) openknx.logger.logMacroWrapper(33, logPrefix().c_str(), __VA_ARGS__)
+#define logHexWarning(...) openknx.logger.logHexMacroWrapper(33, __VA_ARGS__)
+#define logHexWarningP(...) openknx.logger.logHexMacroWrapper(33, logPrefix().c_str(), __VA_ARGS__)
+
 #define logInfo(...) openknx.logger.logMacroWrapper(0, __VA_ARGS__)
 #define logInfoP(...) openknx.logger.logMacroWrapper(0, logPrefix().c_str(), __VA_ARGS__)
 #define logHexInfo(...) openknx.logger.logHexMacroWrapper(0, __VA_ARGS__)
@@ -117,7 +122,11 @@ namespace OpenKNX
         class Logger
         {
           private:
-            char _buffer[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
+            struct {
+                const char magic[4] = {0x06, 0x9F, 0xFD, 0xCC}; // magic values for comparison of _wall
+                char output[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
+                char wall[4] = {0x06, 0x9F, 0xFD, 0xCC};
+            } _buffer;
 #ifdef ARDUINO_ARCH_RP2040
             // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};

@@ -1,10 +1,32 @@
 # Changes
 
-## (upcoming) 1.4.4 
+## (upcoming) 1.5.0
+* Fix: Log and diagnose messages raise only a fatalError "Buffer overflow", if this really happens
+* Feature: Sun elevation and azimuth can be displayed by diagnose object ("sun elevation", "sun azimuth")
+* Feature: Release scripts build now a release with a directory structure per supported Hardware. Provides better overview.
+* Feature: Common contains new module overview with disable option and version information. Needs OpenKNXproducer 3.11.0 at least.
+* Fix: Looptime-Warning-Message is now yellow instead red
+* Feature: logWarning/logWarningP/logHexWarning/logHexWarningP exist now with yellow output
 * Fix: Error-output for overlapping memory areas was broken/mixed with layout output
 * Refactor: Rename variable 'ddl' to 'dll' for consistency and clarity in data link layer operations and remove unnecessary NCN5120 check
-* Update platform for ESP
-* Add new intern bcu debug mode
+* Update: Platform for ESP from 54.03.20 to 54.03.21-2
+* Feature: Add new intern BCU debug mode
+  <!-- Use `getSecondaryDataLinkLayer()` with `MASK_VERSION == 0x091A` for BCU debug -->
+* Feature: ARGB support for RP2040 using PIO (#97)
+* Feature: Added support for PCA9554 port expander open openknx.gpio. (#98)
+* Refactor: Add helper functions to logger for separator and header lines
+* Feature: Add console commands to delete and dump files
+  * `fs del <file>`: Delete a file
+  * `fs dmp <file>`: "Dump a file"
+  <!-- Fix compile error on ESP32 platform -->
+* Feature: Added option to digital read/write PINs in HEX via console and OpenKNX GPIO implementation.
+* Fix: Context-help "In Betrieb" was overwritten by producer documentation build, as not updated in application description.
+  This could result in outdated help-text.
+* Fix: Prevent issues with ADC usage, after showing console info;
+       use "analogReadTemp()" to read CPU temperature.
+* Change: Use UTF8-encoding for dependencies.txt file
+* Fix: Console help-line for `aw` presented wrong value range (maximum is 4095)  
+
 
 ## 1.4.3: 2025-07-16
 * Hotfix: Day-of-week was not set in `DateTime::toTm(..)` provided by *new time implementation* of v1.4.0
