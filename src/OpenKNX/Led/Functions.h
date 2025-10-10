@@ -17,7 +17,7 @@ namespace OpenKNX
 {
     namespace Led
     {
-        enum Capability
+        enum class Capability
         {
             ALL = 0xFF,
             MONOCHROME = 1,
@@ -35,14 +35,15 @@ namespace OpenKNX
               FunctionGroup(uint32_t functionId) : _functionId(functionId) {}
               void addLed(Led::Base* led);
             // control the leds assigned to this function
-              void on(bool state, Capability capability = ALL);
-              void on(Capability capability = ALL);
-              void off(Capability capability = ALL);
+              void on(bool state, Capability capability = Capability::ALL);
+              void on(Capability capability = Capability::ALL);
+              void off(Capability capability = Capability::ALL);
               void setColor(uint8_t r, uint8_t g, uint8_t b);
               void setColor(uint32_t rgb);
-              void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ, Capability capability = ALL);
-              void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = ALL);
-              void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = ALL);
+              void setColor(Color color);
+              void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ, Capability capability = Capability::ALL);
+              void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = Capability::ALL);
+              void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = Capability::ALL);
         };
 
         class Functions

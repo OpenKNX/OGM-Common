@@ -11,5 +11,10 @@ namespace OpenKNX
             uint8_t b = rgb & 0xFF;
             setColor(r, g, b);
         }
+
+        void RGB::setColor(Color color)
+        {
+            setColor(static_cast<uint32_t>(color));
+        }
     } // namespace Led
 } // namespace OpenKNX

@@ -55,9 +55,9 @@ namespace OpenKNX
         {
             for (auto led : _leds)
             {
-                if (capability == ALL ||
-                    (capability == MONOCHROME && !led->isRGB()) ||
-                    (capability == COLOR && led->isRGB()))
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
                 {
                     led->on(state);
                 }
@@ -96,13 +96,18 @@ namespace OpenKNX
             }
         }
 
+        void FunctionGroup::setColor(Color color)
+        {
+            setColor(static_cast<uint32_t>(color));
+        }
+
         void FunctionGroup::pulsing(uint16_t duration, Capability capability)
         {
             for (auto led : _leds)
             {
-                if (capability == ALL ||
-                    (capability == MONOCHROME && !led->isRGB()) ||
-                    (capability == COLOR && led->isRGB()))
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
                 {
                     led->pulsing(duration);
                 }
@@ -113,9 +118,9 @@ namespace OpenKNX
         {
             for (auto led : _leds)
             {
-                if (capability == ALL ||
-                    (capability == MONOCHROME && !led->isRGB()) ||
-                    (capability == COLOR && led->isRGB()))
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
                 {
                     led->blinking(frequency);
                 }
@@ -126,9 +131,9 @@ namespace OpenKNX
         {
             for (auto led : _leds)
             {
-                if (capability == ALL ||
-                    (capability == MONOCHROME && !led->isRGB()) ||
-                    (capability == COLOR && led->isRGB()))
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
                 {
                     led->flash(duration);
                 }
