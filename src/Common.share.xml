@@ -602,8 +602,8 @@
               </ParameterBlock>
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-Module">
                 <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Aktive Module" UIHint="Headline" />
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation beinhaltet die folgenden Module. Diese können bei Bedarf deaktiviert werden, um die Übersichtlichkeit der Applikation zu erhöhen" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Module" UIHint="Headline" />
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="Nicht benötigte Module können deaktiviert werden, um die Übersichtlichkeit zu erhöhen." />
                 <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerModules" Inline="true" Layout="Grid">
                   <Rows>
                     <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
@@ -611,10 +611,11 @@
                   </Rows>
                   <Columns>
                     <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="5%" />
+                    <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="8%" />
                     <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
                     <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="20%" />
                   </Columns>
+                  <ParameterSeparator Id="%AID%_PS-nnn" Text="aktiv" Cell="1,2" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Modul" Cell="1,3" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Version" Cell="1,4" UIHint="Headline" />
                   <ParameterRefRef RefId="%AID%_UP-00999%ProducerModuleRefId%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
@@ -626,21 +627,22 @@
                 <choose ParamRefId="%AID%_P-0099900_R-009990001">
                   <when test="%BASE_ShowSyncModulesButton%">
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Abgleich mit dem Gerät" UIHint="Headline" />
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Die vorliegende Applikation ist generisch gehalten. Die angeschlossene Hardware unterstützt möglicherweise einige der oben angezeigten Module nicht." />
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Mit den Buttons unten kann die Modulliste mit dem Gerät abgeglichen werden. Die Buttons funktionieren erst, nachdem das Gerät programmiert wurde (PA + Applikation)." />
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Linker Button: Die nicht unterstützten Module werden ausgeblendet. Die vom Benutzer ausgeblendeten Module bleiben ausgeblendet." />
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Rechter Button: Es werden sowohl die unterstützten wie auch die nicht unterstützten Module abgeglichen. Die vom Benutzer vorgenommene Auswahl wird überschrieben." />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation unterstützt die Verwendung mit verschiedenen Geräten. Einzelne Module können von der angeschlossenen Hardware abhängig sein." />
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Nachdem das Gerät programmiert wurde (PA + Applikation) ist ein Abgleich mit den Fähigkeiten der Hardware möglich:" />
                     <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
                       <Rows>
                         <Row Id="%AID%_PB-nnn_R-1" />
+                        <Row Id="%AID%_PB-nnn_R-2" />
                       </Rows>
                       <Columns>
                         <Column Id="%AID%_PB-nnn_C-1" Width="2%" />
                         <Column Id="%AID%_PB-nnn_C-2" Width="49%" />
                         <Column Id="%AID%_PB-nnn_C-3" Width="49%" />
                       </Columns>
-                      <Button Id="%AID%_B-%TT%00001" Text="Nicht unterstützte Module ausblenden" Name="UnsupportedModules" Cell="1,2" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 0}" EventHandlerOnline="ConnectionOriented" />
-                      <Button Id="%AID%_B-%TT%00002" Text="Komplettabgleich aller Module" Name="SyncModules" Cell="1,3" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 1}" EventHandlerOnline="ConnectionOriented" />
+                      <Button Id="%AID%_B-%TT%00001" Text="Nicht unterstützte Module deaktivieren" Name="UnsupportedModules" Cell="1,2" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 0}" EventHandlerOnline="ConnectionOriented" />
+                      <Button Id="%AID%_B-%TT%00002" Text="Komplettabgleich aller Module"          Name="SyncModules"        Cell="2,2" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 1}" EventHandlerOnline="ConnectionOriented" />
+                      <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,3" Text="Die nicht unterstützten Module werden ausgeblendet. Die vom Benutzer ausgeblendeten Module bleiben ausgeblendet." />
+                      <ParameterSeparator Id="%AID%_PS-nnn" Cell="2,3" Text="Es werden sowohl die unterstützten wie auch die nicht unterstützten Module abgeglichen. Die vom Benutzer vorgenommene Auswahl wird überschrieben." />
                     </ParameterBlock>
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="&#10;" />
                   </when>
