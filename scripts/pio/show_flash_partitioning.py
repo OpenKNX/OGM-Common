@@ -126,15 +126,15 @@ def show_flash_partitioning(source, target, env):
         sysenv["PATH"] = str(env["ENV"]["PATH"])
         result = exec_command([env.subst(sizetool), '-A', '-d', str(source[0])], env=sysenv)
 
-        searches = ["\.ARM\.exidx", "\.ARM\.extab", "\.rodata", "\.text"]
+        searches = [r"\.ARM\.exidx", r"\.ARM\.extab", r"\.rodata", r"\.text"]
         for search in searches:
-            m = re.search(search + "\s+(\d+)\s+(\d+)", str(result))
+            m = re.search(search + r"\s+(\d+)\s+(\d+)", str(result))
             if m is not None:
                 size += int(m.group(1))
                 size += int(m.group(2))
                 break
 
-        m = re.search("\.data\s+(\d+)\s+(\d+)", str(result))
+        m = re.search(r"\.data\s+(\d+)\s+(\d+)", str(result))
         if m is not None:
             size += int(m.group(1))
         
