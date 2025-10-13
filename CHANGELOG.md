@@ -1,6 +1,6 @@
 # Changes
 
-## (upcoming) 1.5.0
+## 1.5.0: 2025-10-14
 
 * Fix/Doc: Replace parameters migrated from LOG (to BASE) in Readme 
 * Fix: Log and diagnose messages raise only a fatalError "Buffer overflow", if this really happens
