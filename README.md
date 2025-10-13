@@ -70,7 +70,7 @@ KNX_UART_TX_PIN
 | OPENKNX_OVERRIDE_MASK_VERSION      |             |       | defines a mask version which will be returned regardless of the MASK_VERSION used for the build. Set this define if the used mask version does not match the media type.                   |
 | BUFFER_SIZE_UP                     |        1024 | Bytes | Using by Segger RTT                                                                                                                                                                        |
 
-### Leds
+### LEDs
 
 | define                          | default | unit  | function                                                                                                                             |
 | ------------------------------- | ------: | :---: | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -171,14 +171,10 @@ openknx.gpio.pinMode(0x0202, INPUT_PULLUP); // Set IO 2 on expander 2 (addressed
 
 ### Supported Hardware
 
-#### TCA6408
-TCA6408 8-bit I2C port expander
-#### TCA9555
-TCA9555 16-bit I2C port expander
-#### PCA9554
-PCA9554 8-bit I2C-bus expander (I2C slave address range 0x20 to 0x27)
-#### PCA9557
-PCA9557 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F)
+* **TCA6408**: 8-bit I2C port expander
+* **TCA9555**: 16-bit I2C port expander
+* **PCA9554**: 8-bit I2C-bus expander (I2C slave address range 0x20 to 0x27)
+* **PCA9557**: 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F)
 
 
 ### Features
