@@ -15,12 +15,11 @@ MAIN_OpenKnxId
 MAIN_ApplicationNumber
 MAIN_ApplicationVersion
 
-# optional (delivered by OAM-LogicModule)
-LOG_StartupDelayBase
-ParamLOG_StartupDelayTimeMS
-LOG_HeartbeatDelayBase
-KoLOG_Heartbeat
-ParamLOG_HeartbeatDelayTimeMS
+BASE_StartupDelayBase
+ParamBASE_StartupDelayTimeMS
+BASE_HeartbeatDelayBase
+KoBASE_Heartbeat
+ParamBASE_HeartbeatDelayTimeMS
 ```
 ## Hardware
 

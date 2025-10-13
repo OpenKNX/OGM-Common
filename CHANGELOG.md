@@ -1,6 +1,8 @@
 # Changes
 
 ## (upcoming) 1.5.0
+
+* Fix/Doc: Replace parameters migrated from LOG (to BASE) in Readme 
 * Fix: Log and diagnose messages raise only a fatalError "Buffer overflow", if this really happens
 * Feature: Sun elevation and azimuth can be displayed by diagnose object ("sun elevation", "sun azimuth")
 * Feature: Release scripts build now a release with a directory structure per supported Hardware. Provides better overview.
