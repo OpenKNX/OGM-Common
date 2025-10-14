@@ -19,12 +19,13 @@ namespace OpenKNX
         {
             if (_pca->begin())
             {
-                return 0;
+                _initState = GPIOInitState::OK;
             }
             else
             {
-                return -1;
+                _initState = GPIOInitState::Failed;
             }
+            return static_cast<int>(_initState);
         }
 
         void DriverPCA9554::GPIOpinMode(uint8_t pin, int mode, bool preset, int status)
@@ -67,5 +68,5 @@ namespace OpenKNX
             }
             return _pca->digitalRead(pin);
         }
-    }
-}
+    } // namespace GPIO
+} // namespace OpenKNX

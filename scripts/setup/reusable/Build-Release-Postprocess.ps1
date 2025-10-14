@@ -52,19 +52,26 @@ if (Test-Path -Path "release/$($settings.targetName).knxprod" -PathType Leaf) {
 }
 
 # calculate version string
-$appVersion = Select-String -Path "include/knxprod.h" -Pattern MAIN_ApplicationVersion
+$appVersion = Select-String -Path "include/knxprod.h" -Pattern "#define MAIN_ApplicationVersion"
 $appVersion = $appVersion.ToString().Split()[-1]
 $appMajor = [math]::Floor($appVersion / 16)
 $appMinor = $appVersion % 16
-$appRev = 0
-if (Test-Path -Path "src/main.cpp" -PathType Leaf) {
-  $appRev = Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevision"
-  $appRev = $appRev.ToString().Split()[-1].Replace(";", "")
+
+$appRev = Select-String -Path "include/knxprod.h" -Pattern "#define MAIN_FirmwareRevision"
+if ($appRev) {
+  $appRev = $appRev.ToString().Split()[-1]
 }
+else {
+  $appRev = 0
+  if (Test-Path -Path "src/main.cpp" -PathType Leaf) {
+    $appRev = Select-String -Path src/main.cpp -Pattern "const uint8_t firmwareRevision"
+    $appRev = $appRev.ToString().Split()[-1].Replace(";", "")
+  }
+}
+
 $appVersion = "$appMajor.$appMinor"
-if ($appRev -gt 0) {
-  $appVersion = "$appVersion.$appRev"
-}
+$appVersion = "$appVersion.$appRev"
+
 
 # create dependency file
 if (Test-Path -Path dependencies.txt -PathType Leaf) {
