@@ -161,7 +161,8 @@ namespace OpenKNX
     void TimerInterrupt::processLeds()
     {
 #if !defined(OPENKNX_SERIALLED_ENABLE) || !defined(ARDUINO_ARCH_ESP32)
-        if (_time % 10)
+        uint32_t time10 = _time % 10;
+        if (time10 == 0)
         {
             openknx.progLed.loop();
     #ifdef INFO2_LED_PIN
@@ -171,7 +172,7 @@ namespace OpenKNX
              openknx.ledManager.writeLeds();
     #endif
         }
-        else if ((_time + 5) % 10)
+        else if (time10 == 5)
         {
     #ifdef INFO1_LED_PIN
             openknx.info1Led.loop();
