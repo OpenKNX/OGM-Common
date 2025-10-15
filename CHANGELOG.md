@@ -1,7 +1,8 @@
 # Changes
 
-## 1.5.0: 2025-10-14
+## 1.5.0: 2025-10-15
 
+* Fix: Require FileTransferClient minimal version 0.2.7 to prevent issues with firmware update resume
 * Fix/Doc: Replace parameters migrated from LOG (to BASE) in Readme 
 * Fix: Log and diagnose messages raise only a fatalError "Buffer overflow", if this really happens
 * Feature: Sun elevation and azimuth can be displayed by diagnose object (`sun elevation`, `sun azimuth`)
