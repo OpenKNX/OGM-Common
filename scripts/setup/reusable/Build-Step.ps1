@@ -77,7 +77,7 @@ if ($featureSet -eq "bin") {
   $withOTA = $false;
 } elseif ($featureSet -eq "rp2040-ip" -or $featureSet -eq "rp2350-ip") {
   $withOTA = $true;
-} elseif ($featureSet -ne "uf2" -or $featureSet -eq "rp2040-tp" -or $featureSet -eq "rp2350-tp") {
+} elseif ($featureSet -eq "uf2" -or $featureSet -eq "rp2040-tp" -or $featureSet -eq "rp2350-tp") {
   $withOTA = $false;
 } else {
   Write-Host "ERROR: Wrong featureset $featureSet in Build-Step!"
