@@ -126,9 +126,9 @@ jobs:
           OpenKNXproducer create --Debug -h include/knxprod.h src/${{inputs.KNXPROD_PREFIX}}${{ inputs.target != '' && format('-{0}', inputs.target) || '' }}
 
       - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.8'
+          python-version: '3.13'
 
       - name: Install PlatformIO
         run: |
