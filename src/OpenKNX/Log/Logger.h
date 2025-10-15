@@ -166,6 +166,7 @@ namespace OpenKNX
             RTTStream rtt;
 #endif
             Logger();
+            void init();
 
             /*
              * Fetches an exclusive lock to allow contiguous output.
