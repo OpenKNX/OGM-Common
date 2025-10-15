@@ -26,6 +26,8 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+        openknx.logger.init();
+        
 #ifdef DEVICE_INIT
         DEVICE_INIT();
 #endif
