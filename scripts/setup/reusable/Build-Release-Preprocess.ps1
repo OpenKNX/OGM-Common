@@ -17,10 +17,10 @@ if ($null -eq $module -or $module.Version -lt $minVersion) {
     }
     Write-Host "   Required minimum version: $minVersion"
     Write-Host ""
-    Write-Host "➡️  You can install or update the module using:"
+    Write-Host "➡️  You can install or update (as admin) the module using:"
     Write-Host "Install-Module $moduleName -MinimumVersion $minVersion -Repository PSGallery -Force -AllowClobber"
     Write-Host ""
-    Read-Host -Prompt "Press [Enter] to continue"
+    timeout /T 20
     exit 1
 }
 
