@@ -5,7 +5,7 @@
 * Fix: Do not init the serial in constructor of *Logger*
 * Update: RP2040 Environment
   * platform: platform-raspberrypi 6af38e2 to 22a4cc6
-  * platform_packages: ramework-arduinopico 4.6.0 to 5.3.0
+  * platform_packages: ramework-arduinopico 4.6.0 to 5.4.0
 * Update Readme: Add `OPENKNX_DEBUGGER` and reorder configuration table
 * Feature: Enable `-DebugBuild` switch for Build-Step.ps1 script
 * Fix: Solve Escaping Warning for Regex in Python Build Helper Scripts
