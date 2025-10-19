@@ -9,6 +9,7 @@
 * Update Readme: Add `OPENKNX_DEBUGGER` and reorder configuration table
 * Feature: Enable `-DebugBuild` switch for Build-Step.ps1 script
 * Fix: Solve Escaping Warning for Regex in Python Build Helper Scripts
+* Add include path for OGM-HardwareConfig in platformio.base.ini
   
 ## 1.5.0: 2025-10-15
 
