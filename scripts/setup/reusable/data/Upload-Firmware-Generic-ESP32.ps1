@@ -28,6 +28,26 @@ function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
   }
 
+function SearchComPortForDevice($name, $vid) {
+    Write-Host "Searching COM-Port for $name (VID: $vid)"
+    $portList = get-pnpdevice -class Ports
+    if ($portList) {
+        foreach ($usbDevice in $portList) {
+            if ($usbDevice.Present) {
+                $isDevice = $usbDevice.InstanceId.StartsWith("USB\VID_$vid")
+                $isCom = $usbDevice.Name -match "COM\d{1,3}"
+                if ($isDevice -and $isCom) {
+                    # $port = $Matches[1]
+                    $port = $Matches[0]
+                    Write-Host "COM-Port found: $port" -ForegroundColor Green
+                    return $port
+                }
+            }
+        }
+    }
+    return $null
+}
+
 OpenKNX_ShowLogo -AddCustomText "USB Firmware Upload (ESP32)"
 
 
@@ -35,21 +55,27 @@ $firmwareName = $args[0]
 
 
 $currentDir = (Get-Item .).FullName
-# $firmwareWithPath = Join-Path $currentDir "data"
-$firmwareWithPath = Join-Path $firmwareWithPath $firmwareName
+$firmwareWithPath = Join-Path $currentDir $firmwareName
 
 
 
 
 $toolsExist = Test-Path -PathType Leaf ~/bin/esptool.exe
 if ($toolsExist) {
+    $port = SearchComPortForDevice "ESP32" "1A86"
     $helpText = ~/bin/esptool.exe version
     #$toolsExist = $helpText -match 'Version 1.7.0'
 
     #python -m esptool write_flash 0x0 $firmwareWithPath
-    Write-Host "Now executing ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath ..."
-    Write-Host
-    ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath
+    if ($port) {
+      Write-Host "Now executing ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath ..."
+      Write-Host
+      ~/bin/esptool.exe --port "$port" --baud 460800 write_flash 0x0 $firmwareWithPath
+    } else {
+      Write-Host "Now executing ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath ..."
+      Write-Host
+      ~/bin/esptool.exe --baud 460800 write_flash 0x0 $firmwareWithPath
+    }
 
     timeout /T -1
 }
