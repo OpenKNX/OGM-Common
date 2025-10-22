@@ -19,6 +19,7 @@
   * Fix: ESP firmware upload script failed with new release structure
   * Fix: improve texts for ESP-USB-Firmware-Upload
   * Fix: suppress KNX-Upload-Firmware script for ESP as long as KNX-OTA is not available
+* Support new usb handler for ARDUINO_ARCH_RP2040 in common for UsbExchange
 
 
 ## 1.5.0: 2025-10-15

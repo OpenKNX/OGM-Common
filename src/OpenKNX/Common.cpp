@@ -1,6 +1,11 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Stat/RuntimeStat.h"
+#ifdef ARDUINO_ARCH_RP2040
+    #include <USB.h>
+    #include <class/msc/msc.h>
+    #include <device/usbd.h>
+#endif
 
 #ifndef ParamBASE_InternalTime
     #define ParamBASE_InternalTime 0
@@ -26,6 +31,22 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+#ifdef ARDUINO_ARCH_RP2040
+        USB.disconnect();
+        USB.setManufacturer("OpenKNX");
+    #ifdef FIRMWARE_NAME
+        USB.setProduct(FIRMWARE_NAME);
+    #endif
+
+    #ifdef OPENKNX_USB_MSC
+        uint8_t epIn = USB.registerEndpointIn();
+        uint8_t epOut = USB.registerEndpointOut();
+        static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, 64)};
+        USB.registerInterface(1, USBClass::simpleInterface, msd_desc, sizeof(msd_desc), 2, 0);
+    #endif
+        USB.connect();
+#endif
+
         openknx.logger.init();
 
 #ifdef DEVICE_INIT
