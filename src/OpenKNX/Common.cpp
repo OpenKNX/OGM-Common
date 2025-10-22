@@ -27,7 +27,7 @@ namespace OpenKNX
     void Common::init(uint8_t firmwareRevision)
     {
         openknx.logger.init();
-        
+
 #ifdef DEVICE_INIT
         DEVICE_INIT();
 #endif
@@ -341,7 +341,9 @@ namespace OpenKNX
         collectStackStats();
 #endif
 
+#ifdef OPENKNX_LOOPTIME_WARNING
         _skipLooptimeWarning = false;
+#endif
 
         uptime(false);
 
@@ -421,7 +423,7 @@ namespace OpenKNX
 
         RUNTIME_MEASURE_END(_runtimeLoop);
 
-#if OPENKNX_LOOPTIME_WARNING > 1
+#ifdef OPENKNX_LOOPTIME_WARNING
         // loop took to long and last output is at least 1s ago
         if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
@@ -447,7 +449,7 @@ namespace OpenKNX
 
     void Common::skipLooptimeWarning()
     {
-#if OPENKNX_LOOPTIME_WARNING > 1
+#ifdef OPENKNX_LOOPTIME_WARNING
         _skipLooptimeWarning = true;
 #endif
     }
