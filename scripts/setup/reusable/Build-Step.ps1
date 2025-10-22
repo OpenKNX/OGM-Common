@@ -82,10 +82,12 @@ if ($featureSet -eq "bin") {
   $binaryFormat = "factory.bin"
   $processor = "ESP32"
   $withIP = $false;
+  $withTP = $false; # set to true as sooon as we support OTA via knx
 } elseif ($featureSet -eq "esp32-tpip" -or $featureSet -eq "esp32-iptp") {
   $binaryFormat = "factory.bin"
   $processor = "ESP32"
   $withIP = $true;
+  $withTP = $false; # set to true as sooon as we support OTA via knx
 } elseif ($featureSet -eq "rp2040-ip" -or $featureSet -eq "rp2350-ip") {
   $withIP = $true;
   $withTP = $false;
