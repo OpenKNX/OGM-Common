@@ -17,6 +17,12 @@
     #define OPENKNX_LOOPTIME_WARNING_INTERVAL 1000
 #endif
 
+#ifdef OPENKNX_DEBUG
+    #ifndef OPENKNX_LOOPTIME_WARNING
+        #define OPENKNX_LOOPTIME_WARNING 7
+    #endif
+#endif
+
 #ifndef OPENKNX_WAIT_FOR_SERIAL
     #define OPENKNX_WAIT_FOR_SERIAL 2000
 #endif
