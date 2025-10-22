@@ -1,6 +1,6 @@
 # Changes
 
-## (upcoming)
+## 1.5.1: 2025-10-22
 
 * Fix: Do not init the serial in constructor of *Logger*
 * Update: RP2040 Environment
@@ -10,7 +10,9 @@
 * Feature: Enable `-DebugBuild` switch for Build-Step.ps1 script
 * Fix: Solve Escaping Warning for Regex in Python Build Helper Scripts
 * Add include path for OGM-HardwareConfig in platformio.base.ini
-  
+* Fix: improve texts for ESP-USB-Firmware-Upload
+- Fix: suppress KNX-Upload-Firmware script for ESP as long as KNX-OTA is not available
+
 ## 1.5.0: 2025-10-15
 
 * Fix: Require FileTransferClient minimal version 0.2.7 to prevent issues with firmware update resume
