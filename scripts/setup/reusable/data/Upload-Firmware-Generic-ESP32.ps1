@@ -68,11 +68,13 @@ if ($toolsExist) {
 
     #python -m esptool write_flash 0x0 $firmwareWithPath
     if ($port) {
-      Write-Host "Now executing ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath ..."
+      Write-Host "Uploading with:"
+      Write-Host "~/bin/esptool.exe --port $port --baud 460800 write_flash 0x0 $firmwareWithPath ..."
       Write-Host
       ~/bin/esptool.exe --port "$port" --baud 460800 write_flash 0x0 $firmwareWithPath
     } else {
-      Write-Host "Now executing ~/bin/esptool.exe write_flash 0x0 $firmwareWithPath ..."
+      Write-Host "Not found, trying alternative (slower) scan with:" -ForegroundColor Yellow
+      Write-Host "~/bin/esptool.exe --baud 460800 write_flash 0x0 $firmwareWithPath ..."
       Write-Host
       ~/bin/esptool.exe --baud 460800 write_flash 0x0 $firmwareWithPath
     }
