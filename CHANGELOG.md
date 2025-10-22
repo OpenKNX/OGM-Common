@@ -7,11 +7,19 @@
   * platform: platform-raspberrypi 6af38e2 to 22a4cc6
   * platform_packages: ramework-arduinopico 4.6.0 to 5.4.0
 * Update Readme: Add `OPENKNX_DEBUGGER` and reorder configuration table
-* Feature: Enable `-DebugBuild` switch for Build-Step.ps1 script
+* Feature: Add `-DebugBuild` switch for Build-Step.ps1 script
 * Fix: Solve Escaping Warning for Regex in Python Build Helper Scripts
-* Add include path for OGM-HardwareConfig in platformio.base.ini
-* Fix: improve texts for ESP-USB-Firmware-Upload
-- Fix: suppress KNX-Upload-Firmware script for ESP as long as KNX-OTA is not available
+* Change (Build): `lib_ldf_mode` from `deep+` to `chain`
+  * Add include path for OGM-HardwareConfig in platformio.base.ini
+* Fix: (Release Preprocess) Ensure Microsoft.PowerShell.Archive >= 1.2.3.0 to prevent broken release zips with `\` as path seperator 
+* Chore (Build): Removed unused lib_ignore entry in PIO-config
+* Refactor: Build flags and configurations for consistency across platforms
+* Change `OPENKNX_LOOPTIME_WARNING` setting: Disable as default and set to 7 (ms) for debug builds
+* Fix: ESP firmware upload
+  * Fix: ESP firmware upload script failed with new release structure
+  * Fix: improve texts for ESP-USB-Firmware-Upload
+  * Fix: suppress KNX-Upload-Firmware script for ESP as long as KNX-OTA is not available
+
 
 ## 1.5.0: 2025-10-15
 
