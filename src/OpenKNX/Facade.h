@@ -77,7 +77,11 @@ namespace OpenKNX
         Flash::Driver knxFlash;
         GPIO::Manager gpio;
 
+        #ifdef FIRMWARE_REVISION
+        void init();
+        #else
         void init(uint8_t firmwareRevision);
+        #endif
         void loop();
         void setup();
         bool usesDualCore();

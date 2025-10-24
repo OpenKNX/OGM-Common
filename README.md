@@ -15,12 +15,11 @@ MAIN_OpenKnxId
 MAIN_ApplicationNumber
 MAIN_ApplicationVersion
 
-# optional (delivered by OAM-LogicModule)
-LOG_StartupDelayBase
-ParamLOG_StartupDelayTimeMS
-LOG_HeartbeatDelayBase
-KoLOG_Heartbeat
-ParamLOG_HeartbeatDelayTimeMS
+BASE_StartupDelayBase
+ParamBASE_StartupDelayTimeMS
+BASE_HeartbeatDelayBase
+KoBASE_Heartbeat
+ParamBASE_HeartbeatDelayTimeMS
 ```
 ## Hardware
 
@@ -63,15 +62,16 @@ KNX_UART_TX_PIN
 | OPENKNX_RUNTIME_STAT_BUCKETS       | default set |  µs   | The upper (included) limits of histogram bucket, without last bucket as this will be limited by data-type only. Must be a comma-separated list with OPENKNX_RUNTIME_STAT_BUCKETN-1 entries |
 | OPENKNX_DEBUG                      |             |       | Enable debug mode                                                                                                                                                                          |
 | OPENKNX_TRACE1..5                  |             |       | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters.                                                                                                |
+| OPENKNX_DEBUGGER                   |             |       | Must be defined if you want to use a debugger (SWD). (e.g., switches off watchdog)                                                                                                         |
 | OPENKNX_TIME_DIGAGNOSTIC           |             |       | Enable time diagnostic console commands. Will be automatically defined if OPENKNX_DEBUG is defined.                                                                                        |
 | OPENKNX_TIME_TESTCOMMAND           |             |       | Enable time text command to check the behavior of the posix time calculation functions                                                                                                     |
 | OPENKNX_TIME_CLOCK                 | arch depen. |       | Specifies the used time class. The default for SAMD21 is OpenKNX::Time::TimeClockMillis, for all other architectures  OpenKNX::Time::TimeClockSystem                                       |
-| OPENKNX_RTT                        |             |       | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240!                                                                                                            |
 | OPENKNX_LITTLE_FS                  | arch depen. |       | If true, LittleFS will be enabled. Default true for RP2040 and ESP32.                                                                                                                      |
 | OPENKNX_OVERRIDE_MASK_VERSION      |             |       | defines a mask version which will be returned regardless of the MASK_VERSION used for the build. Set this define if the used mask version does not match the media type.                   |
+| OPENKNX_RTT                        |             |       | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240!                                                                                                            |
 | BUFFER_SIZE_UP                     |        1024 | Bytes | Using by Segger RTT                                                                                                                                                                        |
 
-### Leds
+### LEDs
 
 | define                          | default | unit  | function                                                                                                                             |
 | ------------------------------- | ------: | :---: | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -106,18 +106,18 @@ If OPENKNX_LED_TIME is defined, the LED is representing the state of the time.
 Possible values for OPENKNX_LED_TIME: info1Led, info2Led, info3Led. 
 Recommended value: info3Led 
 
-| State                         | LED           | RGB-LED       | Note                                   |
-|-------------------------------|---------------|---------------|----------------------------------------|
-| No valid time                 | Off           | Red           |                                        |
-| Time updated through provider | fast flashing | Green         | for one second                         |
-| Time is valid                 | slow flashing | Blue flashing | synchronized with changing of seconds  |
+| State                         | LED           | RGB-LED       | Note                                  |
+| ----------------------------- | ------------- | ------------- | ------------------------------------- |
+| No valid time                 | Off           | Red           |                                       |
+| Time updated through provider | fast flashing | Green         | for one second                        |
+| Time is valid                 | slow flashing | Blue flashing | synchronized with changing of seconds |
 
 ### Buttons
-| define                          |      default | unit  | function                                                                                                                        |
-|---------------------------------|--------------|-------|---------------------------------------------------------------------------------------------------------------------------------|
-| PROG_BUTTON_PIN                 |        undef |  GPIO | to drive the OpenKNX programming button. Button supports short press (<1000ms), long press, and double press (500ms intervals). |
-| PROG_BUTTON_PIN_MODE            | INPUT_PULLUP |       | values: INPUT_PULLUP, INPUT_PULLDOWN, INPUT. Specifies the mode for the programming button pin.                                 |
-| OPENKNX_BUTTON_DEBOUNCE         |      50      |  ms   | Software debounce time for buttons to avoid false triggers. Setting to 0 disables it (i.e. to use Hardware debounce).           |
+| define                  | default      | unit | function                                                                                                                        |
+| ----------------------- | ------------ | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| PROG_BUTTON_PIN         | undef        | GPIO | to drive the OpenKNX programming button. Button supports short press (<1000ms), long press, and double press (500ms intervals). |
+| PROG_BUTTON_PIN_MODE    | INPUT_PULLUP |      | values: INPUT_PULLUP, INPUT_PULLDOWN, INPUT. Specifies the mode for the programming button pin.                                 |
+| OPENKNX_BUTTON_DEBOUNCE | 50           | ms   | Software debounce time for buttons to avoid false triggers. Setting to 0 disables it (i.e. to use Hardware debounce).           |
 
 ### Heartbeat (Mode: Normal)
 You can enable a debug heartbeat to see if a loop is stuck. The progLed (for loop) and infoLed (for loop1) will blinking if the loop hangs.
@@ -172,14 +172,10 @@ openknx.gpio.pinMode(0x0202, INPUT_PULLUP); // Set IO 2 on expander 2 (addressed
 
 ### Supported Hardware
 
-#### TCA6408
-TCA6408 8-bit I2C port expander
-#### TCA9555
-TCA9555 16-bit I2C port expander
-#### PCA9554
-PCA9554 8-bit I2C-bus expander (I2C slave address range 0x20 to 0x27)
-#### PCA9557
-PCA9557 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F)
+* **TCA6408**: 8-bit I2C port expander
+* **TCA9555**: 16-bit I2C port expander
+* **PCA9554**: 8-bit I2C-bus expander (I2C slave address range 0x20 to 0x27)
+* **PCA9557**: 8-bit I2C-bus expander (I2C slave address range 0x18 to 0x1F)
 
 
 ### Features

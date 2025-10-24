@@ -1,8 +1,33 @@
 # Changes
 
-## (upcoming) 1.5.0
+## 1.5.1: 2025-10-23
+
+* Fix: Do not init the serial in constructor of *Logger*
+* Update: RP2040 Environment
+  * platform: platform-raspberrypi 6af38e2 to 22a4cc6
+  * platform_packages: ramework-arduinopico 4.6.0 to 5.4.1
+* Update Readme: Add `OPENKNX_DEBUGGER` and reorder configuration table
+* Feature: Add `-DebugBuild` switch for Build-Step.ps1 script
+* Fix: Solve Escaping Warning for Regex in Python Build Helper Scripts
+* Change (Build): `lib_ldf_mode` from `deep+` to `chain`
+  * Add include path for OGM-HardwareConfig in platformio.base.ini
+* Fix: (Release Preprocess) Ensure Microsoft.PowerShell.Archive >= 1.2.3.0 to prevent broken release zips with `\` as path seperator 
+* Chore (Build): Removed unused lib_ignore entry in PIO-config
+* Refactor: Build flags and configurations for consistency across platforms
+* Change `OPENKNX_LOOPTIME_WARNING` setting: Disable as default and set to 7 (ms) for debug builds
+* Fix: ESP firmware upload
+  * Fix: ESP firmware upload script failed with new release structure
+  * Fix: improve texts for ESP-USB-Firmware-Upload
+  * Fix: suppress KNX-Upload-Firmware script for ESP as long as KNX-OTA is not available
+* Support new usb handler for ARDUINO_ARCH_RP2040 in common for UsbExchange
+
+
+## 1.5.0: 2025-10-15
+
+* Fix: Require FileTransferClient minimal version 0.2.7 to prevent issues with firmware update resume
+* Fix/Doc: Replace parameters migrated from LOG (to BASE) in Readme 
 * Fix: Log and diagnose messages raise only a fatalError "Buffer overflow", if this really happens
-* Feature: Sun elevation and azimuth can be displayed by diagnose object ("sun elevation", "sun azimuth")
+* Feature: Sun elevation and azimuth can be displayed by diagnose object (`sun elevation`, `sun azimuth`)
 * Feature: Release scripts build now a release with a directory structure per supported Hardware. Provides better overview.
 * Feature: Common contains new module overview with disable option and version information. Needs OpenKNXproducer 3.11.0 at least.
 * Fix: Looptime-Warning-Message is now yellow instead red

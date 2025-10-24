@@ -18,6 +18,10 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_init(&_mutex);
 #endif
+        }
+
+        void Logger::init()
+        {
 
 #ifdef OPENKNX_LOGGER_DEVICE
             OPENKNX_LOGGER_DEVICE.begin(115200);
