@@ -1,6 +1,11 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Stat/RuntimeStat.h"
+#ifdef ARDUINO_ARCH_RP2040
+    #include <USB.h>
+    #include <class/msc/msc.h>
+    #include <device/usbd.h>
+#endif
 
 #ifndef ParamBASE_InternalTime
     #define ParamBASE_InternalTime 0
@@ -26,8 +31,24 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+#ifdef ARDUINO_ARCH_RP2040
+        USB.disconnect();
+        USB.setManufacturer("OpenKNX");
+    #ifdef FIRMWARE_NAME
+        USB.setProduct(FIRMWARE_NAME);
+    #endif
+
+    #ifdef OPENKNX_USB_MSC
+        uint8_t epIn = USB.registerEndpointIn();
+        uint8_t epOut = USB.registerEndpointOut();
+        static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, 64)};
+        USB.registerInterface(1, USBClass::simpleInterface, msd_desc, sizeof(msd_desc), 2, 0);
+    #endif
+        USB.connect();
+#endif
+
         openknx.logger.init();
-        
+
 #ifdef DEVICE_INIT
         DEVICE_INIT();
 #endif
@@ -341,7 +362,9 @@ namespace OpenKNX
         collectStackStats();
 #endif
 
+#ifdef OPENKNX_LOOPTIME_WARNING
         _skipLooptimeWarning = false;
+#endif
 
         uptime(false);
 
@@ -421,7 +444,7 @@ namespace OpenKNX
 
         RUNTIME_MEASURE_END(_runtimeLoop);
 
-#if OPENKNX_LOOPTIME_WARNING > 1
+#ifdef OPENKNX_LOOPTIME_WARNING
         // loop took to long and last output is at least 1s ago
         if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
@@ -447,7 +470,7 @@ namespace OpenKNX
 
     void Common::skipLooptimeWarning()
     {
-#if OPENKNX_LOOPTIME_WARNING > 1
+#ifdef OPENKNX_LOOPTIME_WARNING
         _skipLooptimeWarning = true;
 #endif
     }

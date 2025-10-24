@@ -66,23 +66,36 @@ if (!$?) {
 
 # binaryFormat uf2 means rp2040 without OTA
 $binaryFormat = "uf2"
+$OTAbinaryFormat = "bin"
 $processor = "RP2040"
-$withOTA = $false;
+$withIP = $false;
+$withTP = $true;
 if ($featureSet -eq "bin") {
   $processor = "SAMD"
   $binaryFormat = "bin"
 } elseif ($featureSet -eq "esp32" -or $featureSet -eq "esp32-ip") {
-  $binaryFormat = "bin"
+  $binaryFormat = "factory.bin"
   $processor = "ESP32"
-  $withOTA = $true;
+  $withIP = $true;
+  $withTP = $false;
 } elseif ($featureSet -eq "esp32-tp") {
-  $binaryFormat = "bin"
+  $binaryFormat = "factory.bin"
   $processor = "ESP32"
-  $withOTA = $false;
+  $withIP = $false;
+  $withTP = $false; # set to true as sooon as we support OTA via knx
+} elseif ($featureSet -eq "esp32-tpip" -or $featureSet -eq "esp32-iptp") {
+  $binaryFormat = "factory.bin"
+  $processor = "ESP32"
+  $withIP = $true;
+  $withTP = $false; # set to true as sooon as we support OTA via knx
 } elseif ($featureSet -eq "rp2040-ip" -or $featureSet -eq "rp2350-ip") {
-  $withOTA = $true;
+  $withIP = $true;
+  $withTP = $false;
+} elseif ($featureSet -eq "rp2040-tpip" -or $featureSet -eq "rp2040-iptp" -or $featureSet -eq "rp2350-tpip" -or $featureSet -eq "rp2350-iptp") {
+  $withIP = $true;
+  $withTP = $true;
 } elseif ($featureSet -eq "uf2" -or $featureSet -eq "rp2040-tp" -or $featureSet -eq "rp2350-tp") {
-  $withOTA = $false;
+  $withIP = $false;
 } else {
   Write-Host "ERROR: Wrong featureset $featureSet in Build-Step!"
   exit 1
@@ -127,17 +140,10 @@ if ( Test-Path $CopyItem_Source ) {
   }
 
   # copy OTA image
-  if ($withOTA) {    
-    if ($processor -eq "ESP32") {
-      $CopyItem2_Source = ".pio/build/$pioEnv/firmware.factory.$binaryFormat"
-      $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.factory.$binaryFormat"
-      Copy-Item $CopyItem2_Source $CopyItem2_Target
-    }
-    elseif ($processor -eq "RP2040") {
-      $CopyItem2_Source = ".pio/build/$pioEnv/firmware.bin"
-      $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.bin"
-      Copy-Item $CopyItem2_Source $CopyItem2_Target
-    }
+  if ($withIP) {    
+    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.$OTAbinaryFormat"
+    $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.$OTAbinaryFormat"
+    Copy-Item $CopyItem2_Source $CopyItem2_Target
     if (!$?) {
       Write-Host "ERROR: Firmware could noch be copied!"
       exit 1
@@ -154,10 +160,9 @@ else {
 
 # need to do this BEFORE the USB Upload-File is created
 # OTA-Upload
-if ($withOTA) {
+if ($withIP) {
   # create OTA-Upload-Firmware-<firmwarename>.ps1 script
   $fileName = "$CopyItem_Target_Dir/OTA-Upload-Firmware.ps1"
-  $OTAbinaryFormat = "bin"
   if ($processor -eq "RP2040") {
     $espotaArgs = "'-p 2040'"
   }
@@ -170,8 +175,9 @@ if ($withOTA) {
     Write-Host "ERROR: $fileName could not be created!"
     exit 1
   }
+} 
 # KNX-Upload
-} else {
+if ($withTP) {
   # create KNX-Upload-Firmware-<firmwarename>.ps1 script
   $fileName = "$CopyItem_Target_Dir/KNX-Upload-Firmware.ps1"
 
@@ -191,9 +197,6 @@ $fileName = "$CopyItem_Target_Dir/USB-Upload-Firmware.ps1"
 
 # Write the script file content to the file 
 $scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $CopyItem_Target_Name"
-if ( $processor -eq "ESP32") {
-  $scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $firmwareName.factory.$binaryFormat"
-}
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
 if (!$?) {

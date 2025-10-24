@@ -52,7 +52,7 @@ def post_program_action(source, target, env):
     else:
         application_version = int(m.group(2))
 
-    m = re.search("#define MAIN_FirmwareRevision (\d{1,2})", content)
+    m = re.search(r"#define MAIN_FirmwareRevision (\d{1,2})", content)
     if m is None:
         # Old style, read from main.cpp
         content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()

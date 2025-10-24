@@ -1,5 +1,29 @@
 # This script is responsible for all common tasks before a release build is executed
 
+$moduleName = 'Microsoft.PowerShell.Archive'
+$minVersion = [version]'1.2.3.0'
+
+$module = Get-Module -ListAvailable -Name $moduleName |
+           Sort-Object Version -Descending |
+           Select-Object -First 1
+
+if ($null -eq $module -or $module.Version -lt $minVersion) {
+    Write-Host ""
+    Write-Host "❌ The module '$moduleName' is missing or outdated." -ForegroundColor Red
+    if ($module) {
+        Write-Host "   Found version: $($module.Version)"
+    } else {
+        Write-Host "   Module not found."
+    }
+    Write-Host "   Required minimum version: $minVersion"
+    Write-Host ""
+    Write-Host "➡️  You can install or update (as admin) the module using:"
+    Write-Host "Install-Module $moduleName -MinimumVersion $minVersion -Repository PSGallery -Force -AllowClobber"
+    Write-Host ""
+    timeout /T 20
+    exit 1
+}
+
 # get all definitions for this project
 $settings = scripts/OpenKNX-Build-Settings.ps1 $args[0] $args[1] $args[2] $args[3]
 
