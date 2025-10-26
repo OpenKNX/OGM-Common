@@ -205,12 +205,15 @@ def show_flash_partitioning(source, target, env):
     # Größe der KO Tabelle
     knx_ko_table_size = get_knxprod_define_value("MAIN_MaxKoNumber") * 2
     # Größe der GA Tabelle geschätzt
-    # Annahme, dass im Schnitt 2 GA mit einem KO verknüpft wird = get_knx_max_ko_number * 4 (Eintrag) * 2 (GAs)
-    knx_ga_table_size = knx_ko_table_size * 4
+    # Annahme, dass im Schnitt 2 GA mit einem KO verknüpft wird = get_knx_max_ko_number * 2 (Eintrag) * 2 (GAs)
+    knx_ga_table_size = knx_ko_table_size * 2
+    # jede GA muss auch einem KO zugeordnet werden können = get_knx_max_ko_number * 4 (Eintrag) * 2 (GAs)
+    knx_association_table_size = knx_ko_table_size * 4
+
     # Metadaten & etwas Overhead
     knx_meta = 100
     # Zusammen gerechnete Größe
-    knx_used = knx_meta + knx_parameter_size + knx_ko_table_size + knx_ga_table_size
+    knx_used = knx_meta + knx_parameter_size + knx_ko_table_size + knx_ga_table_size + knx_association_table_size
 
     for name, data in defined_sizes.items():
         if data['offset'] > 0 and data['size'] > 0:
