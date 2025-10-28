@@ -14,6 +14,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - oam: OAM-RaumController
+            ref: v1
+            prefix: RaumController
+            target: Release
+
           - oam: OAM-StateEngine
             # knxprod_xml: StateEngine-DFA16-Release
             ref: v1
