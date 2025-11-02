@@ -197,7 +197,7 @@ namespace OpenKNX
                 size_t readBytes;
                 while ((readBytes = file.readBytes((char*)buffer, sizeof(buffer))) > 0)
                 {
-                     openknx.logger.logHexWithPrefix("Filesystem", buffer, readBytes);
+                    openknx.logger.logHexWithPrefix("Filesystem", buffer, readBytes);
                 }
                 openknx.logger.logDividingLine();
             }
@@ -314,7 +314,7 @@ namespace OpenKNX
         if (current == 0x7)
         {
             OPENKNX_LOGGER_DEVICE.write(0x7);
-            openknx.leds.getProgLed()->forceOn();
+            openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->forceOn();
             openknx.flash.save(true);
             OPENKNX_LOGGER_DEVICE.write(0x7);
             delay(10000);
@@ -709,14 +709,13 @@ namespace OpenKNX
     {
         openknx.watchdog.deactivate();
 
-        openknx.leds.getProgLed()->blinking();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->blinking();
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->off();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2)->off();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3)->off();
-
 
         if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
         {
@@ -749,7 +748,7 @@ namespace OpenKNX
         }
 #endif // ARDUINO_ARCH_RP2040
 
-        openknx.leds.getProgLed()->forceOn();
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->forceOn();
         openknx.logger.logWithPrefix("Erase", "Completed");
         delay(1000);
         openknx.restart();

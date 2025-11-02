@@ -1,14 +1,14 @@
 #pragma once
 #include "OpenKNX/Led/Base.h"
-#include "OpenKNX/Led/RGB.h"
-#include "OpenKNX/Led/GPIO.h"
-#include "OpenKNX/Led/GPIO_RGB.h"
-#include "OpenKNX/Led/Serial.h"
 #include "OpenKNX/Led/Effects/Activity.h"
 #include "OpenKNX/Led/Effects/Blink.h"
 #include "OpenKNX/Led/Effects/Error.h"
 #include "OpenKNX/Led/Effects/Flash.h"
 #include "OpenKNX/Led/Effects/Pulse.h"
+#include "OpenKNX/Led/GPIO.h"
+#include "OpenKNX/Led/GPIO_RGB.h"
+#include "OpenKNX/Led/RGB.h"
+#include "OpenKNX/Led/Serial.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/defines.h"
 #include <Arduino.h>
@@ -24,9 +24,9 @@ namespace OpenKNX
     namespace Led
     {
         /*
-            * Predefined LED identifiers
-            * For User LED use LED_TYPE_USER + x (x = 0..n)
-        */
+         * Predefined LED identifiers
+         * For User LED use LED_TYPE_USER + x (x = 0..n)
+         */
         enum LedType
         {
             LED_TYPE_PROG = 0,
@@ -49,7 +49,6 @@ namespace OpenKNX
 #endif
 
           public:
-
             Manager();
 
             void init();
@@ -70,21 +69,19 @@ namespace OpenKNX
 #endif
             /*
              *gets the ProgLed, dummyLed if not available
-            */
+             */
             Led::Base* getProgLed();
 
             /*
              *gets the Led for identifier, dummyLed if not available
-            */
+             */
             Led::Base* getLed(uint8_t identifier);
-
 
             /*
              * Called by Common to Disable during SAVE Trigger
              * -> Prio 1
              */
             void powerSave(bool active = true);
-
 
             /*
              * Get a logPrefix as string

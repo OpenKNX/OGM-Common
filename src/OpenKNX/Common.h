@@ -4,6 +4,7 @@
 #ifdef OPENKNX_RUNTIME_STAT
     #include "OpenKNX/Stat/RuntimeStat.h"
 #endif
+#include "Led/Functions.h"
 #include "OpenKNX/defines.h"
 #include "knx.h"
 
@@ -40,6 +41,7 @@ namespace OpenKNX
         volatile int32_t _freeStackMin1 = 0x2000;
     #endif
 #endif
+        Led::Functions _ledFunctions = Led::Functions();
 
         void initKnx();
 

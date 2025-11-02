@@ -7,8 +7,10 @@
 #include "string"
 #include "time.h"
 #include <ctime>
+#include "OpenKNX/Led/Manager.h"
 #include "OpenKNX/Led/Base.h"
 #include "OpenKNX/Led/RGB.h"
+#include "OpenKNX/Led/FunctionManager.h"
 
 #ifndef OPENKNX_TIME_DIGAGNOSTIC
     #ifdef OPENKNX_DEBUG
@@ -64,6 +66,7 @@ namespace OpenKNX
             uint8_t _lastSecondChange = 0;
             unsigned long _timerLedOn = 0;
             unsigned long _timeUpdatedActivity = 0;
+            Led::FunctionGroup* _timeLed = nullptr;
 
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();

@@ -378,6 +378,10 @@ namespace OpenKNX
 
                 if (_timeProvider != nullptr)
                     _timeProvider->setup();
+                
+                _timeLed = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_TIME);
+                if(!_timeLed->active())
+                    _timeLed = nullptr;
             }
         }
 
@@ -632,15 +636,18 @@ namespace OpenKNX
 
         void TimeManager::loopLed()
         {
+            if(!_timeLed)
+                return;
+            
             if (_timeUpdatedActivity != 0)
             {
                 // time was updated
                 if (_ledState != 2)
                 {
                     _ledState = 2;
-                    openknx.ledFunctions.get(1)->setColor(Led::Color::Green);
-                    openknx.ledFunctions.get(1)->on(Led::Capability::COLOR);
-                    openknx.ledFunctions.get(1)->blinking(100, Led::Capability::MONOCHROME);
+                    _timeLed->setColor(Led::Color::Green);
+                    _timeLed->on(Led::Capability::COLOR);
+                    _timeLed->blinking(100, Led::Capability::MONOCHROME);
                 } 
                 if (delayCheck(_timeUpdatedActivity, 1000))
                 {
@@ -652,8 +659,8 @@ namespace OpenKNX
                 if (_ledState != 3)
                 {
                     _ledState = 3;
-                    openknx.ledFunctions.get(1)->setColor(Led::Color::Blue);
-                    openknx.ledFunctions.get(1)->blinking(1000, Led::Capability::ALL);
+                    _timeLed->setColor(Led::Color::Blue);
+                    _timeLed->blinking(1000, Led::Capability::ALL);
                 }
             }
             else
@@ -662,9 +669,9 @@ namespace OpenKNX
                 if (_ledState != 1)   
                 {
                     _ledState = 1;
-                    openknx.ledFunctions.get(1)->setColor(Led::Color::Red);
-                    openknx.ledFunctions.get(1)->on(Led::Capability::COLOR);
-                    openknx.ledFunctions.get(1)->off(Led::Capability::MONOCHROME);
+                    _timeLed->setColor(Led::Color::Red);
+                    _timeLed->on(Led::Capability::COLOR);
+                    _timeLed->off(Led::Capability::MONOCHROME);
                 }
             }
         }

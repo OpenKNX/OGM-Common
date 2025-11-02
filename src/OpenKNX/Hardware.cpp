@@ -19,11 +19,6 @@ namespace OpenKNX
 #endif
     }
 
-    void Hardware::initLeds()
-    {
-        openknx.leds.init();
-    }
-
     void Hardware::initButtons()
     {
 #define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                  \
@@ -126,9 +121,9 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
-        openknx.leds.getProgLed()->errorCode(code);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->errorCode(code);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
@@ -187,11 +182,11 @@ namespace OpenKNX
     #else
         #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
     #endif
-#if MASK_VERSION == 0x091A
+    #if MASK_VERSION == 0x091A
         knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerReceivedFrame(
-#else
+    #else
         knx.bau().getDataLinkLayer()->getTPUart().registerReceivedFrame(
-#endif
+    #endif
             [](TPUart::Frame& tpFrame) {
                 // Process received frame
                 if (openknx.console.bcuDebug())
