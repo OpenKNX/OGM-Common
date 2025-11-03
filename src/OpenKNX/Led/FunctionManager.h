@@ -59,8 +59,7 @@ namespace OpenKNX
 #endif
             void powerSave(bool active = true);
             void errorCode(uint8_t code = 0);
-            void activity(uint32_t &lastActivity, bool inverted = false, Capability capability = Capability::ALL);
-
+            void activity(uint32_t& lastActivity, bool inverted = false, Capability capability = Capability::ALL);
         };
 
         /// @brief manages the FunctionGroup objects present in one application
@@ -75,6 +74,9 @@ namespace OpenKNX
 
             /// @brief called by Common, do not call in the application
             void init();
+
+            /// @brief called by Common, do not call in the application
+            void setup();
 
             /*
              * Assign a led to a LED function

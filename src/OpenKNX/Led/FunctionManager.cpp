@@ -11,8 +11,13 @@ namespace OpenKNX
 
         void FunctionManager::init()
         {
-            // setup the prog and info1-3 led according to knx parameters
+            // assign the LED_TYPE_PROG to Prog-LedFunction
             assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_PROG), OPENKNX_LEDFUNC_BASE_PROG);
+        }
+
+        void FunctionManager::setup()
+        {
+            // setup the prog and info1-3 led according to knx parameters
             assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
             assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
             assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
@@ -185,14 +190,14 @@ namespace OpenKNX
             }
         }
 
-        void FunctionGroup::activity(uint32_t &lastActivity, bool inverted, Capability capability)
+        void FunctionGroup::activity(uint32_t& lastActivity, bool inverted, Capability capability)
         {
             for (auto led : _leds)
             {
                 if (capability == Capability::ALL ||
                     (capability == Capability::MONOCHROME && !led->isRGB()) ||
                     (capability == Capability::COLOR && led->isRGB()))
-                led->activity(lastActivity, inverted);
+                    led->activity(lastActivity, inverted);
             }
         }
 

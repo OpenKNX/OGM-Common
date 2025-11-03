@@ -57,6 +57,7 @@ namespace OpenKNX
         openknx.timerInterrupt.init();
         openknx.gpio.init();
         openknx.leds.init();
+        openknx.ledFunctions.init();
 
 #if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
         processRecovery();
@@ -98,7 +99,6 @@ namespace OpenKNX
 #endif
 
         openknx.hardware.init();
-        openknx.ledFunctions.init();
         _ledFunctions.init();
     }
 
@@ -259,6 +259,8 @@ namespace OpenKNX
 
     void Common::setup()
     {
+        openknx.ledFunctions.setup();
+
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
