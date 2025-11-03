@@ -10,9 +10,9 @@
 #include "OpenKNX/Led/Manager.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
+#include "OpenKNX/Time/Calendar.h"
 #include "OpenKNX/Time/TimeManager.h"
 #include "OpenKNX/Time/TimeProvider.h"
-#include "OpenKNX/Time/Calendar.h"
 #include "OpenKNX/Watchdog.h"
 
 #ifdef ParamBASE_Latitude
