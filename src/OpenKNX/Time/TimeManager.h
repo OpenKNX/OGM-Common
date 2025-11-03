@@ -1,16 +1,16 @@
 #pragma once
 #include "../DateTime.h"
 #include "Arduino.h"
+#include "OpenKNX/Led/Base.h"
+#include "OpenKNX/Led/FunctionManager.h"
+#include "OpenKNX/Led/Manager.h"
+#include "OpenKNX/Led/RGB.h"
 #include "TimeClockMillis.h"
 #include "TimeClockSystem.h"
 #include "hardware.h"
 #include "string"
 #include "time.h"
 #include <ctime>
-#include "OpenKNX/Led/Manager.h"
-#include "OpenKNX/Led/Base.h"
-#include "OpenKNX/Led/RGB.h"
-#include "OpenKNX/Led/FunctionManager.h"
 
 #ifndef OPENKNX_TIME_DIGAGNOSTIC
     #ifdef OPENKNX_DEBUG

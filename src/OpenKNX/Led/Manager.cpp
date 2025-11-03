@@ -16,36 +16,36 @@ namespace OpenKNX
             LED_INIT();
     #else
         #ifdef OPENKNX_SERIALLED_ENABLE
-                addLed(new OpenKNX::Led::Serial(PROG_LED_PIN, OPENKNX_SERIALLED_PIN, PROG_LED_COLOR), OpenKNX::Led::LED_TYPE_PROG);
+            addLed(new OpenKNX::Led::Serial(PROG_LED_PIN, OPENKNX_SERIALLED_PIN, PROG_LED_COLOR), OpenKNX::Led::LED_TYPE_PROG);
             #ifdef INFO1_LED_PIN
-                addLed(new OpenKNX::Led::Serial(INFO1_LED_PIN, OPENKNX_SERIALLED_PIN, INFO1_LED_COLOR), OpenKNX::Led::LED_TYPE_INFO1);
+            addLed(new OpenKNX::Led::Serial(INFO1_LED_PIN, OPENKNX_SERIALLED_PIN, INFO1_LED_COLOR), OpenKNX::Led::LED_TYPE_INFO1);
             #endif
             #ifdef INFO2_LED_PIN
-                addLed(new OpenKNX::Led::Serial(INFO2_LED_PIN, OPENKNX_SERIALLED_PIN, INFO2_LED_COLOR), OpenKNX::Led::LED_TYPE_INFO2);
+            addLed(new OpenKNX::Led::Serial(INFO2_LED_PIN, OPENKNX_SERIALLED_PIN, INFO2_LED_COLOR), OpenKNX::Led::LED_TYPE_INFO2);
             #endif
             #ifdef INFO3_LED_PIN
-                addLed(new OpenKNX::Led::Serial(INFO3_LED_PIN, OPENKNX_SERIALLED_PIN, INFO3_LED_COLOR), OpenKNX::Led::LED_TYPE_INFO3);
+            addLed(new OpenKNX::Led::Serial(INFO3_LED_PIN, OPENKNX_SERIALLED_PIN, INFO3_LED_COLOR), OpenKNX::Led::LED_TYPE_INFO3);
             #endif
         #else
-                addLed(new OpenKNX::Led::GPIO(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_PROG);
+            addLed(new OpenKNX::Led::GPIO(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_PROG);
             #ifdef INFO1_LED_PIN
-                addLed(new OpenKNX::Led::GPIO(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_INFO1);
+            addLed(new OpenKNX::Led::GPIO(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_INFO1);
             #endif
             #ifdef INFO2_LED_PIN
-                addLed(new OpenKNX::Led::GPIO(INFO2_LED_PIN, INFO2_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_INFO2);
+            addLed(new OpenKNX::Led::GPIO(INFO2_LED_PIN, INFO2_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_INFO2);
             #endif
             #ifdef INFO3_LED_PIN
-                addLed(new OpenKNX::Led::GPIO(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_INFO3);
+            addLed(new OpenKNX::Led::GPIO(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON), OpenKNX::Led::LED_TYPE_INFO3);
             #endif
         #endif
     #endif
 #endif
             logInfoP("Init %d Leds", _leds.size());
 #ifdef OPENKNX_SERIALLED_ENABLE
-            if(_serialLedManager)
+            if (_serialLedManager)
                 _serialLedManager->init(_serialLedCount);
 #endif
-            
+
             for (const auto& pair : _leds)
                 pair.second->init();
 
@@ -54,7 +54,6 @@ namespace OpenKNX
 
         void Manager::loop()
         {
-
         }
 
         void Manager::addLed(Led::Base* led, uint8_t identifier)
@@ -67,7 +66,7 @@ namespace OpenKNX
             led->setIdentifier(identifier);
             _leds[identifier] = led;
         }
-        
+
 #ifdef OPENKNX_SERIALLED_ENABLE
         void Manager::addLed(Led::Serial* led, uint8_t identifier)
         {
@@ -76,21 +75,21 @@ namespace OpenKNX
                 logErrorP("Cannot add LED after init or led is null");
                 return;
             }
-            
+
             led->setManager(getSerialLedManager(led->getPin()));
-            if(led->getAddr() >= _serialLedCount)
-                _serialLedCount = led->getAddr()+1;
+            if (led->getAddr() >= _serialLedCount)
+                _serialLedCount = led->getAddr() + 1;
             led->setIdentifier(identifier);
             _leds[identifier] = led;
         }
-        
+
         Led::SerialLedManager* Manager::getSerialLedManager(long pin)
         {
-            if(_serialLedManager == nullptr)
+            if (_serialLedManager == nullptr)
             {
                 _serialLedManager = new Led::SerialLedManager(pin);
             }
-            else if(_serialLedManager->getPin() != pin)
+            else if (_serialLedManager->getPin() != pin)
             {
                 logErrorP("Only one Serial LED Manager supported!");
                 return nullptr;
@@ -101,10 +100,10 @@ namespace OpenKNX
 
         void __time_critical_func(Manager::timer)(bool distribute)
         {
-            if(!_init)
+            if (!_init)
                 return;
-            
-            if(!distribute)
+
+            if (!distribute)
             {
                 // distribute the 1ms timer evenly to all leds
                 // 100Hz frequency
@@ -112,12 +111,12 @@ namespace OpenKNX
                 uint8_t i = 0;
                 for (const auto& pair : _leds)
                 {
-                    if(i%10 == time%10)
+                    if (i % 10 == time % 10)
                         pair.second->loop();
                     i++;
                 }
 #ifdef OPENKNX_SERIALLED_ENABLE
-                if(_serialLedManager && time % 10) // 100Hz frequency
+                if (_serialLedManager && time % 10) // 100Hz frequency
                     _serialLedManager->writeLeds();
 #endif
             }
@@ -127,7 +126,7 @@ namespace OpenKNX
                     pair.second->loop();
 
 #ifdef OPENKNX_SERIALLED_ENABLE
-                if(_serialLedManager)
+                if (_serialLedManager)
                     _serialLedManager->writeLeds();
 #endif
             }

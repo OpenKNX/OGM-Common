@@ -9,7 +9,7 @@ namespace OpenKNX
         {
           protected:
             uint8_t _color[3] = {0, 0, 0}; // R, G, B
-            long _pins[3] = {-1, -1, -1}; // R, G, B
+            long _pins[3] = {-1, -1, -1};  // R, G, B
             volatile long _activeOn = HIGH;
             volatile bool _colorDirty = false;
 

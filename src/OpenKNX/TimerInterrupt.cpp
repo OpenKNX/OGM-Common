@@ -72,8 +72,8 @@
     #endif
 
     #ifndef ARDUINO_ARCH_ESP32
-    // include after defines!
-    #include "TimerInterrupt_Generic.h"
+        // include after defines!
+        #include "TimerInterrupt_Generic.h"
     #endif
 
     // Select Timer Interrupt

@@ -10,7 +10,7 @@ namespace OpenKNX
           private:
             volatile long _activeOn = HIGH;
             volatile long _pin = -1;
-            
+
             void writeLed(uint8_t brightness) override;
 
           public:

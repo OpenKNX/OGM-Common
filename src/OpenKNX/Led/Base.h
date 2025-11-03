@@ -37,7 +37,6 @@ namespace OpenKNX
             Led::Effects::Blink *_debugEffect = nullptr;
 #endif
 
-
             /*
              * write led state based on bool
              */
@@ -48,7 +47,6 @@ namespace OpenKNX
             virtual void writeLed(uint8_t brightness) = 0;
 
           public:
-
             virtual void init() = 0;
 
             /*
@@ -89,7 +87,7 @@ namespace OpenKNX
              * Return if led is capable of RGB colors
              */
             virtual bool isRGB() { return false; }
-            
+
             /*
              * For progLed called by knx Stack for active Progmode
              * -> Prio 4

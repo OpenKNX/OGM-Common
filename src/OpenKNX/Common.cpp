@@ -66,11 +66,11 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.leds.getLed(Led::LedType::LED_TYPE_PROG)->on();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
 #else
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->pulsing();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->pulsing();
 #endif
 
@@ -229,11 +229,11 @@ namespace OpenKNX
     {
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->blinking();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->blinking();
 #else
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->pulsing(500);
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->pulsing(500);
 #endif
 
@@ -248,11 +248,11 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->on();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
 #else
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->pulsing();
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->pulsing();
 #endif
     }
@@ -274,7 +274,7 @@ namespace OpenKNX
         _startupDelay = millis();
 #endif
 
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->off();
 
         _ledFunctions.setup();
@@ -556,7 +556,7 @@ namespace OpenKNX
         if (!_setup1Ready) return;
 
     #ifdef OPENKNX_HEARTBEAT
-        if(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
+        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->debugLoop();
     #endif
 
@@ -716,7 +716,6 @@ namespace OpenKNX
         logIndentUp();
 
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->powerSave(false);
-
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();

@@ -378,9 +378,9 @@ namespace OpenKNX
 
                 if (_timeProvider != nullptr)
                     _timeProvider->setup();
-                
+
                 _timeLed = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_TIME);
-                if(!_timeLed->active())
+                if (!_timeLed->active())
                     _timeLed = nullptr;
             }
         }
@@ -395,7 +395,7 @@ namespace OpenKNX
 
         std::string TimeManager::buildTimezoneString(DaylightSavingMode daylightSavingMode)
         {
-            // <Enumeration Text="Amsterdam, Berlin, Bern, Rom, Wien (+1 Stunde)" Value="1" Id="%ENID%" />   
+            // <Enumeration Text="Amsterdam, Berlin, Bern, Rom, Wien (+1 Stunde)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Benutzerdefiniert" Value="31" Id="%ENID%" />
             // <Enumeration Text="UTC -11 Stunden" Value="27" Id="%ENID%" />
             // <Enumeration Text="UTC -10 Stunden" Value="26" Id="%ENID%" />
@@ -427,13 +427,13 @@ namespace OpenKNX
                 switch (ParamBASE_Timezone)
                 {
                     case 1: // Germany
-                        // Use default 
+                        // Use default
                         break;
-                     case 31: // Custom timezone    
-                        timezoneString =  (const char*) ParamBASE_TimezoneCustom; 
+                    case 31: // Custom timezone
+                        timezoneString = (const char*)ParamBASE_TimezoneCustom;
                         break;
                     case 27:
-                        timezoneString = "EST11EST10,366,367"; 
+                        timezoneString = "EST11EST10,366,367";
                         break;
                     case 26:
                         timezoneString = "EST10EST9,366,367";
@@ -448,52 +448,52 @@ namespace OpenKNX
                         timezoneString = "EST7EST6,366,367";
                         break;
                     case 22:
-                        timezoneString = "EST6EST5,366,367"; 
+                        timezoneString = "EST6EST5,366,367";
                         break;
                     case 21:
-                        timezoneString = "EST5EST4,366,367"; 
+                        timezoneString = "EST5EST4,366,367";
                         break;
                     case 20:
-                        timezoneString = "EST4EST3,366,367"; 
+                        timezoneString = "EST4EST3,366,367";
                         break;
                     case 19:
-                        timezoneString = "EST3EST2,366,367"; 
+                        timezoneString = "EST3EST2,366,367";
                         break;
                     case 18:
-                        timezoneString = "EST2EST1,366,367"; 
+                        timezoneString = "EST2EST1,366,367";
                         break;
                     case 17:
-                        timezoneString = "EST1EST0,366,367"; 
+                        timezoneString = "EST1EST0,366,367";
                         break;
                     case 0:
-                        timezoneString = "EST0CET-1,366,367"; 
+                        timezoneString = "EST0CET-1,366,367";
                         break;
                     case 28:
-                        timezoneString = "CET-1CET-2,366,367"; 
+                        timezoneString = "CET-1CET-2,366,367";
                         break;
                     case 2:
                         timezoneString = "CET-2CET-3,366,367";
                         break;
                     case 3:
-                        timezoneString = "CET-3CET-4,366,367"; 
+                        timezoneString = "CET-3CET-4,366,367";
                         break;
                     case 4:
                         timezoneString = "CET-4CET-5,366,367";
                         break;
                     case 5:
-                        timezoneString = "CET-5CET-6,366,367"; 
+                        timezoneString = "CET-5CET-6,366,367";
                         break;
                     case 6:
-                        timezoneString = "CET-CET-7,366,367"; 
+                        timezoneString = "CET-CET-7,366,367";
                         break;
                     case 7:
                         timezoneString = "CET-7CET-8,366,367";
                         break;
                     case 8:
-                        timezoneString = "CET-8CET-9,366,367"; 
+                        timezoneString = "CET-8CET-9,366,367";
                         break;
                     case 9:
-                        timezoneString = "CET-9CET-10,366,367"; 
+                        timezoneString = "CET-9CET-10,366,367";
                         break;
                     case 10:
                         timezoneString = "CET-10CET-11,366,367";
@@ -533,7 +533,7 @@ namespace OpenKNX
             _lastTimeStamp = _timeClock.getTime();
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
-            
+
             DateTime localTime = getLocalTime();
             bool isValidState = isValid();
 
@@ -636,9 +636,9 @@ namespace OpenKNX
 
         void TimeManager::loopLed()
         {
-            if(!_timeLed)
+            if (!_timeLed)
                 return;
-            
+
             if (_timeUpdatedActivity != 0)
             {
                 // time was updated
@@ -648,14 +648,14 @@ namespace OpenKNX
                     _timeLed->setColor(Led::Color::Green);
                     _timeLed->on(Led::Capability::COLOR);
                     _timeLed->blinking(100, Led::Capability::MONOCHROME);
-                } 
+                }
                 if (delayCheck(_timeUpdatedActivity, 1000))
                 {
                     _timeUpdatedActivity = 0;
                 }
             }
             else if (isValid())
-            {       
+            {
                 if (_ledState != 3)
                 {
                     _ledState = 3;
@@ -666,7 +666,7 @@ namespace OpenKNX
             else
             {
                 // time is invalid
-                if (_ledState != 1)   
+                if (_ledState != 1)
                 {
                     _ledState = 1;
                     _timeLed->setColor(Led::Color::Red);
@@ -675,7 +675,7 @@ namespace OpenKNX
                 }
             }
         }
-        
+
         bool TimeManager::isValid()
         {
             time_t now = _timeClock.getTime();

@@ -24,7 +24,7 @@ namespace OpenKNX
                 return;
 
             _initialized = true;
-            for(int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 pinMode(_pins[i], OUTPUT);
                 digitalWrite(_pins[i], !_activeOn);
@@ -47,17 +47,16 @@ namespace OpenKNX
                 return;
 
             uint8_t pwmValues[3];
-            for(int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 pwmValues[i] = ((uint32_t)_color[i] * calcBrightness / 255);
 
-
-                if(pwmValues[i] == 255)
+                if (pwmValues[i] == 255)
                 {
                     pinMode(_pins[i], OUTPUT);
                     digitalWrite(_pins[i], _activeOn);
                 }
-                else if(pwmValues[i] == 0)
+                else if (pwmValues[i] == 0)
                 {
                     pinMode(_pins[i], OUTPUT);
                     digitalWrite(_pins[i], !_activeOn);
