@@ -54,9 +54,13 @@ namespace OpenKNX
             void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = Capability::ALL);
             void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = Capability::ALL);
             void forceOn(bool active = true);
+#ifdef OPENKNX_HEARTBEAT
             void debugLoop();
+#endif
             void powerSave(bool active = true);
             void errorCode(uint8_t code = 0);
+            void activity(uint32_t &lastActivity, bool inverted = false, Capability capability = Capability::ALL);
+
         };
 
         /// @brief manages the FunctionGroup objects present in one application

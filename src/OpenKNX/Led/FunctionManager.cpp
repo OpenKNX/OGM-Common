@@ -159,7 +159,7 @@ namespace OpenKNX
                 led->forceOn(state);
             }
         }
-
+#ifdef OPENKNX_HEARTBEAT
         void FunctionGroup::debugLoop()
         {
             for (auto led : _leds)
@@ -167,6 +167,7 @@ namespace OpenKNX
                 led->debugLoop();
             }
         }
+#endif
 
         void FunctionGroup::powerSave(bool active)
         {
@@ -181,6 +182,17 @@ namespace OpenKNX
             for (auto led : _leds)
             {
                 led->errorCode(code);
+            }
+        }
+
+        void FunctionGroup::activity(uint32_t &lastActivity, bool inverted, Capability capability)
+        {
+            for (auto led : _leds)
+            {
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
+                led->activity(lastActivity, inverted);
             }
         }
 
