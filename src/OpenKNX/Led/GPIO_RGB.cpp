@@ -17,15 +17,15 @@ namespace OpenKNX
             _colorDirty = true;
         }
 
-        GPIO_RGB::GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, uint32_t rgb)
+        GPIO_RGB::GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, Color rgb)
         {
             _pins[0] = pin_r;
             _pins[1] = pin_g;
             _pins[2] = pin_b;
             _activeOn = activeOn;
-            _color[0] = (rgb >> 16) & 0xFF;
-            _color[1] = (rgb >> 8) & 0xFF;
-            _color[2] = rgb & 0xFF;
+            _color[0] = (((uint32_t)rgb) >> 16) & 0xFF;
+            _color[1] = (((uint32_t)rgb) >> 8) & 0xFF;
+            _color[2] = ((uint32_t)rgb) & 0xFF;
             _colorDirty = true;
         }
 

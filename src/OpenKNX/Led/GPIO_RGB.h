@@ -18,7 +18,7 @@ namespace OpenKNX
 
           public:
             GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
-            GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, uint32_t rgb);
+            GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, Color rgb);
             void init() override;
             virtual void setColor(uint8_t r, uint8_t g, uint8_t b) override;
         };

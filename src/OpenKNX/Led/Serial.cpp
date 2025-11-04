@@ -101,13 +101,13 @@ namespace OpenKNX
             _color[2] = b;
         }
 
-        Serial::Serial(long num, long pin, uint32_t rgb)
+        Serial::Serial(long num, long pin, Color rgb)
         {
             _addr = num;
             _pin = pin;
-            _color[0] = (rgb >> 16) & 0xFF;
-            _color[1] = (rgb >> 8) & 0xFF;
-            _color[2] = rgb & 0xFF;
+            _color[0] = (((uint32_t)rgb) >> 16) & 0xFF;
+            _color[1] = (((uint32_t)rgb) >> 8) & 0xFF;
+            _color[2] = ((uint32_t)rgb) & 0xFF;
         }
 
         void Serial::setManager(SerialLedManager *manager)
