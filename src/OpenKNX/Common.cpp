@@ -71,13 +71,9 @@ namespace OpenKNX
 #ifdef OPENKNX_NO_BOOT_PULSATING
         _progLedFunc->setColor(Led::Color::Blue);
         _progLedFunc->on();
-        _stateLedFunc->setColor(Led::Color::Blue);
-        _stateLedFunc->on();
 #else
         _progLedFunc->setColor(Led::Color::Blue);
         _progLedFunc->pulsing();
-        _stateLedFunc->setColor(Led::Color::Blue);
-        _stateLedFunc->pulsing();
 #endif
 
         debugWait();
@@ -235,10 +231,8 @@ namespace OpenKNX
     {
 #ifdef OPENKNX_NO_BOOT_PULSATING
         _progLedFunc->blinking();
-        _stateLedFunc->blinking();
 #else
         _progLedFunc->pulsing(500);
-        _stateLedFunc->pulsing(500);
 #endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
@@ -252,12 +246,8 @@ namespace OpenKNX
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
         _progLedFunc->on();
-        if (_stateLedFunc != nullptr)
-            _stateLedFunc->on();
 #else
         _progLedFunc->pulsing();
-        if (_stateLedFunc != nullptr)
-            _stateLedFunc->pulsing();
 #endif
     }
 
@@ -279,12 +269,6 @@ namespace OpenKNX
 #ifdef BASE_StartupDelayBase
         _startupDelay = millis();
 #endif
-
-        if (_stateLedFunc != nullptr)
-        {
-            _stateLedFunc->off();
-            _stateLedFunc->setColor(Led::Color::Green);
-        }
 
         _ledFunctions.setup();
 
@@ -360,8 +344,12 @@ namespace OpenKNX
             openknx.modules.list[i]->setup1(configured);
 
         _setup1Ready = true;
+
         _progLedFunc->off();
         _progLedFunc->setColor(Led::Color::Red);
+
+        _stateLedFunc->setColor(Led::Color::Yellow);
+        _stateLedFunc->on(Led::Capability::COLOR);
     }
 #endif
 
@@ -567,8 +555,7 @@ namespace OpenKNX
         if (!_setup1Ready) return;
 
     #ifdef OPENKNX_HEARTBEAT
-        if (_stateLedFunc != nullptr)
-            _stateLedFunc->debugLoop();
+        if (_stateLedFunc != nullptr) _stateLedFunc->debugLoop();
     #endif
 
         bool configured = knx.configured();
@@ -612,8 +599,8 @@ namespace OpenKNX
 
         logIndentDown();
 
-         _stateLedFunc->setColor(Led::Color::Green);
-//         _stateLedFunc->on();
+        _stateLedFunc->setColor(Led::Color::Green);
+        _stateLedFunc->on();
     }
 
 #ifdef BASE_HeartbeatDelayBase
