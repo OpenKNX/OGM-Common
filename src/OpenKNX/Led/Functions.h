@@ -17,6 +17,10 @@ namespace OpenKNX
         class Functions
         {
           private:
+            uint32_t _leds = 0;
+            uint8_t _ipLedState = 0;
+            uint8_t _tpLedState = 0;
+
           public:
             Functions();
             void init();

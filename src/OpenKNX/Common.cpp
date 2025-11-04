@@ -269,11 +269,11 @@ namespace OpenKNX
         _startupDelay = millis();
 #endif
 
-        _ledFunctions.setup();
-
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->setup(configured);
+
+        _ledFunctions.setup(); // run after setup of all modules, because some modules might add leds to functions
 
         if (configured) openknx.flash.load();
 
