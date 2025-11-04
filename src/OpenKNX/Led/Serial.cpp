@@ -141,9 +141,9 @@ namespace OpenKNX
             {
                 _manager->setLED(
                     _addr,
-                    ((uint32_t)_color[0] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255 * 255)),
-                    ((uint32_t)_color[1] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255 * 255)),
-                    ((uint32_t)_color[2] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255 * 255)));
+                    (uint32_t)_color[0] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255 * 255),
+                    (uint32_t)_color[1] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255 * 255),
+                    (uint32_t)_color[2] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255 * 255));
 
                 _currentLedBrightness = brightness;
             }
@@ -157,7 +157,12 @@ namespace OpenKNX
             _color[0] = r;
             _color[1] = g;
             _color[2] = b;
-            _manager->setLED(_addr, (_color[0] * (uint16_t)_currentLedBrightness) / 256, (_color[1] * (uint16_t)_currentLedBrightness) / 256, (_color[2] * (uint16_t)_currentLedBrightness) / 256);
+
+            _manager->setLED(
+                _addr,
+                (uint32_t)_color[0] * _currentLedBrightness * _maxBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255 * 255),
+                (uint32_t)_color[1] * _currentLedBrightness * _maxBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255 * 255),
+                (uint32_t)_color[2] * _currentLedBrightness * _maxBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255 * 255));
         }
 
         void SerialLedManager::init(uint8_t ledCount)
