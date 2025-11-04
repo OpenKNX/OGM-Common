@@ -17,6 +17,18 @@ namespace OpenKNX
             _colorDirty = true;
         }
 
+        GPIO_RGB::GPIO_RGB(long pin_r, long pin_g, long pin_b, long activeOn, uint32_t rgb)
+        {
+            _pins[0] = pin_r;
+            _pins[1] = pin_g;
+            _pins[2] = pin_b;
+            _activeOn = activeOn;
+            _color[0] = (rgb >> 16) & 0xFF;
+            _color[1] = (rgb >> 8) & 0xFF;
+            _color[2] = rgb & 0xFF;
+            _colorDirty = true;
+        }
+
         void GPIO_RGB::init()
         {
             // no valid pin
@@ -41,16 +53,17 @@ namespace OpenKNX
             if (_pins[0] < 0 || _pins[1] < 0 || _pins[2] < 0)
                 return;
 
-            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 100;
+            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 255;
 
             if (calcBrightness == _currentLedBrightness && !_colorDirty)
                 return;
 
             uint8_t pwmValues[3];
+            pwmValues[0] = ((uint32_t)_color[0] * calcBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255));
+            pwmValues[1] = ((uint32_t)_color[1] * calcBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255));
+            pwmValues[2] = ((uint32_t)_color[2] * calcBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255));
             for (int i = 0; i < 3; i++)
             {
-                pwmValues[i] = ((uint32_t)_color[i] * calcBrightness / 255);
-
                 if (pwmValues[i] == 255)
                 {
                     pinMode(_pins[i], OUTPUT);

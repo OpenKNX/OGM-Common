@@ -29,6 +29,12 @@
     #define OPENKNX_LEDCOLOR_MAGENTA 0xff00ff
 #endif
 
+#ifndef OPENKNX_LEDCOLOR_CALIBRATION
+    #define OPENKNX_LEDCOLOR_CALIBRATION {255, 255, 255}
+#endif
+
+constexpr int OpenKNX_LedColor_Calibration[] = OPENKNX_LEDCOLOR_CALIBRATION;
+
 namespace OpenKNX
 {
     namespace Led

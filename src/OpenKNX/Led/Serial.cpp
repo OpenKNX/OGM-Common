@@ -101,6 +101,15 @@ namespace OpenKNX
             _color[2] = b;
         }
 
+        Serial::Serial(long num, long pin, uint32_t rgb)
+        {
+            _addr = num;
+            _pin = pin;
+            _color[0] = (rgb >> 16) & 0xFF;
+            _color[1] = (rgb >> 8) & 0xFF;
+            _color[2] = rgb & 0xFF;
+        }
+
         void Serial::setManager(SerialLedManager *manager)
         {
             // no valid manager
@@ -132,9 +141,9 @@ namespace OpenKNX
             {
                 _manager->setLED(
                     _addr,
-                    ((uint32_t)_color[0] * brightness * _maxBrightness / 100 / 256),
-                    ((uint32_t)_color[1] * brightness * _maxBrightness / 100 / 256),
-                    ((uint32_t)_color[2] * brightness * _maxBrightness / 100 / 256));
+                    ((uint32_t)_color[0] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255 * 255)),
+                    ((uint32_t)_color[1] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255 * 255)),
+                    ((uint32_t)_color[2] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255 * 255)));
 
                 _currentLedBrightness = brightness;
             }
@@ -212,9 +221,9 @@ namespace OpenKNX
                 return;
             }
     #else // RP2040
-            // This will find a free pio and state machine for our program and load it for us
-            // We use pio_claim_free_sm_and_add_program_for_gpio_range (for_gpio_range variant)
-            // so we will get a PIO instance suitable for addressing gpios >= 32 if needed and supported by the hardware
+          // This will find a free pio and state machine for our program and load it for us
+          // We use pio_claim_free_sm_and_add_program_for_gpio_range (for_gpio_range variant)
+          // so we will get a PIO instance suitable for addressing gpios >= 32 if needed and supported by the hardware
             bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&ws2812_program, &_pio, &_sm, &_offset, _ledPin, 1, true);
             logInfo("SerialLedManager", "PIO init %d", success);
             if (!success)

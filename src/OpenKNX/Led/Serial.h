@@ -54,6 +54,7 @@ namespace OpenKNX
 
           public:
             Serial(long num, long pin, uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
+            Serial(long num, long pin, uint32_t rgb);F
 
           public:
             void setManager(SerialLedManager *manager);

@@ -30,7 +30,7 @@ namespace OpenKNX
             // do nothing if not initialized
             if (_initialized < 0) return;
 
-            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 100;
+            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 255;
 
             if (calcBrightness == _currentLedBrightness)
                 return;

@@ -76,8 +76,6 @@ namespace OpenKNX
             // do nothing if not initialized
             if (!_initialized) return;
 
-            if (brightness > 100) brightness = 100;
-
             logTraceP("brightness %i", brightness);
             _maxBrightness = brightness;
         }
