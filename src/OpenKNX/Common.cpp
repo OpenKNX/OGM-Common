@@ -713,7 +713,7 @@ namespace OpenKNX
         logInfoP("Restore power (after 1s)");
         logIndentUp();
 
-        _progLedFunc->powerSave(false);
+        openknx.leds.powerSave(false);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
