@@ -59,6 +59,9 @@ namespace OpenKNX
         openknx.leds.init();
         openknx.ledFunctions.init();
 
+        _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);
+        _stateLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE);
+
 #if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
         processRecovery();
 #endif
@@ -66,13 +69,15 @@ namespace OpenKNX
         openknx.hardware.initButtons();
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.leds.getLed(Led::LedType::LED_TYPE_PROG)->on();
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
+        _progLedFunc->setColor(Led::Color::Blue);
+        _progLedFunc->on();
+        _stateLedFunc->setColor(Led::Color::Blue);
+        _stateLedFunc->on();
 #else
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->pulsing();
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->pulsing();
+        _progLedFunc->setColor(Led::Color::Blue);
+        _progLedFunc->pulsing();
+        _stateLedFunc->setColor(Led::Color::Blue);
+        _stateLedFunc->pulsing();
 #endif
 
         debugWait();
@@ -143,7 +148,8 @@ namespace OpenKNX
             {
                 if (!erase)
                 {
-                    openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->blinking(200);
+                    _progLedFunc->setColor(Led::Color::Red);
+                    _progLedFunc->blinking(200);
                     erase = true;
                 }
             }
@@ -156,7 +162,7 @@ namespace OpenKNX
             restart();
         }
 
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->off();
+        _progLedFunc->off();
     }
 #endif
 
@@ -228,13 +234,11 @@ namespace OpenKNX
     void Common::debugWait()
     {
 #ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->blinking();
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->blinking();
+        _progLedFunc->blinking();
+        _stateLedFunc->blinking();
 #else
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->pulsing(500);
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->pulsing(500);
+        _progLedFunc->pulsing(500);
+        _stateLedFunc->pulsing(500);
 #endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
@@ -247,13 +251,13 @@ namespace OpenKNX
 #endif
 
 #ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->on();
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->on();
+        _progLedFunc->on();
+        if (_stateLedFunc != nullptr)
+            _stateLedFunc->on();
 #else
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->pulsing();
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->pulsing();
+        _progLedFunc->pulsing();
+        if (_stateLedFunc != nullptr)
+            _stateLedFunc->pulsing();
 #endif
     }
 
@@ -276,8 +280,11 @@ namespace OpenKNX
         _startupDelay = millis();
 #endif
 
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->off();
+        if (_stateLedFunc != nullptr)
+        {
+            _stateLedFunc->off();
+            _stateLedFunc->setColor(Led::Color::Green);
+        }
 
         _ledFunctions.setup();
 
@@ -315,7 +322,11 @@ namespace OpenKNX
 #endif // OPENKNX_DUALCORE
 
 #ifndef OPENKNX_DUALCORE
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->off();
+        _progLedFunc->off();
+        _progLedFunc->setColor(Led::Color::Red);
+
+        _stateLedFunc->setColor(Led::Color::Yellow);
+        _stateLedFunc->on(Led::Capability::COLOR);
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
@@ -323,9 +334,6 @@ namespace OpenKNX
             openknx.gpio.showInitResults();
             openknx.console.showInformations();
         }
-
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->on(Led::Capability::COLOR);
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->setColor(Led::Color::Yellow);
     }
 
 #ifdef OPENKNX_DUALCORE
@@ -352,7 +360,8 @@ namespace OpenKNX
             openknx.modules.list[i]->setup1(configured);
 
         _setup1Ready = true;
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->off();
+        _progLedFunc->off();
+        _progLedFunc->setColor(Led::Color::Red);
     }
 #endif
 
@@ -377,7 +386,7 @@ namespace OpenKNX
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->debugLoop();
+        _progLedFunc->debugLoop();
 #endif
 #ifdef OPENKNX_WATCHDOG
         openknx.watchdog.loop();
@@ -558,8 +567,8 @@ namespace OpenKNX
         if (!_setup1Ready) return;
 
     #ifdef OPENKNX_HEARTBEAT
-        if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1) != nullptr)
-            openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1)->debugLoop();
+        if (_stateLedFunc != nullptr)
+            _stateLedFunc->debugLoop();
     #endif
 
         bool configured = knx.configured();
@@ -603,14 +612,14 @@ namespace OpenKNX
 
         logIndentDown();
 
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->on();
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->setColor(Led::Color::Green);
+         _stateLedFunc->setColor(Led::Color::Green);
+//         _stateLedFunc->on();
     }
 
 #ifdef BASE_HeartbeatDelayBase
     void Common::processHeartbeat()
     {
-        // check thermal warning
+    // check thermal warning
     #if MASK_VERSION == 0x07B0
         TPUart::SystemState& systemState = knx.bau().getDataLinkLayer()->getTPUart().getSystemState();
         if (systemState.thermalWarning())
@@ -717,7 +726,7 @@ namespace OpenKNX
         logInfoP("Restore power (after 1s)");
         logIndentUp();
 
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->powerSave(false);
+        _progLedFunc->powerSave(false);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();

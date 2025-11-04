@@ -4,7 +4,8 @@
 #ifdef OPENKNX_RUNTIME_STAT
     #include "OpenKNX/Stat/RuntimeStat.h"
 #endif
-#include "Led/Functions.h"
+#include "OpenKNX/Led/FunctionManager.h"
+#include "OpenKNX/Led/Functions.h"
 #include "OpenKNX/defines.h"
 #include "knx.h"
 
@@ -14,6 +15,9 @@ namespace OpenKNX
     class Common
     {
       private:
+        OpenKNX::Led::FunctionGroup* _progLedFunc = nullptr;
+        OpenKNX::Led::FunctionGroup* _stateLedFunc = nullptr;
+
         uint32_t _unsupportedEtsModules = 0;
 #if OPENKNX_LOOPTIME_WARNING > 1
         uint32_t _lastLooptimeWarning = 0;
