@@ -68,11 +68,10 @@ namespace OpenKNX
 
         openknx.hardware.initButtons();
 
-#ifdef OPENKNX_NO_BOOT_PULSATING
         _progLedFunc->setColor(Led::Color::Blue);
+#ifdef OPENKNX_NO_BOOT_PULSATING
         _progLedFunc->on();
 #else
-        _progLedFunc->setColor(Led::Color::Blue);
         _progLedFunc->pulsing();
 #endif
 
