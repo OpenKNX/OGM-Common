@@ -36,50 +36,12 @@ namespace OpenKNX
         {
             if (delayCheck(_leds, 100))
             {
-                /*
-                if(openknxNetwork.established())
-                {
-                    if(_ipLedState != 1)
-                    {
-                        #ifdef OPENKNX_SERIALLED_ENABLE
-                        openknx.info2Led.setColor(OPENKNX_SERIALLED_COLOR_GREEN);
-                        #endif
-                        openknx.info2Led.activity(_ipLedActivity, true);
-                        _ipLedState = 1;
-                    }
-                }
-                else if(openknxNetwork.connected())
-                {
-                    if(_ipLedState != 2)
-                    {
-                        #ifdef OPENKNX_SERIALLED_ENABLE
-                        openknx.info2Led.setColor(OPENKNX_SERIALLED_COLOR_YELLOW);
-                        openknx.info2Led.on();
-                        #else
-                        openknx.info2Led.off();
-                        #endif
-
-                        _ipLedState = 2;
-                    }
-                }
-                else
-                {
-                    if(_ipLedState != 3)
-                    {
-                        #ifdef OPENKNX_SERIALLED_ENABLE
-                        openknx.info2Led.setColor(OPENKNX_SERIALLED_COLOR_RED);
-                        openknx.info2Led.on();
-                        #else
-                        openknx.info2Led.off();
-                        #endif
-                        _ipLedState = 3;
-                    }
-                }
-                */
 #if MASK_VERSION == 0x091A
                 if (knx.bau().getSecondaryDataLinkLayer()->isConnected())
-#else
+#elif MASK_VERSION == 0x07B0
                 if (knx.bau().getDataLinkLayer()->isConnected())
+#else // e.g. 57B0, KNX-IP-Only, no Busstatus availible
+                if (false)
 #endif
                 {
                     if (_tpLedState != 1)
