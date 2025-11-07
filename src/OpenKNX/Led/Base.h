@@ -16,7 +16,8 @@ namespace OpenKNX
         class Base
         {
           protected:
-            volatile long _pin = -1;
+            volatile uint8_t _identifier = -1;
+            volatile bool _initialized = false;
             volatile uint32_t _lastMillis = 0;
             volatile uint8_t _maxBrightness = 100;
             volatile bool _state = false;
@@ -46,6 +47,8 @@ namespace OpenKNX
             virtual void writeLed(uint8_t brightness) = 0;
 
           public:
+            virtual void init() = 0;
+
             /*
              * use in normal loop or loop1
              */
@@ -80,6 +83,10 @@ namespace OpenKNX
              */
             void debugLoop();
 #endif
+            /*
+             * Return if led is capable of RGB colors
+             */
+            virtual bool isRGB() { return false; }
 
             /*
              * For progLed called by knx Stack for active Progmode
@@ -132,6 +139,11 @@ namespace OpenKNX
              * Call unloadEffect() and load new normal effect
              */
             void loadEffect(Led::Effects::Base *effect);
+
+            /*
+             * Set the identifier for logging
+             */
+            void setIdentifier(uint8_t identifier) { _identifier = identifier; }
 
             /*
              * Get a logPrefix as string

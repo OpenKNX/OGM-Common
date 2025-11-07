@@ -1,11 +1,11 @@
 #pragma once
-#include "OpenKNX/defines.h"
 #include "OpenKNX/Button.h"
-#ifdef OPENKNX_SERIALLED_ENABLE
-    #include "OpenKNX/Led/Serial.h"
-#else
-    #include "OpenKNX/Led/GPIO.h"
-#endif
+#include "OpenKNX/defines.h"
+// #ifdef OPENKNX_SERIALLED_ENABLE
+//     #include "OpenKNX/Led/Serial.h"
+// #else
+//     #include "OpenKNX/Led/GPIO.h"
+// #endif
 #include <Arduino.h>
 
 #ifdef ARDUINO_ARCH_RP2040
@@ -50,7 +50,6 @@ namespace OpenKNX
         void initFilesystem();
 #endif
         void initFlash();
-        void initLeds();
         void initButtons();
 #if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
         void initKnxInterface();

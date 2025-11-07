@@ -1,6 +1,6 @@
 #pragma once
+#include "OpenKNX/DateTime.h"
 #include "knxprod.h"
-#include "time.h"
 
 namespace OpenKNX
 {
@@ -12,7 +12,6 @@ namespace OpenKNX
             DateOnly _fourthAdvent = {0};
 
           public:
-
             /*
              * Returns true, if the calculation is valid
              */
