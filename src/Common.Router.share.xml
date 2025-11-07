@@ -47,7 +47,7 @@
               </Union>
               <!-- Time & Date -->
               <Union SizeInBit="520">
-                <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
+                <Memory CodeSegment="%MID%" Offset="8" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
