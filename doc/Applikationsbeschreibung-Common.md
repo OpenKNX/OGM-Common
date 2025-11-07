@@ -32,7 +32,7 @@ Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte besch
   - [**Gerätestandort**](#gerätestandort)
     - [**Breitengrad**](#breitengrad)
     - [**Längengrad**](#längengrad)
-  - [Erweitert](#erweitert)
+  - [**Erweitert**](#erweitert)
     - [**Watchdog aktivieren**](#watchdog-aktivieren)
     - [**Diagnoseobjekt anzeigen**](#diagnoseobjekt-anzeigen)
     - [**Erweitertes "In Betrieb"**](#erweitertes-in-betrieb)
@@ -41,10 +41,12 @@ Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte besch
       - [Auswirkung beim RP2040/RP2350](#auswirkung-beim-rp2040rp2350)
       - [Zyklisches speichern](#zyklisches-speichern)
       - [Manuelles speichern](#manuelles-speichern)
+  - [**Module**](#module)
+    - [**Modul aktivieren**](#modul-aktivieren)
+    - [**Abgleich mit dem Gerät**](#abgleich-mit-dem-gerät)
+      - [**Nicht unterstützte Module ausblenden**](#nicht-unterstützte-module-ausblenden)
+      - [**Komplettabgleich aller Module**](#komplettabgleich-aller-module)
   - [Info LEDs](#info-leds)
-    - [Type](#type)
-    - [Modus](#modus)
-    - [Funktion](#funktion)
 
 ## **Allgemein**
 
@@ -325,31 +327,8 @@ Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die v
 <!-- DOC -->
 ## Info LEDs
 
-Einstellungen für die auf vielen OpenKNX Geräten verfügbaren Info LEDs
+Hier können den bis zu 3 vorhandenen Info-LEDs LED-Funktionen zugewiesen werden. Je nach Applikation ist die Zuweisung auch fest eingestellt und kann nicht verändert werden.
 
-<!-- DOC -->
-### Type
+Eine detailierte Beschreibung der LED-Funktionen ist unter http://go.openknx.de/Status-LED zu finden.
 
-Hier muss der korrekte LED Typ eingestellt werden
-
-- einfarbig
-  herkömmliche LED, Farbe ist durch die Hardware bestimmt
-- RGB
-  farbige RGB-LED, Farbe kann per Software bestimmt werden
-- RGB (einfarbig)
-  farbige RGB-LED, verhält sich wie eine einfarbige LED. Farbe wird in der ETS bestimmt
-
-<!-- DOC -->
-### Modus
-
-Betriebsmodus der LED
-
-- Deaktiviert
-  LED wird nicht angesteuert und bleibt aus
-- LED-Funktion
-  LED wird durch eine auszuwählende LED-Funktion angesteuert
-
-<!-- DOC -->
-### Funktion
-
-Auswahl der konkreten LED-Funtion
+Hinweis: Welche LED-Funktionen verfügbar sind, variiert von Applikation zu Applikation je nach verwendeten OpenKNX-Modulen.
