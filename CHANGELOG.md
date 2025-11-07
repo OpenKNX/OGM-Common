@@ -1,6 +1,6 @@
 # Changes
 
-## 1.5.1: 2025-10-23
+## 1.5.1: 2025-10-24
 
 * Fix: Do not init the serial in constructor of *Logger*
 * Update: RP2040 Environment
