@@ -237,7 +237,6 @@
                   <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" DisplayOrder="0"/>
                   <Enumeration Text="Busstatus" Value="3" Id="%ENID%" DisplayOrder="0"/>
                   <Enumeration Text="Zeitstatus" Value="4" Id="%ENID%" DisplayOrder="0"/>
-                  <Enumeration Text="Netzwerkstatus" Value="10" Id="%ENID%" DisplayOrder="0"/>
                 </TypeRestriction>
               </ParameterType>
             </ParameterTypes>
