@@ -75,7 +75,6 @@ KNX_UART_TX_PIN
 
 | define                          | default | unit  | function                                                                                                                             |
 | ------------------------------- | ------: | :---: | ------------------------------------------------------------------------------------------------------------------------------------ |
-| OPENKNX_NO_BOOT_PULSATING       |   undef |       | Turn off the pulsating LED during the boot phase. (Only necessary for specific hardware where the LED cannot be controlled via PWM). |
 | OPENKNX_LEDEFFECT_PULSE_FREQ    |    1000 |  ms   |                                                                                                                                      |
 | OPENKNX_LEDEFFECT_BLINK_FREQ    |    1000 |  ms   |                                                                                                                                      |
 | OPENKNX_HEARTBEAT               |    1000 |  ms   | enable heartbeat mode (optional with with specific failure time)                                                                     |

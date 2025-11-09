@@ -69,11 +69,7 @@ namespace OpenKNX
         openknx.hardware.initButtons();
 
         _progLedFunc->setColor(Led::Color::Blue);
-#ifdef OPENKNX_NO_BOOT_PULSATING
-        _progLedFunc->on();
-#else
         _progLedFunc->pulsing();
-#endif
 
         debugWait();
 
@@ -228,11 +224,7 @@ namespace OpenKNX
 
     void Common::debugWait()
     {
-#ifdef OPENKNX_NO_BOOT_PULSATING
-        _progLedFunc->blinking();
-#else
         _progLedFunc->pulsing(500);
-#endif
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
         uint32_t timeoutBase = millis();
@@ -243,11 +235,7 @@ namespace OpenKNX
         }
 #endif
 
-#ifdef OPENKNX_NO_BOOT_PULSATING
-        _progLedFunc->on();
-#else
         _progLedFunc->pulsing();
-#endif
     }
 
     void Common::setup()
