@@ -17,10 +17,16 @@ namespace OpenKNX
 
         void FunctionManager::setup()
         {
-            // setup the prog and info1-3 led according to knx parameters
-            assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
-            assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
-            assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
+            if (knx.configured())
+            {
+                // setup the prog and info1-3 led according to knx parameters
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
+            } else {
+                // not configured, assign state led to info1 as default
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_LEDFUNC_BASE_STATE);
+            }
         }
 
         void FunctionManager::assignLed2Function(Led::Base* led, uint32_t functionId)

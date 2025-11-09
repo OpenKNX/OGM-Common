@@ -379,9 +379,7 @@ namespace OpenKNX
                 if (_timeProvider != nullptr)
                     _timeProvider->setup();
 
-                _timeLed = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_TIME);
-                if (!_timeLed->active())
-                    _timeLed = nullptr;
+                _timeLed = openknx.ledFunctions.getActive(OPENKNX_LEDFUNC_BASE_TIME);
             }
         }
 
@@ -645,7 +643,7 @@ namespace OpenKNX
                 if (_ledState != 2)
                 {
                     _ledState = 2;
-                    _timeLed->setColor(Led::Color::Green);
+                    _timeLed->setColor(Led::Color::Blue);
                     _timeLed->on(Led::Capability::COLOR);
                     _timeLed->blinking(100, Led::Capability::MONOCHROME);
                 }
@@ -659,8 +657,8 @@ namespace OpenKNX
                 if (_ledState != 3)
                 {
                     _ledState = 3;
-                    _timeLed->setColor(Led::Color::Blue);
-                    _timeLed->blinking(1000, Led::Capability::ALL);
+                    _timeLed->setColor(Led::Color::Green);
+                    _timeLed->on();
                 }
             }
             else
