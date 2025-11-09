@@ -145,6 +145,8 @@ namespace OpenKNX
              */
             void setIdentifier(uint8_t identifier) { _identifier = identifier; }
 
+            virtual bool isDimmable();
+
             /*
              * Get a logPrefix as string
              */
