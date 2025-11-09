@@ -7,7 +7,6 @@
 #include "OpenKNX/Led/Effects/Pulse.h"
 #include "OpenKNX/Led/GPIO.h"
 #include "OpenKNX/Led/GPIO_RGB.h"
-#include "OpenKNX/Led/I2CGPIO.h"
 #include "OpenKNX/Led/RGB.h"
 #include "OpenKNX/Led/Serial.h"
 #include "OpenKNX/Log/Logger.h"
