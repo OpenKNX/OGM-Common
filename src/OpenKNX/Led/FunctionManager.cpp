@@ -132,7 +132,10 @@ namespace OpenKNX
                     (capability == Capability::MONOCHROME && !led->isRGB()) ||
                     (capability == Capability::COLOR && led->isRGB()))
                 {
-                    led->pulsing(duration);
+                    if(led->isDimmable())
+                        led->pulsing(duration);
+                    else
+                        led->on();
                 }
             }
         }

@@ -226,5 +226,10 @@ namespace OpenKNX
         {
             return openknx.logger.buildPrefix("LED", _identifier);
         }
+
+        bool Base::isDimmable()
+        {
+            return true;
+        }
     } // namespace Led
 } // namespace OpenKNX
