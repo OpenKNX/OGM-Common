@@ -308,8 +308,16 @@ namespace OpenKNX
         _progLedFunc->off();
         _progLedFunc->setColor(Led::Color::Red);
 
-        _stateLedFunc->setColor(Led::Color::Yellow);
-        _stateLedFunc->on(Led::Capability::COLOR);
+        if (knx.configured())
+        {
+            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->on(Led::Capability::COLOR);
+        }
+        else
+        {
+            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->blinking(500);
+        }
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
@@ -347,8 +355,16 @@ namespace OpenKNX
         _progLedFunc->off();
         _progLedFunc->setColor(Led::Color::Red);
 
-        _stateLedFunc->setColor(Led::Color::Yellow);
-        _stateLedFunc->on(Led::Capability::COLOR);
+        if (knx.configured())
+        {
+            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->on(Led::Capability::COLOR);
+        }
+        else
+        {
+            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->blinking(500);
+        }
     }
 #endif
 
