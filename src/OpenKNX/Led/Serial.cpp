@@ -243,7 +243,6 @@ namespace OpenKNX
 
         void SerialLedManager::setLED(uint8_t ledAddr, uint8_t r, uint8_t g, uint8_t b)
         {
-            _dirty = false;
             if (_ledData[ledAddr * 3] != g)
             {
                 _ledData[ledAddr * 3] = g;
