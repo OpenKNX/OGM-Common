@@ -1,4 +1,4 @@
-$checkVersion = "0.2.7"
+$checkVersion = "0.2.8"
 $toolsExist = Test-Path -PathType Leaf ~/bin/KnxFileTransferClient.exe
 if ($toolsExist) {
     $versionLine = ~/bin/KnxFileTransferClient.exe version | findstr /R /C:"Version Client: *\d*.\d*.\d*"
