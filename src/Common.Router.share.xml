@@ -22,11 +22,11 @@
               <!-- Status LEDs-->
               <ParameterType Id="%AID%_PT-SLEDFunc" Name="SLEDFunc">
                 <TypeRestriction Base="Value" SizeInBit="32" UIHint="DropDown">
-                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" DisplayOrder="0"/>
-                  <Enumeration Text="Prog-LED" Value="1" Id="%ENID%" DisplayOrder="0"/>
-                  <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" DisplayOrder="0"/>
-                  <Enumeration Text="Busstatus" Value="3" Id="%ENID%" DisplayOrder="0"/>
-                  <Enumeration Text="Zeitstatus" Value="4" Id="%ENID%" DisplayOrder="0"/>
+                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Prog-LED" Value="1" Id="%ENID%" />
+                  <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Busstatus" Value="3" Id="%ENID%" />
+                  <Enumeration Text="Zeitstatus" Value="4" Id="%ENID%" />
                 </TypeRestriction>
               </ParameterType>
             </ParameterTypes>
