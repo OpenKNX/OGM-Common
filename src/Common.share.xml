@@ -15,9 +15,9 @@
   <op:config name="%BASE_Info1LedFunc%" value="0"></op:config>
   <op:config name="%BASE_Info2LedFunc%" value="0"></op:config>
   <op:config name="%BASE_Info3LedFunc%" value="0"></op:config>
-  <op:config name="%BASE_Info1LedFunc_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info2LedFunc_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info3LedFunc_Access" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info1LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info2LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -231,7 +231,7 @@
               </ParameterType>
               <!-- Status LEDs-->
               <ParameterType Id="%AID%_PT-SLEDFunc" Name="SLEDFunc">
-                <TypeRestriction Base="Value" SizeInBit="32" UIHint="DropDown">
+                <TypeRestriction Base="Value" SizeInBit="16" UIHint="DropDown">
                   <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
                   <Enumeration Text="Prog-LED" Value="1" Id="%ENID%" />
                   <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" />
@@ -300,8 +300,8 @@
                 <Parameter Id="%AID%_UP-%TT%00091" Name="ManualSave"        ParameterType="%AID%_PT-ManualSave"   Offset="0" BitOffset="5" Text="Manuelles speichern" Value="%BASE_ManualSave%"/>
                 <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches speichern" Value="%BASE_PeriodicSave%" />
                 <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="2" BitOffset="0" Text="Info1%BASE_Info1LedLabel%" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="6" BitOffset="0" Text="Info2%BASE_Info2LedLabel%" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="10" BitOffset="0" Text="Info3%BASE_Info3LedLabel%" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="Info2%BASE_Info2LedLabel%" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="6" BitOffset="0" Text="Info3%BASE_Info3LedLabel%" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
                 <!--
                 
                   Reserved for new parameters
