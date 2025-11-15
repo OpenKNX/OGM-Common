@@ -5,10 +5,43 @@
 name: BASE-check
 run-name: Check OGM-Common Module Build
 
-on: [push]
+on:
+  pull_request:
+    # only run for PRs whose base (target) branch is v1dev or v1
+    branches:
+      - v1dev
+      - v1
+    # limit to the most relevant PR events
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+  # allow manual runs via "Actions → Run workflow" and provide example inputs
+  workflow_dispatch:
+    inputs:
+      oam:
+        description: 'OAM to build (e.g. OAM-RaumController)'
+        required: false
+        default: 'OAM-RaumController'
+      ref:
+        description: 'Reference branch to use (e.g. v1 or v1dev)'
+        required: false
+        default: 'v1'
+      KNXPROD_PREFIX:
+        description: 'KNXPROD (XML-file) prefix'
+        required: false
+        default: 'RaumController'
+      target:
+        description: 'Build target (e.g. Release, DFA16-Release, Big)'
+        required: false
+        default: 'Release'
 
 jobs:
+  # This job runs for pull_request events (matrix based)
   check:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     name: Check '${{ matrix.target }}' in '${{ matrix.oam }}'
     strategy:
       fail-fast: false
@@ -25,32 +58,22 @@ jobs:
             prefix: StateEngine
             target: DFA16-Release
 
-          # - oam: OAM-SensorModule
-          #   ref: v1dev
-          #   prefix: Sensormodul
-          #   target: Big
-          #   # knxprod_xml: Sensormodul-Big
-
-          # - oam: OAM-PresenceModule
-          #   ref: v1dev
-          #   prefix: PMmodul
-          #   target: Big
-          #   # knxprod_xml: PMmodul-Big
-
-        # # [BUILD]: all build targets
-        # target:
-        #   - DFA16-Release
-        # #  - ""
-        #
-        # # [REF]: same commit and (newest on) branch
-        # # restore_branch:
-        # #   - false
-        # #   - true
-
     uses: ./.github/workflows/openknx-ofm-check.yml
     with:
       oam: ${{ matrix.oam }}
       ref: ${{ matrix.ref }}
-      KNXPROD_PREFIX: ${{ matrix.prefix}}
+      KNXPROD_PREFIX: ${{ matrix.prefix }}
       target: ${{ matrix.target }}
       # restore_branch: ${{ matrix.restore_branch }}
+
+  # This job runs only when the workflow is started manually (workflow_dispatch).
+  # It uses the input fields above so you can run one specific combination on demand.
+  manual:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    name: Manual check for '${{ github.event.inputs.oam }}' in '${{ github.event.inputs.ref }}'
+    uses: ./.github/workflows/openknx-ofm-check.yml
+    with:
+      oam: ${{ github.event.inputs.oam }}
+      ref: ${{ github.event.inputs.ref }}
+      KNXPROD_PREFIX: ${{ github.event.inputs.KNXPROD_PREFIX }}
+      target: ${{ github.event.inputs.target }}
