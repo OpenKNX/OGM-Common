@@ -178,14 +178,6 @@ namespace OpenKNX
             _state = false;
         }
 
-        /*
-         * write led state based on bool
-         */
-        void Base::writeLed(bool state)
-        {
-            writeLed((uint8_t)(state ? 255 : 0));
-        }
-
 #ifdef OPENKNX_HEARTBEAT
         void Base::debugLoop()
         {

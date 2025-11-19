@@ -379,7 +379,7 @@ namespace OpenKNX
                 if (_timeProvider != nullptr)
                     _timeProvider->setup();
 
-                _timeLed = openknx.ledFunctions.getActive(OPENKNX_LEDFUNC_BASE_TIME);
+                _timeLed = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_TIME);
             }
         }
 
@@ -634,7 +634,7 @@ namespace OpenKNX
 
         void TimeManager::loopLed()
         {
-            if (!_timeLed)
+            if (!_timeLed->active())
                 return;
 
             if (_timeUpdatedActivity != 0)

@@ -1,5 +1,5 @@
 #pragma once
-#include "OpenKNX/Led/Base.h"
+#include "OpenKNX/Led/Abstract.h"
 #include "OpenKNX/Led/GPIO.h"
 #include "OpenKNX/Led/GPIO_RGB.h"
 #include "OpenKNX/Led/RGB.h"
@@ -29,20 +29,20 @@ namespace OpenKNX
             COLOR = 2,
         };
 
-        /// @brief a Led::FunctionGroup represents a group of n Led::Base Leds which can be adressed by the application by the assigned FunctionID
+        /// @brief a Led::FunctionGroup represents a group of n Led::Abstract Leds which can be adressed by the application by the assigned FunctionID
         class FunctionGroup
         {
           private:
             bool _active = false;
             uint32_t _functionId = 0;
-            std::vector<Led::Base*> _leds;
+            std::vector<Led::Abstract*> _leds;
             std::string logPrefix();
 
           public:
             // manage the FunctionGroup itself
             FunctionGroup(uint32_t functionId) : _functionId(functionId) {}
             bool active();
-            void addLed(Led::Base* led);
+            void addLed(Led::Abstract* led);
             // control the leds assigned to this function
             void on(bool state, Capability capability = Capability::ALL);
             void on(Capability capability = Capability::ALL);
@@ -54,6 +54,7 @@ namespace OpenKNX
             void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = Capability::ALL);
             void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = Capability::ALL);
             void forceOn(bool active = true);
+            bool getState();
 #ifdef OPENKNX_HEARTBEAT
             void debugLoop();
 #endif
@@ -81,7 +82,7 @@ namespace OpenKNX
             /*
              * Assign a led to a LED function
              */
-            void assignLed2Function(Led::Base* led, uint32_t functionId);
+            void assignLed2Function(Led::Abstract* led, uint32_t functionId);
 
             /*
              * returns a pointer to a function group representing all leds assigned to the functionId, will create the group if not existing
