@@ -17,7 +17,6 @@ namespace OpenKNX
           protected:
             volatile uint8_t _identifier = -1;
             volatile bool _initialized = false;
-            volatile bool _state = false;
             volatile bool _powerSave = false;
             volatile bool _forceOn = false;
 
