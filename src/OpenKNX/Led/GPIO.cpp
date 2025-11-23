@@ -5,17 +5,28 @@ namespace OpenKNX
 {
     namespace Led
     {
-        void GPIO::init(long pin /* = -1 */, long activeOn /* = HIGH */)
+        GPIO::GPIO(long pin /*= -1*/, long activeOn /*= HIGH*/, bool isDimmable /*= true*/)
         {
-            // no valid pin
-            if (pin < 0)
-                return;
-
             _pin = pin;
             _activeOn = activeOn;
+            _isDimmable = isDimmable;
+        }
 
-            pinMode(_pin, OUTPUT);
-            digitalWrite(_pin, !_activeOn);
+        void GPIO::init()
+        {
+            // no valid pin
+            if (_pin < 0)
+                return;
+            
+            if(_pin > 0x00FF & _isDimmable)
+            {
+                logErrorP("Led::GPIO does not support dimmable LED on I2C expander");
+                _isDimmable = false;
+            }
+
+            _initialized = true;
+            openknx.gpio.pinMode(_pin, OUTPUT);
+            openknx.gpio.digitalWrite(_pin, !_activeOn);
         }
 
         /*
@@ -23,28 +34,46 @@ namespace OpenKNX
          */
         void GPIO::writeLed(uint8_t brightness)
         {
-            // no valid pin
-            if (_pin < 0) return;
+            // do nothing if not initialized
+            if (_initialized < 0) return;
 
-            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 100;
+            if(_isDimmable)
+            {
+                uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 255;
 
-            if (calcBrightness == _currentLedBrightness)
-                return;
+                if (calcBrightness == _currentLedBrightness)
+                    return;
 
-            // Need to reset pinMode after using analogWrite
-            if (_currentLedBrightness != 0 || _currentLedBrightness != 255)
-                pinMode(_pin, OUTPUT);
+                if (calcBrightness == 255)
+                {
+                    openknx.gpio.pinMode(_pin, OUTPUT);
+                    openknx.gpio.digitalWrite(_pin, _activeOn);
+                }
+                else if (calcBrightness == 0)
+                {
+                    openknx.gpio.pinMode(_pin, OUTPUT);
+                    openknx.gpio.digitalWrite(_pin, !_activeOn);
+                }
+                else
+                {
+                    analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness));
+                }
 
-            if (calcBrightness == 255)
-                digitalWrite(_pin, _activeOn);
-
-            else if (calcBrightness == 0)
-                digitalWrite(_pin, !_activeOn);
-
+                _currentLedBrightness = calcBrightness;
+            }
             else
-                analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness));
+            {
+                if (!brightness)
+                {
+                    openknx.gpio.digitalWrite(_pin, _activeOn);
+                }
+                else
+                {
+                    openknx.gpio.digitalWrite(_pin, !_activeOn);
+                }
 
-            _currentLedBrightness = calcBrightness;
+                _currentLedBrightness = brightness;
+            }
         }
     } // namespace Led
 } // namespace OpenKNX

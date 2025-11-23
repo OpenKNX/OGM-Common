@@ -1,0 +1,219 @@
+#include "OpenKNX/Led/FunctionManager.h"
+#include "OpenKNX/Facade.h"
+
+namespace OpenKNX
+{
+    namespace Led
+    {
+        FunctionManager::FunctionManager()
+        {
+        }
+
+        void FunctionManager::init()
+        {
+            // assign the LED_TYPE_PROG to Prog-LedFunction
+            assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_PROG), OPENKNX_LEDFUNC_BASE_PROG);
+        }
+
+        void FunctionManager::setup()
+        {
+            if (knx.configured())
+            {
+                // setup the prog and info1-3 led according to knx parameters
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
+            } else {
+                // not configured, assign state led to info1 as default
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_LEDFUNC_BASE_STATE);
+            }
+        }
+
+        void FunctionManager::assignLed2Function(Led::Abstract* led, uint32_t functionId)
+        {
+            if (functionId == 0)
+                return;
+
+            FunctionGroup* fg = get(functionId);
+            fg->addLed(led);
+            logDebugP("assignLed2Function led pointer value: %p to functionId %u", led, functionId);
+        }
+
+        std::string FunctionManager::logPrefix()
+        {
+            return "LED-Functions";
+        }
+
+        FunctionGroup* FunctionManager::get(uint32_t functionId)
+        {
+            auto it = _functionGroups.find(functionId);
+            if (it == _functionGroups.end())
+            {
+                // construct a new FunctionGroup with the correct id
+                auto [insertIt, _] = _functionGroups.emplace(functionId, FunctionGroup(functionId));
+                it = insertIt;
+            }
+
+            return &it->second;
+        }
+
+        FunctionGroup* FunctionManager::getActive(uint32_t functionId)
+        {
+            FunctionGroup* retVal = get(functionId);
+            return retVal->active() ? retVal : nullptr;
+        }
+
+        bool FunctionGroup::active()
+        {
+            return _active;
+        }
+
+        void FunctionGroup::addLed(Led::Abstract* led)
+        {
+            _active = true;
+            _leds.push_back(led);
+        }
+
+        void FunctionGroup::on(bool state, Capability capability)
+        {
+            for (auto led : _leds)
+            {
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
+                {
+                    led->on(state);
+                }
+            }
+        }
+
+        void FunctionGroup::on(Capability capability)
+        {
+            on(true, capability);
+        }
+
+        void FunctionGroup::off(Capability capability)
+        {
+            on(false, capability);
+        }
+
+        void FunctionGroup::setColor(uint8_t r, uint8_t g, uint8_t b)
+        {
+            for (auto led : _leds)
+            {
+                if (led->isRGB())
+                {
+                    ((RGB*)led)->setColor(r, g, b);
+                }
+            }
+        }
+
+        void FunctionGroup::setColor(uint32_t rgb)
+        {
+            for (auto led : _leds)
+            {
+                if (led->isRGB())
+                {
+                    ((RGB*)led)->setColor(rgb);
+                }
+            }
+        }
+
+        void FunctionGroup::setColor(Color color)
+        {
+            setColor(static_cast<uint32_t>(color));
+        }
+
+        void FunctionGroup::pulsing(uint16_t duration, Capability capability)
+        {
+            for (auto led : _leds)
+            {
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
+                {
+                    if(led->isDimmable())
+                        led->pulsing(duration);
+                    else
+                        led->on();
+                }
+            }
+        }
+
+        void FunctionGroup::blinking(uint16_t frequency, Capability capability)
+        {
+            for (auto led : _leds)
+            {
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
+                {
+                    led->blinking(frequency);
+                }
+            }
+        }
+
+        void FunctionGroup::flash(uint16_t duration, Capability capability)
+        {
+            for (auto led : _leds)
+            {
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
+                {
+                    led->flash(duration);
+                }
+            }
+        }
+
+        void FunctionGroup::forceOn(bool state)
+        {
+            for (auto led : _leds)
+            {
+                led->forceOn(state);
+            }
+        }
+
+#ifdef OPENKNX_HEARTBEAT
+        void FunctionGroup::debugLoop()
+        {
+            for (auto led : _leds)
+            {
+                led->debugLoop();
+            }
+        }
+#endif
+
+        void FunctionGroup::powerSave(bool active)
+        {
+            for (auto led : _leds)
+            {
+                led->powerSave(active);
+            }
+        }
+
+        void FunctionGroup::errorCode(uint8_t code)
+        {
+            for (auto led : _leds)
+            {
+                led->errorCode(code);
+            }
+        }
+
+        void FunctionGroup::activity(uint32_t& lastActivity, bool inverted, Capability capability)
+        {
+            for (auto led : _leds)
+            {
+                if (capability == Capability::ALL ||
+                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
+                    (capability == Capability::COLOR && led->isRGB()))
+                    led->activity(lastActivity, inverted);
+            }
+        }
+
+        std::string FunctionGroup::logPrefix()
+        {
+            return "LED-FunctionGroup";
+        }
+    } // namespace Led
+} // namespace OpenKNX

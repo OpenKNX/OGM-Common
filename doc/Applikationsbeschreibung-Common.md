@@ -13,20 +13,40 @@ DOCCONTENT -->
 
 Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
 
-* [Allgemein](#allgemein)
-  * [Startverzögerung](#startverzögerung)
-  * [In Betrieb senden alle](#in-betrieb-senden-alle)
-* [Uhrzeit & Datum](#uhrzeit--datum)
-  * [Empfangen über](#empfangen-über)
-  * [Bei Neustart vom Bus lesen](#bei-neustart-vom-bus-lesen)
-  * [Zeitzone](#zeitzone)
-  * [Sommerzeit ermitteln durch](#sommerzeit-ermitteln-durch)
-* [Gerätestandort](#gerätestandort)
-  * [Breitengrad](#breitengrad)
-  * [Längengrad](#längengrad)
-* [Erweitert](#erweitert)
-  * [Watchdog aktivieren](#watchdog-aktivieren)
-  * [Diagnoseobjekt anzeigen](#diagnoseobjekt-anzeigen)
+- [OpenKNX](#openknx)
+  - [Inhalte](#inhalte)
+  - [**Allgemein**](#allgemein)
+    - [**Startverzögerung**](#startverzögerung)
+    - [**In Betrieb senden alle**](#in-betrieb-senden-alle)
+  - [**Uhrzeit \& Datum**](#uhrzeit--datum)
+    - [**Empfangen über**](#empfangen-über)
+      - [**Ein kombiniertes KO**](#ein-kombiniertes-ko)
+      - [**Zwei getrennte KOs**](#zwei-getrennte-kos)
+    - [**Bei Neustart vom Bus lesen**](#bei-neustart-vom-bus-lesen)
+    - [**Zeitzone**](#zeitzone)
+      - [**POSIX TZ-String**\*](#posix-tz-string)
+    - [**Sommerzeit ermitteln durch**](#sommerzeit-ermitteln-durch)
+      - [**Kommunikationsobjekt 'Sommerzeit aktiv'**](#kommunikationsobjekt-sommerzeit-aktiv)
+      - [**Kombiniertem Datum/Zeit-KO (DPT 19)**](#kombiniertem-datumzeit-ko-dpt-19)
+      - [**Interne Berechnung**](#interne-berechnung)
+  - [**Gerätestandort**](#gerätestandort)
+    - [**Breitengrad**](#breitengrad)
+    - [**Längengrad**](#längengrad)
+  - [**Erweitert**](#erweitert)
+    - [**Watchdog aktivieren**](#watchdog-aktivieren)
+    - [**Diagnoseobjekt anzeigen**](#diagnoseobjekt-anzeigen)
+    - [**Erweitertes "In Betrieb"**](#erweitertes-in-betrieb)
+    - [Erweitertes Speichern](#erweitertes-speichern)
+      - [Flashspeicher](#flashspeicher)
+      - [Auswirkung beim RP2040/RP2350](#auswirkung-beim-rp2040rp2350)
+      - [Zyklisches speichern](#zyklisches-speichern)
+      - [Manuelles speichern](#manuelles-speichern)
+  - [**Module**](#module)
+    - [**Modul aktivieren**](#modul-aktivieren)
+    - [**Abgleich mit dem Gerät**](#abgleich-mit-dem-gerät)
+      - [**Nicht unterstützte Module ausblenden**](#nicht-unterstützte-module-ausblenden)
+      - [**Komplettabgleich aller Module**](#komplettabgleich-aller-module)
+  - [Info LEDs](#info-leds)
 
 ## **Allgemein**
 
@@ -304,4 +324,11 @@ Mit dieser Funktion werden Module nur ausgeblendet, nicht eingeblendet.
 
 Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die vom Gerät unterstützten Module werden eingeblendet, die nicht unterstützten ausgeblendet. Eine vom Benutzer vorher getroffene Auswahl wird überschrieben.
 
+<!-- DOC -->
+## Info LEDs
 
+Hier können den bis zu 3 vorhandenen Info-LEDs LED-Funktionen zugewiesen werden. Je nach Applikation ist die Zuweisung auch fest eingestellt und kann nicht verändert werden.
+
+Eine detailierte Beschreibung der LED-Funktionen ist unter http://go.openknx.de/statusled zu finden.
+
+Hinweis: Welche LED-Funktionen verfügbar sind, variiert von Applikation zu Applikation je nach verwendeten OpenKNX-Modulen.

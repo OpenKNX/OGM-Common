@@ -19,49 +19,6 @@ namespace OpenKNX
 #endif
     }
 
-    void Hardware::initLeds()
-    {
-#ifdef OPENKNX_SERIALLED_ENABLE
-    #ifndef PROG_LED_COLOR
-        #define PROG_LED_COLOR 63, 0, 0
-    #endif
-        openknx.ledManager.init(OPENKNX_SERIALLED_PIN, OPENKNX_SERIALLED_NUM);
-        openknx.progLed.init(PROG_LED_PIN, &(openknx.ledManager), PROG_LED_COLOR);
-
-    #ifdef INFO1_LED_PIN
-        #ifndef INFO1_LED_COLOR
-            #define INFO1_LED_COLOR 0, 63, 0
-        #endif
-        openknx.info1Led.init(INFO1_LED_PIN, &(openknx.ledManager), INFO1_LED_COLOR);
-    #endif
-    #ifdef INFO2_LED_PIN
-        #ifndef INFO2_LED_COLOR
-            #define INFO2_LED_COLOR 0, 63, 0
-        #endif
-        openknx.info2Led.init(INFO2_LED_PIN, &(openknx.ledManager), INFO2_LED_COLOR);
-    #endif
-    #ifdef INFO3_LED_PIN
-        #ifndef INFO3_LED_COLOR
-            #define INFO3_LED_COLOR 0, 63, 0
-        #endif
-        openknx.info3Led.init(INFO3_LED_PIN, &(openknx.ledManager), INFO3_LED_COLOR);
-    #endif
-
-#else
-
-        openknx.progLed.init(PROG_LED_PIN, PROG_LED_PIN_ACTIVE_ON);
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.init(INFO1_LED_PIN, INFO1_LED_PIN_ACTIVE_ON);
-    #endif
-    #ifdef INFO2_LED_PIN
-        openknx.info2Led.init(INFO2_LED_PIN, INFO2_LED_PIN_ACTIVE_ON);
-    #endif
-    #ifdef INFO3_LED_PIN
-        openknx.info3Led.init(INFO3_LED_PIN, INFO3_LED_PIN_ACTIVE_ON);
-    #endif
-#endif
-    }
-
     void Hardware::initButtons()
     {
 #define ATTACH_BUTTON_INTERRUPT(PIN, MODE, BUTTON)                  \
@@ -164,10 +121,10 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.on();
-#endif
-        openknx.progLed.errorCode(code);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->setColor(Led::Color::Red);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->off(Led::Capability::MONOCHROME);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->on(Led::Capability::COLOR);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->errorCode(code);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
@@ -226,11 +183,11 @@ namespace OpenKNX
     #else
         #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
     #endif
-#if MASK_VERSION == 0x091A
+    #if MASK_VERSION == 0x091A
         knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerReceivedFrame(
-#else
+    #else
         knx.bau().getDataLinkLayer()->getTPUart().registerReceivedFrame(
-#endif
+    #endif
             [](TPUart::Frame& tpFrame) {
                 // Process received frame
                 if (openknx.console.bcuDebug())
