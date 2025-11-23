@@ -124,6 +124,7 @@ namespace OpenKNX
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->setColor(Led::Color::Red);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->off(Led::Capability::MONOCHROME);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->on(Led::Capability::COLOR);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->setColor(Led::Color::Red);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->errorCode(code);
 
 #if MASK_VERSION == 0x07B0
