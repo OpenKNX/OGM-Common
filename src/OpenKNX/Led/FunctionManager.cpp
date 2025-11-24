@@ -57,12 +57,6 @@ namespace OpenKNX
             return &it->second;
         }
 
-        FunctionGroup* FunctionManager::getActive(uint32_t functionId)
-        {
-            FunctionGroup* retVal = get(functionId);
-            return retVal->active() ? retVal : nullptr;
-        }
-
         bool FunctionGroup::active()
         {
             return _active;

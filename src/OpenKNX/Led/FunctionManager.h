@@ -88,11 +88,6 @@ namespace OpenKNX
              * returns a pointer to a function group representing all leds assigned to the functionId, will create the group if not existing
              */
             FunctionGroup* get(uint32_t functionId);
-
-            /*
-             * returns a pointer to a function group representing all leds assigned to the functionId, will return nullptr if not existing
-             */
-            FunctionGroup* getActive(uint32_t functionId);
         };
 
     } // namespace Led
