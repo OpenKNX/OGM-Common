@@ -41,7 +41,7 @@ namespace OpenKNX
             long getPin() { return _ledPin; }
         };
 
-        class Serial : public RGB
+        class Serial : public Base, public RGB
         {
           protected:
             SerialLedManager *_manager = nullptr;

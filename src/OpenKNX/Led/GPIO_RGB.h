@@ -5,7 +5,7 @@ namespace OpenKNX
 {
     namespace Led
     {
-        class GPIO_RGB : public RGB
+        class GPIO_RGB : public Base, public RGB
         {
           protected:
             uint8_t _color[3] = {0, 0, 0}; // R, G, B
