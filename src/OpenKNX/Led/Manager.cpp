@@ -122,7 +122,7 @@ namespace OpenKNX
             }
             else
             {
-                if (time % 10) // 100Hz frequency
+                if (!(time % 10)) // 100Hz frequency
                 {
                     for (const auto& pair : _leds)
                         pair.second->loop();
