@@ -98,16 +98,16 @@ namespace OpenKNX
         }
 #endif
 
-        void __time_critical_func(Manager::timer)(bool distribute)
+        void __time_critical_func(Manager::timer)(bool distribute /* = true */)
         {
             if (!_init)
                 return;
-
-            if (!distribute)
+            
+            uint32_t time = millis();
+            if (distribute) // default
             {
                 // distribute the 1ms timer evenly to all leds
                 // 100Hz frequency
-                uint32_t time = millis();
                 uint8_t i = 0;
                 for (const auto& pair : _leds)
                 {
@@ -122,13 +122,16 @@ namespace OpenKNX
             }
             else
             {
-                for (const auto& pair : _leds)
-                    pair.second->loop();
+                if (time % 10) // 100Hz frequency
+                {
+                    for (const auto& pair : _leds)
+                        pair.second->loop();
 
 #ifdef OPENKNX_SERIALLED_ENABLE
-                if (_serialLedManager)
-                    _serialLedManager->writeLeds();
+                    if (_serialLedManager)
+                        _serialLedManager->writeLeds();
 #endif
+                }
             }
         }
 
