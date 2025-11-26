@@ -37,13 +37,12 @@ namespace OpenKNX
             // do nothing if not initialized
             if (_initialized < 0) return;
 
+            uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 255;
+            if (calcBrightness == _currentLedBrightness)
+                return;
+
             if(_isDimmable)
             {
-                uint8_t calcBrightness = (uint32_t)brightness * _maxBrightness / 255;
-
-                if (calcBrightness == _currentLedBrightness)
-                    return;
-
                 if (calcBrightness == 255)
                 {
                     openknx.gpio.pinMode(_pin, OUTPUT);
@@ -63,7 +62,7 @@ namespace OpenKNX
             }
             else
             {
-                if (!brightness)
+                if (calcBrightness)
                 {
                     openknx.gpio.digitalWrite(_pin, _activeOn);
                 }
@@ -72,7 +71,7 @@ namespace OpenKNX
                     openknx.gpio.digitalWrite(_pin, !_activeOn);
                 }
 
-                _currentLedBrightness = brightness;
+                _currentLedBrightness = calcBrightness;
             }
         }
     } // namespace Led
