@@ -29,7 +29,7 @@ namespace OpenKNX
             }
         }
 
-        void FunctionManager::assignLed2Function(Led::Abstract* led, uint32_t functionId)
+        void FunctionManager::assignLed2Function(Led::Base* led, uint32_t functionId)
         {
             if (functionId == 0)
                 return;
@@ -62,7 +62,7 @@ namespace OpenKNX
             return _active;
         }
 
-        void FunctionGroup::addLed(Led::Abstract* led)
+        void FunctionGroup::addLed(Led::Base* led)
         {
             _active = true;
             _leds.push_back(led);

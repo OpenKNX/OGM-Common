@@ -1,11 +1,18 @@
 #pragma once
-#include "OpenKNX/Led/Abstract.h"
+#include "OpenKNX/Led/Effects/Blink.h"
+#include "OpenKNX/Led/Effects/Error.h"
+#include "OpenKNX/Led/Effects/Flash.h"
+#include "OpenKNX/Led/Effects/Pulse.h"
+#include "OpenKNX/Log/Logger.h"
+#include "OpenKNX/defines.h"
+#include <Arduino.h>
+#include <string>
 
 namespace OpenKNX
 {
     namespace Led
     {
-        class Base: public Abstract
+        class Base
         {
           protected:
             volatile uint32_t _lastMillis = 0;
@@ -23,22 +30,37 @@ namespace OpenKNX
             volatile uint32_t _debugHeartbeat = 0;
             Led::Effects::Blink *_debugEffect = nullptr;
 #endif
+            volatile uint8_t _identifier = -1;
+            volatile bool _initialized = false;
+            volatile bool _powerSave = false;
+            volatile bool _forceOn = false;
+
+            /*
+             * write led state based on bool
+             */
+            void writeLed(bool state) { writeLed((uint8_t)(state ? 255 : 0)); }
+            /*
+             * write led state based on bool and _brightness
+             */
+            virtual void writeLed(uint8_t brightness) = 0;
+
           public:
+            virtual void init() = 0;
             /*
              * use in normal loop or loop1
              */
-            void loop();
+            virtual void loop();
 
             /*
              * Configure a max brightness
              */
-            void brightness(uint8_t brightness = 255);
+            virtual void brightness(uint8_t brightness = 255);
 
             /*
              * Called by Common to Disable during SAVE Trigger
              * -> Prio 1
              */
-            void powerSave(bool active = true) override;
+            virtual void powerSave(bool active = true);
 
             /*
              * Call by fatalError to proviede error code signal
@@ -46,7 +68,7 @@ namespace OpenKNX
              * Code = 0: Disable
              * -> Prio 2
              */
-            void errorCode(uint8_t code = 0) override;
+            virtual void errorCode(uint8_t code = 0);
 
 #ifdef OPENKNX_HEARTBEAT
             /*
@@ -56,67 +78,77 @@ namespace OpenKNX
              * Only active if OPENKNX_HEARTBEAT or OPENKNX_HEARTBEAT_PRIO is defined
              *  -> Prio 3
              */
-            void debugLoop() override;
+            virtual void debugLoop();
 #endif
+            /****
+             * Return if led is capable of RGB colors
+             */
+            virtual bool isRGB() { return false; }
+
             /*
              * For progLed called by knx Stack for active Progmode
              * -> Prio 4
              */
-            void forceOn(bool active = true) override;
+            virtual void forceOn(bool active = true);
 
             /*
              * Normal "On"
              * -> Prio 5
              */
-            void on(bool active = true) override;
+            virtual void on(bool active = true);
 
             /*
              * Normal "On" with pulse effect
              * -> Prio 5
              */
-            void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ) override;
+            virtual void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ);
 
             /*
              * Normal "On" with blink effect
              * -> Prio 5
              */
-            void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ) override;
+            virtual void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ);
 
             /*
              * Normal "On" with flash effect
              * -> Prio 5
              */
-            void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION) override;
+            virtual void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION);
 
             /*
              * Normal "On" with activity effect
              * -> Prio 5
              */
-            void activity(uint32_t &lastActivity, bool inverted = false) override;
+            virtual void activity(uint32_t &lastActivity, bool inverted = false);
 
             /*
              * Normal "Off"
              * -> Prio 5
              */
-            void off() override;
+            virtual void off();
+
+            /*
+             * Set the identifier for logging
+             */
+            virtual void setIdentifier(uint8_t identifier) { _identifier = identifier; }
 
             /*
              * Unload current normal effect is available
              */
-            void unloadEffect();
+            virtual void unloadEffect();
 
             /*
              * Call unloadEffect() and load new normal effect
              */
-            void loadEffect(Led::Effects::Base *effect);
+            virtual void loadEffect(Led::Effects::Base *effect);
 
 
-            virtual bool isDimmable() override;
+            virtual bool isDimmable();
 
             /*
              * Get a logPrefix as string
              */
-            std::string logPrefix() override;
+            virtual std::string logPrefix();
         };
     } // namespace Led
 } // namespace OpenKNX

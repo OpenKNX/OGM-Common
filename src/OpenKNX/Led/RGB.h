@@ -52,7 +52,7 @@ namespace OpenKNX
             Magenta = OPENKNX_LEDCOLOR_MAGENTA
         };
 
-        class RGB //: public Base
+        class RGB : public Base
         {
           public:
             virtual void setColor(uint8_t r, uint8_t g, uint8_t b) = 0;
