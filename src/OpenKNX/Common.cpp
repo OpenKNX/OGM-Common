@@ -240,11 +240,11 @@ namespace OpenKNX
 
     void Common::setup()
     {
-        openknx.ledFunctions.setup();
-
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
+        
+        openknx.ledFunctions.setup();
 
         bool configured = knx.configured();
         openknx.time.setup(configured);

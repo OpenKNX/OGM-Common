@@ -58,7 +58,7 @@ namespace OpenKNX
 
         void Manager::addLed(Led::Base* led, uint8_t identifier)
         {
-            if (led == nullptr || _init)
+            if (led == nullptr)
             {
                 logErrorP("Cannot add LED after init or led is null");
                 return;
