@@ -13,15 +13,15 @@ namespace OpenKNX
             volatile uint8_t _currentLedBrightness = 0;
             volatile bool _state = false;
             volatile bool _effectMode = false;
-            Led::Effects::Base *_effect = nullptr;
+            Led::Effects::Base * volatile _effect = nullptr; // volatile pointer for interrupt safety!
 
             volatile bool _errorMode = false;
-            Led::Effects::Error *_errorEffect = nullptr;
+            Led::Effects::Error * volatile _errorEffect = nullptr; // volatile pointer for interrupt safety!
 
 #ifdef OPENKNX_HEARTBEAT
             volatile bool _debugMode = false;
             volatile uint32_t _debugHeartbeat = 0;
-            Led::Effects::Blink *_debugEffect = nullptr;
+            Led::Effects::Blink * volatile _debugEffect = nullptr; // volatile pointer for interrupt safety!
 #endif
           public:
             /*

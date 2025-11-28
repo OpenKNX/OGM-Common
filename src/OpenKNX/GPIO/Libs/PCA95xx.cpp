@@ -24,6 +24,8 @@
 PCA95XX::PCA95XX( TwoWire *wirePort, uint8_t address, pca95xx_devices_e device, uint8_t numberOfGpio)
 {
     _i2cPort = wirePort;
+    _lastValidInput = 0xFF; // Default: all inputs HIGH (pullup logic)
+    _cachedOutput = 0x00;   // Default: all outputs LOW
     
     switch (device)
     {
@@ -73,7 +75,24 @@ PCA95XX::PCA95XX( TwoWire *wirePort, uint8_t address, pca95xx_devices_e device, 
 
 bool PCA95XX::begin()
 {
-    return (isConnected());
+    if (!isConnected())
+        return false;
+    
+    // Initialize cache with actual INPUT register value (prevent ghost button events on boot)
+    uint8_t inputReg = 0;
+    if (readI2CRegister(&inputReg, PCA95XX_REGISTER_INPUT_PORT) == PCA95XX_ERROR_SUCCESS)
+    {
+        _lastValidInput = inputReg;
+    }
+    
+    // Initialize OUTPUT cache with actual register value (for consistent state)
+    uint8_t outputReg = 0;
+    if (readI2CRegister(&outputReg, PCA95XX_REGISTER_OUTPUT_PORT) == PCA95XX_ERROR_SUCCESS)
+    {
+        _cachedOutput = outputReg;
+    }
+    
+    return true;
 }
 
 bool PCA95XX::isConnected(void)
@@ -109,15 +128,25 @@ PCA95XX_error_t PCA95XX::write(uint8_t pin, uint8_t value)
     if (pin >= _numberOfGpio)
         return PCA95XX_ERROR_UNDEFINED;
 
-    uint8_t outputRegister;
-    PCA95XX_error_t err = readI2CRegister(&outputRegister, PCA95XX_REGISTER_OUTPUT_PORT);
-    if (err != PCA95XX_ERROR_SUCCESS)
-        return err;
-
+    // **Atomic Cached Modify-Write** (NO Read from chip!)
+    // Thread-safe between ISR calls - atomic update prevents race conditions
+    // when multiple LEDs write simultaneously
+    
+#ifdef ARDUINO_ARCH_RP2040
+    // RP2040: Use atomic section for cache update
+    uint32_t irqState = save_and_disable_interrupts();
+#endif
+    
     const uint8_t mask = 1 << pin;
-    outputRegister = (outputRegister & ~mask) | ((value != 0) << pin);
-
-    return writeI2CRegister(outputRegister, PCA95XX_REGISTER_OUTPUT_PORT);
+    uint8_t newOutput = (_cachedOutput & ~mask) | ((value != 0) << pin);
+    _cachedOutput = newOutput;  // Update cache atomically
+    
+#ifdef ARDUINO_ARCH_RP2040
+    restore_interrupts(irqState);
+#endif
+    
+    // Write to chip (may be queued if ASYNC_QUEUE enabled)
+    return writeI2CRegister(newOutput, PCA95XX_REGISTER_OUTPUT_PORT);
 }
 
 // digitalWrite overload 
@@ -160,19 +189,26 @@ PCA95XX_error_t PCA95XX::read(uint8_t *destination, uint8_t pin)
 
     err = readI2CRegister(&inputRegister, PCA95XX_REGISTER_INPUT_PORT);
     if (err != PCA95XX_ERROR_SUCCESS)
-        return err;
+    {
+        // On I2C error: return cached value from last successful read
+        inputRegister = _lastValidInput;
+    }
+    else
+    {
+        // Success: cache this value for error recovery
+        _lastValidInput = inputRegister;
+    }
 
     *destination = (inputRegister & (1 << pin)) >> pin;
     return (err);
 }
 
-// Unsafe overload
+// Unsafe overload - returns last valid value on error (safer than 0)
 uint8_t PCA95XX::read(uint8_t pin)
 {
     uint8_t val;
-    if (read(&val, pin) == PCA95XX_ERROR_SUCCESS)
-        return val;
-    return 0; // Unsafe
+    read(&val, pin); // Always returns a value (cached on error)
+    return val;
 }
 
 // Safe reading of a pin
@@ -181,13 +217,10 @@ PCA95XX_error_t PCA95XX::digitalRead(uint8_t *destination, uint8_t pin)
     return (read(destination, pin));
 }
 
-// Unsafe overload
+// Unsafe overload - returns last valid value on error (safer than 0)
 uint8_t PCA95XX::digitalRead(uint8_t pin)
 {
-    uint8_t val;
-    if (digitalRead(&val, pin) == PCA95XX_ERROR_SUCCESS)
-        return val;
-    return 0; // Unsafe
+    return read(pin); // Uses cached value on I2C error
 }
 
 // Invert the polarity of a pin

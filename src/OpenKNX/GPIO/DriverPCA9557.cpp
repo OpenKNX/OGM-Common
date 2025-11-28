@@ -51,13 +51,13 @@ namespace OpenKNX
         }
 
         // Writes a digital value (HIGH/LOW) to the specified pin
-        void DriverPCA9557::GPIOdigitalWrite(uint8_t pin, int status)
+        int DriverPCA9557::GPIOdigitalWrite(uint8_t pin, int status)
         {
             if (pin > 7)
             {
-                return;
+                return -1;
             }
-            _pca->digitalWrite(pin, status);
+            return (_pca->digitalWrite(pin, status) == PCA95XX_ERROR_SUCCESS) ? 0 : -1;
         }
 
         bool DriverPCA9557::GPIOdigitalRead(uint8_t pin)

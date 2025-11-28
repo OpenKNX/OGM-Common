@@ -1,6 +1,8 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Flash/Driver.h"
+#include "OpenKNX/I2C/Console.h"
+#include "OpenKNX/Led/Console.h"
 
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
@@ -147,6 +149,14 @@ namespace OpenKNX
         else if (!diagnoseKo && (cmd.rfind("dwon ", 0) == 0 || cmd.rfind("dwoff ", 0) == 0))
         {
             processPinCommand("dw " + cmd.substr(((cmd.rfind("dwon ", 0) == 0) ? 5 : 6)) + (cmd.rfind("dwon ", 0) == 0 ? " 1" : " 0"));
+        }
+        else if (!diagnoseKo && (cmd.compare(0, 4, "i2c ") == 0 || cmd.compare(0, 3, "i2c") == 0))
+        {
+            OpenKNX::I2C::Console::processCommand(cmd);
+        }
+        else if (!diagnoseKo && (cmd.compare(0, 5, "leds ") == 0 || cmd.compare(0, 4, "leds") == 0 || cmd.compare(0, 4, "led ") == 0 || cmd.compare(0, 3, "led") == 0))
+        {
+            OpenKNX::Led::Console::processCommand(cmd);
         }
 #endif
 
@@ -570,6 +580,8 @@ namespace OpenKNX
         printHelpLine("aw <pin> 0-4095", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
+        printHelpLine("i2c", "I2C bus commands. Use 'i2c' for help");
+        printHelpLine("leds", "LED control. Use 'leds' for help");
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         printHelpLine("bcu", "Show BCU status");
         printHelpLine("bcu mon", "Start BCU monitoring");
@@ -800,6 +812,6 @@ namespace OpenKNX
                 openknx.logger.logWithPrefixAndValues("PinCommand", "Read pin %i: %i", pin, analogRead((pin_size_t)pin));
             }
         }
-    }
-#endif
+    } // processPinCommand
+#endif // ARDUINO_ARCH_SAMD
 } // namespace OpenKNX

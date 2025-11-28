@@ -421,6 +421,37 @@ namespace OpenKNX
 
         _ledFunctions.loop();
 
+#if defined(OPENKNX_I2C_USE_PENDING_PATTERN)
+        // Flush pending I2C LED writes (for PENDING pattern)
+        openknx.leds.loop();
+#elif defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
+        // Note: openknx.leds.loop() not needed - ISR queues writes, processQueue() executes them
+        // Process async I2C queue (LED transfers + callbacks)
+        // Process in batches to prevent queue overflow during heavy load (Rain + LED PWM)
+        #ifdef OPENKNX_GPIO_WIRE
+            // Process up to 64 transfers per loop cycle (balance: empty queue fast, but don't starve Main Loop)
+            // At 360 transfers/sec during PULSING, this empties queue in ~180ms max
+            for (uint8_t i = 0; i < 64 && OPENKNX_GPIO_WIRE.queuedCount() > 0; i++)
+            {
+                OPENKNX_GPIO_WIRE.processQueue();
+            }
+            OPENKNX_GPIO_WIRE.processCallbacks();
+            
+            // Debug: Log queue stats every 5 seconds
+            static uint32_t lastQueueLog = 0;
+            if (delayCheck(lastQueueLog, 5000))
+            {
+                logInfoP("I2C Queue: %d/%d used | Completed: %lu | Failed: %lu | Overflows: %lu",
+                         OPENKNX_GPIO_WIRE.queuedCount(),
+                         OPENKNX_I2C_QUEUE_SIZE,
+                         OPENKNX_GPIO_WIRE.getTransfersCompleted(),
+                         OPENKNX_GPIO_WIRE.getTransfersFailed(),
+                         OPENKNX_GPIO_WIRE.getQueueOverflows());
+                lastQueueLog = millis();
+            }
+        #endif
+#endif
+
         // loop  appstack
         _loopMicros = micros();
 

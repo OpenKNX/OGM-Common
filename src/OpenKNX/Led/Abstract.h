@@ -30,6 +30,11 @@ namespace OpenKNX
             virtual void writeLed(uint8_t brightness) = 0;
 
           public:
+            /*
+             * Process pending I2C updates (default: do nothing)
+             */
+            virtual void processI2C() {}
+
             virtual void init() = 0;
 
             /****
@@ -56,7 +61,7 @@ namespace OpenKNX
              */
             virtual void debugLoop() {};
 
-            #endif
+#endif
 
             /****
              * Return if led is capable of RGB colors

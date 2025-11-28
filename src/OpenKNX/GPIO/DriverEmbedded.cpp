@@ -41,9 +41,10 @@ namespace OpenKNX
                 digitalWriteFast(pin, status);
         }
 
-        void DriverEmbedded::GPIOdigitalWrite(uint8_t pin, int status)
+        int DriverEmbedded::GPIOdigitalWrite(uint8_t pin, int status)
         {
-            digitalWrite(pin, status);
+            ::digitalWrite(pin, (PinStatus)status);
+            return 0; // Direct GPIO always succeeds
         }
 
         bool DriverEmbedded::GPIOdigitalRead(uint8_t pin)

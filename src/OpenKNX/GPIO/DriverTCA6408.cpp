@@ -48,15 +48,16 @@ namespace OpenKNX
             _tca->pinMode1(pin, mode);
         }
 
-        void DriverTCA6408::GPIOdigitalWrite(uint8_t pin, int status)
+        int DriverTCA6408::GPIOdigitalWrite(uint8_t pin, int status)
         {
             if (pin > 7)
             {
                 // log some message
-                return;
+                return -1;
             }
 
             _tca->write1(pin, status);
+            return 0; // TCA write1 has no error return
         }
 
         bool DriverTCA6408::GPIOdigitalRead(uint8_t pin)

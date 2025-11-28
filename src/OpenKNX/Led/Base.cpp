@@ -61,7 +61,7 @@ namespace OpenKNX
             // Normal with optional Effect (Prio 5)
             if (_state)
             {
-                if (_effectMode)
+                if (_effectMode && _effect != nullptr)
                     writeLed(_effect->value());
                 else
                     writeLed(true);
@@ -202,7 +202,9 @@ namespace OpenKNX
             {
                 logTraceP("unload effect");
                 _effectMode = false;
-                delete _effect;
+                Led::Effects::Base *oldEffect = _effect;
+                _effect = nullptr; // Clear pointer BEFORE delete to prevent race condition
+                delete oldEffect;
             }
         }
 

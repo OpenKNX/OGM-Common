@@ -55,6 +55,7 @@ namespace OpenKNX
 #ifndef ARDUINO_ARCH_SAMD
         void processPinCommand(const std::string& cmd);
 #endif
+        void processI2cCommand(const std::string& cmd);
 
       public:
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};

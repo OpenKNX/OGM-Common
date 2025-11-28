@@ -2,6 +2,12 @@
 #include "Arduino.h"
 #include <Wire.h>
 
+// Check if we're using PIOI2CWire with spinlock support
+#if defined(ARDUINO_ARCH_RP2040)
+    #include "OpenKNX/I2C/PIOI2CWire.h"
+    #define PCA95XX_HAS_ATOMIC_RMW 1
+#endif
+
 // Supported PCA variants
 typedef enum
 {
@@ -125,6 +131,8 @@ class PCA95XX
     PCA95XX_Address_t _deviceAddress; // The I2C address of the PCA95XX
     pca95xx_devices_e _deviceType;    // The type of PCA95XX
     byte _numberOfGpio;               // The number of GPIO pins on the PCA95XX
+    uint8_t _lastValidInput;          // Cache of last successful INPUT register read (for error recovery)
+    uint8_t _cachedOutput;            // Shadow copy of OUTPUT register (for async queue compatibility)
 
     // I2C Read/Write
     PCA95XX_error_t readI2CBuffer(uint8_t *dest, PCA95XX_REGISTER_t startRegister, uint16_t len);

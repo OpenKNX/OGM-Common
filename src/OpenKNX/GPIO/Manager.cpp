@@ -131,16 +131,16 @@ namespace OpenKNX
             GPIOExpanders[expander]->GPIOpinMode(localpin, mode, preset, status);
         }
 
-        void Manager::digitalWrite(openknx_gpio_number_t pin, int status)
+        int Manager::digitalWrite(openknx_gpio_number_t pin, int status)
         {
             int8_t localpin = pin & 0xff;
             uint8_t expander = pin >> 8;
             if (expander > OPENKNX_GPIO_NUM)
             {
-                logErrorP("GPIOModule::digitalWrite: invalid pin id %u", pin);
-                return;
+                logErrorP("invalid pin id %u", pin);
+                return -1;
             }
-            GPIOExpanders[expander]->GPIOdigitalWrite(localpin, status);
+            return GPIOExpanders[expander]->GPIOdigitalWrite(localpin, status);
         }
 
         bool Manager::digitalRead(openknx_gpio_number_t pin)

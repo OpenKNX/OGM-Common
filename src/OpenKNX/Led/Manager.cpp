@@ -52,10 +52,6 @@ namespace OpenKNX
             _init = true;
         }
 
-        void Manager::loop()
-        {
-        }
-
         void Manager::addLed(Led::Base* led, uint8_t identifier)
         {
             if (led == nullptr || _init)
@@ -103,33 +99,34 @@ namespace OpenKNX
             if (!_init)
                 return;
 
-            if (!distribute)
-            {
-                // distribute the 1ms timer evenly to all leds
-                // 100Hz frequency
-                uint32_t time = millis();
-                uint8_t i = 0;
-                for (const auto& pair : _leds)
-                {
-                    if (i % 10 == time % 10)
-                        pair.second->loop();
-                    i++;
-                }
-#ifdef OPENKNX_SERIALLED_ENABLE
-                if (_serialLedManager && time % 10) // 100Hz frequency
-                    _serialLedManager->writeLeds();
-#endif
-            }
-            else
-            {
-                for (const auto& pair : _leds)
-                    pair.second->loop();
+            // LED effects every 10ms (100Hz)
+            for (const auto& pair : _leds)
+                pair.second->loop();
 
 #ifdef OPENKNX_SERIALLED_ENABLE
-                if (_serialLedManager)
-                    _serialLedManager->writeLeds();
+            // Serial LEDs every 10ms (100Hz)
+            if (_serialLedManager)
+                _serialLedManager->writeLeds();
 #endif
+        }
+
+        // Main loop - flush pending I2C LED updates
+        void Manager::loop()
+        {
+#if defined(OPENKNX_I2C_USE_PENDING_PATTERN) || defined(OPENKNX_I2C_USE_SPINLOCK)
+            if (!_init)
+                return;
+
+            // Flush all pending I2C writes from main loop
+            // - PENDING_PATTERN: All I2C writes happen here
+            // - SPINLOCK: Only failed ISR writes are retried here with blocking lock
+            for (const auto& pair : _leds)
+            {
+                GPIO* gpio = dynamic_cast<GPIO*>(pair.second);
+                if (gpio)
+                    gpio->flushPendingI2C();
             }
+#endif
         }
 
         Led::Base* Manager::getProgLed()
