@@ -64,20 +64,7 @@ namespace OpenKNX
             pwmValues[2] = ((uint32_t)_color[2] * calcBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255));
             for (int i = 0; i < 3; i++)
             {
-                if (pwmValues[i] == 255)
-                {
-                    pinMode(_pins[i], OUTPUT);
-                    digitalWrite(_pins[i], _activeOn);
-                }
-                else if (pwmValues[i] == 0)
-                {
-                    pinMode(_pins[i], OUTPUT);
-                    digitalWrite(_pins[i], !_activeOn);
-                }
-                else
-                {
-                    analogWrite(_pins[i], _activeOn ? pwmValues[i] : (255 - pwmValues[i]));
-                }
+                analogWrite(_pins[i], _activeOn ? pwmValues[i] : (255 - pwmValues[i]));
             }
             _currentLedBrightness = calcBrightness;
             _colorDirty = false;
