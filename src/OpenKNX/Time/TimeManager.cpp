@@ -349,6 +349,8 @@ namespace OpenKNX
 
         void TimeManager::setup(bool configured)
         {
+            _timeLed = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_TIME);
+
             _configured = configured;
             setDaylightSavingMode(DaylightSavingMode::Calculated);
 
@@ -378,8 +380,6 @@ namespace OpenKNX
 
                 if (_timeProvider != nullptr)
                     _timeProvider->setup();
-
-                _timeLed = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_TIME);
             }
         }
 
