@@ -63,7 +63,7 @@ namespace OpenKNX
                 logDebugP("Cannot add LED: led is null");
                 return;
             }
-            if (_leds.find(identifier) == _leds.end())
+            if (_leds.find(identifier) != _leds.end())
             {
                 logDebugP("Cannot add LED: identifier %d already in use", identifier);
                 return;
@@ -80,7 +80,7 @@ namespace OpenKNX
                 logDebugP("Cannot add Serial LED after init or led is null");
                 return;
             }
-            if (_leds.find(identifier) == _leds.end())
+            if (_leds.find(identifier) != _leds.end())
             {
                 logDebugP("Cannot add LED: identifier %d already in use", identifier);
                 return;
