@@ -60,7 +60,12 @@ namespace OpenKNX
         {
             if (led == nullptr)
             {
-                logErrorP("Cannot add LED after init or led is null");
+                logDebugP("Cannot add LED: led is null");
+                return;
+            }
+            if(_leds.find(identifier) == _leds.end())
+            {
+                logDebugP("Cannot add LED: identifier %d already in use", identifier);
                 return;
             }
             led->setIdentifier(identifier);
@@ -72,10 +77,14 @@ namespace OpenKNX
         {
             if (led == nullptr || _init)
             {
-                logErrorP("Cannot add LED after init or led is null");
+                logDebugP("Cannot add Serial LED after init or led is null");
                 return;
             }
-
+            if(_leds.find(identifier) == _leds.end())
+            {
+                logDebugP("Cannot add LED: identifier %d already in use", identifier);
+                return;
+            }
             led->setManager(getSerialLedManager(led->getPin()));
             if (led->getAddr() >= _serialLedCount)
                 _serialLedCount = led->getAddr() + 1;
