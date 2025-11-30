@@ -42,6 +42,7 @@ namespace OpenKNX
             Led::Base* _dummyLed = new GPIO(-1);
             std::unordered_map<uint8_t, Led::Base*> _leds;
             bool _init = false;
+            uint32_t _timerMillis = 0;
 #ifdef OPENKNX_SERIALLED_ENABLE
             Led::SerialLedManager* _serialLedManager = nullptr;
             uint8_t _serialLedCount = 0;
@@ -54,9 +55,9 @@ namespace OpenKNX
             void init();
 
             /*
-             * Must be called by TimerInterrupt every 1ms
+             * Should be called by a TimerInterrupt or Task with at least 100Hz
              */
-            void timer(bool distribute = true);
+            void timer(bool doNotCheckMillis = false);
 
             /*
              * use in normal loop or loop1

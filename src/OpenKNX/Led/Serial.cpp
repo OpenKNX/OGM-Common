@@ -208,7 +208,7 @@ namespace OpenKNX
                 pdTRUE,             // Auto-Reload (Wiederholung nach Ablauf)
                 (void *)0,          // Timer-ID (kann für Identifikation verwendet werden)
                 [](TimerHandle_t timer) {
-                    openknx.leds.timer();
+                    openknx.leds.timer(true);
                 } // Callback-Funktion, die beim Timeout aufgerufen wird
             );
 
