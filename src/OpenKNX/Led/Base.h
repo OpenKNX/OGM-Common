@@ -142,7 +142,6 @@ namespace OpenKNX
              */
             virtual void loadEffect(Led::Effects::Base *effect);
 
-
             virtual bool isDimmable();
 
             /*

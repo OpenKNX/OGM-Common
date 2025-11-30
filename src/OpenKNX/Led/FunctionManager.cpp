@@ -23,7 +23,9 @@ namespace OpenKNX
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
-            } else {
+            }
+            else
+            {
                 // not configured, assign state led to info1 as default
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_LEDFUNC_BASE_STATE);
             }
@@ -126,7 +128,7 @@ namespace OpenKNX
                     (capability == Capability::MONOCHROME && !led->isRGB()) ||
                     (capability == Capability::COLOR && led->isRGB()))
                 {
-                    if(led->isDimmable())
+                    if (led->isDimmable())
                         led->pulsing(duration);
                     else
                         led->on();

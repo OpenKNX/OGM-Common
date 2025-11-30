@@ -17,8 +17,8 @@ namespace OpenKNX
             // no valid pin
             if (_pin < 0)
                 return;
-            
-            if(_pin > 0x00FF & _isDimmable)
+
+            if (_pin > 0x00FF & _isDimmable)
             {
                 logErrorP("Led::GPIO does not support dimmable LED on I2C expander");
                 _isDimmable = false;
@@ -41,7 +41,7 @@ namespace OpenKNX
             if (calcBrightness == _currentLedBrightness)
                 return;
 
-            if(_isDimmable)
+            if (_isDimmable)
             {
                 if (calcBrightness == 255)
                 {
