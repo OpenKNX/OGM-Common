@@ -1,10 +1,16 @@
 #include "OpenKNX/Led/Manager.h"
 #include "OpenKNX/Facade.h"
+#include "OpenKNX/TimerInterrupt.h"  // For OPENKNX_INTERRUPT_TIMER_MS
 
 namespace OpenKNX
 {
     namespace Led
     {
+        // Global PWM configuration (updated every timer interrupt)
+        volatile uint8_t Manager::_pwmCycle = 0;
+        volatile uint8_t Manager::_pwmSteps = 10;  // Default: 10 steps
+        volatile uint8_t Manager::_timerUpdateHz = 1000 / OPENKNX_INTERRUPT_TIMER_MS; // Calculate from timer interval
+        
         Manager::Manager()
         {
         }
@@ -41,13 +47,14 @@ namespace OpenKNX
     #endif
 #endif
             logInfoP("Init %d Leds", _leds.size());
+            
+            for (const auto& pair : _leds)
+                pair.second->init();
+
 #ifdef OPENKNX_SERIALLED_ENABLE
             if (_serialLedManager)
                 _serialLedManager->init(_serialLedCount);
 #endif
-
-            for (const auto& pair : _leds)
-                pair.second->init();
 
             _init = true;
         }
@@ -99,6 +106,9 @@ namespace OpenKNX
             if (!_init)
                 return;
 
+            // Increment PWM cycle counter (configurable steps)
+            _pwmCycle = (_pwmCycle + 1) % _pwmSteps;
+
             // LED effects every 10ms (100Hz)
             for (const auto& pair : _leds)
                 pair.second->loop();
@@ -113,10 +123,10 @@ namespace OpenKNX
         // Main loop - flush pending I2C LED updates
         void Manager::loop()
         {
-#if defined(OPENKNX_I2C_USE_PENDING_PATTERN) || defined(OPENKNX_I2C_USE_SPINLOCK)
             if (!_init)
                 return;
 
+#if defined(OPENKNX_I2C_USE_PENDING_PATTERN) || defined(OPENKNX_I2C_USE_SPINLOCK) 
             // Flush all pending I2C writes from main loop
             // - PENDING_PATTERN: All I2C writes happen here
             // - SPINLOCK: Only failed ISR writes are retried here with blocking lock
@@ -126,6 +136,12 @@ namespace OpenKNX
                 if (gpio)
                     gpio->flushPendingI2C();
             }
+#endif
+
+#if defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
+            // ASYNC_QUEUE: Process queue is handled in Common.cpp loop()
+            // No action needed here - LEDs are already queued by writeLed()
+            // This comment ensures loop() still runs for consistency
 #endif
         }
 

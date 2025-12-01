@@ -1,4 +1,5 @@
 #include "OpenKNX/Led/GPIO.h"
+#include "OpenKNX/Led/Manager.h"
 #include "OpenKNX/Facade.h"
 
 namespace OpenKNX
@@ -33,32 +34,25 @@ namespace OpenKNX
 
             uint8_t calcBrightness = _isDimmable ? (uint32_t)brightness * _maxBrightness / 255 : brightness;
 
-            // Skip if already at target brightness AND no pending I2C write
-            if (calcBrightness == _currentLedBrightness && !_hasPendingI2C)
-                return;
-
-            // For I2C expanders: Choose pattern based on compile-time config
+            // For I2C expanders: Use Manager's global PWM cycle
             if (_isI2C)
             {
-                // Software PWM simulation: Calculate duty cycle
-                // 10 steps @ 100Hz timer = 10Hz PWM frequency (100ms full cycle)
-                // Maps brightness 0-255 to duty cycle 0-10 (10% steps)
-                _pwmCycle = (_pwmCycle + 1) % 10;
+                // Get current cycle from Manager (updated every timer interrupt)
+                uint8_t currentCycle = Manager::getPwmCycle();
+                uint8_t pwmSteps = Manager::getPwmSteps();
                 
-                // Map brightness to duty cycle (0-10 steps)
+                // Map brightness to duty cycle (0-pwmSteps)
                 uint8_t dutyCycle;
-                if (calcBrightness == 0)
-                    dutyCycle = 0;
-                else if (calcBrightness >= 255)
-                    dutyCycle = 10;
-                else
-                    dutyCycle = ((uint16_t)calcBrightness * 10 + 127) / 255; // 0-10 with rounding
+                if (calcBrightness == 0) dutyCycle = 0;
+                else if (calcBrightness >= 255) dutyCycle = pwmSteps;
+                else dutyCycle = (calcBrightness * pwmSteps + 127) / 255; // Scale to 0-pwmSteps
                 
-                bool willBeOn = (_pwmCycle < dutyCycle); // ON if within duty cycle
+                // Determine desired state based on PWM cycle
+                const bool willBeOn = (currentCycle < dutyCycle);
                 
-                // **OPTIMIZATION**: Only write if state changed (reduces I2C load by 90%!)
+                // Skip write if no change (brightness same AND state same)
                 if (willBeOn == _lastPwmState && calcBrightness == _currentLedBrightness)
-                    return; // No state change, skip write
+                    return;
                 
                 _lastPwmState = willBeOn; // Update state tracker
                 
@@ -67,6 +61,11 @@ namespace OpenKNX
                 _pendingI2CState = willBeOn;
                 _pendingI2CBrightness = calcBrightness;
                 _hasPendingI2C = true;
+                _currentLedBrightness = calcBrightness;
+                return;
+#elif defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
+                // ASYNC_QUEUE: Direct write, queued by I2C layer
+                openknx.gpio.digitalWrite(_pin, willBeOn ? _activeOn : !_activeOn);
                 _currentLedBrightness = calcBrightness;
                 return;
 #else
@@ -89,16 +88,17 @@ namespace OpenKNX
                 return;
 #endif
             }
-
-            // Direct GPIO write (with PWM support) - safe from ISR for non-I2C pins
-            if (calcBrightness == 0)
-                openknx.gpio.digitalWrite(_pin, !_activeOn);
-            else if (calcBrightness == 255)
-                openknx.gpio.digitalWrite(_pin, _activeOn);
             else
-                analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness));
-
-            _currentLedBrightness = calcBrightness;
+            {
+                // Direct GPIO write (non-I2C pin)
+                if (calcBrightness == 0)
+                    openknx.gpio.digitalWrite(_pin, !_activeOn);
+                else if (calcBrightness == 255)
+                    openknx.gpio.digitalWrite(_pin, _activeOn);
+                else
+                    analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness)); // Invert for LOW active  
+                _currentLedBrightness = calcBrightness;
+            }
         }
 
         // Flush pending I2C writes - called from main loop, NOT from ISR!

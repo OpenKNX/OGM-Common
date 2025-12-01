@@ -78,6 +78,48 @@ bool PCA95XX::begin()
     if (!isConnected())
         return false;
     
+#ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
+    // === ASYNC QUEUE MODE: MUST use blocking I2C for initialization ===
+    // Problem: If init writes are queued, first LED operations execute BEFORE chip is configured
+    // Solution: Use direct PIO I2C blocking calls to guarantee hardware state before any queued ops
+    
+    #if defined(ARDUINO_ARCH_RP2040)
+        OpenKNX::I2C::PIOI2CWire* pioWire = dynamic_cast<OpenKNX::I2C::PIOI2CWire*>(_i2cPort);
+        if (pioWire && pioWire->getInstance())
+        {
+            // Read INPUT register (blocking)
+            uint8_t reg = PCA95XX_REGISTER_INPUT_PORT;
+            uint8_t inputReg = 0;
+            if (pioWire->getInstance()->write_blocking(_deviceAddress, &reg, 1, true) >= 0 &&
+                pioWire->getInstance()->read_blocking(_deviceAddress, &inputReg, 1, false) >= 0)
+            {
+                _lastValidInput = inputReg;
+            }
+            
+            // Read OUTPUT register (blocking) - initialize desired state cache
+            // After boot, _cachedOutput tracks intended state, no further chip reads needed
+            reg = PCA95XX_REGISTER_OUTPUT_PORT;
+            uint8_t outputReg = 0;
+            if (pioWire->getInstance()->write_blocking(_deviceAddress, &reg, 1, true) >= 0 &&
+                pioWire->getInstance()->read_blocking(_deviceAddress, &outputReg, 1, false) >= 0)
+            {
+                _cachedOutput = outputReg;
+            }
+            
+            // Read CONFIG register for boot verification
+            reg = PCA95XX_REGISTER_CONFIGURATION;
+            uint8_t configReg = 0xFF;
+            if (pioWire->getInstance()->write_blocking(_deviceAddress, &reg, 1, true) >= 0 &&
+                pioWire->getInstance()->read_blocking(_deviceAddress, &configReg, 1, false) >= 0)
+            {
+                Serial.printf("PCA95xx::begin[ASYNC]: CONFIG=0x%02X OUTPUT=0x%02X (0=OUTPUT, 1=INPUT) addr=0x%02X\n", 
+                             configReg, outputReg, _deviceAddress);
+            }
+        }
+    #endif
+#else
+    // === PENDING/SPINLOCK MODE: Normal read via queue (safe, as writes are blocking) ===
+    
     // Initialize cache with actual INPUT register value (prevent ghost button events on boot)
     uint8_t inputReg = 0;
     if (readI2CRegister(&inputReg, PCA95XX_REGISTER_INPUT_PORT) == PCA95XX_ERROR_SUCCESS)
@@ -91,6 +133,15 @@ bool PCA95XX::begin()
     {
         _cachedOutput = outputReg;
     }
+    
+    // Read CONFIGURATION register for boot verification
+    uint8_t configReg = 0;
+    if (readI2CRegister(&configReg, PCA95XX_REGISTER_CONFIGURATION) == PCA95XX_ERROR_SUCCESS)
+    {
+        Serial.printf("PCA95xx::begin: CONFIG=0x%02X OUTPUT=0x%02X (0=OUTPUT, 1=INPUT)\n", 
+                     configReg, outputReg);
+    }
+#endif
     
     return true;
 }
@@ -109,6 +160,43 @@ PCA95XX_error_t PCA95XX::pinMode(uint8_t pin, uint8_t mode)
     if (pin >= _numberOfGpio)
         return PCA95XX_ERROR_UNDEFINED;
 
+#ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
+    // === ASYNC QUEUE MODE: pinMode MUST be blocking (boot-init critical) ===
+    // Problem: LED init calls pinMode early in boot, queued writes execute too late
+    // Solution: Use direct PIO I2C blocking read-modify-write
+    
+    #if defined(ARDUINO_ARCH_RP2040)
+        OpenKNX::I2C::PIOI2CWire* pioWire = dynamic_cast<OpenKNX::I2C::PIOI2CWire*>(_i2cPort);
+        if (pioWire && pioWire->getInstance())
+        {
+            // Blocking read of CONFIG register
+            uint8_t reg = PCA95XX_REGISTER_CONFIGURATION;
+            if (pioWire->getInstance()->write_blocking(_deviceAddress, &reg, 1, true) < 0 ||
+                pioWire->getInstance()->read_blocking(_deviceAddress, &cfgRegister, 1, false) < 0)
+            {
+                return PCA95XX_ERROR_READ;
+            }
+            
+            // Modify bit for this pin
+            cfgRegister &= ~(1 << pin);
+            if (mode == INPUT)
+            {
+                cfgRegister |= (1 << pin);
+            }
+            
+            // Blocking write back
+            uint8_t buf[2] = { PCA95XX_REGISTER_CONFIGURATION, cfgRegister };
+            if (pioWire->getInstance()->write_blocking(_deviceAddress, buf, 2, false) < 0)
+            {
+                return PCA95XX_ERROR_WRITE;
+            }
+            
+            return PCA95XX_ERROR_SUCCESS;
+        }
+    #endif
+#endif
+
+    // === Normal path (PENDING/SPINLOCK or non-RP2040) ===
     err = readI2CRegister(&cfgRegister, PCA95XX_REGISTER_CONFIGURATION);
     if (err != PCA95XX_ERROR_SUCCESS)
     {
@@ -128,25 +216,29 @@ PCA95XX_error_t PCA95XX::write(uint8_t pin, uint8_t value)
     if (pin >= _numberOfGpio)
         return PCA95XX_ERROR_UNDEFINED;
 
-    // **Atomic Cached Modify-Write** (NO Read from chip!)
-    // Thread-safe between ISR calls - atomic update prevents race conditions
-    // when multiple LEDs write simultaneously
+    // **CRITICAL SECTION: Protect ENTIRE operation**
+    // Must prevent ISR interference from cache-update through I2C-queue
     
 #ifdef ARDUINO_ARCH_RP2040
-    // RP2040: Use atomic section for cache update
     uint32_t irqState = save_and_disable_interrupts();
 #endif
-    
+
+    // Use cached desired state (no chip read needed)
+    // _cachedOutput tracks the *intended* state of all pins,
+    // preventing race conditions when multiple pins update concurrently (LED1 pulse + LED2 blink)
     const uint8_t mask = 1 << pin;
     uint8_t newOutput = (_cachedOutput & ~mask) | ((value != 0) << pin);
-    _cachedOutput = newOutput;  // Update cache atomically
+    
+    _cachedOutput = newOutput;
+    
+    // Write to chip (may be queued if ASYNC_QUEUE enabled)
+    PCA95XX_error_t result = writeI2CRegister(newOutput, PCA95XX_REGISTER_OUTPUT_PORT);
     
 #ifdef ARDUINO_ARCH_RP2040
     restore_interrupts(irqState);
 #endif
     
-    // Write to chip (may be queued if ASYNC_QUEUE enabled)
-    return writeI2CRegister(newOutput, PCA95XX_REGISTER_OUTPUT_PORT);
+    return result;
 }
 
 // digitalWrite overload 
@@ -275,13 +367,19 @@ PCA95XX_error_t PCA95XX::writeI2CBuffer(uint8_t *src, PCA95XX_REGISTER_t startRe
     {
         return PCA95XX_ERROR_INVALID_ADDRESS;
     }
+    
+    // NOTE: Critical section is handled by caller (write())
+    // This function should NOT add another critical section (nested disable_interrupts)
+    
     _i2cPort->beginTransmission((uint8_t)_deviceAddress);
     _i2cPort->write(startRegister);
     for (int i = 0; i < len; i++)
     {
         _i2cPort->write(src[i]);
     }
-    if (_i2cPort->endTransmission(true) != 0)
+    uint8_t result = _i2cPort->endTransmission(true);
+    
+    if (result != 0)
     {
         return PCA95XX_ERROR_WRITE;
     }

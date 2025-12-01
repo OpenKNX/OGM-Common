@@ -132,7 +132,7 @@ class PCA95XX
     pca95xx_devices_e _deviceType;    // The type of PCA95XX
     byte _numberOfGpio;               // The number of GPIO pins on the PCA95XX
     uint8_t _lastValidInput;          // Cache of last successful INPUT register read (for error recovery)
-    uint8_t _cachedOutput;            // Shadow copy of OUTPUT register (for async queue compatibility)
+    uint8_t _cachedOutput;            // Desired OUTPUT state (tracks pending writes, prevents race conditions)
 
     // I2C Read/Write
     PCA95XX_error_t readI2CBuffer(uint8_t *dest, PCA95XX_REGISTER_t startRegister, uint16_t len);

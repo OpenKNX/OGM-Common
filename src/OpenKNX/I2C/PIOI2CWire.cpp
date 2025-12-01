@@ -33,26 +33,28 @@ namespace OpenKNX
               _rxPos(0),
               _address(0)
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-            , _queueHead(0)
-            , _queueTail(0)
-            , _queueCount(0)
-            , _transferBusy(false)
-            , _completedHead(0)
-            , _completedTail(0)
-            , _completedCount(0)
-            , _transfersCompleted(0)
-            , _transfersFailed(0)
-            , _queueOverflows(0)
+            , _lastProcessTime(0)
+            , _scheduleCounter(0)
+            , _fastTransfersCompleted(0)
+            , _slowTransfersCompleted(0)
+            , _fastQueueOverflows(0)
+            , _slowQueueOverflows(0)
+            , _poolExhausted(0)
 #endif
         {
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-            // Initialize queue entries
-            for (uint8_t i = 0; i < OPENKNX_I2C_QUEUE_SIZE; i++)
+            // Initialize Fast Queue
+            _fastQueue.head = 0;
+            _fastQueue.tail = 0;
+            
+            // Initialize Slow Queue
+            _slowQueue.head = 0;
+            _slowQueue.tail = 0;
+            
+            // Initialize Large Buffer Pool
+            for (uint8_t i = 0; i < LARGE_POOL_SIZE; i++)
             {
-                _queue[i].active = false;
-                _queue[i].callback = nullptr;
-                _completedQueue[i].active = false;
-                _completedQueue[i].callback = nullptr;
+                _largePool.used[i] = false;
             }
 #endif
         }
@@ -233,31 +235,48 @@ namespace OpenKNX
             if (!_pioi2c) return 4;
             
 #if defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
-            // === Async Queue Mode ===
-            // Queue ALL small I2C transfers (except Display which uses empty command transfers)
-            // PCA9557 now uses cached state - no RMW dependency, queue-safe!
+            // === Two-Tier Async Queue Mode ===
             
+            // Empty transfer (OLED command bytes) - always direct
             if (_txLen == 0)
             {
-                // Empty transfer - only Display uses this for command bytes
                 int res = _pioi2c->write_blocking(_address, _txBuffer, 0, !stop);
                 return (res < 0) ? 4 : 0;
             }
             
-            // Queue small transfers, direct blocking for large
+            // Detect transfer type and route to appropriate queue
             const bool isDisplayTransfer = (_address == 0x3C || _address == 0x3D);
-            const bool isLargeTransfer = (_txLen > 32);
+            const bool isSmallTransfer = (_txLen <= 12);
             
-            if (!isDisplayTransfer && !isLargeTransfer)
+            if (isSmallTransfer && !isDisplayTransfer)
             {
-                // Queue it (includes PCA9557 with cached state)
-                bool queued = enqueueWrite(_address, _txBuffer, _txLen, nullptr);
+                // === Fast Queue (LED, GPIO expander, sensors) ===
+                // Assume first byte is register address for typical I2C devices
+                uint8_t reg = _txBuffer[0];
+                const uint8_t* data = (_txLen > 1) ? &_txBuffer[1] : nullptr;
+                uint8_t dataLen = (_txLen > 1) ? (_txLen - 1) : 0;
+                
+                bool queued = enqueueFast(_address, reg, data, dataLen, true);
+                _txLen = 0;
+                return queued ? 0 : 4;
+            }
+            else if (!isSmallTransfer && isDisplayTransfer)
+            {
+                // === Slow Queue (OLED large transfers) ===
+                // OLED: First byte is usually 0x40 (data) or 0x00 (command)
+                uint8_t reg = _txBuffer[0];
+                const uint8_t* data = (_txLen > 1) ? &_txBuffer[1] : nullptr;
+                uint16_t dataLen = (_txLen > 1) ? (_txLen - 1) : 0;
+                
+                bool queued = enqueueSlow(_address, reg, data, dataLen, true);
                 _txLen = 0;
                 return queued ? 0 : 4;
             }
             else
             {
-                // Display or large transfer: Direct blocking
+                // === Direct-Write Fallback (edge cases) ===
+                // - Display small transfers (command sequences)
+                // - Unexpected large non-display transfers
                 int res = _pioi2c->write_blocking(_address, _txBuffer, _txLen, !stop);
                 _txLen = 0;
                 return (res < 0) ? 4 : 0;
@@ -472,170 +491,351 @@ namespace OpenKNX
 
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
         // ========================================
-        // Async Queue Implementation
+        // Two-Tier Async Queue Implementation
         // ========================================
 
         /*
-         * @brief Enqueue I2C write transfer (ISR-safe, non-blocking)
-         * @param address I2C device address
-         * @param data Pointer to data buffer
-         * @param length Data length in bytes (max 32 for inline buffer)
-         * @param callback Completion callback (optional, executed in Main Loop!)
-         * @return true if enqueued successfully, false if queue full or data too large
+         * @brief Allocate a large buffer from pool
+         * @return Pool index (0-3) or -1 if pool exhausted
          */
-        bool PIOI2CWire::enqueueWrite(uint8_t address, const uint8_t* data, uint8_t length, void (*callback)(bool))
+        int PIOI2CWire::allocateLargeBuffer()
         {
-            // Sanity checks
-            if (length == 0 || length > 32 || data == nullptr)
+            for (uint8_t i = 0; i < LARGE_POOL_SIZE; i++)
             {
+                if (!_largePool.used[i])
+                {
+                    _largePool.used[i] = true;
+                    return i;
+                }
+            }
+            _poolExhausted++;
+            return -1;  // Pool exhausted
+        }
+
+        /*
+         * @brief Release a large buffer back to pool
+         * @param poolIndex Index to release (0-3)
+         */
+        void PIOI2CWire::releaseLargeBuffer(uint8_t poolIndex)
+        {
+            if (poolIndex < LARGE_POOL_SIZE)
+            {
+                _largePool.used[poolIndex] = false;
+            }
+        }
+
+        /*
+         * @brief Enqueue fast transfer (≤12 bytes, ISR-safe)
+         * @param address I2C device address
+         * @param reg Register address (optional)
+         * @param data Data buffer
+         * @param length Data length (0-12 bytes)
+         * @param hasReg Whether register address is valid
+         * @return true if enqueued, false if queue full
+         */
+        bool PIOI2CWire::enqueueFast(uint8_t address, uint8_t reg, const uint8_t* data, uint8_t length, bool hasReg)
+        {
+            // Validate length
+            if (length > 12)
+            {
+                logErrorP("enqueueFast: length %d > 12 bytes", length);
                 return false;
             }
-
-            // Check queue overflow
-            if (_queueCount >= OPENKNX_I2C_QUEUE_SIZE)
+            
+            // Read head/tail with acquire barrier
+            DMB_ACQUIRE();
+            uint8_t head = _fastQueue.head;
+            uint8_t tail = _fastQueue.tail;
+            
+            // Check if queue full (leave 1 slot empty to distinguish full/empty)
+            uint8_t nextHead = (head + 1) & FAST_QUEUE_MASK;
+            if (nextHead == tail)
             {
-                _queueOverflows++;
-                return false;
+                _fastQueueOverflows++;
+                return false;  // Queue full
             }
-
-            // Atomic enqueue (ISR-safe)
-            uint32_t saveInterrupts = save_and_disable_interrupts();
-
-            I2CQueueEntry& entry = const_cast<I2CQueueEntry&>(_queue[_queueTail]);
+            
+            // Write entry (non-volatile local copy for performance)
+            FastQueueEntry entry;
             entry.address = address;
-            memcpy((void*)entry.data, data, length);  // Copy to inline buffer
+            entry.reg = reg;
             entry.length = length;
-            entry.type = TransferType::WRITE;
-            entry.callback = callback;
-            entry.active = true;
-
-            _queueTail = (_queueTail + 1) % OPENKNX_I2C_QUEUE_SIZE;
-            _queueCount++;
-
-            restore_interrupts(saveInterrupts);
-
+            entry.hasReg = hasReg;
+            
+            // Copy data inline
+            if (data != nullptr && length > 0)
+            {
+                memcpy(entry.data, data, length);
+            }
+            
+            // Write to queue buffer
+            memcpy((void*)&_fastQueue.buffer[head], &entry, sizeof(FastQueueEntry));
+            
+            // Release barrier before updating head
+            DMB_RELEASE();
+            _fastQueue.head = nextHead;
+            
             return true;
         }
 
         /*
-         * @brief Process queue - starts next transfer if idle
-         * MUST be called from Main Loop!
+         * @brief Enqueue slow transfer (>12 bytes, ISR-safe)
+         * @param address I2C device address
+         * @param reg Register address (optional)
+         * @param data Data buffer
+         * @param length Data length (>12 bytes)
+         * @param hasReg Whether register address is valid
+         * @return true if enqueued, false if queue/pool full
          */
-        void PIOI2CWire::processQueue()
+        bool PIOI2CWire::enqueueSlow(uint8_t address, uint8_t reg, const uint8_t* data, uint16_t length, bool hasReg)
         {
-            // Check if queue empty or transfer busy
-            if (_queueCount == 0 || _transferBusy)
+            // Validate length
+            if (length <= 12)
             {
-                return;
+                logErrorP("enqueueSlow: length %d <= 12 bytes (use enqueueFast)", length);
+                return false;
             }
-
-            // Atomic queue access
-            uint32_t saveInterrupts = save_and_disable_interrupts();
-
-            I2CQueueEntry& transfer = const_cast<I2CQueueEntry&>(_queue[_queueHead]);
-
-            if (!transfer.active)
+            if (length > LARGE_BUFFER_SIZE)
             {
-                restore_interrupts(saveInterrupts);
-                return;
+                logErrorP("enqueueSlow: length %d > %d bytes", length, LARGE_BUFFER_SIZE);
+                return false;
             }
-
-            // Mark as busy
-            _transferBusy = true;
-
-            // Copy transfer data for processing (minimize atomic section)
-            uint8_t address = transfer.address;
-            uint8_t data[32];
-            memcpy(data, (void*)transfer.data, transfer.length);
-            uint16_t length = transfer.length;
-            TransferType type = transfer.type;
-            void (*callback)(bool) = transfer.callback;
-
-            restore_interrupts(saveInterrupts);
-
-            // Execute I2C transfer (blocking, but we're in Main Loop)
-            int result = 0;
-            if (type == TransferType::WRITE)
+            
+            // Allocate large buffer FIRST (before queue entry)
+            int poolIndex = allocateLargeBuffer();
+            if (poolIndex < 0)
             {
-                result = WriteBlocking(address, data, length);
+                return false;  // Pool exhausted
             }
-            // TODO: Add READ and WRITE_READ support
-
-            bool success = (result >= 0);
-
-            // Transfer complete - update queue
-            saveInterrupts = save_and_disable_interrupts();
-
-            // Queue callback if provided
-            if (callback != nullptr && _completedCount < OPENKNX_I2C_QUEUE_SIZE)
+            
+            // Copy data to pool buffer
+            if (data != nullptr && length > 0)
             {
-                CompletedTransfer& completed = const_cast<CompletedTransfer&>(_completedQueue[_completedTail]);
-                completed.callback = callback;
-                completed.success = success;
-                completed.active = true;
-
-                _completedTail = (_completedTail + 1) % OPENKNX_I2C_QUEUE_SIZE;
-                _completedCount++;
+                memcpy(_largePool.buffers[poolIndex], data, length);
             }
-
-            // Update stats
-            if (success)
+            
+            // Read head/tail with acquire barrier
+            DMB_ACQUIRE();
+            uint8_t head = _slowQueue.head;
+            uint8_t tail = _slowQueue.tail;
+            
+            // Check if queue full
+            uint8_t nextHead = (head + 1) & SLOW_QUEUE_MASK;
+            if (nextHead == tail)
             {
-                _transfersCompleted++;
+                // Queue full - release buffer and fail
+                releaseLargeBuffer(poolIndex);
+                _slowQueueOverflows++;
+                return false;
             }
-            else
-            {
-                _transfersFailed++;
-            }
-
-            // Dequeue transfer
-            transfer.active = false;
-            _queueHead = (_queueHead + 1) % OPENKNX_I2C_QUEUE_SIZE;
-            _queueCount--;
-
-            // Mark as idle
-            _transferBusy = false;
-
-            restore_interrupts(saveInterrupts);
+            
+            // Write entry
+            SlowQueueEntry entry;
+            entry.address = address;
+            entry.reg = reg;
+            entry.poolIndex = poolIndex;
+            entry.length = length;
+            entry.hasReg = hasReg;
+            
+            // Write to queue buffer
+            memcpy((void*)&_slowQueue.buffer[head], &entry, sizeof(SlowQueueEntry));
+            
+            // Release barrier before updating head
+            DMB_RELEASE();
+            _slowQueue.head = nextHead;
+            
+            return true;
         }
 
         /*
-         * @brief Process completed callbacks
-         * MUST be called from Main Loop! Callbacks can use I2C, malloc, Serial, etc.
+         * @brief Process queues with time-slicing and fair scheduling
+         * Call from Main Loop! Max 2ms execution time per call.
+         * Fair scheduling: 4:1 Fast:Slow ratio (4× Fast, then 1× Slow)
          */
-        void PIOI2CWire::processCallbacks()
+        void PIOI2CWire::processQueue()
         {
-            while (_completedCount > 0)
+            if (!_pioi2c)
+                return;
+            
+            const uint32_t MAX_PROCESS_TIME_US = 2000;  // 2ms time-slice
+            const uint32_t startTime = micros();
+            
+            // === Fast Queue Processing (4 out of 5 cycles) ===
+            if (_scheduleCounter < 4)
             {
-                // Atomic access
-                uint32_t saveInterrupts = save_and_disable_interrupts();
-
-                CompletedTransfer& completed = const_cast<CompletedTransfer&>(_completedQueue[_completedHead]);
-
-                if (!completed.active)
+                // Acquire barrier before reading head
+                DMB_ACQUIRE();
+                uint8_t head = _fastQueue.head;
+                uint8_t tail = _fastQueue.tail;
+                
+                // Process Fast Queue entries until time-slice exhausted or queue empty
+                while (tail != head)
                 {
-                    restore_interrupts(saveInterrupts);
-                    break;
-                }
-
-                // Copy callback info (minimize atomic section)
-                void (*callback)(bool) = completed.callback;
-                bool success = completed.success;
-
-                // Mark as processed
-                completed.active = false;
-                _completedHead = (_completedHead + 1) % OPENKNX_I2C_QUEUE_SIZE;
-                _completedCount--;
-
-                restore_interrupts(saveInterrupts);
-
-                // Execute callback OUTSIDE atomic section (Main Loop context!)
-                if (callback != nullptr)
-                {
-                    callback(success);
+                    // Check time budget
+                    if ((micros() - startTime) >= MAX_PROCESS_TIME_US)
+                        break;
+                    
+                    // Read entry (volatile -> local copy)
+                    FastQueueEntry entry;
+                    memcpy(&entry, (void*)&_fastQueue.buffer[tail], sizeof(FastQueueEntry));
+                    
+                    // Build I2C transfer buffer
+                    uint8_t buffer[13];  // Max: 1 reg + 12 data
+                    uint8_t bufLen = 0;
+                    
+                    if (entry.hasReg)
+                    {
+                        buffer[bufLen++] = entry.reg;
+                    }
+                    
+                    if (entry.length > 0)
+                    {
+                        memcpy(&buffer[bufLen], entry.data, entry.length);
+                        bufLen += entry.length;
+                    }
+                    
+                    // Execute I2C write (blocking, but fast <200µs for LED)
+                    int result = _pioi2c->write_blocking(entry.address, buffer, bufLen, false);
+                    
+                    if (result >= 0)
+                    {
+                        _fastTransfersCompleted++;
+                    }
+                    
+                    // Release barrier before updating tail
+                    DMB_RELEASE();
+                    _fastQueue.tail = (tail + 1) & FAST_QUEUE_MASK;
+                    
+                    // Acquire barrier before reading updated head/tail
+                    DMB_ACQUIRE();
+                    head = _fastQueue.head;
+                    tail = _fastQueue.tail;
                 }
             }
+            // === Slow Queue Processing (1 out of 5 cycles) ===
+            else
+            {
+                // Acquire barrier before reading head
+                DMB_ACQUIRE();
+                uint8_t head = _slowQueue.head;
+                uint8_t tail = _slowQueue.tail;
+                
+                // Process Slow Queue entries until time-slice exhausted or queue empty
+                while (tail != head)
+                {
+                    // Check time budget
+                    if ((micros() - startTime) >= MAX_PROCESS_TIME_US)
+                        break;
+                    
+                    // Read entry
+                    SlowQueueEntry entry;
+                    memcpy(&entry, (void*)&_slowQueue.buffer[tail], sizeof(SlowQueueEntry));
+                    
+                    // Build I2C transfer buffer (reg + large data from pool)
+                    uint8_t* poolBuffer = _largePool.buffers[entry.poolIndex];
+                    uint8_t buffer[LARGE_BUFFER_SIZE + 1];  // Max: 1 reg + 1024 data
+                    uint16_t bufLen = 0;
+                    
+                    if (entry.hasReg)
+                    {
+                        buffer[bufLen++] = entry.reg;
+                    }
+                    
+                    if (entry.length > 0)
+                    {
+                        memcpy(&buffer[bufLen], poolBuffer, entry.length);
+                        bufLen += entry.length;
+                    }
+                    
+                    // Execute I2C write (blocking, ~8ms for OLED full-screen)
+                    int result = _pioi2c->write_blocking(entry.address, buffer, bufLen, false);
+                    
+                    if (result >= 0)
+                    {
+                        _slowTransfersCompleted++;
+                    }
+                    
+                    // Release large buffer back to pool
+                    releaseLargeBuffer(entry.poolIndex);
+                    
+                    // Release barrier before updating tail
+                    DMB_RELEASE();
+                    _slowQueue.tail = (tail + 1) & SLOW_QUEUE_MASK;
+                    
+                    // Acquire barrier before reading updated head/tail
+                    DMB_ACQUIRE();
+                    head = _slowQueue.head;
+                    tail = _slowQueue.tail;
+                }
+            }
+            
+            // Update fair scheduling counter (0-4, wraps to 0 after 4)
+            _scheduleCounter = (_scheduleCounter + 1) % 5;
+            
+            // Store timestamp for next call
+            _lastProcessTime = micros();
         }
+
+        /*
+         * @brief Flush display queue (priority flush for widget-switch)
+         * Forces immediate processing of Slow Queue (OLED transfers)
+         * Call BEFORE widget switch to prevent pool overflow!
+         */
+        void PIOI2CWire::flushDisplayQueue()
+        {
+            if (!_pioi2c)
+                return;
+            
+            // Acquire barrier
+            DMB_ACQUIRE();
+            uint8_t head = _slowQueue.head;
+            uint8_t tail = _slowQueue.tail;
+            
+            // Process all Slow Queue entries (no time-slice limit!)
+            while (tail != head)
+            {
+                // Read entry
+                SlowQueueEntry entry;
+                memcpy(&entry, (void*)&_slowQueue.buffer[tail], sizeof(SlowQueueEntry));
+                
+                // Build I2C transfer buffer
+                uint8_t* poolBuffer = _largePool.buffers[entry.poolIndex];
+                uint8_t buffer[LARGE_BUFFER_SIZE + 1];
+                uint16_t bufLen = 0;
+                
+                if (entry.hasReg)
+                {
+                    buffer[bufLen++] = entry.reg;
+                }
+                
+                if (entry.length > 0)
+                {
+                    memcpy(&buffer[bufLen], poolBuffer, entry.length);
+                    bufLen += entry.length;
+                }
+                
+                // Execute I2C write (blocking)
+                int result = _pioi2c->write_blocking(entry.address, buffer, bufLen, false);
+                
+                if (result >= 0)
+                {
+                    _slowTransfersCompleted++;
+                }
+                
+                // Release large buffer
+                releaseLargeBuffer(entry.poolIndex);
+                
+                // Release barrier before updating tail
+                DMB_RELEASE();
+                _slowQueue.tail = (tail + 1) & SLOW_QUEUE_MASK;
+                
+                // Acquire barrier before reading updated head/tail
+                DMB_ACQUIRE();
+                head = _slowQueue.head;
+                tail = _slowQueue.tail;
+            }
+        }
+        
 #endif // OPENKNX_I2C_USE_ASYNC_QUEUE
 
     } // namespace I2C

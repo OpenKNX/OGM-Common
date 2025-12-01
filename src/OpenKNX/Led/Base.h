@@ -114,6 +114,11 @@ namespace OpenKNX
             virtual bool isDimmable() override;
 
             /*
+             * Get current brightness (0-255)
+             */
+            inline uint8_t getCurrentBrightness() const { return _currentLedBrightness; }
+
+            /*
              * Get a logPrefix as string
              */
             std::string logPrefix() override;

@@ -14,10 +14,10 @@
 // #define OPENKNX_I2C_USE_SPINLOCK 1
 
 // Option 2: Pending pattern (ISR sets flag, main loop writes - SAFEST for LED+Display)
-#define OPENKNX_I2C_USE_PENDING_PATTERN 1
+//#define OPENKNX_I2C_USE_PENDING_PATTERN 1
 
-// Option 3: Async Queue (DMA-based, ISR-safe, non-blocking - BEST for LED+Display)
-//#define OPENKNX_I2C_USE_ASYNC_QUEUE 1
+// Option 3: Async Queue (Two-Tier, Dual-Core Safe, ISR-safe, non-blocking - BEST for LED+Display)
+#define OPENKNX_I2C_USE_ASYNC_QUEUE 1
 
     #include "pio/pio_i2c.h"
     #include <Wire.h>
@@ -29,9 +29,17 @@
 #endif
 
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-    #ifndef OPENKNX_I2C_QUEUE_SIZE
-        #define OPENKNX_I2C_QUEUE_SIZE 128  // 128 × 34 bytes = 4.3 KB (sufficient for LED PWM + safety margin)
-    #endif
+    // === Memory Barrier Macros (ARM Cortex-M Dual-Core Safety) ===
+    #define DMB_ACQUIRE() __asm__ __volatile__ ("dmb" ::: "memory")  // Load barrier (acquire semantics)
+    #define DMB_RELEASE() __asm__ __volatile__ ("dmb" ::: "memory")  // Store barrier (release semantics)
+    
+    // === Queue Sizes (Power-of-2 for bitwise AND masking) ===
+    #define FAST_QUEUE_SIZE 128  // Fast queue for ≤12 byte transfers
+    #define FAST_QUEUE_MASK 127  // Bitwise AND mask (SIZE - 1)
+    #define SLOW_QUEUE_SIZE 8    // Slow queue for >12 byte transfers
+    #define SLOW_QUEUE_MASK 7    // Bitwise AND mask (SIZE - 1)
+    #define LARGE_POOL_SIZE 4    // Number of large buffers (1KB each)
+    #define LARGE_BUFFER_SIZE 1024  // Size of each large buffer
 #endif
 
 namespace OpenKNX
@@ -39,31 +47,55 @@ namespace OpenKNX
     namespace I2C
     {
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-        // Transfer types for async queue
-        enum class TransferType : uint8_t
+        // === Fast Queue Entry (inline data ≤12 bytes) ===
+        struct FastQueueEntry
         {
-            WRITE,
-            READ,
-            WRITE_READ
-        };
-
-        // Queue entry for async I2C transfers
-        struct I2CQueueEntry
+            uint8_t address;      // I2C device address
+            uint8_t reg;          // Register address (if applicable)
+            uint8_t data[12];     // Inline data buffer
+            uint8_t length;       // Data length (0-12 bytes)
+            bool hasReg;          // Whether reg is valid
+        } __attribute__((packed));  // 16 bytes total
+        
+        // === Slow Queue Entry (external pool for >12 bytes) ===
+        struct SlowQueueEntry
         {
-            uint8_t address;
-            uint8_t data[32];  // Inline buffer für kleine Transfers (LED = 1 byte)
-            uint16_t length;
-            TransferType type;
-            void (*callback)(bool success);
-            bool active;
+            uint8_t address;      // I2C device address
+            uint8_t reg;          // Register address (if applicable)
+            uint8_t poolIndex;    // Index into large buffer pool
+            uint16_t length;      // Data length (>12 bytes)
+            bool hasReg;          // Whether reg is valid
+        } __attribute__((packed));  // 6 bytes total (+ 2 padding = 8 bytes)
+        
+        // === Fast Queue Structure (Cache-Line Aligned) ===
+        struct alignas(64) FastQueue
+        {
+            alignas(64) volatile uint8_t head;  // Producer writes (Core 0 or Core 1)
+            uint8_t _pad_head[63];              // Padding to 64-byte cache-line
+            
+            alignas(64) volatile uint8_t tail;  // Consumer writes (Main Loop)
+            uint8_t _pad_tail[63];              // Padding to 64-byte cache-line
+            
+            alignas(64) FastQueueEntry buffer[FAST_QUEUE_SIZE];  // 128 × 16B = 2048B
         };
         
-        // Completed transfer for Main Loop callbacks
-        struct CompletedTransfer
+        // === Slow Queue Structure (Cache-Line Aligned) ===
+        struct alignas(64) SlowQueue
         {
-            void (*callback)(bool success);
-            bool success;
-            bool active;
+            alignas(64) volatile uint8_t head;  // Producer writes
+            uint8_t _pad_head[63];              // Padding to 64-byte cache-line
+            
+            alignas(64) volatile uint8_t tail;  // Consumer writes
+            uint8_t _pad_tail[63];              // Padding to 64-byte cache-line
+            
+            alignas(64) SlowQueueEntry buffer[SLOW_QUEUE_SIZE];  // 8 × 8B = 64B
+        };
+        
+        // === Large Buffer Pool (for OLED full-screen transfers) ===
+        struct LargeBufferPool
+        {
+            uint8_t buffers[LARGE_POOL_SIZE][LARGE_BUFFER_SIZE];  // 4 × 1024B = 4096B
+            volatile bool used[LARGE_POOL_SIZE];                   // Pool slot usage flags
         };
 #endif
 
@@ -75,21 +107,21 @@ namespace OpenKNX
             static volatile uint32_t _tryLockFailCount; // Debug: Count failed try-locks
             static volatile uint32_t _tryLockSuccessCount; // Debug: Count successful try-locks
 #elif defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
-            // Async Queue members
-            volatile I2CQueueEntry _queue[OPENKNX_I2C_QUEUE_SIZE];
-            volatile uint8_t _queueHead;
-            volatile uint8_t _queueTail;
-            volatile uint8_t _queueCount;
-            volatile bool _transferBusy;
+            // === Async Queue Members (Two-Tier: Fast + Slow) ===
+            FastQueue _fastQueue;              // Fast queue for ≤12 byte transfers
+            SlowQueue _slowQueue;              // Slow queue for >12 byte transfers
+            LargeBufferPool _largePool;        // Pool for large data buffers
             
-            volatile CompletedTransfer _completedQueue[OPENKNX_I2C_QUEUE_SIZE];
-            volatile uint8_t _completedHead;
-            volatile uint8_t _completedTail;
-            volatile uint8_t _completedCount;
+            // === Processing State ===
+            uint32_t _lastProcessTime;         // Timestamp of last processQueue() call
+            uint8_t _scheduleCounter;          // Fair scheduling counter (4:1 Fast:Slow)
             
-            volatile uint32_t _transfersCompleted;
-            volatile uint32_t _transfersFailed;
-            volatile uint32_t _queueOverflows;
+            // === Statistics ===
+            volatile uint32_t _fastTransfersCompleted;
+            volatile uint32_t _slowTransfersCompleted;
+            volatile uint32_t _fastQueueOverflows;
+            volatile uint32_t _slowQueueOverflows;
+            volatile uint32_t _poolExhausted;
 #else
             static bool _i2cBusy; // Simple busy flag
 #endif
@@ -171,25 +203,44 @@ namespace OpenKNX
 #endif
 
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-            // === Async Queue Methods (ISR-Safe) ===
-            // Enqueue transfer (ISR-safe, non-blocking)
-            bool enqueueWrite(uint8_t address, const uint8_t* data, uint8_t length, void (*callback)(bool) = nullptr);
+            // === Async Queue Methods (Dual-Core Safe) ===
             
-            // Process queue - call from Main Loop!
+            // Enqueue fast transfer (≤12 bytes, ISR-safe)
+            bool enqueueFast(uint8_t address, uint8_t reg, const uint8_t* data, uint8_t length, bool hasReg = true);
+            
+            // Enqueue slow transfer (>12 bytes, ISR-safe)
+            bool enqueueSlow(uint8_t address, uint8_t reg, const uint8_t* data, uint16_t length, bool hasReg = true);
+            
+            // Process queues - call from Main Loop! (max 2ms per call)
             void processQueue();
             
-            // Process callbacks - call from Main Loop!
-            void processCallbacks();
+            // Priority flush for display queue (widget-switch safety)
+            void flushDisplayQueue();
             
-            // Queue status
-            inline bool isQueueBusy() const { return _transferBusy; }
-            inline uint8_t queuedCount() const { return _queueCount; }
-            inline uint8_t queueFreeSpace() const { return OPENKNX_I2C_QUEUE_SIZE - _queueCount; }
+            // === Pool Management ===
+            int allocateLargeBuffer();         // Allocate buffer from pool (returns index or -1)
+            void releaseLargeBuffer(uint8_t poolIndex);  // Release buffer back to pool
             
-            // Stats
-            inline uint32_t getTransfersCompleted() const { return _transfersCompleted; }
-            inline uint32_t getTransfersFailed() const { return _transfersFailed; }
-            inline uint32_t getQueueOverflows() const { return _queueOverflows; }
+            // === Queue Status ===
+            inline uint8_t fastQueueCount() const {
+                uint8_t h = _fastQueue.head;
+                uint8_t t = _fastQueue.tail;
+                return (h >= t) ? (h - t) : (FAST_QUEUE_SIZE - t + h);
+            }
+            inline uint8_t slowQueueCount() const {
+                uint8_t h = _slowQueue.head;
+                uint8_t t = _slowQueue.tail;
+                return (h >= t) ? (h - t) : (SLOW_QUEUE_SIZE - t + h);
+            }
+            inline uint8_t fastQueueFree() const { return FAST_QUEUE_SIZE - fastQueueCount() - 1; }
+            inline uint8_t slowQueueFree() const { return SLOW_QUEUE_SIZE - slowQueueCount() - 1; }
+            
+            // === Statistics ===
+            inline uint32_t getFastTransfersCompleted() const { return _fastTransfersCompleted; }
+            inline uint32_t getSlowTransfersCompleted() const { return _slowTransfersCompleted; }
+            inline uint32_t getFastQueueOverflows() const { return _fastQueueOverflows; }
+            inline uint32_t getSlowQueueOverflows() const { return _slowQueueOverflows; }
+            inline uint32_t getPoolExhausted() const { return _poolExhausted; }
 #endif
 
           private:

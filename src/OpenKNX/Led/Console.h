@@ -75,6 +75,15 @@ namespace OpenKNX
                 openknx.console.printHelpLine("  leds 3 on", "Turn Info LED 3 on");
                 openknx.logger.log("");
                 openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+                openknx.logger.log("PWM Testing Commands:");
+                openknx.logger.color(0);
+                openknx.console.printHelpLine("  leds pwm status", "Show PWM config and I2C LED states");
+                openknx.console.printHelpLine("  leds pwm cycle", "Show current PWM cycle");
+                openknx.console.printHelpLine("  leds pwm steps <n>", "Set PWM steps (2-100, default 10)");
+                openknx.console.printHelpLine("  leds pwm reset", "Reset PWM to defaults (10 steps)");
+                openknx.console.printHelpLine("  leds pwm demo <led>", "Run PWM demo on LED (fade 0-100%)");
+                openknx.logger.log("");
+                openknx.logger.color(CONSOLE_HEADLINE_COLOR);
                 openknx.logger.log("---------------------------------------------------------------------------------");
                 openknx.logger.color(0);
                 openknx.logger.end();
@@ -170,6 +179,203 @@ namespace OpenKNX
                 {
                     showStatus();
                     return;
+                }
+
+                // ------ PWM COMMANDS ------
+                if (args.substr(0, 3) == "pwm")
+                {
+                    std::string pwmCmd = args.substr(3);
+                    // Trim leading spaces
+                    auto trimStart = pwmCmd.find_first_not_of(" ");
+                    if (trimStart != std::string::npos)
+                        pwmCmd = pwmCmd.substr(trimStart);
+                    else
+                        pwmCmd = "";
+
+                    if (pwmCmd.empty() || pwmCmd == "status")
+                    {
+                        // Show PWM status with I2C LED states
+                        openknx.logger.begin();
+                        openknx.logger.log("");
+                        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+                        openknx.logger.log("============================== PWM Status =====================================");
+                        openknx.logger.color(0);
+                        
+                        uint8_t cycle = Manager::getPwmCycle();
+                        uint8_t steps = Manager::getPwmSteps();
+                        uint8_t updateHz = Manager::getTimerUpdateHz();
+                        float effectiveHz = (float)updateHz / (float)steps;
+                        openknx.logger.logWithPrefixAndValues("PWM", "Current Cycle: %d/%d (%dHz update, %.1fHz effective)", (int)cycle, (int)(steps-1), (int)updateHz, effectiveHz);
+                        openknx.logger.logWithPrefixAndValues("PWM", "Configuration: %d steps, %dms timer", (int)steps, 1000/updateHz);
+                        
+                        // Show I2C LED states (INFO1, INFO2, INFO3)
+                        openknx.logger.log("");
+                        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+                        openknx.logger.log("I2C LED States:");
+                        openknx.logger.color(0);
+                        
+                        for (uint8_t i = 1; i <= 3; i++)
+                        {
+                            auto led = openknx.leds.getLed(Led::LED_TYPE_INFO1 + i - 1);
+                            GPIO* gpio = dynamic_cast<GPIO*>(led);
+                            if (gpio && gpio->getPin() > 0xFF)
+                            {
+                                long pin = gpio->getPin();
+                                uint8_t brightness = led->getCurrentBrightness();
+                                uint8_t steps = Manager::getPwmSteps();
+                                uint8_t dutyCycle = (brightness * steps + 127) / 255;
+                                bool isOn = (cycle < dutyCycle);
+                                openknx.logger.logWithPrefixAndValues("", "INFO%d LED: Pin 0x%04X, Brightness %d (%.1f%%), Duty %d/%d, State %s",
+                                    (int)i, (int)pin, (int)brightness, (brightness * 100.0f / 255.0f), (int)dutyCycle, (int)steps, isOn ? "ON" : "OFF");
+                            }
+                        }
+                        
+                        openknx.logger.log("");
+                        openknx.logger.logDividingLine();
+                        openknx.logger.end();
+                        return;
+                    }
+                    else if (pwmCmd == "cycle")
+                    {
+                        // Show current PWM cycle only
+                        uint8_t cycle = Manager::getPwmCycle();
+                        uint8_t steps = Manager::getPwmSteps();
+                        openknx.logger.logWithPrefixAndValues("PWM", "Current Cycle: %d/%d", (int)cycle, (int)(steps-1));
+                        return;
+                    }
+                    else if (pwmCmd.substr(0, 5) == "steps")
+                    {
+                        // Set PWM steps
+                        std::string stepsStr = pwmCmd.substr(5);
+                        auto trimStart = stepsStr.find_first_not_of(" ");
+                        if (trimStart != std::string::npos)
+                            stepsStr = stepsStr.substr(trimStart);
+                        
+                        if (stepsStr.empty())
+                        {
+                            uint8_t steps = Manager::getPwmSteps();
+                            openknx.logger.logWithPrefixAndValues("PWM", "Current steps: %d", (int)steps);
+                            return;
+                        }
+                        
+                        int newSteps = std::atoi(stepsStr.c_str());
+                        if (newSteps < 2 || newSteps > 100)
+                        {
+                            openknx.logger.logWithPrefix("PWM", "Error: Steps must be 2-100");
+                            return;
+                        }
+                        
+                        Manager::setPwmSteps((uint8_t)newSteps);
+                        uint8_t updateHz = Manager::getTimerUpdateHz();
+                        float effectiveHz = (float)updateHz / (float)newSteps;
+                        openknx.logger.logWithPrefixAndValues("PWM", "PWM steps set to %d (%.1fHz effective @ %dHz update)", 
+                            newSteps, effectiveHz, (int)updateHz);
+                        return;
+                    }
+                    else if (pwmCmd == "reset")
+                    {
+                        // Reset to defaults
+                        Manager::setPwmSteps(10);
+                        openknx.logger.logWithPrefix("PWM", "PWM reset to defaults (10 steps)");
+                        return;
+                    }
+                    else if (pwmCmd.substr(0, 4) == "demo")
+                    {
+                        // PWM Demo - set LED to specific brightness levels
+                        std::string demoArgs = pwmCmd.substr(4);
+                        auto trimStart = demoArgs.find_first_not_of(" ");
+                        if (trimStart != std::string::npos)
+                            demoArgs = demoArgs.substr(trimStart);
+                        
+                        // Parse: "demo <led> [brightness]"
+                        std::vector<std::string> demoTokens = tokenize(demoArgs);
+                        
+                        if (demoTokens.empty())
+                        {
+                            openknx.logger.logWithPrefix("PWM", "Usage: leds pwm demo <led> [brightness]");
+                            openknx.logger.logWithPrefix("PWM", "Example: leds pwm demo 1 128  (set to 50%)");
+                            openknx.logger.logWithPrefix("PWM", "Example: leds pwm demo 1      (show all levels)");
+                            return;
+                        }
+                        
+                        // Parse LED identifier
+                        Led::LedType ledType;
+                        if (!getLedType(demoTokens[0], ledType))
+                        {
+                            openknx.logger.logWithPrefix("PWM", "Error: Invalid LED identifier");
+                            openknx.logger.logWithPrefix("PWM", "Valid: prog, p, info1, 1, info2, 2, info3, 3");
+                            return;
+                        }
+                        
+                        auto led = openknx.leds.getLed(ledType);
+                        if (!led)
+                        {
+                            openknx.logger.logWithPrefix("PWM", "Error: LED not initialized");
+                            return;
+                        }
+                        
+                        // Check if it's an I2C LED
+                        GPIO* gpio = dynamic_cast<GPIO*>(led);
+                        bool isI2C = (gpio && gpio->getPin() > 0xFF);
+                        
+                        uint8_t steps = Manager::getPwmSteps();
+                        uint8_t updateHz = Manager::getTimerUpdateHz();
+                        float effectiveHz = (float)updateHz / (float)steps;
+                        
+                        if (demoTokens.size() > 1)
+                        {
+                            // Set specific brightness
+                            int brightness = std::atoi(demoTokens[1].c_str());
+                            if (brightness < 0 || brightness > 255)
+                            {
+                                openknx.logger.logWithPrefix("PWM", "Error: Brightness must be 0-255");
+                                return;
+                            }
+                            
+                            led->brightness((uint8_t)brightness);
+                            led->on();
+                            
+                            uint8_t dutyCycle = (brightness * steps + 127) / 255;
+                            openknx.logger.logWithPrefixAndValues("PWM", "LED %s: Brightness %d (%.1f%%), Duty %d/%d, %dHz update, %.1fHz effective %s", 
+                                demoTokens[0].c_str(), brightness, (brightness * 100.0f / 255.0f), 
+                                (int)dutyCycle, (int)steps, (int)updateHz, effectiveHz,
+                                isI2C ? "(I2C Soft-PWM)" : "(HW-PWM)");
+                        }
+                        else
+                        {
+                            // Show all common brightness levels
+                            openknx.logger.begin();
+                            openknx.logger.log("");
+                            openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+                            openknx.logger.log("========================= PWM Demo Levels =========================");
+                            openknx.logger.color(0);
+                            openknx.logger.logWithPrefixAndValues("", "LED: %s (%s)", demoTokens[0].c_str(), isI2C ? "I2C Soft-PWM" : "HW-PWM");
+                            openknx.logger.logWithPrefixAndValues("", "Config: %d steps, %dHz update, %.1fHz effective", (int)steps, (int)updateHz, effectiveHz);
+                            openknx.logger.log("");
+                            
+                            const uint8_t levels[] = {0, 13, 26, 51, 77, 102, 128, 153, 179, 204, 230, 255};
+                            const char* labels[] = {"0%", "5%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"};
+                            
+                            for (uint8_t i = 0; i < 12; i++)
+                            {
+                                uint8_t dutyCycle = (levels[i] * steps + 127) / 255;
+                                openknx.logger.logWithPrefixAndValues("", "%s: Brightness %3d, Duty %2d/%d  → leds pwm demo %s %d", 
+                                    labels[i], (int)levels[i], (int)dutyCycle, (int)steps, 
+                                    demoTokens[0].c_str(), (int)levels[i]);
+                            }
+                            
+                            openknx.logger.log("");
+                            openknx.logger.logDividingLine();
+                            openknx.logger.end();
+                        }
+                        return;
+                    }
+                    else
+                    {
+                        openknx.logger.logWithPrefix("leds", "Error: Unknown PWM command");
+                        openknx.logger.logWithPrefix("leds", "Valid PWM commands: status, cycle, steps <n>, reset, demo <led>");
+                        return;
+                    }
                 }
 
                 // Split args into tokens
