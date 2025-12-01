@@ -56,7 +56,11 @@ namespace OpenKNX
 
         openknx.timerInterrupt.init();
         openknx.gpio.init();
-        openknx.hardware.initLeds();
+        openknx.leds.init();
+        openknx.ledFunctions.init();
+
+        _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);
+        _stateLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE);
 
 #if defined(PROG_BUTTON_PIN) && PROG_BUTTON_PIN >= 0 && OPENKNX_RECOVERY_TIME > 0
         processRecovery();
@@ -64,17 +68,8 @@ namespace OpenKNX
 
         openknx.hardware.initButtons();
 
-#ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.progLed.on();
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.on();
-    #endif
-#else
-        openknx.progLed.pulsing();
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.pulsing();
-    #endif
-#endif
+        _progLedFunc->setColor(Led::Color::Blue);
+        _progLedFunc->pulsing();
 
         debugWait();
 
@@ -100,6 +95,7 @@ namespace OpenKNX
 #endif
 
         openknx.hardware.init();
+        _ledFunctions.init();
     }
 
 #ifdef OPENKNX_DEBUG
@@ -143,7 +139,8 @@ namespace OpenKNX
             {
                 if (!erase)
                 {
-                    openknx.progLed.blinking(200);
+                    _progLedFunc->setColor(Led::Color::Red);
+                    _progLedFunc->blinking(200);
                     erase = true;
                 }
             }
@@ -156,7 +153,7 @@ namespace OpenKNX
             restart();
         }
 
-        openknx.progLed.off();
+        _progLedFunc->off();
     }
 #endif
 
@@ -170,8 +167,8 @@ namespace OpenKNX
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
 
         knx.ledPin(0);
-        knx.setProgLedOnCallback([] { openknx.progLed.forceOn(true); });
-        knx.setProgLedOffCallback([] { openknx.progLed.forceOn(false); });
+        knx.setProgLedOnCallback([] { openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->forceOn(true); });
+        knx.setProgLedOffCallback([] { openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->forceOn(false); });
 
         uint8_t hardwareType[LEN_HARDWARE_TYPE] = {0x00, 0x00, MAIN_OpenKnxId, MAIN_ApplicationNumber, MAIN_ApplicationVersion, 0x00};
 
@@ -227,17 +224,7 @@ namespace OpenKNX
 
     void Common::debugWait()
     {
-#ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.progLed.blinking();
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.blinking();
-    #endif
-#else
-        openknx.progLed.pulsing(500);
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.pulsing(500);
-    #endif
-#endif
+        _progLedFunc->pulsing(500);
 
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
         uint32_t timeoutBase = millis();
@@ -248,17 +235,7 @@ namespace OpenKNX
         }
 #endif
 
-#ifdef OPENKNX_NO_BOOT_PULSATING
-        openknx.progLed.on();
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.on();
-    #endif
-#else
-        openknx.progLed.pulsing();
-    #ifdef INFO1_LED_PIN
-        openknx.info1Led.pulsing();
-    #endif
-#endif
+        _progLedFunc->pulsing();
     }
 
     void Common::setup()
@@ -266,6 +243,8 @@ namespace OpenKNX
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
+
+        openknx.ledFunctions.setup();
 
         bool configured = knx.configured();
         openknx.time.setup(configured);
@@ -278,14 +257,11 @@ namespace OpenKNX
         _startupDelay = millis();
 #endif
 
-#ifdef INFO1_LED_PIN
-        // pre setup complete
-        openknx.info1Led.off();
-#endif
-
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->setup(configured);
+
+        _ledFunctions.setup(); // run after setup of all modules, because some modules might add leds to functions
 
         if (configured) openknx.flash.load();
 
@@ -317,7 +293,19 @@ namespace OpenKNX
 #endif // OPENKNX_DUALCORE
 
 #ifndef OPENKNX_DUALCORE
-        openknx.progLed.off();
+        _progLedFunc->off();
+        _progLedFunc->setColor(Led::Color::Red);
+
+        if (knx.configured())
+        {
+            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->on(Led::Capability::COLOR);
+        }
+        else
+        {
+            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->blinking(500);
+        }
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
@@ -351,7 +339,20 @@ namespace OpenKNX
             openknx.modules.list[i]->setup1(configured);
 
         _setup1Ready = true;
-        openknx.progLed.off();
+
+        _progLedFunc->off();
+        _progLedFunc->setColor(Led::Color::Red);
+
+        if (knx.configured())
+        {
+            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->on(Led::Capability::COLOR);
+        }
+        else
+        {
+            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->blinking(500);
+        }
     }
 #endif
 
@@ -376,7 +377,7 @@ namespace OpenKNX
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT
-        openknx.progLed.debugLoop();
+        _progLedFunc->debugLoop();
 #endif
 #ifdef OPENKNX_WATCHDOG
         openknx.watchdog.loop();
@@ -417,6 +418,8 @@ namespace OpenKNX
         openknx.sun.loop();
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
 #endif
+
+        _ledFunctions.loop();
 
         // loop  appstack
         _loopMicros = micros();
@@ -555,9 +558,7 @@ namespace OpenKNX
         if (!_setup1Ready) return;
 
     #ifdef OPENKNX_HEARTBEAT
-        #ifdef INFO1_LED_PIN
-        openknx.info1Led.debugLoop();
-        #endif
+        if (_stateLedFunc != nullptr) _stateLedFunc->debugLoop();
     #endif
 
         bool configured = knx.configured();
@@ -600,12 +601,15 @@ namespace OpenKNX
         }
 
         logIndentDown();
+
+        _stateLedFunc->setColor(Led::Color::Green);
+        _stateLedFunc->on();
     }
 
 #ifdef BASE_HeartbeatDelayBase
     void Common::processHeartbeat()
     {
-        // check thermal warning
+    // check thermal warning
     #if MASK_VERSION == 0x07B0
         TPUart::SystemState& systemState = knx.bau().getDataLinkLayer()->getTPUart().getSystemState();
         if (systemState.thermalWarning())
@@ -675,16 +679,7 @@ namespace OpenKNX
         logInfoP("Save power");
         logIndentUp();
 
-        openknx.progLed.powerSave();
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.powerSave();
-#endif
-#ifdef INFO2_LED_PIN
-        openknx.info2Led.powerSave();
-#endif
-#ifdef INFO3_LED_PIN
-        openknx.info3Led.powerSave();
-#endif
+        openknx.leds.powerSave();
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
@@ -721,16 +716,7 @@ namespace OpenKNX
         logInfoP("Restore power (after 1s)");
         logIndentUp();
 
-        openknx.progLed.powerSave(false);
-#ifdef INFO1_LED_PIN
-        openknx.info1Led.powerSave(false);
-#endif
-#ifdef INFO2_LED_PIN
-        openknx.info2Led.powerSave(false);
-#endif
-#ifdef INFO3_LED_PIN
-        openknx.info3Led.powerSave(false);
-#endif
+        openknx.leds.powerSave(false);
 
 #if MASK_VERSION == 0x07B0
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();

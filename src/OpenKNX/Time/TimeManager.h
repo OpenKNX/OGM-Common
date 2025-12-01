@@ -1,6 +1,10 @@
 #pragma once
 #include "../DateTime.h"
 #include "Arduino.h"
+#include "OpenKNX/Led/Base.h"
+#include "OpenKNX/Led/FunctionManager.h"
+#include "OpenKNX/Led/Manager.h"
+#include "OpenKNX/Led/RGB.h"
 #include "TimeClockMillis.h"
 #include "TimeClockSystem.h"
 #include "hardware.h"
@@ -58,12 +62,11 @@ namespace OpenKNX
             unsigned long _waitTimerReadKo = 0;
             bool _intialReadKo = false;
             time_t _lastTimeStamp = 0;
-#ifdef OPENKNX_LED_TIME
             uint8_t _ledState = 0;
             uint8_t _lastSecondChange = 0;
             unsigned long _timerLedOn = 0;
             unsigned long _timeUpdatedActivity = 0;
-#endif
+            Led::FunctionGroup* _timeLed = nullptr;
 
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
@@ -76,6 +79,7 @@ namespace OpenKNX
             void setup(bool configured);
             void setDaylightSavingMode(DaylightSavingMode daylightSavingMode);
             void loop();
+            void loopLed();
             void processInputKo(GroupObject& ko);
             bool processCommand(std::string& cmd, bool diagnoseKo);
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);

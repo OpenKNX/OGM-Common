@@ -15,7 +15,7 @@ namespace OpenKNX
             uint8_t __time_critical_func(Error::value)()
             {
                 if (
-                    (delayCheck(_lastMillis, 250) && _counter < _code) ||   // Blink
+                    (delayCheck(_lastMillis, 500) && _counter < _code) ||   // Blink
                     (delayCheck(_lastMillis, 1500) && _counter >= _code) || // Pause between sequence
                     _lastMillis == 0)
                 {

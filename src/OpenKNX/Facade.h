@@ -3,17 +3,20 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Flash/Default.h"
+#include "OpenKNX/GPIO/GPIO.h"
 #include "OpenKNX/Hardware.h"
 #include "OpenKNX/Information.h"
+#include "OpenKNX/Led/FunctionManager.h"
+#include "OpenKNX/Led/Manager.h"
 #include "OpenKNX/Log/Logger.h"
 #include "OpenKNX/Module.h"
-#include "OpenKNX/Watchdog.h"
+#include "OpenKNX/Time/Calendar.h"
 #include "OpenKNX/Time/TimeManager.h"
 #include "OpenKNX/Time/TimeProvider.h"
-#include "OpenKNX/Time/Calendar.h"
-#include "OpenKNX/GPIO/GPIO.h"
+#include "OpenKNX/Watchdog.h"
+
 #ifdef ParamBASE_Latitude
-        #include "OpenKNX/Sun/SunCalculation.h"
+    #include "OpenKNX/Sun/SunCalculation.h"
 #endif
 
 #ifdef OPENKNX_RUNTIME_STAT
@@ -66,35 +69,19 @@ namespace OpenKNX
         Button func3Button = Button("Func3");
 #endif
 
-#ifdef OPENKNX_SERIALLED_ENABLE
-        Led::SerialLedManager ledManager;
-    #define LEDCLASS Led::Serial
-#else
-    #define LEDCLASS Led::GPIO
-#endif
-
-        LEDCLASS progLed;
-#ifdef INFO1_LED_PIN
-        LEDCLASS info1Led;
-        LEDCLASS& infoLed = info1Led;
-#endif
-#ifdef INFO2_LED_PIN
-        LEDCLASS info2Led;
-#endif
-#ifdef INFO3_LED_PIN
-        LEDCLASS info3Led;
-#endif
+        Led::Manager leds;
+        Led::FunctionManager ledFunctions;
 
         Modules modules;
         Flash::Driver openknxFlash;
         Flash::Driver knxFlash;
         GPIO::Manager gpio;
 
-        #ifdef FIRMWARE_REVISION
+#ifdef FIRMWARE_REVISION
         void init();
-        #else
+#else
         void init(uint8_t firmwareRevision);
-        #endif
+#endif
         void loop();
         void setup();
         bool usesDualCore();

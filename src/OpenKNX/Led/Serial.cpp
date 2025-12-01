@@ -1,29 +1,29 @@
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040)
 
-#include "OpenKNX/Led/Serial.h"
-#include "OpenKNX/Facade.h"
+    #include "OpenKNX/Led/Serial.h"
+    #include "OpenKNX/Facade.h"
 
-#if defined(ARDUINO_ARCH_ESP32)
-#include "esp_log.h"
-#include "esp_system.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/timers.h"
+    #if defined(ARDUINO_ARCH_ESP32)
+        #include "esp_log.h"
+        #include "esp_system.h"
+        #include "freertos/FreeRTOS.h"
+        #include "freertos/task.h"
+        #include "freertos/timers.h"
 
-#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
-#define BITS_PER_LED_CMD 24
-#else // RP2040
-#include "ws2812.pio.h"
-#if OPENKNX_SERIALLED_NUM > 8
-#error "OPENKNX_SERIALLED_NUM Maximum (8) exceeded"
-#endif
-#endif
+        #define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
+        #define BITS_PER_LED_CMD 24
+    #else // RP2040
+        #include "ws2812.pio.h"
+        #if OPENKNX_SERIALLED_NUM > 8
+            #error "OPENKNX_SERIALLED_NUM Maximum (8) exceeded"
+        #endif
+    #endif
 
 namespace OpenKNX
 {
     namespace Led
     {
-        #if defined(ARDUINO_ARCH_ESP32)
+    #if defined(ARDUINO_ARCH_ESP32)
         static const rmt_symbol_word_t ws2812_zero = {
             .duration0 = (uint16_t)3, // T0H=0.3us
             .level0 = 1,
@@ -38,7 +38,7 @@ namespace OpenKNX
             .level1 = 0,
         };
 
-        //reset defaults to 50uS
+        // reset defaults to 50uS
         static const rmt_symbol_word_t ws2812_reset = {
             .duration0 = RMT_LED_STRIP_RESOLUTION_HZ / 1000000 * 50 / 2,
             .level0 = 1,
@@ -47,8 +47,8 @@ namespace OpenKNX
         };
 
         static size_t encoder_callback(const void *data, size_t data_size,
-                               size_t symbols_written, size_t symbols_free,
-                               rmt_symbol_word_t *symbols, bool *done, void *arg)
+                                       size_t symbols_written, size_t symbols_free,
+                                       rmt_symbol_word_t *symbols, bool *done, void *arg)
         {
             // We need a minimum of 8 symbol spaces to encode a byte. We only
             // need one to encode a reset, but it's simpler to simply demand that
@@ -62,17 +62,19 @@ namespace OpenKNX
             // Alternatively, we could use some counter referenced by the arg
             // parameter to keep track of this.
             size_t data_pos = symbols_written / 8;
-            uint8_t *data_bytes = (uint8_t*)data;
+            uint8_t *data_bytes = (uint8_t *)data;
             if (data_pos < data_size)
             {
                 // Encode a byte
                 size_t symbol_pos = 0;
                 for (int bitmask = 0x80; bitmask != 0; bitmask >>= 1)
                 {
-                    if (data_bytes[data_pos]&bitmask)
+                    if (data_bytes[data_pos] & bitmask)
                     {
                         symbols[symbol_pos++] = ws2812_one;
-                    } else {
+                    }
+                    else
+                    {
                         symbols[symbol_pos++] = ws2812_zero;
                     }
                 }
@@ -81,24 +83,50 @@ namespace OpenKNX
             }
             else
             {
-                //All bytes already are encoded.
-                //Encode the reset, and we're done.
+                // All bytes already are encoded.
+                // Encode the reset, and we're done.
                 symbols[0] = ws2812_reset;
-                *done = 1; //Indicate end of the transaction.
-                return 1; //we only wrote one symbol
+                *done = 1; // Indicate end of the transaction.
+                return 1;  // we only wrote one symbol
             }
         }
-        #endif
+    #endif
 
-        void Serial::init(long num, SerialLedManager *manager, uint8_t r, uint8_t g, uint8_t b)
+        Serial::Serial(long num, long pin, uint8_t r, uint8_t g, uint8_t b)
         {
-            // no valid pin
-            if (num < 0 || manager == nullptr)
+            _addr = num;
+            _pin = pin;
+            _color[0] = r;
+            _color[1] = g;
+            _color[2] = b;
+        }
+
+        Serial::Serial(long num, long pin, Color rgb)
+        {
+            _addr = num;
+            _pin = pin;
+            _color[0] = (((uint32_t)rgb) >> 16) & 0xFF;
+            _color[1] = (((uint32_t)rgb) >> 8) & 0xFF;
+            _color[2] = ((uint32_t)rgb) & 0xFF;
+        }
+
+        void Serial::setManager(SerialLedManager *manager)
+        {
+            // no valid manager
+            if (manager == nullptr)
                 return;
 
-            _pin = num;
             _manager = manager;
-            setColor(r, g, b);
+        }
+
+        void Serial::init()
+        {
+            // no valid manager
+            if (_manager == nullptr || _addr < 0)
+                return;
+
+            _initialized = true;
+            setColor(_color[0], _color[1], _color[2]);
         }
 
         /*
@@ -107,87 +135,80 @@ namespace OpenKNX
         void Serial::writeLed(uint8_t brightness)
         {
             // no valid pin
-            if (_pin < 0 || _manager == nullptr) return;
+            if (_addr < 0 || _manager == nullptr) return;
 
             if (_currentLedBrightness != brightness)
             {
                 _manager->setLED(
-                    _pin,
-                    ((uint32_t)color[0] * brightness * _maxBrightness / 100 / 256),
-                    ((uint32_t)color[1] * brightness * _maxBrightness / 100 / 256),
-                    ((uint32_t)color[2] * brightness * _maxBrightness / 100 / 256));
+                    _addr,
+                    (uint32_t)_color[0] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255 * 255),
+                    (uint32_t)_color[1] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255 * 255),
+                    (uint32_t)_color[2] * brightness * _maxBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255 * 255));
 
                 _currentLedBrightness = brightness;
             }
         }
-
-
 
         /*
          * Set the color of the RGB LED
          */
         void Serial::setColor(uint8_t r, uint8_t g, uint8_t b)
         {
-            color[0] = r;
-            color[1] = g;
-            color[2] = b;
-            _manager->setLED(_pin, (color[0] * (uint16_t)_currentLedBrightness) / 256, (color[1] * (uint16_t)_currentLedBrightness) / 256, (color[2] * (uint16_t)_currentLedBrightness) / 256);
+            _color[0] = r;
+            _color[1] = g;
+            _color[2] = b;
+
+            _manager->setLED(
+                _addr,
+                (uint32_t)_color[0] * _currentLedBrightness * _maxBrightness * OpenKNX_LedColor_Calibration[0] / (255 * 255 * 255),
+                (uint32_t)_color[1] * _currentLedBrightness * _maxBrightness * OpenKNX_LedColor_Calibration[1] / (255 * 255 * 255),
+                (uint32_t)_color[2] * _currentLedBrightness * _maxBrightness * OpenKNX_LedColor_Calibration[2] / (255 * 255 * 255));
         }
 
-        void SerialLedManager::init(uint8_t ledPin, uint8_t ledCount)
+        void SerialLedManager::init(uint8_t ledCount)
         {
             logInfo("SerialLedManager", "init");
 
-            _ledCount = ledCount;
-            _ledData = new uint8_t[_ledCount*3];
+            // LED-Todo: check max led count based on platform
 
-            #if defined(ARDUINO_ARCH_ESP32)
+            _ledCount = ledCount;
+            _ledData = new uint8_t[_ledCount * 3];
+
+    #if defined(ARDUINO_ARCH_ESP32)
 
             _led_chan = NULL;
             rmt_tx_channel_config_t tx_chan_config =
-                    {
-                        .gpio_num = (gpio_num_t)ledPin,
-                        .clk_src = RMT_CLK_SRC_DEFAULT, // select source clock
-                        .resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ,
-                        .mem_block_symbols = (size_t)(ledCount * BITS_PER_LED_CMD) , // increase the block size can make the LED less flickering
-                        .trans_queue_depth = 1, // set the number of transactions that can be pending in the background
-                    };
+                {
+                    .gpio_num = (gpio_num_t)_ledPin,
+                    .clk_src = RMT_CLK_SRC_DEFAULT, // select source clock
+                    .resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ,
+                    .mem_block_symbols = (size_t)(ledCount * BITS_PER_LED_CMD), // increase the block size can make the LED less flickering
+                    .trans_queue_depth = 1,                                     // set the number of transactions that can be pending in the background
+                };
             rmt_new_tx_channel(&tx_chan_config, &_led_chan);
             _simple_encoder = NULL;
             const rmt_simple_encoder_config_t simple_encoder_cfg =
-            {
-                .callback = encoder_callback
-                //min_chunk_size default 64 is good
-            };
+                {
+                    .callback = encoder_callback
+                    // min_chunk_size default 64 is good
+                };
             rmt_new_simple_encoder(&simple_encoder_cfg, &_simple_encoder);
 
             rmt_enable(_led_chan);
 
             _tx_config =
-            {
-                .loop_count = 0, // no transfer loop
-            };            
+                {
+                    .loop_count = 0, // no transfer loop
+                };
 
             // Timer-Handle erstellen
             _timer = xTimerCreate(
                 "SerialLedManager", // Name des Timers
-                pdMS_TO_TICKS(10),  // Timer-Periode in Millisekunden 
+                pdMS_TO_TICKS(10),  // Timer-Periode in Millisekunden
                 pdTRUE,             // Auto-Reload (Wiederholung nach Ablauf)
                 (void *)0,          // Timer-ID (kann für Identifikation verwendet werden)
                 [](TimerHandle_t timer) {
-                    openknx.progLed.loop();
-    #ifdef INFO2_LED_PIN
-                    openknx.info2Led.loop();
-    #endif
-    #ifdef INFO1_LED_PIN
-                    openknx.info1Led.loop();
-    #endif
-    #ifdef INFO3_LED_PIN
-                    openknx.info3Led.loop();
-    #endif
-    #ifdef OPENKNX_SERIALLED_ENABLE
-                    openknx.ledManager.writeLeds();
-    #endif
+                    openknx.leds.timer(true);
                 } // Callback-Funktion, die beim Timeout aufgerufen wird
             );
 
@@ -204,43 +225,42 @@ namespace OpenKNX
                 logError("SerialLedManager", "Could not start Timer");
                 return;
             }
-            #else // RP2040
-            // This will find a free pio and state machine for our program and load it for us
-            // We use pio_claim_free_sm_and_add_program_for_gpio_range (for_gpio_range variant)
-            // so we will get a PIO instance suitable for addressing gpios >= 32 if needed and supported by the hardware
-            bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&ws2812_program, &_pio, &_sm, &_offset, ledPin, 1, true);
+    #else // RP2040
+          // This will find a free pio and state machine for our program and load it for us
+          // We use pio_claim_free_sm_and_add_program_for_gpio_range (for_gpio_range variant)
+          // so we will get a PIO instance suitable for addressing gpios >= 32 if needed and supported by the hardware
+            bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&ws2812_program, &_pio, &_sm, &_offset, _ledPin, 1, true);
             logInfo("SerialLedManager", "PIO init %d", success);
-            if(!success)
+            if (!success)
             {
                 logError("SerialLedManager", "Timer creation failed");
                 return;
             }
 
-            ws2812_program_init(_pio, _sm, _offset, ledPin, 800000, false);
-            #endif
+            ws2812_program_init(_pio, _sm, _offset, _ledPin, 800000, false);
+    #endif
         }
 
-        void SerialLedManager::setLED(uint8_t ledAdr, uint8_t r, uint8_t g, uint8_t b)
+        void SerialLedManager::setLED(uint8_t ledAddr, uint8_t r, uint8_t g, uint8_t b)
         {
-           _dirty = false;
-           if(_ledData[ledAdr*3] != g)
+            if (_ledData[ledAddr * 3] != g)
             {
-                _ledData[ledAdr*3] = g;
-                _ledData[ledAdr*3+1] = r;
-                _ledData[ledAdr*3+2] = b;
+                _ledData[ledAddr * 3] = g;
+                _ledData[ledAddr * 3 + 1] = r;
+                _ledData[ledAddr * 3 + 2] = b;
                 _dirty = true;
                 return;
             }
-            if(_ledData[ledAdr*3+1] != r)
+            if (_ledData[ledAddr * 3 + 1] != r)
             {
-                _ledData[ledAdr*3+1] = r;
-                _ledData[ledAdr*3+2] = b;
+                _ledData[ledAddr * 3 + 1] = r;
+                _ledData[ledAddr * 3 + 2] = b;
                 _dirty = true;
                 return;
             }
-            if(_ledData[ledAdr*3+2] != b)
+            if (_ledData[ledAddr * 3 + 2] != b)
             {
-                _ledData[ledAdr*3+2] = b;
+                _ledData[ledAddr * 3 + 2] = b;
                 _dirty = true;
             }
         }
@@ -249,26 +269,24 @@ namespace OpenKNX
         {
             if (!_dirty)
                 return;
-
             if (delayCheckMillis(_lastWritten, 5)) // prevent calling a new rmt transmission into an running on
             {
                 _lastWritten = millis();
                 _dirty = 0;
 
-                // Flush RGB values to LEDs
-                #if defined(ARDUINO_ARCH_ESP32)
-                rmt_transmit(_led_chan, _simple_encoder, _ledData, _ledCount*3, &_tx_config);
-                #else
-                if(pio_sm_get_tx_fifo_level(_pio, _sm) == 0 )
+    // Flush RGB values to LEDs
+    #if defined(ARDUINO_ARCH_ESP32)
+                rmt_transmit(_led_chan, _simple_encoder, _ledData, _ledCount * 3, &_tx_config);
+    #else
+                if (pio_sm_get_tx_fifo_level(_pio, _sm) == 0)
                 {
                     for (int i = 0; i < _ledCount; ++i)
                     {
-                        uint32_t pixel_grb = _ledData[i*3+2] | (_ledData[i*3+1] << 8u) | (_ledData[i*3] << 16u);
+                        uint32_t pixel_grb = _ledData[i * 3 + 2] | (_ledData[i * 3 + 1] << 8u) | (_ledData[i * 3] << 16u);
                         pio_sm_put(_pio, _sm, pixel_grb << 8u);
                     }
                 }
-                #endif
-
+    #endif
             }
         }
     } // namespace Led
