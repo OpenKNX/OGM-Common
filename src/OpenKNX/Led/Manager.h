@@ -49,7 +49,7 @@ namespace OpenKNX
 #endif
             static volatile uint8_t _pwmCycle; // Global PWM cycle counter
             static volatile uint8_t _pwmSteps;  // Configurable PWM steps (default 10)
-            static volatile uint8_t _timerUpdateHz; // Timer interrupt frequency (e.g., 100Hz for 10ms)
+            static volatile uint16_t _timerUpdateHz; // Timer interrupt frequency (e.g., 333Hz for 3ms)
 
           public:
             Manager();
@@ -61,14 +61,14 @@ namespace OpenKNX
             // Set PWM steps (for testing different resolutions)
             static inline void setPwmSteps(uint8_t steps) { _pwmSteps = steps > 0 ? steps : 10; }
             // Get timer update frequency
-            static inline uint8_t getTimerUpdateHz() { return _timerUpdateHz; }
+            static inline uint16_t getTimerUpdateHz() { return _timerUpdateHz; }
 
             void init();
 
             /*
              * Must be called by TimerInterrupt every 1ms
              */
-            void timer(bool distribute = true);
+            void timer(bool doNotCheckMillis = false);
 
             /*
              * use in normal loop or loop1

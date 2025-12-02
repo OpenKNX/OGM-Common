@@ -9,7 +9,7 @@ namespace OpenKNX
         // Global PWM configuration (updated every timer interrupt)
         volatile uint8_t Manager::_pwmCycle = 0;
         volatile uint8_t Manager::_pwmSteps = 10;  // Default: 10 steps
-        volatile uint8_t Manager::_timerUpdateHz = 1000 / OPENKNX_INTERRUPT_TIMER_MS; // Calculate from timer interval
+        volatile uint16_t Manager::_timerUpdateHz = 1000 / OPENKNX_INTERRUPT_TIMER_MS; // Calculate from timer interval
         
         Manager::Manager()
         {
@@ -47,23 +47,33 @@ namespace OpenKNX
     #endif
 #endif
             logInfoP("Init %d Leds", _leds.size());
-            
-            for (const auto& pair : _leds)
-                pair.second->init();
 
 #ifdef OPENKNX_SERIALLED_ENABLE
             if (_serialLedManager)
                 _serialLedManager->init(_serialLedCount);
 #endif
 
+            for (const auto& pair : _leds)
+                pair.second->init();
+
             _init = true;
         }
 
         void Manager::addLed(Led::Base* led, uint8_t identifier)
         {
-            if (led == nullptr || _init)
+            if (led == nullptr)
             {
-                logErrorP("Cannot add LED after init or led is null");
+                logDebugP("Cannot add LED: led is null");
+                return;
+            }
+            if (_init)
+            {
+                logErrorP("Cannot add LED after init");
+                return;
+            }
+            if (_leds.find(identifier) != _leds.end())
+            {
+                logDebugP("Cannot add LED: identifier %d already in use", identifier);
                 return;
             }
             led->setIdentifier(identifier);
@@ -73,9 +83,19 @@ namespace OpenKNX
 #ifdef OPENKNX_SERIALLED_ENABLE
         void Manager::addLed(Led::Serial* led, uint8_t identifier)
         {
-            if (led == nullptr || _init)
+            if (led == nullptr)
             {
-                logErrorP("Cannot add LED after init or led is null");
+                logDebugP("Cannot add Serial LED: led is null");
+                return;
+            }
+            if (_init)
+            {
+                logErrorP("Cannot add LED after init");
+                return;
+            }
+            if (_leds.find(identifier) != _leds.end())
+            {
+                logDebugP("Cannot add LED: identifier %d already in use", identifier);
                 return;
             }
 
@@ -101,7 +121,7 @@ namespace OpenKNX
         }
 #endif
 
-        void __time_critical_func(Manager::timer)(bool distribute)
+        void __time_critical_func(Manager::timer)(bool doNotCheckMillis /*= false*/)
         {
             if (!_init)
                 return;

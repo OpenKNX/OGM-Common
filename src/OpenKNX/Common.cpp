@@ -246,6 +246,8 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
 
+        openknx.ledFunctions.setup();
+
         bool configured = knx.configured();
         openknx.time.setup(configured);
 
@@ -421,12 +423,9 @@ namespace OpenKNX
 
         _ledFunctions.loop();
 
-#if defined(OPENKNX_I2C_USE_PENDING_PATTERN)
-        // Flush pending I2C LED writes (for PENDING pattern)
-        // LED Manager loop (runs LED functions + updates brightness)
-        // Must ALWAYS run for LED functions (PULSING, BLINK, etc.)
+        // LED Manager loop - must ALWAYS run for LED effects (PULSING, BLINK, etc.)
+        // Also handles pending I2C writes depending on pattern
         openknx.leds.loop();
-#endif
 
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
         // Process I2C queue in Main Loop

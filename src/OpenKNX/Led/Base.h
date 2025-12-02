@@ -23,16 +23,18 @@ namespace OpenKNX
             volatile uint32_t _debugHeartbeat = 0;
             Led::Effects::Blink * volatile _debugEffect = nullptr; // volatile pointer for interrupt safety!
 #endif
+
           public:
+            virtual void init() = 0;
             /*
              * use in normal loop or loop1
              */
-            void loop();
+            virtual void loop();
 
             /*
              * Configure a max brightness
              */
-            void brightness(uint8_t brightness = 255);
+            virtual void brightness(uint8_t brightness = 255);
 
             /*
              * Called by Common to Disable during SAVE Trigger
@@ -58,6 +60,7 @@ namespace OpenKNX
              */
             void debugLoop() override;
 #endif
+
             /*
              * For progLed called by knx Stack for active Progmode
              * -> Prio 4
@@ -103,13 +106,12 @@ namespace OpenKNX
             /*
              * Unload current normal effect is available
              */
-            void unloadEffect();
+            virtual void unloadEffect();
 
             /*
              * Call unloadEffect() and load new normal effect
              */
-            void loadEffect(Led::Effects::Base *effect);
-
+            virtual void loadEffect(Led::Effects::Base *effect);
 
             virtual bool isDimmable() override;
 
