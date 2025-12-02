@@ -1,11 +1,17 @@
 # Changes
 
+## 1.6.0: 
+
+* Feature: New StatusLED Implementation see README_LED.md
+* Breaking changes: Old LED Apis (openknx.progLed and openknx.infoLeds) no longer available!
+* Fix: RP2040 Framwork update to 5.4.3
+
 ## 1.5.1: 2025-10-24
 
 * Fix: Do not init the serial in constructor of *Logger*
 * Update: RP2040 Environment
   * platform: platform-raspberrypi 6af38e2 to 22a4cc6
-  * platform_packages: ramework-arduinopico 4.6.0 to 5.4.1
+  * platform_packages: framework-arduinopico 4.6.0 to 5.4.1
 * Update Readme: Add `OPENKNX_DEBUGGER` and reorder configuration table
 * Feature: Add `-DebugBuild` switch for Build-Step.ps1 script
 * Fix: Solve Escaping Warning for Regex in Python Build Helper Scripts
