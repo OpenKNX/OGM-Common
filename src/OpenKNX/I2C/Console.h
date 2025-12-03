@@ -502,7 +502,7 @@ namespace OpenKNX
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
             // Queue Statistics
             openknx.logger.log("");
-            openknx.logger.log("═══ PIO I2C Async Queue Statistics ═══");
+            openknx.logger.log("═══ PIO I2C Async Queue (Scheduler) ═══");
 #ifdef OPENKNX_GPIO_WIRE
             // Queue Status
             openknx.logger.logWithValues("Queue Status:  %u/%u free (%u%% used)", 
@@ -568,7 +568,7 @@ namespace OpenKNX
             if (WIRE_PIO.getInstance() && WIRE_PIO.getInstance()->_dma_available)
             {
                 openknx.logger.log("");
-                openknx.logger.log("WIRE_PIO:");
+                openknx.logger.log("WIRE_PIO (Device-Level):");
 #ifdef OPENKNX_DEBUG
                 openknx.logger.logWithValues("  DMA Writes:  %u", WIRE_PIO.getInstance()->_dma_write_count);
                 openknx.logger.logWithValues("  DMA Reads:   %u", WIRE_PIO.getInstance()->_dma_read_count);
@@ -577,16 +577,36 @@ namespace OpenKNX
 #endif
                 uint32_t total = WIRE_PIO.getInstance()->_dma_write_count + WIRE_PIO.getInstance()->_dma_read_count + 
                                  WIRE_PIO.getInstance()->_blocking_write_count + WIRE_PIO.getInstance()->_blocking_read_count;
+                uint32_t device_dma_ratio = 0;
                 if (total > 0)
                 {
                     uint32_t dma_total = WIRE_PIO.getInstance()->_dma_write_count + WIRE_PIO.getInstance()->_dma_read_count;
-                    openknx.logger.logWithValues("  DMA Usage:   %u%%", (dma_total * 100) / total);
+                    device_dma_ratio = (dma_total * 100) / total;
+                    openknx.logger.logWithValues("  DMA Usage:   %u%%", device_dma_ratio);
                 }
+
+                // Vergleich Queue vs. Device (nur wenn Async Queue aktiv)
+#ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
+#ifdef OPENKNX_GPIO_WIRE
+                uint32_t queue_dma_ratio = (uint32_t)OPENKNX_GPIO_WIRE.getDmaRatio();
+                openknx.logger.logWithValues("  DMA Ratio:   Queue %u%% / Device %u%%", queue_dma_ratio, device_dma_ratio);
+                // Hinweis bei deutlicher Abweichung
+                if (device_dma_ratio > 0)
+                {
+                    uint32_t diff = (queue_dma_ratio > device_dma_ratio) ? (queue_dma_ratio - device_dma_ratio) : (device_dma_ratio - queue_dma_ratio);
+                    if (diff > 10)
+                    {
+                        openknx.logger.log("  NOTICE: Queue vs Device DMA ratio differs >10%.");
+                        openknx.logger.log("          Queue zeigt Scheduling, Device echte Bus-Transaktionen.");
+                    }
+                }
+#endif
+#endif
             }
             else
             {
                 openknx.logger.log("");
-                openknx.logger.log("WIRE_PIO: DMA not available");
+                openknx.logger.log("WIRE_PIO (Device-Level): DMA not available");
             }
 #endif
 

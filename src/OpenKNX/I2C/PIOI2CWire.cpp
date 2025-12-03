@@ -569,14 +569,14 @@ namespace OpenKNX
                     }
                     else
                     {
-                        // DMA available - use it (waits for completion inside _write_dma)
+                        // DMA available - use it (Fire & Forget optimiert)
                         int result = _pioi2c->_write_dma(
                             _pioi2c->_inst->pio,
                             _pioi2c->_inst->sm,
                             entry.address,
                             entry.data,
                             entry.length,
-                            true  // send_stop
+                            true  // send_stop - ALWAYS true for proper I2C
                         );
                         
                         if (result >= 0)

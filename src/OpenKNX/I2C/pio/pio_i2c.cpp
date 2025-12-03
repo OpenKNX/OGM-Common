@@ -535,20 +535,21 @@ int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len
         true  // Start immediately
     );
     
-    // Wait for DMA to complete (required before STOP or error check)
-    dma_channel_wait_for_finish_blocking(_dma_tx);
-    
+    // Batch-Wait optimization: Nur warten wenn STOP gesendet wird (letzter Transfer)
+    // Mid-Batch Transfers: Fire & Forget!
     if (send_stop)
     {
+        dma_channel_wait_for_finish_blocking(_dma_tx);
         stop(pio, sm);
         wait_idle(pio, sm);
+        
+        if (check_error(pio, sm))
+        {
+            err = -1;
+            resume_after_error(pio, sm);
+        }
     }
-    
-    if (check_error(pio, sm))
-    {
-        err = -1;
-        resume_after_error(pio, sm);
-    }
+    // ELSE: Fire & Forget - DMA läuft weiter während CPU nächsten Entry vorbereitet!
     
     return err;
 }

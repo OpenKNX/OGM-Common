@@ -68,6 +68,7 @@ class pio_i2c
     void rx_enable(PIO pio, uint sm, bool en);                                        // Enable RX
     void resume_after_error(PIO pio, uint sm);                                        // Resume after error
     uint8_t get(PIO pio, uint sm);                                                    // Get data
+
     void start(PIO pio, uint sm);                                                     // Start condition
     void stop(PIO pio, uint sm);                                                      // Stop condition
     void repstart(PIO pio, uint sm);                                                  // Repeated start condition
