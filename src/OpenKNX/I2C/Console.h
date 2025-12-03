@@ -493,12 +493,76 @@ namespace OpenKNX
 
         inline void Console::showStats()
         {
-#ifdef OPENKNX_PIO_I2C_DMA
             openknx.logger.begin();
             openknx.logger.log("");
             openknx.logger.color(CONSOLE_HEADLINE_COLOR);
-            openknx.logger.log("I2C DMA Statistics");
+            openknx.logger.log("I2C Statistics");
             openknx.logger.color(0);
+
+#ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
+            // Queue Statistics
+            openknx.logger.log("");
+            openknx.logger.log("═══ PIO I2C Async Queue Statistics ═══");
+#ifdef OPENKNX_GPIO_WIRE
+            // Queue Status
+            openknx.logger.logWithValues("Queue Status:  %u/%u free (%u%% used)", 
+                OPENKNX_GPIO_WIRE.queueFree(), 
+                QUEUE_SIZE-1,
+                (uint32_t)OPENKNX_GPIO_WIRE.getQueueUtilization());
+            
+            openknx.logger.logWithValues("  Peak Usage:  %u entries (%u%% peak)", 
+                OPENKNX_GPIO_WIRE.getQueuePeakCount(),
+                (uint32_t)OPENKNX_GPIO_WIRE.getPeakUtilization());
+            
+            openknx.logger.logWithValues("  Overflows:   %u (Efficiency: %u%%)", 
+                OPENKNX_GPIO_WIRE.getQueueOverflows(),
+                (uint32_t)OPENKNX_GPIO_WIRE.getQueueEfficiency());
+            
+            // Transfer Statistics
+            openknx.logger.logWithValues("Transfers:     %u completed", 
+                OPENKNX_GPIO_WIRE.getTransfersCompleted());
+            
+#ifdef OPENKNX_PIO_I2C_DMA
+            openknx.logger.logWithValues("  DMA:         %u (%u%% DMA ratio)", 
+                OPENKNX_GPIO_WIRE.getDmaTransfers(),
+                (uint32_t)OPENKNX_GPIO_WIRE.getDmaRatio());
+            
+            openknx.logger.logWithValues("  Blocking:    %u", 
+                OPENKNX_GPIO_WIRE.getBlockingTransfers());
+#else
+            openknx.logger.logWithValues("  Mode:        Blocking only (DMA disabled)");
+#endif
+            
+            // Processing Performance
+            openknx.logger.logWithValues("Processing:    %u calls", 
+                OPENKNX_GPIO_WIRE.getTotalProcessCalls());
+            
+            openknx.logger.logWithValues("  Avg/Call:    %.2f entries", 
+                OPENKNX_GPIO_WIRE.getAvgEntriesPerCall());
+            
+            openknx.logger.logWithValues("  Total Proc:  %u entries", 
+                OPENKNX_GPIO_WIRE.getTotalEntriesProcessed());
+            
+            // Health Indicators
+            if (OPENKNX_GPIO_WIRE.getQueueOverflows() > 0) {
+                openknx.logger.log("WARNING: Queue overflows detected!");
+                openknx.logger.log("   -> Increase QUEUE_SIZE or call processQueue() more frequently");
+            }
+            
+            if (OPENKNX_GPIO_WIRE.getPeakUtilization() > 80.0f) {
+                openknx.logger.logWithValues("NOTICE: High queue usage (%u%% peak)", 
+                    (uint32_t)OPENKNX_GPIO_WIRE.getPeakUtilization());
+                openknx.logger.log("   -> Consider increasing processQueue() frequency");
+            }
+            
+            if (OPENKNX_GPIO_WIRE.getQueueEfficiency() == 100.0f && 
+                OPENKNX_GPIO_WIRE.getTransfersCompleted() > 1000) {
+                openknx.logger.log("OK: Queue operating optimally (100% efficiency)");
+            }
+#endif
+#endif
+
+#ifdef OPENKNX_PIO_I2C_DMA
 
 #ifdef OPENKNX_WIRE_PIO
             if (WIRE_PIO.getInstance() && WIRE_PIO.getInstance()->_dma_available)

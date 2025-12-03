@@ -146,8 +146,6 @@ pio_i2c::pio_i2c(uint32_t sda, uint32_t scl, uint32_t baudrate)
     if (_dma_tx >= 0 && _dma_rx >= 0)
     {
         _dma_available = true;
-        // Note: DMA configuration happens in _write_dma()/_read_dma() 
-        // because we need transfer-specific settings (address, size, etc.)
     }
     else
     {
@@ -384,7 +382,7 @@ int pio_i2c::_write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uin
     rx_enable(pio, sm, false); // Disable RX
 
     uint8_t addr_byte = (addr << 1) | 0;
-    put16(pio, sm, (addr_byte << 1) | 1u); // Send address with write bit (0)
+    put16(pio, sm, (addr_byte << 1) | 1u); // Shift to bits 8:1, add NAK bit
 
     while (len && !check_error(pio, sm)) // Send data bytes
     {
@@ -437,7 +435,7 @@ int pio_i2c::_read_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint
     }
 
     uint8_t addr_byte = (addr << 1) | 1; // Read address
-    put16(pio, sm, (addr_byte << 1) | 1u);
+    put16(pio, sm, (addr_byte << 1) | 1u); // Shift to bits 8:1
 
     uint32_t tx_remain = len;
     bool first = true;
@@ -491,63 +489,57 @@ int pio_i2c::_read_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint
 
 #ifdef OPENKNX_PIO_I2C_DMA
 /*
- * @brief DMA-based write (non-blocking, timer-interrupt safe)
- * @note This function returns immediately after starting DMA transfer
+ * @brief DMA-based write (non-blocking)
  */
 int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop)
 {
     if (!_dma_available) 
     {
-        // Fallback to blocking mode if DMA not available
         return _write_blocking(pio, sm, addr, txbuf, len, send_stop);
     }
 
-    // Check if previous DMA transfer still busy
     if (dma_channel_is_busy(_dma_tx))
     {
-        return -2; // Busy, caller should retry
+        return -2; // Busy
     }
 
     int err = 0;
     pio_interrupt_clear(pio, sm);
     
-    // Manual START + Address (must be done before DMA)
     start(pio, sm);
     rx_enable(pio, sm, false);
     
-    uint8_t addr_byte = (addr << 1) | 0; // Write address
-    put16(pio, sm, (addr_byte << 1) | 1u);
+    uint8_t addr_byte = (addr << 1) | 0;
+    put16(pio, sm, (addr_byte << 1) | 1u); // Shift to bits 8:1, add NAK bit
     
-    // Configure DMA for TX FIFO
-    dma_channel_config c = dma_channel_get_default_config(_dma_tx);
-    channel_config_set_transfer_data_size(&c, DMA_SIZE_16); // 16-bit transfers (put16)
-    channel_config_set_read_increment(&c, true);  // Increment read address
-    channel_config_set_write_increment(&c, false); // Fixed write address (FIFO)
-    channel_config_set_dreq(&c, pio_get_dreq(pio, sm, true)); // TX DREQ
-    
-    // Prepare data with Final bit for last byte
-    static uint16_t dma_buffer[256]; // Static to avoid stack issues
-    for (size_t i = 0; i < len; i++)
+    // Prepare buffer (STATIC - single buffer)
+    static uint16_t dma_buffer[256];
+    for (size_t i = 0; i < len && i < 256; i++)
     {
         dma_buffer[i] = (txbuf[i] << 1) | ((i == len - 1) << 9) | 1u;
     }
     
+    // Configure DMA
+    dma_channel_config c = dma_channel_get_default_config(_dma_tx);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_16);
+    channel_config_set_read_increment(&c, true);
+    channel_config_set_write_increment(&c, false);
+    channel_config_set_dreq(&c, pio_get_dreq(pio, sm, true));
+    
     dma_channel_configure(
         _dma_tx,
         &c,
-        &pio->txf[sm],  // Write to TX FIFO
-        dma_buffer,     // Read from buffer
-        len,            // Transfer count
-        true            // Start immediately
+        &pio->txf[sm],
+        dma_buffer,
+        len,
+        true
     );
     
-    // Note: We return immediately! DMA runs in background
-    // Caller must check dma_channel_is_busy() before next transfer
+    // Wait for DMA to complete (required before STOP or error check)
+    dma_channel_wait_for_finish_blocking(_dma_tx);
     
     if (send_stop)
     {
-        // Wait for DMA to finish, then send STOP
-        dma_channel_wait_for_finish_blocking(_dma_tx);
         stop(pio, sm);
         wait_idle(pio, sm);
     }
@@ -591,7 +583,7 @@ int pio_i2c::_read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len,
     }
     
     uint8_t addr_byte = (addr << 1) | 1; // Read address
-    put16(pio, sm, (addr_byte << 1) | 1u);
+    put16(pio, sm, (addr_byte << 1) | 1u); // Shift to bits 8:1
     
     // Send read commands
     for (uint i = 0; i < len; i++)
@@ -646,22 +638,13 @@ int pio_i2c::_read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len,
 #endif // OPENKNX_PIO_I2C_DMA
 
 /*
- * @brief Public write blocking method
+ * @brief Public write blocking method (ALWAYS uses blocking implementation)
  */
 int pio_i2c::write_blocking(uint8_t addr, const uint8_t* data, size_t len, bool nostop)
 {
     if (!_inst) return -1;
-#ifdef OPENKNX_PIO_I2C_DMA
-    if (_dma_available)
-    {
-#ifdef OPENKNX_DEBUG
-        _dma_write_count++; // Count DMA transfers
-#endif
-        return _write_dma(_inst->pio, _inst->sm, addr, (uint8_t*)data, len, !nostop);
-    }
 #ifdef OPENKNX_DEBUG
     _blocking_write_count++; // Count blocking transfers
-#endif
 #endif
     return _write_blocking(_inst->pio, _inst->sm, addr, (uint8_t*)data, len, !nostop);
 }

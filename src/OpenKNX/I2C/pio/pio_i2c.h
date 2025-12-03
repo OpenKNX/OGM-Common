@@ -85,6 +85,10 @@ class pio_i2c
     int _dma_rx = -1;          // DMA channel for RX (FIFO reads)
     bool _dma_available = false; // DMA successfully initialized
     
+    // DMA transfer functions (non-blocking) - public for PIOI2CWire queue processing
+    int _write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop = true);
+    int _read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len, bool send_stop = true);
+    
 #ifdef OPENKNX_DEBUG
     // Statistics (only in debug builds)
     uint32_t _dma_write_count = 0;
@@ -92,11 +96,6 @@ class pio_i2c
     uint32_t _blocking_write_count = 0;
     uint32_t _blocking_read_count = 0;
 #endif
-    
-  private:
-    // DMA transfer functions (non-blocking)
-    int _write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop = true);
-    int _read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len, bool send_stop = true);
 #endif
 };
 #endif // !defined(ARDUINO_ARCH_RP2040)
