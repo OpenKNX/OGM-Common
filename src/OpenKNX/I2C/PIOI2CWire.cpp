@@ -546,26 +546,19 @@ namespace OpenKNX
 #ifdef OPENKNX_PIO_I2C_DMA
                 if (_pioi2c->_dma_available)
                 {
-                    // Try DMA transfer first
-                    int result = _pioi2c->_write_dma(
-                        _pioi2c->_inst->pio,
-                        _pioi2c->_inst->sm,
-                        entry.address,
-                        entry.data,
-                        entry.length,
-                        false  // no stop - faster consecutive transfers
-                    );
+                    // Check if DMA is currently busy (from previous transfer)
+                    bool dma_busy = dma_channel_is_busy(_pioi2c->_dma_tx);
                     
-                    if (result == -2)
+                    if (dma_busy)
                     {
-                        // DMA busy - use blocking fallback for THIS entry
-                        result = _pioi2c->_write_blocking(
+                        // DMA still processing - use blocking fallback
+                        int result = _pioi2c->_write_blocking(
                             _pioi2c->_inst->pio,
                             _pioi2c->_inst->sm,
                             entry.address,
                             entry.data,
                             entry.length,
-                            false
+                            true
                         );
                         
                         if (result >= 0)
@@ -574,10 +567,23 @@ namespace OpenKNX
                             _blockingTransfers++;
                         }
                     }
-                    else if (result >= 0)
+                    else
                     {
-                        _transfersCompleted++;
-                        _dmaTransfers++;
+                        // DMA available - use it (waits for completion inside _write_dma)
+                        int result = _pioi2c->_write_dma(
+                            _pioi2c->_inst->pio,
+                            _pioi2c->_inst->sm,
+                            entry.address,
+                            entry.data,
+                            entry.length,
+                            true  // send_stop
+                        );
+                        
+                        if (result >= 0)
+                        {
+                            _transfersCompleted++;
+                            _dmaTransfers++;
+                        }
                     }
                 }
                 else
@@ -590,7 +596,7 @@ namespace OpenKNX
                         entry.address,
                         entry.data,
                         entry.length,
-                        false  // no stop - faster consecutive transfers
+                        true  // send_stop=true for proper I2C protocol
                     );
                     
                     if (result >= 0)

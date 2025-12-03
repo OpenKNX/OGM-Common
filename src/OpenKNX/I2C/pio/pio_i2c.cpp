@@ -532,7 +532,7 @@ int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len
         &pio->txf[sm],
         dma_buffer,
         len,
-        true
+        true  // Start immediately
     );
     
     // Wait for DMA to complete (required before STOP or error check)
