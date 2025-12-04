@@ -510,6 +510,9 @@ namespace OpenKNX
          */
         void PIOI2CWire::processQueue()
         {
+            // DEBUG: Log processQueue entry with queue status
+            logDebugP("PIOI2C", "processQueue() ENTER - Queue: %d/%d (%.1f%%), Peak: %d",
+                queueCount(), QUEUE_SIZE, queueUtilization(), _queuePeakCount);
             if (!_pioi2c)
                 return;
             
@@ -539,10 +542,27 @@ namespace OpenKNX
             // This limits blocking time to ~500µs in non-DMA mode
             uint8_t processed = 0;
             
-            while (tail != head && processed < MAX_ENTRIES_PER_CALL)
+            // Adaptive Processing: Reduziere Load bei hoher Queue-Füllung (>50%)
+            // Verhindert System-Hangs unter extremer Last (LED Pulse + Rain)
+            uint16_t currentQueueCount = queueCount();
+            uint8_t maxEntriesThisCall = MAX_ENTRIES_PER_CALL;
+            
+            if (currentQueueCount > (QUEUE_SIZE / 2)) // >50% voll
             {
-                // Read entry (local copy for performance - fewer volatile accesses)
-                QueueEntry entry = _queue.buffer[tail];
+                maxEntriesThisCall = 2; // Nur 2 Einträge bei hoher Last
+            }
+            else if (currentQueueCount > (QUEUE_SIZE / 4)) // >25% voll  
+            {
+                maxEntriesThisCall = 3; // 3 Einträge bei mittlerer Last
+            }
+            
+            // DEBUG: Log processing start with adaptive limits
+            logDebugP("PIOI2C", "Processing %d entries (max %d), Queue: %d/%d",
+                processed, maxEntriesThisCall, currentQueueCount, QUEUE_SIZE);
+            {
+                // DEBUG: Log each transfer attempt
+                logDebugP("PIOI2C", "Transfer[%d]: addr=0x%02X, len=%d, stop=%d",
+                    processed, entry.address, entry.length, entry.send_stop);
                 
                 // Execute I2C write
 #ifdef OPENKNX_PIO_I2C_DMA
@@ -550,10 +570,11 @@ namespace OpenKNX
                 {
                     // Check if DMA is currently busy (from previous transfer)
                     bool dma_busy = dma_channel_is_busy(_pioi2c->_dma_tx);
-                    
                     if (dma_busy)
                     {
-                        // DMA still processing - use blocking fallback
+                        // DEBUG: DMA busy, using blocking
+                        logDebugP("PIOI2C", "DMA busy, using blocking fallback");
+                        int result = _pioi2c->_write_blocking( fallback
                         int result = _pioi2c->_write_blocking(
                             _pioi2c->_inst->pio,
                             _pioi2c->_inst->sm,
@@ -567,18 +588,33 @@ namespace OpenKNX
                         {
                             _transfersCompleted++;
                             _blockingTransfers++;
+                            // DEBUG: Transfer success
+                            logDebugP("PIOI2C", "Transfer OK (blocking)");
                         }
-                    }
+                        else
+                        {
+                            // DEBUG: Transfer failed
+                            logDebugP("PIOI2C", "Transfer FAILED (blocking): %d", result);
+                        }
                     else
                     {
-                        // DMA available - use it (Fire & Forget optimiert)
+                        // DEBUG: Using DMA
+                        logDebugP("PIOI2C", "Using DMA transfer");
+                        int result = _pioi2c->_write_dma( Forget optimiert)
                         int result = _pioi2c->_write_dma(
                             _pioi2c->_inst->pio,
-                            _pioi2c->_inst->sm,
-                            entry.address,
-                            entry.data,
-                            entry.length,
-                            entry.send_stop
+                        if (result >= 0)
+                        {
+                            _transfersCompleted++;
+                            _dmaTransfers++;
+                            // DEBUG: DMA transfer success
+                            logDebugP("PIOI2C", "Transfer OK (DMA)");
+                        }
+                        else
+                        {
+                            // DEBUG: DMA transfer failed
+                            logDebugP("PIOI2C", "Transfer FAILED (DMA): %d", result);
+                        }   entry.send_stop
                         );
                         
                         if (result >= 0)
@@ -589,16 +625,24 @@ namespace OpenKNX
                     }
                 }
                 else
-#endif
                 {
-                    // Blocking mode (DMA not available)
+                    // DEBUG: Blocking mode (DMA not available)
+                    logDebugP("PIOI2C", "DMA not available, using blocking");
+                    int result = _pioi2c->_write_blocking(
                     int result = _pioi2c->_write_blocking(
                         _pioi2c->_inst->pio,
-                        _pioi2c->_inst->sm,
-                        entry.address,
-                        entry.data,
-                        entry.length,
-                        entry.send_stop
+                    if (result >= 0)
+                    {
+                        _transfersCompleted++;
+                        _blockingTransfers++;
+                        // DEBUG: Blocking transfer success
+                        logDebugP("PIOI2C", "Transfer OK (blocking fallback)");
+                    }
+                    else
+                    {
+                        // DEBUG: Blocking transfer failed
+                        logDebugP("PIOI2C", "Transfer FAILED (blocking fallback): %d", result);
+                    }   entry.send_stop
                     );
                     
                     if (result >= 0)
@@ -608,12 +652,27 @@ namespace OpenKNX
                     }
                 }
                 
-                processed++;
+                // Watchdog-Feeding: Bei vielen Transfers Watchdog füttern
+            // Verhindert Watchdog-Reboots unter hoher Last
+            if (processed > 0 && (processed % 3) == 0)
+            {
+                // Feed watchdog every 3 transfers (ca. alle 1-2ms bei 400kHz)
+                watchdog_update();
+            }
                 
                 // Release barrier before updating tail
                 DMB_RELEASE();
                 _queue.tail = (tail + 1) & QUEUE_MASK;
-                
+            _totalEntriesProcessed += processed;  // Track total entries processed
+            
+            // DEBUG: Heartbeat every 100 calls
+            static uint32_t heartbeatCounter = 0;
+            if (++heartbeatCounter % 100 == 0)
+            {
+                logInfoP("PIOI2C", "Heartbeat #%d - Queue healthy: %d/%d entries",
+                    heartbeatCounter, queueCount(), QUEUE_SIZE);
+            }   logDebugP("PIOI2C", "processQueue() EXIT - Processed: %d, Total: %d/%d",
+                processed, _transfersCompleted, _totalEntriesProcessed);
                 // Acquire barrier before reading updated head/tail for next iteration
                 DMB_ACQUIRE();
                 head = _queue.head;

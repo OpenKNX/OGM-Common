@@ -29,7 +29,7 @@
 #ifdef PIO_I2C_USE_STATIC_PIO
 #define PIO_I2C_USE_PIO_INSTANCE pio0 // We will use PIO0 for I2C
 #endif
-#define PIO_I2C_TIMEOUT_US 50000      // In microseconds (50ms - Required for PIO I2C)
+#define PIO_I2C_TIMEOUT_US 5000       // In microseconds (5ms - 10x safety margin for 28 bytes @ 400kHz)
 
 /*
  * @brief PIO I2C instance structure
@@ -86,6 +86,10 @@ class pio_i2c
     int _dma_rx = -1;          // DMA channel for RX (FIFO reads)
     bool _dma_available = false; // DMA successfully initialized
     bool _last_send_stop = true; // Track last transfer's stop flag for Repeated START
+    
+    // CRITICAL: Instance-based DMA buffer to prevent static buffer corruption
+    // Static buffer caused crashes when processQueue() prepared next transfer before DMA finished
+    uint16_t _dma_buffer[32];  // Instance buffer for DMA transfers (28 data + margin)
     
     // DMA transfer functions (non-blocking) - public for PIOI2CWire queue processing
     int _write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop = true);

@@ -37,7 +37,7 @@
     #define QUEUE_SIZE 1024              // Single queue for all transfers (worst-case: 721 display + 30 LEDs)
     #define QUEUE_MASK 1023              // Bitwise AND mask (SIZE - 1)
     #define MAX_ENTRY_DATA 28            // Max inline data per entry (28 bytes for 32-byte struct)
-    #define MAX_ENTRIES_PER_CALL 600     // Process max 600 entries per processQueue() call - MAXIMALE DMA POWER
+    #define MAX_ENTRIES_PER_CALL 5      // Process max 5 entries per processQueue() call - STABILITÄT UNTER HOHER LAST
 #endif
 
 namespace OpenKNX
