@@ -428,7 +428,7 @@ namespace OpenKNX
         openknx.leds.loop();
 
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-        // Process I2C queue in Main Loop
+        // Process I2C queue in Main Loop (2x for Display/LED performance)
         #ifdef OPENKNX_GPIO_WIRE
             // Process queues (time-sliced, max 2ms per call)
             OPENKNX_GPIO_WIRE.processQueue();

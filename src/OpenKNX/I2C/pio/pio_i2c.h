@@ -85,6 +85,7 @@ class pio_i2c
     int _dma_tx = -1;          // DMA channel for TX (FIFO writes)
     int _dma_rx = -1;          // DMA channel for RX (FIFO reads)
     bool _dma_available = false; // DMA successfully initialized
+    bool _last_send_stop = true; // Track last transfer's stop flag for Repeated START
     
     // DMA transfer functions (non-blocking) - public for PIOI2CWire queue processing
     int _write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop = true);

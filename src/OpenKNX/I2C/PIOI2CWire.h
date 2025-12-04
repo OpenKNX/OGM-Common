@@ -36,8 +36,8 @@
     // === Single Queue Configuration (Power-of-2 for bitwise AND masking) ===
     #define QUEUE_SIZE 1024              // Single queue for all transfers (worst-case: 721 display + 30 LEDs)
     #define QUEUE_MASK 1023              // Bitwise AND mask (SIZE - 1)
-    #define MAX_ENTRY_DATA 29            // Max inline data per entry (29 bytes)
-    #define MAX_ENTRIES_PER_CALL 200     // Process max 100 entries per processQueue() call (~5ms @ 400kHz) - MAXIMALE DMA POWER
+    #define MAX_ENTRY_DATA 28            // Max inline data per entry (28 bytes for 32-byte struct)
+    #define MAX_ENTRIES_PER_CALL 600     // Process max 600 entries per processQueue() call - MAXIMALE DMA POWER
 #endif
 
 namespace OpenKNX
@@ -48,10 +48,11 @@ namespace OpenKNX
         // === Queue Entry (32 bytes, cache-aligned) ===
         struct alignas(32) QueueEntry
         {
-            uint8_t address;      // I2C device address
-            uint16_t length;      // Data length (1-29 bytes)
-            uint8_t data[MAX_ENTRY_DATA];  // Inline data storage (29 bytes)
-        };  // Exactly 32 bytes (1 + 2 + 29 = 32)
+            uint8_t address;      // I2C device address (1 byte)
+            uint16_t length;      // Data length (1-28 bytes) (2 bytes)
+            bool send_stop;       // Send STOP condition (false = Repeated START) (1 byte)
+            uint8_t data[28];     // Inline data storage (28 bytes)
+        };  // Exactly 32 bytes (1 + 2 + 1 + 28 = 32)
         
         // === Single Queue Structure (Cache-Line Aligned for Dual-Core Safety) ===
         struct alignas(64) Queue
@@ -172,7 +173,7 @@ namespace OpenKNX
             // === Single Queue Methods (Dual-Core Safe) ===
             
             // Enqueue transfer (ISR-safe, up to 29 bytes inline)
-            bool enqueue(uint8_t address, const uint8_t* data, uint16_t length);
+            bool enqueue(uint8_t address, const uint8_t* data, uint16_t length, bool send_stop);
             
             // Process queue - call from Main Loop! (max 10 entries per call = ~500µs)
             void processQueue();

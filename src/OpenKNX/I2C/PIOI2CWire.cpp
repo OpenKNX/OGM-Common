@@ -237,8 +237,8 @@ namespace OpenKNX
                 return (res < 0) ? 4 : 0;
             }
             
-            // Enqueue to single queue
-            bool queued = enqueue(_address, _txBuffer, _txLen);
+            // Enqueue to single queue with stop flag
+            bool queued = enqueue(_address, _txBuffer, _txLen, stop);
             _txLen = 0;
             
             return queued ? 0 : 4;  // 0 = success, 4 = queue full
@@ -460,9 +460,10 @@ namespace OpenKNX
          * @param address I2C device address
          * @param data Data buffer to send
          * @param length Data length (1-29 bytes)
+         * @param send_stop Send STOP condition (false = Repeated START)
          * @return true if enqueued, false if queue full
          */
-        bool PIOI2CWire::enqueue(uint8_t address, const uint8_t* data, uint16_t length)
+        bool PIOI2CWire::enqueue(uint8_t address, const uint8_t* data, uint16_t length, bool send_stop)
         {
             // Validate length
             if (length == 0 || length > MAX_ENTRY_DATA)
@@ -486,6 +487,7 @@ namespace OpenKNX
             // Write entry (direct assignment for optimal speed)
             _queue.buffer[head].address = address;
             _queue.buffer[head].length = length;
+            _queue.buffer[head].send_stop = send_stop;
             
             // Fast memcpy for data
             if (data != nullptr)
@@ -558,7 +560,7 @@ namespace OpenKNX
                             entry.address,
                             entry.data,
                             entry.length,
-                            true
+                            entry.send_stop
                         );
                         
                         if (result >= 0)
@@ -576,7 +578,7 @@ namespace OpenKNX
                             entry.address,
                             entry.data,
                             entry.length,
-                            true  // send_stop - ALWAYS true for proper I2C
+                            entry.send_stop
                         );
                         
                         if (result >= 0)
@@ -596,7 +598,7 @@ namespace OpenKNX
                         entry.address,
                         entry.data,
                         entry.length,
-                        true  // send_stop=true for proper I2C protocol
+                        entry.send_stop
                     );
                     
                     if (result >= 0)

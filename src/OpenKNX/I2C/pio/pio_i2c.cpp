@@ -378,7 +378,16 @@ int pio_i2c::_write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uin
 
     pio_interrupt_clear(pio, sm); // Clear any previous error
 
-    start(pio, sm);            // Send START condition
+    // Repeated START: Wenn letzter Transfer kein STOP hatte, RESTART senden
+#ifdef OPENKNX_PIO_I2C_DMA
+    if (!_last_send_stop) {
+        repstart(pio, sm);  // RESTART condition
+    } else {
+        start(pio, sm);     // START condition
+    }
+#else
+    start(pio, sm);  // Immer START (kein State-Tracking ohne DMA)
+#endif
     rx_enable(pio, sm, false); // Disable RX
 
     uint8_t addr_byte = (addr << 1) | 0;
@@ -413,7 +422,19 @@ int pio_i2c::_write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uin
         // stop(pio, sm);
         // wait_idle(pio, sm);
         // pio_interrupt_clear(pio, sm);
+
+#ifdef OPENKNX_PIO_I2C_DMA
+        // Bei Error: State zurücksetzen! Nächster Transfer braucht START, nicht RESTART
+        _last_send_stop = true;
+#endif
     }
+#ifdef OPENKNX_PIO_I2C_DMA
+    else
+    {
+        // Nur bei Success: State für nächsten Transfer merken (Repeated START Logic)
+        _last_send_stop = send_stop;
+    }
+#endif
 
     return err;
 }
@@ -503,10 +524,19 @@ int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len
         return -2; // Busy
     }
 
+#ifdef OPENKNX_DEBUG
+    _dma_write_count++; // Count DMA transfers
+#endif
+
     int err = 0;
     pio_interrupt_clear(pio, sm);
     
-    start(pio, sm);
+    // Repeated START: Wenn letzter Transfer kein STOP hatte, RESTART senden
+    if (!_last_send_stop) {
+        repstart(pio, sm);  // RESTART condition
+    } else {
+        start(pio, sm);     // START condition
+    }
     rx_enable(pio, sm, false);
     
     uint8_t addr_byte = (addr << 1) | 0;
@@ -539,6 +569,7 @@ int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len
     // Mid-Batch Transfers: Fire & Forget!
     if (send_stop)
     {
+        // Final transfer: wait for DMA completion, then send STOP
         dma_channel_wait_for_finish_blocking(_dma_tx);
         stop(pio, sm);
         wait_idle(pio, sm);
@@ -547,9 +578,35 @@ int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len
         {
             err = -1;
             resume_after_error(pio, sm);
+            // Bei Error: State zurücksetzen! Nächster Transfer braucht START
+            _last_send_stop = true;
+        }
+        else
+        {
+            // Success: State für nächsten Transfer setzen
+            _last_send_stop = true;  // send_stop war true
         }
     }
-    // ELSE: Fire & Forget - DMA läuft weiter während CPU nächsten Entry vorbereitet!
+    else
+    {
+        // Fire & Forget: DMA läuft async, KEIN STOP
+        // KRITISCH: Warten bis DMA fertig, Bus MUSS idle sein vor Repeated START!
+        dma_channel_wait_for_finish_blocking(_dma_tx);
+        wait_idle(pio, sm);
+        
+        if (check_error(pio, sm))
+        {
+            err = -1;
+            resume_after_error(pio, sm);
+            // Bei Error: State zurücksetzen!
+            _last_send_stop = true;
+        }
+        else
+        {
+            // Success: State für nächsten Transfer setzen
+            _last_send_stop = false;  // send_stop war false → nächster braucht RESTART
+        }
+    }
     
     return err;
 }
@@ -570,6 +627,10 @@ int pio_i2c::_read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len,
     {
         return -2; // Busy, caller should retry
     }
+
+#ifdef OPENKNX_DEBUG
+    _dma_read_count++; // Count DMA transfers
+#endif
     
     int err = 0;
     pio_interrupt_clear(pio, sm);
