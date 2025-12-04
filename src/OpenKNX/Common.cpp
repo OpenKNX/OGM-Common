@@ -58,6 +58,10 @@ namespace OpenKNX
         openknx.gpio.init();
         openknx.leds.init();
         openknx.ledFunctions.init();
+#if defined(POWER_SAVE_PIN) && POWER_SAVE_PIN >= 0
+        openknx.gpio.pinMode(POWER_SAVE_PIN, OUTPUT);
+        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON); 
+#endif
 
         _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);
         _stateLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE);
@@ -694,6 +698,11 @@ namespace OpenKNX
         dll->powerControl(false);
 #endif
 
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+            logInfoP("Shut off aux power with pin %i", SAVE_POWER_PIN);
+            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
+#endif
+
         logInfoP("Completed (%ims)", millis() - start);
         logIndentDown();
 
@@ -722,6 +731,11 @@ namespace OpenKNX
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
         dll->powerControl(true);
         dll->stop(false);
+#endif
+
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+            logInfoP("Switch on aux power with pin %i", SAVE_POWER_PIN);
+            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
 #endif
 
         bool reboot = false;

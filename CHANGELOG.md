@@ -5,6 +5,7 @@
 * Feature: New StatusLED Implementation see README_LED.md
 * Breaking changes: Old LED Apis (openknx.progLed and openknx.infoLeds) no longer available!
 * Fix: RP2040 Framwork update to 5.4.3
+* Feature: Vcc2 shut off with DCU (POWER_SAVE_PIN)
 
 ## 1.5.1: 2025-10-24
 

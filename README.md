@@ -29,19 +29,24 @@ ParamBASE_HeartbeatDelayTimeMS
 | SAMD21 | obsolete but still supported. no hw should be developed on this anymore |
 | ESP32  | experimental                                                            |
 
+## Configuration
+
 To configure the Hardware-Setup use the following defines in hardware.h
 
-```
-SAVE_INTERRUPT_PIN
-INFO_LED_PIN
-PROG_BUTTON_PIN
-PROG_LED_PIN_ACTIVE_ON
-PROG_LED_PIN
-KNX_UART_RX_PIN
-KNX_UART_TX_PIN
-```
+### General HW settings
 
-## Configuration
+| define                     | default | unit  | function                                                                  | mandatory/optional                  |
+| -------------------------- | ------: | :---: | ------------------------------------------------------------------------- | ----------------------------------- |
+| SAVE_INTERRUPT_PIN         |         |       | if defined >= 0, falling edge on this pin will trigger power save actions | optional                            |
+| KNX_UART_RX_PIN            |         |       | UART receive Pin to connect to BCU                                        | mandatory for TP devices            |
+| KNX_UART_TX_PIN            |         |       | UART transmit Pin to connect to BCU                                       | mandatory for TP devices            |
+| KNX_UART_NUM               |         |       | HW UART number                                                            | mandatory for TP devices            |
+| SAVE_POWER_PIN             |         |       | if defined >= 0 this pin will be used to shut off non crucial power       | optional                            |
+| SAVE_POWER_PIN_POWER_OFF   |         |       | value of SAVE_POWER_PIN to shut the power off (e.g. LOW or HIGH)          | mandatory if SAVE_POWER_PIN defined |
+| SAVE_POWER_PIN_POWER_ON    |         |       | value of SAVE_POWER_PIN to shut the power on (e.g. LOW or HIGH)           | mandatory if SAVE_POWER_PIN defined |
+
+
+### General FW settings
 
 
 | define                             |     default | unit  | function                                                                                                                                                                                   |

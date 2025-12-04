@@ -132,6 +132,12 @@ namespace OpenKNX
         dll->stop(true);
         dll->powerControl(false);
 #endif
+
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+            logInfo("FatalError", "Shut off aux power with pin %i", SAVE_POWER_PIN);
+            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
+#endif
+
         logIndentDown();
 
 #ifdef OPENKNX_WATCHDOG
