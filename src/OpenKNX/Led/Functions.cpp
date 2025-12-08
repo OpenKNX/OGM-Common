@@ -46,7 +46,7 @@ namespace OpenKNX
                 {
                     if (_tpLedState != 1)
                     {
-                        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->setColor(Led::Color::Green);
+                        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->color(Led::Color::Green);
                         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->activity(g_tpLedActivity, true);
                         _tpLedState = 1;
                     }
@@ -57,7 +57,7 @@ namespace OpenKNX
                     {
                         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->off(Capability::MONOCHROME);
                         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->on(Capability::COLOR);
-                        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->setColor(Led::Color::Red);
+                        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->color(Led::Color::Red);
                         _tpLedState = 3;
                     }
                 }

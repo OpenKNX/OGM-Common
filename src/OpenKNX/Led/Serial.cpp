@@ -126,7 +126,7 @@ namespace OpenKNX
                 return;
 
             _initialized = true;
-            setColor(_color[0], _color[1], _color[2]);
+            color(_color[0], _color[1], _color[2]);
         }
 
         /*
@@ -152,7 +152,7 @@ namespace OpenKNX
         /*
          * Set the color of the RGB LED
          */
-        void Serial::setColor(uint8_t r, uint8_t g, uint8_t b)
+        void Serial::color(uint8_t r, uint8_t g, uint8_t b)
         {
             _color[0] = r;
             _color[1] = g;

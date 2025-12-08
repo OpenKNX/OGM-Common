@@ -72,7 +72,7 @@ namespace OpenKNX
 
         openknx.hardware.initButtons();
 
-        _progLedFunc->setColor(Led::Color::Blue);
+        _progLedFunc->color(Led::Color::Blue);
         _progLedFunc->pulsing();
 
         debugWait();
@@ -143,7 +143,7 @@ namespace OpenKNX
             {
                 if (!erase)
                 {
-                    _progLedFunc->setColor(Led::Color::Red);
+                    _progLedFunc->color(Led::Color::Red);
                     _progLedFunc->blinking(200);
                     erase = true;
                 }
@@ -298,16 +298,16 @@ namespace OpenKNX
 
 #ifndef OPENKNX_DUALCORE
         _progLedFunc->off();
-        _progLedFunc->setColor(Led::Color::Red);
+        _progLedFunc->color(Led::Color::Red);
 
         if (knx.configured())
         {
-            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->color(Led::Color::Yellow);
             _stateLedFunc->on(Led::Capability::COLOR);
         }
         else
         {
-            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->color(Led::Color::Orange);
             _stateLedFunc->blinking(500);
         }
 #endif
@@ -345,16 +345,16 @@ namespace OpenKNX
         _setup1Ready = true;
 
         _progLedFunc->off();
-        _progLedFunc->setColor(Led::Color::Red);
+        _progLedFunc->color(Led::Color::Red);
 
         if (knx.configured())
         {
-            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->color(Led::Color::Yellow);
             _stateLedFunc->on(Led::Capability::COLOR);
         }
         else
         {
-            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->color(Led::Color::Orange);
             _stateLedFunc->blinking(500);
         }
     }
@@ -606,7 +606,7 @@ namespace OpenKNX
 
         logIndentDown();
 
-        _stateLedFunc->setColor(Led::Color::Green);
+        _stateLedFunc->color(Led::Color::Green);
         _stateLedFunc->on();
     }
 

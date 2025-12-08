@@ -55,13 +55,13 @@ namespace OpenKNX
         class RGB : public Base
         {
           public:
-            virtual void setColor(uint8_t r, uint8_t g, uint8_t b) = 0;
-            virtual void setColor(uint32_t rgb);
-            virtual void setColor(Color color);
+            virtual void color(uint8_t r, uint8_t g, uint8_t b) = 0;
+            virtual void color(uint32_t rgb);
+            virtual void color(Color color);
             /*
              * Return if led is capable of RGB colors
              */
-            virtual bool isRGB() { return true; }
+            virtual bool isColor() { return true; }
         };
     } // namespace Led
 } // namespace OpenKNX
