@@ -503,7 +503,7 @@ namespace OpenKNX
             // Queue Statistics
             openknx.logger.log("");
             openknx.logger.log("═══ PIO I2C Async Queue (Scheduler) ═══");
-#ifdef OPENKNX_GPIO_WIRE
+#if defined(OPENKNX_WIRE_PIO) || defined(OPENKNX_WIRE1_PIO)
             // Queue Status
             openknx.logger.logWithValues("Queue Status:  %u/%u free (%u%% used)", 
                 OPENKNX_GPIO_WIRE.queueFree(), 
@@ -587,7 +587,7 @@ namespace OpenKNX
 
                 // Vergleich Queue vs. Device (nur wenn Async Queue aktiv)
 #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-#ifdef OPENKNX_GPIO_WIRE
+#if defined(OPENKNX_WIRE_PIO) || defined(OPENKNX_WIRE1_PIO)
                 uint32_t queue_dma_ratio = (uint32_t)OPENKNX_GPIO_WIRE.getDmaRatio();
                 openknx.logger.logWithValues("  DMA Ratio:   Queue %u%% / Device %u%%", queue_dma_ratio, device_dma_ratio);
                 // Hinweis bei deutlicher Abweichung

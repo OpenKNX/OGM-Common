@@ -25,6 +25,7 @@ namespace OpenKNX
             void flushPendingI2C(); // Flush pending I2C writes - MUST be called from main loop, NOT ISR!
 
             long getPin() { return _pin; }
+            GPIO* asGPIO() override { return this; }
         };
     } // namespace Led
 } // namespace OpenKNX

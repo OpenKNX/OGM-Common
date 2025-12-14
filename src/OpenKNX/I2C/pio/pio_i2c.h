@@ -102,6 +102,6 @@ class pio_i2c
     uint32_t _blocking_write_count = 0;
     uint32_t _blocking_read_count = 0;
 #endif
-#endif
+#endif // OPENKNX_PIO_I2C_DMA
 };
 #endif // !defined(ARDUINO_ARCH_RP2040)

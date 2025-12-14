@@ -217,7 +217,7 @@ namespace OpenKNX
                         for (uint8_t i = 1; i <= 3; i++)
                         {
                             auto led = openknx.leds.getLed(Led::LED_TYPE_INFO1 + i - 1);
-                            GPIO* gpio = dynamic_cast<GPIO*>(led);
+                            GPIO* gpio = led ? led->asGPIO() : nullptr;
                             if (gpio && gpio->getPin() > 0xFF)
                             {
                                 long pin = gpio->getPin();
@@ -315,7 +315,7 @@ namespace OpenKNX
                         }
                         
                         // Check if it's an I2C LED
-                        GPIO* gpio = dynamic_cast<GPIO*>(led);
+                        GPIO* gpio = led->asGPIO();
                         bool isI2C = (gpio && gpio->getPin() > 0xFF);
                         
                         uint8_t steps = Manager::getPwmSteps();

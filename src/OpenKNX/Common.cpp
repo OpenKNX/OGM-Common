@@ -425,21 +425,27 @@ namespace OpenKNX
 
         // LED Manager loop - must ALWAYS run for LED effects (PULSING, BLINK, etc.)
         // Also handles pending I2C writes depending on pattern
-        openknx.leds.loop();
+       openknx.leds.loop();
 
-#ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
+#if defined(OPENKNX_WIRE_PIO) || defined(OPENKNX_WIRE1_PIO)
+    #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
         // Process I2C queue in Main Loop (2x for Display/LED performance)
-        #ifdef OPENKNX_GPIO_WIRE
-            // Process queues (time-sliced, max 2ms per call)
-            OPENKNX_GPIO_WIRE.processQueue();
-        #endif
+        // Only for PIO I2C - native Wire has no queue
+        OPENKNX_GPIO_WIRE.processQueue();
+    #endif
 #endif
 
         // loop  appstack
         _loopMicros = micros();
 
         // knx is configured
-        if (knx.configured())
+        bool configured = knx.configured();
+#ifdef OPENKNX_DUALCORE
+        // Update cache for Core1 (volatile ensures visibility)
+        _knxConfiguredCache = configured;
+#endif
+
+        if (configured)
         {
 
 #ifdef BASE_HeartbeatDelayBase
@@ -575,7 +581,8 @@ namespace OpenKNX
         if (_stateLedFunc != nullptr) _stateLedFunc->debugLoop();
     #endif
 
-        bool configured = knx.configured();
+        // Read cached configured state from Core0 (volatile ensures visibility)
+        bool configured = _knxConfiguredCache;
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {

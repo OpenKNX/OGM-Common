@@ -98,6 +98,12 @@ namespace OpenKNX
             void activity(uint32_t &lastActivity, bool inverted = false) override;
 
             /*
+             * Type-safe casting for GPIO (no RTTI needed)
+             * Returns nullptr if not a GPIO instance
+             */
+            virtual class GPIO* asGPIO() { return nullptr; }
+
+            /*
              * Normal "Off"
              * -> Prio 5
              */

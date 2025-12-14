@@ -28,6 +28,7 @@ namespace OpenKNX
         volatile bool _setup0Ready = false;
 #ifdef OPENKNX_DUALCORE
         volatile bool _setup1Ready = false;
+        volatile bool _knxConfiguredCache = false;  // Thread-safe cache for Core1
 #endif
 
         uint32_t _savedPinProcessed = 0;
