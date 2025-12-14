@@ -83,7 +83,7 @@ namespace OpenKNX
             _colorDirty = false;
         }
 
-        void GPIO_RGB::setColor(uint8_t r, uint8_t g, uint8_t b)
+        void GPIO_RGB::color(uint8_t r, uint8_t g, uint8_t b)
         {
             _color[0] = r;
             _color[1] = g;

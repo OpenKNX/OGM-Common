@@ -254,6 +254,8 @@
               <!-- Extended save -->
               <Parameter Id="%AID%_P-%TT%00011" Name="ExtendedSave" ParameterType="%AID%_PT-OnOffYesNo" Text="Erweitertes Speichern" Value="%BASE_ExtendedSave%" />
 
+              <Parameter Id="%AID%_P-%TT%00023" Name="ProgLedFunc" ParameterType="%AID%_PT-SLEDFunc" Text="Prog" Value="1" Access="Read"/>
+
               <!-- General -->
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
@@ -332,6 +334,7 @@
               <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" />
               <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
               <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" />
+              <ParameterRef Id="%AID%_P-%TT%00023_R-%TT%0002301" RefId="%AID%_P-%TT%00023" />
               <ParameterRef Id="%AID%_UP-%TT%00034_R-%TT%0003401" RefId="%AID%_UP-%TT%00034" />
               <!-- The follwing 2 IDs are used by logic module for update compatibility -->
               <!-- <ParameterRef Id="%AID%_UP-%TT%00035_R-%TT%0003501" RefId="%AID%_UP-%TT%00035" /> -->
@@ -627,6 +630,7 @@
               </ParameterBlock>
               <ParameterBlock Id="%AID%_PB-nnn" Name="InfoLeds" Text="Info LEDs" Icon="led-on" HelpContext="BASE-Info-LEDs">
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Funktion der Info LEDs" UIHint="Headline" />
+                <ParameterRefRef RefId="%AID%_P-%TT%00023_R-%TT%0002301" IndentLevel="1" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" IndentLevel="1" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" IndentLevel="1" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" IndentLevel="1" />

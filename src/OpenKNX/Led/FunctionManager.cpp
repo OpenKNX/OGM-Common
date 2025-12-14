@@ -79,8 +79,8 @@ namespace OpenKNX
             for (auto led : _leds)
             {
                 if (capability == Capability::ALL ||
-                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
-                    (capability == Capability::COLOR && led->isRGB()))
+                    (capability == Capability::MONOCHROME && !led->isColor()) ||
+                    (capability == Capability::COLOR && led->isColor()))
                 {
                     led->on(state);
                 }
@@ -97,31 +97,31 @@ namespace OpenKNX
             on(false, capability);
         }
 
-        void FunctionGroup::setColor(uint8_t r, uint8_t g, uint8_t b)
+        void FunctionGroup::color(uint8_t r, uint8_t g, uint8_t b)
         {
             for (auto led : _leds)
             {
-                if (led->isRGB())
+                if (led->isColor())
                 {
-                    ((RGB*)led)->setColor(r, g, b);
+                    ((RGB*)led)->color(r, g, b);
                 }
             }
         }
 
-        void FunctionGroup::setColor(uint32_t rgb)
+        void FunctionGroup::color(uint32_t rgb)
         {
             for (auto led : _leds)
             {
-                if (led->isRGB())
+                if (led->isColor())
                 {
-                    ((RGB*)led)->setColor(rgb);
+                    ((RGB*)led)->color(rgb);
                 }
             }
         }
 
-        void FunctionGroup::setColor(Color color)
+        void FunctionGroup::color(Color value)
         {
-            setColor(static_cast<uint32_t>(color));
+            color(static_cast<uint32_t>(value));
         }
 
         void FunctionGroup::pulsing(uint16_t duration, Capability capability)
@@ -129,8 +129,8 @@ namespace OpenKNX
             for (auto led : _leds)
             {
                 if (capability == Capability::ALL ||
-                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
-                    (capability == Capability::COLOR && led->isRGB()))
+                    (capability == Capability::MONOCHROME && !led->isColor()) ||
+                    (capability == Capability::COLOR && led->isColor()))
                 {
                     if(led->isDimmable())
                         led->pulsing(duration);
@@ -145,8 +145,8 @@ namespace OpenKNX
             for (auto led : _leds)
             {
                 if (capability == Capability::ALL ||
-                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
-                    (capability == Capability::COLOR && led->isRGB()))
+                    (capability == Capability::MONOCHROME && !led->isColor()) ||
+                    (capability == Capability::COLOR && led->isColor()))
                 {
                     led->blinking(frequency);
                 }
@@ -158,8 +158,8 @@ namespace OpenKNX
             for (auto led : _leds)
             {
                 if (capability == Capability::ALL ||
-                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
-                    (capability == Capability::COLOR && led->isRGB()))
+                    (capability == Capability::MONOCHROME && !led->isColor()) ||
+                    (capability == Capability::COLOR && led->isColor()))
                 {
                     led->flash(duration);
                 }
@@ -205,8 +205,8 @@ namespace OpenKNX
             for (auto led : _leds)
             {
                 if (capability == Capability::ALL ||
-                    (capability == Capability::MONOCHROME && !led->isRGB()) ||
-                    (capability == Capability::COLOR && led->isRGB()))
+                    (capability == Capability::MONOCHROME && !led->isColor()) ||
+                    (capability == Capability::COLOR && led->isColor()))
                     led->activity(lastActivity, inverted);
             }
         }

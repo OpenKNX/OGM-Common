@@ -60,6 +60,10 @@ namespace OpenKNX
              */
             void debugLoop() override;
 #endif
+            /****
+             * Return if led is capable of RGB colors
+             */
+            virtual bool isColor() { return false; }
 
             /*
              * For progLed called by knx Stack for active Progmode

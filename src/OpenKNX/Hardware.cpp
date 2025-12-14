@@ -121,9 +121,10 @@ namespace OpenKNX
     {
         logError("FatalError", "Code: %d (%s)", code, message);
         logIndentUp();
-        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->setColor(Led::Color::Red);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->color(Led::Color::Red);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->off(Led::Capability::MONOCHROME);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE)->on(Led::Capability::COLOR);
+        openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->color(Led::Color::Red);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->errorCode(code);
 
 #if MASK_VERSION == 0x07B0
@@ -131,6 +132,12 @@ namespace OpenKNX
         dll->stop(true);
         dll->powerControl(false);
 #endif
+
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+            logInfo("FatalError", "Shut off aux power with pin %i", SAVE_POWER_PIN);
+            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
+#endif
+
         logIndentDown();
 
 #ifdef OPENKNX_WATCHDOG

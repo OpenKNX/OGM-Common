@@ -58,6 +58,10 @@ namespace OpenKNX
         openknx.gpio.init();
         openknx.leds.init();
         openknx.ledFunctions.init();
+#if defined(POWER_SAVE_PIN) && POWER_SAVE_PIN >= 0
+        openknx.gpio.pinMode(POWER_SAVE_PIN, OUTPUT);
+        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON); 
+#endif
 
         _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);
         _stateLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_STATE);
@@ -68,7 +72,7 @@ namespace OpenKNX
 
         openknx.hardware.initButtons();
 
-        _progLedFunc->setColor(Led::Color::Blue);
+        _progLedFunc->color(Led::Color::Blue);
         _progLedFunc->pulsing();
 
         debugWait();
@@ -139,7 +143,7 @@ namespace OpenKNX
             {
                 if (!erase)
                 {
-                    _progLedFunc->setColor(Led::Color::Red);
+                    _progLedFunc->color(Led::Color::Red);
                     _progLedFunc->blinking(200);
                     erase = true;
                 }
@@ -296,16 +300,16 @@ namespace OpenKNX
 
 #ifndef OPENKNX_DUALCORE
         _progLedFunc->off();
-        _progLedFunc->setColor(Led::Color::Red);
+        _progLedFunc->color(Led::Color::Red);
 
         if (knx.configured())
         {
-            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->color(Led::Color::Yellow);
             _stateLedFunc->on(Led::Capability::COLOR);
         }
         else
         {
-            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->color(Led::Color::Orange);
             _stateLedFunc->blinking(500);
         }
 #endif
@@ -343,16 +347,16 @@ namespace OpenKNX
         _setup1Ready = true;
 
         _progLedFunc->off();
-        _progLedFunc->setColor(Led::Color::Red);
+        _progLedFunc->color(Led::Color::Red);
 
         if (knx.configured())
         {
-            _stateLedFunc->setColor(Led::Color::Yellow);
+            _stateLedFunc->color(Led::Color::Yellow);
             _stateLedFunc->on(Led::Capability::COLOR);
         }
         else
         {
-            _stateLedFunc->setColor(Led::Color::Orange);
+            _stateLedFunc->color(Led::Color::Orange);
             _stateLedFunc->blinking(500);
         }
     }
@@ -623,7 +627,7 @@ namespace OpenKNX
 
         logIndentDown();
 
-        _stateLedFunc->setColor(Led::Color::Green);
+        _stateLedFunc->color(Led::Color::Green);
         _stateLedFunc->on();
     }
 
@@ -715,6 +719,11 @@ namespace OpenKNX
         dll->powerControl(false);
 #endif
 
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+            logInfoP("Shut off aux power with pin %i", SAVE_POWER_PIN);
+            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
+#endif
+
         logInfoP("Completed (%ims)", millis() - start);
         logIndentDown();
 
@@ -743,6 +752,11 @@ namespace OpenKNX
         TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
         dll->powerControl(true);
         dll->stop(false);
+#endif
+
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+            logInfoP("Switch on aux power with pin %i", SAVE_POWER_PIN);
+            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
 #endif
 
         bool reboot = false;

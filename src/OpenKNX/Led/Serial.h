@@ -67,7 +67,7 @@ namespace OpenKNX
             long getPin() { return _pin; }
 
           public:
-            void setColor(uint8_t r, uint8_t g, uint8_t b) override;
+            void color(uint8_t r, uint8_t g, uint8_t b) override;
         };
     } // namespace Led
 } // namespace OpenKNX

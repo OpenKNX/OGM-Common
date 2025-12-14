@@ -643,7 +643,7 @@ namespace OpenKNX
                 if (_ledState != 2)
                 {
                     _ledState = 2;
-                    _timeLed->setColor(Led::Color::Blue);
+                    _timeLed->color(Led::Color::Blue);
                     _timeLed->on(Led::Capability::COLOR);
                     _timeLed->blinking(100, Led::Capability::MONOCHROME);
                 }
@@ -657,7 +657,7 @@ namespace OpenKNX
                 if (_ledState != 3)
                 {
                     _ledState = 3;
-                    _timeLed->setColor(Led::Color::Green);
+                    _timeLed->color(Led::Color::Green);
                     _timeLed->on();
                 }
             }
@@ -667,7 +667,7 @@ namespace OpenKNX
                 if (_ledState != 1)
                 {
                     _ledState = 1;
-                    _timeLed->setColor(Led::Color::Red);
+                    _timeLed->color(Led::Color::Red);
                     _timeLed->on(Led::Capability::COLOR);
                     _timeLed->off(Led::Capability::MONOCHROME);
                 }

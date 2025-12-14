@@ -50,16 +50,17 @@ ParamBASE_HeartbeatDelayTimeMS
 
 ### Hardware Configuration (hardware.h)
 
-Basic hardware pins configuration:
-```cpp
-SAVE_INTERRUPT_PIN
-INFO_LED_PIN
-PROG_BUTTON_PIN
-PROG_LED_PIN_ACTIVE_ON
-PROG_LED_PIN
-KNX_UART_RX_PIN
-KNX_UART_TX_PIN
-```
+#### General HW Settings
+
+| Define | Default | Unit | Function | Mandatory/Optional |
+|--------|---------|------|----------|-------------------|
+| `SAVE_INTERRUPT_PIN` | - | - | Falling edge on this pin triggers power save actions | optional |
+| `KNX_UART_RX_PIN` | - | - | UART receive pin to connect to BCU | mandatory (TP devices) |
+| `KNX_UART_TX_PIN` | - | - | UART transmit pin to connect to BCU | mandatory (TP devices) |
+| `KNX_UART_NUM` | - | - | Hardware UART number | mandatory (TP devices) |
+| `SAVE_POWER_PIN` | - | - | Pin to shut off non-critical power | optional |
+| `SAVE_POWER_PIN_POWER_OFF` | - | - | Value to power off (e.g., LOW/HIGH) | mandatory if SAVE_POWER_PIN defined |
+| `SAVE_POWER_PIN_POWER_ON` | - | - | Value to power on (e.g., LOW/HIGH) | mandatory if SAVE_POWER_PIN defined |
 
 ---
 
