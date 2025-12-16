@@ -13,8 +13,8 @@
 // PENDING_PATTERN: ISR sets flag, Main Loop writes to Queue
 // ASYNC_QUEUE: Queue processes transfers asynchronously with DMA
 // Combination: ISR-safe + High throughput + Correct I²C protocol
-// #define OPENKNX_I2C_USE_PENDING_PATTERN 1
-    #define OPENKNX_I2C_USE_ASYNC_QUEUE 1
+//#define OPENKNX_I2C_USE_PENDING_PATTERN 1
+ #define OPENKNX_I2C_USE_ASYNC_QUEUE 1
 
     #include "pio/pio_i2c.h"
     #include <Wire.h>

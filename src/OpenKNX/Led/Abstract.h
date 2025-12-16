@@ -69,6 +69,11 @@ namespace OpenKNX
             virtual bool isRGB() { return false; }
 
             /****
+             * Return if led is capable of colors (alias for isRGB)
+             */
+            virtual bool isColor() { return isRGB(); }
+
+            /****
              * For progLed called by knx Stack for active Progmode
              * -> Prio 4
              */
