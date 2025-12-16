@@ -88,14 +88,9 @@ namespace OpenKNX
             virtual void debugLoop();
 #endif
             /****
-             * Return if led is capable of RGB colors
+             * Return if led is capable of colors
              */
-            virtual bool isRGB() { return false; }
-
-            /****
-             * Return if led is capable of colors (alias for isRGB)
-             */
-            virtual bool isColor() { return isRGB(); }
+            virtual bool isColor() { return false; }
 
             /*
              * For progLed called by knx Stack for active Progmode
@@ -143,7 +138,7 @@ namespace OpenKNX
              * Normal "Off"
              * -> Prio 5
              */
-            virtual void off() { on(false); }
+            virtual void off();
 
             /*
              * Set the identifier for logging
