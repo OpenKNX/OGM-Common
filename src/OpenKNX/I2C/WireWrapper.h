@@ -11,6 +11,7 @@
 #include "OpenKNX/defines.h"
 #include <Wire.h>
 #include <string>
+#include "../../macros.h"
 
 /*
  * Check if PIO I2C is requested on non-RP2040/RP2350 platforms
