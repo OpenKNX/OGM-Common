@@ -94,7 +94,7 @@ Compress-Archive -Path release/* -DestinationPath $releaseTemp -Verbose
 #Check if Release.zip is created
 if (Test-Path -Path $releaseTemp -PathType Leaf ) {
   # remove all files and directories in release directory
-  Remove-Item -Recurse release/*
+  Remove-Item -Recurse -Force release/*
   # move Release.zip to release directory
   Move-Item $releaseTemp "release/$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
   Write-Host "Release $($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!" -ForegroundColor Green

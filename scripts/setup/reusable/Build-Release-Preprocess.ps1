@@ -35,7 +35,7 @@ Write-Host "--------------------------------"
 # check and cleanup working dir
 if (Test-Path -Path release) {
   # clean working dir
-  Remove-Item -Recurse release\*
+  Remove-Item -Recurse -Force release\*
 }
 else {
   New-Item -Path release -ItemType Directory | Out-Null
