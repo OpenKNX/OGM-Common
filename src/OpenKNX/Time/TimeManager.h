@@ -45,8 +45,36 @@ namespace OpenKNX
             Calculated
         };
 
+        enum TimeChangedEvents
+        {
+            TimeChangedEventSecondChanged = 1,
+            TimeChangedEventMinuteChanged = 2,
+            TimeChangedEventHourChanged = 4,
+            TimeChangedEventDayChanged = 8,
+            TimeChangedEventMonthChanged = 16,
+            TimeChangedEventYearChanged = 32,
+            TimeChangedEventTimeSet = 64,
+            TimeChangedEventValidChanged = 128,
+            TimeChangedEventInaccurateChanged = 256
+        };
+
+        struct TimeChangedArgs
+        {
+            TimeChangedEvents events;
+            DateTime localTime;
+            bool isValid;
+            bool isInaccurate;
+        };
+
+        typedef std::function<void(TimeChangedArgs)> TimeChangeCallback;
+       
         class TimeManager
         {
+            struct TimeChangedEventHandler
+            {
+                TimeChangedEvents events;
+                TimeChangeCallback callback;
+            };
             OPENKNX_TIME_CLOCK _timeClock = OPENKNX_TIME_CLOCK();
             friend Common;
             friend Console;
@@ -61,12 +89,18 @@ namespace OpenKNX
             bool _timeProvideSupportKnxDaylightSavingTimeSwitch = false;
             unsigned long _waitTimerReadKo = 0;
             bool _intialReadKo = false;
+            DateTime _lastLocalTimeInLoop = DateTime();
+            bool _lastInaccurateInLoop = false;
+            bool _lastValidInLoop = false;
+            time_t _lastUpdatedByProviderTimeStamp =0;
             time_t _lastTimeStamp = 0;
             uint8_t _ledState = 0;
             uint8_t _lastSecondChange = 0;
             unsigned long _timerLedOn = 0;
             unsigned long _timeUpdatedActivity = 0;
             Led::FunctionGroup* _timeLed = nullptr;
+            bool _timeSetEventNeeded = false;
+            std::vector<TimeChangedEventHandler> _callbacks = std::vector<TimeChangedEventHandler>();
 
 #ifdef OPENKNX_TIME_TESTCOMMAND
             void commandTest();
@@ -76,10 +110,11 @@ namespace OpenKNX
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
             void commandSetDateTime(std::string& cmd);
 #endif
+            void sendEvent(TimeChangedArgs args);
             void setup(bool configured);
             void setDaylightSavingMode(DaylightSavingMode daylightSavingMode);
             void loop();
-            void loopLed();
+            void loopLed(TimeChangedArgs args);
             void processInputKo(GroupObject& ko);
             bool processCommand(std::string& cmd, bool diagnoseKo);
             void setLocalTime(tm& tm, unsigned long miilisReceivedTimestamp);
@@ -89,8 +124,14 @@ namespace OpenKNX
             void sendTime();
             const std::string logPrefix();
             std::string buildTimezoneString(DaylightSavingMode daylightSavingMode);
+            bool calculateValid(time_t now);
+            bool calculateInaccurate(time_t now);
 
           public:
+            /*
+            Register a callback for time changed events. Specify the events to listen for and the callback function.
+            */
+            void registerCallback(TimeChangedEvents events, TimeChangeCallback callback);
             /*
             Returns true, if a time provider was set
             */
@@ -115,6 +156,11 @@ namespace OpenKNX
              * returns true, if the time was a least one time set
              */
             bool isValid();
+
+            /*
+             * returns true, if the last time from time provider was set more than 24 hours ago
+             */
+            bool isInaccurate();
 
             /*
              * Returns for the provided local time
