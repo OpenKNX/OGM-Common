@@ -41,12 +41,12 @@ Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte besch
       - [Auswirkung beim RP2040/RP2350](#auswirkung-beim-rp2040rp2350)
       - [Zyklisches speichern](#zyklisches-speichern)
       - [Manuelles speichern](#manuelles-speichern)
+  - [**Info-LEDs**](#info-leds)
   - [**Module**](#module)
     - [**Modul aktivieren**](#modul-aktivieren)
     - [**Abgleich mit dem Gerät**](#abgleich-mit-dem-gerät)
       - [**Nicht unterstützte Module ausblenden**](#nicht-unterstützte-module-ausblenden)
       - [**Komplettabgleich aller Module**](#komplettabgleich-aller-module)
-  - [Info LEDs](#info-leds)
 
 ## **Allgemein**
 
@@ -291,6 +291,17 @@ Auswahl:
   Die Anzahl der Speicheroperation werden auf maximal einmal pro 60 Minuten begrenzt
 
 <!-- DOC -->
+## **Info-LEDs**
+
+Auf dieser Seite können die Info-LEDs angepasst werden. In der Regel ist bereits eine geräteabhängige Vorbelegung der LEDs vorhanden. Dies bedeutet jedoch nicht, dass jeder Info-LED bereits eine Funktion zugewiesen ist.
+
+Diese Vorbelegung kann – sofern vorhanden – bei Bedarf angepasst werden. Da viele Produktdatenbanken geräteunabhängig aufgebaut sind, können unter Umständen mehr LEDs zur Auswahl stehen, als das verwendete Gerät tatsächlich bietet. In diesem Fall bleibt die entsprechende Zuordnung ohne Funktion.
+
+Eine Beschreibung der LED-Funktionen ist im Wiki unter http://go.openknx.de/statusled zu finden.
+
+**Hinweis**: Die Nummerierung der Info-LEDs entspricht nicht immer der Beschriftung auf der Gerätefront. Bei OpenKNX-REG1-Geräten z. B. beginnen die LEDs technisch von unten mit der Prog-LED, gefolgt von Info-LED 1 bis 3. Je nach verwendeter Front erfolgt die Beschriftung jedoch von oben mit Info 1, Info 2, Func und Prog-LED. Info 1 entspricht somit in Wirklichkeit der Info-LED 3, während Func in Wirklichkeit der Info-LED 1 entspricht.
+
+<!-- DOC -->
 ## **Module**
 
 Hier wird eine Liste aller in dieser Applikation enthaltenen OpenKNX-Module und deren Version angezeigt. Standardmäßig sind alle Module aktiv. Mit der Checkbox kann man ein Modul deaktivieren. Es erscheint dann nicht mehr zur Auswahl in der ETS-Applikation und wird auf dem Gerät nicht ausgeführt.
@@ -324,11 +335,3 @@ Mit dieser Funktion werden Module nur ausgeblendet, nicht eingeblendet.
 
 Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die vom Gerät unterstützten Module werden eingeblendet, die nicht unterstützten ausgeblendet. Eine vom Benutzer vorher getroffene Auswahl wird überschrieben.
 
-<!-- DOC -->
-## Info LEDs
-
-Hier können den bis zu 3 vorhandenen Info-LEDs LED-Funktionen zugewiesen werden. Je nach Applikation ist die Zuweisung auch fest eingestellt und kann nicht verändert werden.
-
-Eine detailierte Beschreibung der LED-Funktionen ist unter http://go.openknx.de/statusled zu finden.
-
-Hinweis: Welche LED-Funktionen verfügbar sind, variiert von Applikation zu Applikation je nach verwendeten OpenKNX-Modulen.
