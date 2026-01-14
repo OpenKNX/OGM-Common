@@ -17,24 +17,43 @@ namespace OpenKNX
 
         void FunctionManager::setup()
         {
-            if (knx.configured())
+            if (useDefaultFunction())
+            {
+#ifdef OPENKNX_INFOLED1_DEFAULT
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_INFOLED1_DEFAULT);
+#else
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_LEDFUNC_BASE_STATE);
+#endif
+#ifdef OPENKNX_INFOLED2_DEFAULT
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), OPENKNX_INFOLED2_DEFAULT);
+#endif
+#ifdef OPENKNX_INFOLED3_DEFAULT
+                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), OPENKNX_INFOLED3_DEFAULT);
+#endif
+            }
+            else if (knx.configured())
             {
                 // setup the prog and info1-3 led according to knx parameters
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
             }
-            else
-            {
-                // not configured, assign state led to info1 as default
-                assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_LEDFUNC_BASE_STATE);
-            }
+        }
+
+        bool FunctionManager::useDefaultFunction()
+        {
+            if (!knx.configured()) return true;
+
+#ifdef ParamBASE_DefaultLedFunc
+            if (ParamBASE_DefaultLedFunc) return true;
+#endif
+
+            return false;
         }
 
         void FunctionManager::assignLed2Function(Led::Base* led, uint32_t functionId)
         {
-            if (functionId == 0)
-                return;
+            if (functionId == 0) return;
 
             FunctionGroup* fg = get(functionId);
             fg->addLed(led);
