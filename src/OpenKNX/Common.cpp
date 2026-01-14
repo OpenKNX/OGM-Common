@@ -228,8 +228,6 @@ namespace OpenKNX
 
     void Common::debugWait()
     {
-        _progLedFunc->pulsing(500);
-
 #if OPENKNX_WAIT_FOR_SERIAL > 1 && !defined(OPENKNX_RTT) && defined(SERIAL_DEBUG)
         uint32_t timeoutBase = millis();
         while (!SERIAL_DEBUG)
@@ -238,8 +236,6 @@ namespace OpenKNX
                 break;
         }
 #endif
-
-        _progLedFunc->pulsing();
     }
 
     void Common::setup()
