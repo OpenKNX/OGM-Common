@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   <!-- This is a special include File for Applications that do not allow Group objects like a Router. In this file, only parts that differ from Common.share.xml are specified. For the other parts, use the Common.share.xml -->
 
@@ -13,15 +13,16 @@
   <op:config name="%BASE_ShowInfo1LedFunc%" value="1"></op:config>
   <op:config name="%BASE_ShowInfo2LedFunc%" value="1"></op:config>
   <op:config name="%BASE_ShowInfo3LedFunc%" value="1"></op:config>
-  <op:config name="%BASE_Info1LedFunc_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info2LedFunc_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info3LedFunc_Access" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info1LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info2LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
 
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
         <ApplicationProgram>
+          <op:part name="InfoLed" href="InfoLed.part.xml" instances="1"></op:part>
           <Static>
             <ParameterTypes>
               <!-- PT are used from Common.share.xml only -->
@@ -47,16 +48,17 @@
                 <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
               </Union>
-              <Union SizeInBit="96">
+              <Union SizeInBit="56">
                 <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="0" BitOffset="0" Text="Info1%BASE_Info1LedLabel%" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="2" BitOffset="0" Text="Info2%BASE_Info2LedLabel%" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="Info3%BASE_Info3LedLabel%" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00029" Name="DefaultLedFunc"    ParameterType="%AID%_PT-CheckBox"     Offset="7" BitOffset="0" Text="" Value="1"/>
               </Union>
+
               <!-- Time & Date -->
               <Union SizeInBit="520">
-                <Memory CodeSegment="%MID%" Offset="12" BitOffset="0" />
+                <Memory CodeSegment="%MID%" Offset="13" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
@@ -89,6 +91,7 @@
               <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_UP-%TT%00006_R-%TT%0000601" />
+                <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
                 <!-- Startup Delay pattern -->
@@ -128,159 +131,7 @@
                 <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="%DOC%" IndentLevel="1" />
               </ParameterBlock>
 
-              <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                <when test="!=%BASE_ShowInfoLedPanel%">
-                  <ParameterBlock Id="%AID%_PB-nnn" Name="InfoLeds" Text="Info LEDs" Icon="led-on" HelpContext="BASE-Info-LEDs">
-                    <!-- Logic Assign -->
-                    <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                      <when test="!=%BASE_ShowDeviceDependentLedSelector%">
-                        <!-- Show Default Checkbox-->
-                        <choose ParamRefId="%AID%_UP-%TT%00029_R-%TT%0002901">
-                          <when test="0">
-                            <!-- Show Func Table-->
-                            <Assign TargetParamRefRef="%AID%_P-%TT%00049_R-%TT%0004901" Value="1" />
-                          </when>
-                          <when test="1">
-                            <!-- Hide Func Table-->
-                            <Assign TargetParamRefRef="%AID%_P-%TT%00049_R-%TT%0004901" Value="0" />
-                          </when>
-                        </choose>
-                      </when>
-                      <when test="=%BASE_ShowDeviceDependentLedSelector%">
-                        <!-- Hide Default Checkbox-->
-
-                        <!-- Show Func Table-->
-                        <Assign TargetParamRefRef="%AID%_P-%TT%00049_R-%TT%0004901" Value="1" />
-                      </when>
-                    </choose>
-
-                    <!-- UI -->
-                    <ParameterSeparator Id="%AID%_PS-nnn" Text="Info LEDs" UIHint="Headline" />
-
-                    <ParameterBlock Id="%AID%_PB-nnn" Name="LedFuncHead" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                      <Rows>
-                        <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                      </Rows>
-                      <Columns>
-                        <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                        <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="100%" />
-                      </Columns>
-                      <ParameterSeparator Id="%AID%_PS-nnn" Text="Auf dieser Seite können die Info-LEDs angepasst werden." Cell="1,2" />
-                    </ParameterBlock>
-
-                    <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                      <when test="!=%BASE_ShowDeviceDependentLedSelector%">
-
-                        <ParameterBlock Id="%AID%_PB-nnn" Name="LedFuncParam" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                          <Rows>
-                            <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                          </Rows>
-                          <Columns>
-                            <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                            <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="5%" />
-                            <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="94%" />
-                          </Columns>
-                          <ParameterRefRef RefId="%AID%_UP-%TT%00029_R-%TT%0002901" Cell="1,2" />
-                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Geräteabhängige Vorbelegung" Cell="1,3" />
-                        </ParameterBlock>
-
-                      </when>
-                    </choose>
-
-                    <choose ParamRefId="%AID%_P-%TT%00049_R-%TT%0004901">
-                      <when test="1">
-                        <ParameterBlock Id="%AID%_PB-nnn" Name="HeaderLedFuncTable" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                          <Rows>
-                            <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                          </Rows>
-                          <Columns>
-                            <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                            <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="20%" />
-                            <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
-                            <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="80%" />
-                          </Columns>
-                          <ParameterSeparator Id="%AID%_PS-nnn" Text="LED" Cell="1,2" UIHint="Headline" />
-                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Funktion" Cell="1,3" UIHint="Headline" />
-                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Noitz" Cell="1,4" UIHint="Headline" />
-                        </ParameterBlock>
-
-                        <ParameterBlock Id="%AID%_PB-nnn" Name="ProgLedFuncTable" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                          <Rows>
-                            <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                          </Rows>
-                          <Columns>
-                            <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                            <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="20%" />
-                            <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
-                            <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="80%" />
-                          </Columns>
-                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Prog" Cell="1,2" />
-                          <ParameterSeparator Id="%AID%_PS-nnn" Text="Prog-LED" Cell="1,3" />
-                        </ParameterBlock>
-
-                        <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                          <when test="!=%BASE_ShowInfo1LedFunc%">
-                          <ParameterBlock Id="%AID%_PB-nnn" Name="Info1LedFuncTable" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                            <Rows>
-                              <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                            </Rows>
-                            <Columns>
-                              <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                              <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="20%" />
-                              <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
-                              <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="80%" />
-                            </Columns>
-                            <ParameterSeparator Id="%AID%_PS-nnn" Text="Info 1%BASE_Info1LedLabel%" Cell="1,2" />
-                            <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" Cell="1,3" />
-                            <ParameterRefRef RefId="%AID%_P-%TT%00040_R-%TT%0004001" Cell="1,4" />
-                          </ParameterBlock>
-                          </when>
-                        </choose>
-
-                        <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                          <when test="!=%BASE_ShowInfo2LedFunc%">
-                            <ParameterBlock Id="%AID%_PB-nnn" Name="Info2LedFuncTable" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                              <Rows>
-                                <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                              </Rows>
-                              <Columns>
-                                <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                                <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="20%" />
-                                <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
-                                <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="80%" />
-                              </Columns>
-                              <ParameterSeparator Id="%AID%_PS-nnn" Text="Info 2%BASE_Info1LedLabel%" Cell="1,2" />
-                              <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" Cell="1,3" />
-                              <ParameterRefRef RefId="%AID%_P-%TT%00041_R-%TT%0004101" Cell="1,4" />
-                            </ParameterBlock>
-                          </when>
-                        </choose>
-
-                        <choose ParamRefId="%AID%_P-%TT%00099_R-%TT%0009901">
-                          <when test="!=%BASE_ShowInfo3LedFunc%">
-                            <ParameterBlock Id="%AID%_PB-nnn" Name="Info3LedFuncTable" Inline="true" Layout="Grid" HelpContext="BASE-Info-LEDs">
-                              <Rows>
-                                <Row Id="%AID%_PB-nnn_R-1" Name="Row1" />
-                              </Rows>
-                              <Columns>
-                                <Column Id="%AID%_PB-nnn_C-1" Name="Col1" Width="2%" />
-                                <Column Id="%AID%_PB-nnn_C-2" Name="Col2" Width="20%" />
-                                <Column Id="%AID%_PB-nnn_C-3" Name="Col3" Width="40%" />
-                                <Column Id="%AID%_PB-nnn_C-4" Name="Col4" Width="80%" />
-                              </Columns>
-                              <ParameterSeparator Id="%AID%_PS-nnn" Text="Info 3%BASE_Info1LedLabel%" Cell="1,2" />
-                              <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" Cell="1,3" />
-                              <ParameterRefRef RefId="%AID%_P-%TT%00042_R-%TT%0004201" Cell="1,4" />
-                            </ParameterBlock>
-                          </when>
-                        </choose>
-
-                      </when>
-                    </choose>
-
-                  </ParameterBlock>
-                </when>
-              </choose>
+              <op:usePart name="InfoLed" xpath="//Dynamic/ChannelIndependentBlock/*" />
 
               <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
 						
