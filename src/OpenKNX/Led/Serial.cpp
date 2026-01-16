@@ -167,7 +167,7 @@ namespace OpenKNX
 
         void SerialLedManager::init(uint8_t ledCount)
         {
-            logInfo("SerialLedManager", "init");
+            logInfo("SerialLedManager", "init %d serial leds", (int) ledCount);
 
             // LED-Todo: check max led count based on platform
 
@@ -182,7 +182,7 @@ namespace OpenKNX
                     .gpio_num = (gpio_num_t)_ledPin,
                     .clk_src = RMT_CLK_SRC_DEFAULT, // select source clock
                     .resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ,
-                    .mem_block_symbols = (size_t)(ledCount * BITS_PER_LED_CMD), // increase the block size can make the LED less flickering
+                    .mem_block_symbols = (size_t) max(64 /* required minimum */, ledCount * BITS_PER_LED_CMD), // increase the block size can make the LED less flickering
                     .trans_queue_depth = 1,                                     // set the number of transactions that can be pending in the background
                 };
             rmt_new_tx_channel(&tx_chan_config, &_led_chan);
