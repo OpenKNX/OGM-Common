@@ -634,7 +634,7 @@ namespace OpenKNX
 
         void TimeManager::loopLed()
         {
-            if (!_timeLed->active())
+            if (!_timeLed || !_timeLed->active())
                 return;
 
             if (_timeUpdatedActivity != 0)
