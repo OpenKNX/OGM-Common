@@ -130,6 +130,8 @@ namespace OpenKNX
                 time = time.toLocalTime();
                 logInfoP("%s", time.toString().c_str());
                 logInfoP("%s", time.dayOfWeekString());
+                if (isInaccurate())
+                    logInfoP("Time is inaccurate");
 #ifdef LOG_HolidayKo
                 if (openknx.calendar.isWorkingDayToday())
                     logInfoP("Today is a working day");
@@ -532,10 +534,48 @@ namespace OpenKNX
             if (_timeProvider != nullptr)
                 _timeProvider->loop();
 
-            DateTime localTime = getLocalTime();
-            bool isValidState = isValid();
+            DateTime localTime = DateTime(_lastTimeStamp);
+            TimeChangedEvents timeChangeEvents = (TimeChangedEvents) 0;
+            if (_timeSetEventNeeded)
+            {
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventTimeSet);
+                _timeSetEventNeeded = false;
+            }
+            if (_lastLocalTimeInLoop.second != localTime.second)
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventSecondChanged);
+            if (_lastLocalTimeInLoop.minute != localTime.minute)
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventMinuteChanged);
+            if (_lastLocalTimeInLoop.hour != localTime.hour)
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventHourChanged);
+            if (_lastLocalTimeInLoop.day != localTime.day)
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventDayChanged);
+            if (_lastLocalTimeInLoop.month != localTime.month)
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventMonthChanged);
+            if (_lastLocalTimeInLoop.year != localTime.year)
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventYearChanged);
+            
+            _lastLocalTimeInLoop = localTime;
+            bool isValidState = calculateValid(_lastTimeStamp);
+            if (_lastValidInLoop != isValidState)
+            {    
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventValidChanged);
+                _lastValidInLoop = isValidState;
+            }
+            bool isInaccurateState = calculateInaccurate(_lastTimeStamp);
+            if (_lastInaccurateInLoop != isInaccurateState)
+            {
+                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventInaccurateChanged);
+                _lastInaccurateInLoop = isInaccurateState;
+            }
 
-            loopLed();
+            TimeChangedArgs timeArgs;
+            timeArgs.events = timeChangeEvents;
+            timeArgs.localTime = localTime;
+            timeArgs.isInaccurate = isInaccurateState;
+            timeArgs.isValid = isValidState;
+            if (timeChangeEvents != 0)
+                sendEvent(timeArgs);
+            loopLed(timeArgs);
 
             if (ParamBASE_InternalTime && isValidState)
             {
@@ -632,7 +672,26 @@ namespace OpenKNX
 #endif
         }
 
-        void TimeManager::loopLed()
+        void TimeManager::registerCallback(TimeChangedEvents events, TimeChangeCallback callback)
+        {
+            TimeChangedEventHandler handler;
+            handler.events = events;
+            handler.callback = callback;
+            _callbacks.push_back(handler);
+        }
+
+        void TimeManager::sendEvent(TimeChangedArgs args)
+        {
+            for (auto& handler : _callbacks)
+            {
+                if ((handler.events & args.events) != 0)
+                {
+                    handler.callback(args);
+                }
+            }
+        }
+
+        void TimeManager::loopLed(TimeChangedArgs args)
         {
             if (!_timeLed || !_timeLed->active())
                 return;
@@ -652,13 +711,28 @@ namespace OpenKNX
                     _timeUpdatedActivity = 0;
                 }
             }
-            else if (isValid())
+            else if (args.isValid)
             {
-                if (_ledState != 3)
+                if (args.isInaccurate)
                 {
-                    _ledState = 3;
-                    _timeLed->color(Led::Color::Green);
-                    _timeLed->on();
+                    // time is valid but inaccurate
+                    if (_ledState != 4)
+                    {
+                        _ledState = 4;
+                        _timeLed->color(Led::Color::Yellow);
+                        _timeLed->on(Led::Capability::COLOR);
+                        _timeLed->blinking(1000, Led::Capability::MONOCHROME);
+                    }
+                }
+                else
+                {
+                    // time is valid and accurate
+                    if (_ledState != 3)
+                    {
+                        _ledState = 3;
+                        _timeLed->color(Led::Color::Green);
+                        _timeLed->on();
+                    }
                 }
             }
             else
@@ -674,10 +748,30 @@ namespace OpenKNX
             }
         }
 
+        bool TimeManager::calculateValid(time_t time)
+        {
+            return time > 1704070800; // 2024-01-01
+        }
+
         bool TimeManager::isValid()
         {
             time_t now = _timeClock.getTime();
-            return now > 1704070800; // 2024-01-01
+            return calculateValid(now);
+        }
+
+        bool TimeManager::calculateInaccurate(time_t time)
+        {
+            if (!calculateValid(time))
+                return true;
+            if (_lastUpdatedByProviderTimeStamp == 0)   
+                return true;
+            return time - _lastUpdatedByProviderTimeStamp > 24 * 60 * 60; // more than 24 hours
+        }
+
+        bool TimeManager::isInaccurate()
+        {
+            time_t now = _timeClock.getTime();
+            return calculateInaccurate(now);
         }
 
         DateTime TimeManager::getLocalTime()
@@ -747,6 +841,7 @@ namespace OpenKNX
         {
             _timeUpdatedActivity = millis();
             std::time_t now = _timeClock.getTime();
+            _lastUpdatedByProviderTimeStamp = now;
             double offset = difftime(now, _lastTimeStamp);
             bool changed = offset > 2 || offset < -2;
             if (changed)
@@ -770,6 +865,8 @@ namespace OpenKNX
                           millis() - millisReceivedTimestamp);
             _lastTimeStamp = now;
             sendTime();
+            _timeSetEventNeeded = true;
+       
         }
 
         int8_t TimeManager::isDaylightSavingTime(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute)
