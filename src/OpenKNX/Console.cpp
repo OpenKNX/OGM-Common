@@ -386,7 +386,13 @@ namespace OpenKNX
         openknx.logger.log("Device");
         openknx.logger.color(0);
 #ifdef DEVICE_ID
+    #ifdef DEVICE_HW_ID
+        char deviceIdBuffer[128];
+        sprintf(deviceIdBuffer, "%s (HW ID: 0x%04X)", DEVICE_ID, DEVICE_HW_ID);
+        openknx.logger.logWithPrefix("ID", deviceIdBuffer);
+    #else
         openknx.logger.logWithPrefix("ID", DEVICE_ID);
+    #endif
 #endif
 #ifdef DEVICE_NAME
         openknx.logger.logWithPrefix("Name", DEVICE_NAME);
