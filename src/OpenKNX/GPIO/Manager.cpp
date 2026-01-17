@@ -31,10 +31,17 @@ namespace OpenKNX
         void Manager::init()
         {
 #if OPENKNX_GPIO_NUM > 0
+    #if defined(ARDUINO_ARCH_ESP32)
+            // ESP32: begin() takes SDA/SCL as parameters
+            OPENKNX_GPIO_WIRE.begin(OPENKNX_GPIO_SDA, OPENKNX_GPIO_SCL);
+            OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
+    #else
+            // RP2040, SAMD: setSDA/setSCL before begin()
             OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
             OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
             OPENKNX_GPIO_WIRE.begin();
             OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
+    #endif
 #endif
 
             for (int i = 0; i < OPENKNX_GPIO_NUM + 1; i++)
