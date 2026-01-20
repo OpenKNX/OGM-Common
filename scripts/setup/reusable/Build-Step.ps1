@@ -40,8 +40,41 @@ param (
 )
 
 $buildMode = if ($DebugBuild) { "debug"} else { "run" }
-if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio $buildMode -e $pioEnv }
-else { ~/.platformio/penv/Scripts/pio.exe $buildMode -e $pioEnv }
+
+# Try to find PlatformIO executable
+# Priority:
+# 1. In PATH (most common - IDE extension or standalone installer)
+# 2. In Python virtual environment (pip install platformio)
+
+$pioPath = $null
+
+# Try to find in PATH first (works for IDE extension and standalone)
+$pioCmd = Get-Command pio, pio.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($pioCmd) {
+  $pioPath = $pioCmd.Source
+  Write-Host "Found PlatformIO in PATH: $pioPath" -ForegroundColor DarkGray
+}
+else {
+  # Fallback: Try Python virtual environment location
+  if ($IsMacOS -or $IsLinux) { 
+    $pioPath = Join-Path $HOME (Join-Path ".platformio" (Join-Path "penv" (Join-Path "bin" "pio")))
+  }
+  else { 
+    $pioPath = Join-Path $HOME (Join-Path ".platformio" (Join-Path "penv" (Join-Path "Scripts" "pio.exe")))
+  }
+  
+  if (Test-Path $pioPath) {
+    Write-Host "Found PlatformIO in venv: $pioPath" -ForegroundColor DarkGray
+  }
+  else {
+    Write-Host "ERROR: PlatformIO not found!" -ForegroundColor Red
+    Write-Host "  Searched in PATH and at: $pioPath" -ForegroundColor Yellow
+    Write-Host "  Please install PlatformIO: https://platformio.org/install/cli" -ForegroundColor Yellow
+    exit 1
+  }
+}
+
+& $pioPath $buildMode -e $pioEnv
 if (!$?) {
   Write-Host "$pioEnv build failed, Firmware was not built!"
   exit 1
