@@ -24,10 +24,18 @@
   #define __has_include(...) 1
 #endif
 
+#ifndef _FORCE_INLINE_
 #define _FORCE_INLINE_ __attribute__((__always_inline__)) __inline__
-#define  FORCE_INLINE  __attribute__((always_inline)) inline
+#endif
+#ifndef FORCE_INLINE
+#define FORCE_INLINE  __attribute__((always_inline)) inline
+#endif
+#ifndef NO_INLINE
 #define NO_INLINE      __attribute__((noinline))
+#endif
+#ifndef _UNUSED
 #define _UNUSED      __attribute__((unused))
+#endif
 
 #define IS_CONSTEXPR(...) __builtin_constant_p(__VA_ARGS__) // Only valid solution with C++14. Should use std::is_constant_evaluated() in C++20 instead
 
