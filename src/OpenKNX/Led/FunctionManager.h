@@ -85,6 +85,13 @@ namespace OpenKNX
             void assignLed2Function(Led::Base* led, uint32_t functionId);
 
             /*
+             * Return true if...
+             * ... knx is unconfigured
+             * ... ParamBASE_DefaultLedFunc is true
+             */
+            bool useDefaultFunction();
+
+            /*
              * returns a pointer to a function group representing all leds assigned to the functionId, will create the group if not existing
              */
             FunctionGroup* get(uint32_t functionId);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-model href="../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   <!-- This is a special include File for Applications that do not allow Group objects like a Router. In this file, only parts that differ from Common.share.xml are specified. For the other parts, use the Common.share.xml -->
 
@@ -9,29 +9,36 @@
   <op:config name="%BASE_Info1LedFunc%" value="0"></op:config>
   <op:config name="%BASE_Info2LedFunc%" value="0"></op:config>
   <op:config name="%BASE_Info3LedFunc%" value="0"></op:config>
-  <op:config name="%BASE_Info1LedFunc_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info2LedFunc_Access" value="ReadWrite"></op:config>
-  <op:config name="%BASE_Info3LedFunc_Access" value="ReadWrite"></op:config>
+  <op:config name="%BASE_ShowInfoLedPanel%" value="1"></op:config>
+  <op:config name="%BASE_ShowInfo1LedFunc%" value="1"></op:config>
+  <op:config name="%BASE_ShowInfo2LedFunc%" value="1"></op:config>
+  <op:config name="%BASE_ShowInfo3LedFunc%" value="1"></op:config>
+  <op:config name="%BASE_Info1LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info2LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
 
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
         <ApplicationProgram>
+          <op:part name="InfoLed" href="InfoLed.part.xml" instances="1"></op:part>
           <Static>
             <ParameterTypes>
-              <!-- Status LEDs-->
-              <ParameterType Id="%AID%_PT-SLEDFunc" Name="SLEDFunc">
-                <TypeRestriction Base="Value" SizeInBit="16" UIHint="DropDown">
-                  <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
-                  <Enumeration Text="Prog-LED" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" />
-                  <Enumeration Text="Busstatus" Value="3" Id="%ENID%" />
-                  <Enumeration Text="Zeitstatus" Value="4" Id="%ENID%" />
-                </TypeRestriction>
-              </ParameterType>
+              <!-- PT are used from Common.share.xml only -->
             </ParameterTypes>
             <Parameters>
               <Parameter Id="%AID%_P-%TT%00001" Name="ETS" ParameterType="%AID%_PT-ETS" Text="ETS" Access="Read" Value="" />
+
+              <!-- Helper with 0 An auxiliary parameter that is always 0 to make a check against it -->
+              <Parameter Id="%AID%_P-%TT%00099" Name="SelectHelper" ParameterType="%AID%_PT-CheckBox" Text="" Value="0" Access="None"/>
+
+              <!-- Info LED -->
+              <Parameter Id="%AID%_P-%TT%00040" Name="Info1LedFuncNotice" ParameterType="%AID%_PT-Text80Byte" Text="" Value="" />
+              <Parameter Id="%AID%_P-%TT%00041" Name="Info2LedFuncNotice" ParameterType="%AID%_PT-Text80Byte" Text="" Value="" />
+              <Parameter Id="%AID%_P-%TT%00042" Name="Info3LedFuncNotice" ParameterType="%AID%_PT-Text80Byte" Text="" Value="" />
+              <Parameter Id="%AID%_P-%TT%00049" Name="ShowLedFuncTable"   ParameterType="%AID%_PT-CheckBox"   Text="" Value="1" Access="None" />
+
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00002" Name="StartupDelayBase"   ParameterType="%AID%_PT-DelayBase"        Offset="0" BitOffset="0" Text="Zeitbasis" Value="0" />
@@ -41,15 +48,17 @@
                 <Memory CodeSegment="%MID%" Offset="4" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00147" Name="Watchdog"           ParameterType="%AID%_PT-OnOffYesNo"       Offset="1" BitOffset="1" Text="Watchdog aktivieren" Value="1" />
               </Union>
-              <Union SizeInBit="96">
+              <Union SizeInBit="56">
                 <Memory CodeSegment="%MID%" Offset="6" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="0" BitOffset="0" Text="Info1%BASE_Info1LedLabel%" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="2" BitOffset="0" Text="Info2%BASE_Info2LedLabel%" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="Info3%BASE_Info3LedLabel%" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00029" Name="DefaultLedFunc"    ParameterType="%AID%_PT-CheckBox"     Offset="7" BitOffset="0" Text="" Value="1"/>
               </Union>
+
               <!-- Time & Date -->
               <Union SizeInBit="520">
-                <Memory CodeSegment="%MID%" Offset="12" BitOffset="0" />
+                <Memory CodeSegment="%MID%" Offset="13" BitOffset="0" />
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="1" />
                 <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
@@ -63,11 +72,17 @@
               <ParameterRef Id="%AID%_UP-%TT%00002_R-%TT%0000201" RefId="%AID%_UP-%TT%00002" />
               <ParameterRef Id="%AID%_UP-%TT%00003_R-%TT%0000301" RefId="%AID%_UP-%TT%00003" />
               <ParameterRef Id="%AID%_UP-%TT%00006_R-%TT%0000601" RefId="%AID%_UP-%TT%00006" />
+              <ParameterRef Id="%AID%_P-%TT%00040_R-%TT%0004001" RefId="%AID%_P-%TT%00040" />
+              <ParameterRef Id="%AID%_P-%TT%00041_R-%TT%0004101" RefId="%AID%_P-%TT%00041" />
+              <ParameterRef Id="%AID%_P-%TT%00042_R-%TT%0004201" RefId="%AID%_P-%TT%00042" />
+              <ParameterRef Id="%AID%_P-%TT%00049_R-%TT%0004901" RefId="%AID%_P-%TT%00049" />
               <ParameterRef Id="%AID%_UP-%TT%00144_R-%TT%0014401" RefId="%AID%_UP-%TT%00144" />
               <ParameterRef Id="%AID%_UP-%TT%00147_R-%TT%0014701" RefId="%AID%_UP-%TT%00147" />
               <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" />
               <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
               <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" />
+              <ParameterRef Id="%AID%_UP-%TT%00029_R-%TT%0002901" RefId="%AID%_UP-%TT%00029" />
+              <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
             </ParameterRefs>
           </Static>
           <Dynamic>
@@ -76,6 +91,7 @@
               <ParameterBlock Id="%AID%_PB-nnn" Name="Basic" Text="Allgemein" Icon="cog-outline" HelpContext="BASE-OpenKNX">
                 <!-- Hidden -->
                 <ParameterRefRef RefId="%AID%_UP-%TT%00006_R-%TT%0000601" />
+                <ParameterRefRef RefId="%AID%_P-%TT%00099_R-%TT%0009901" />
 
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Allgemein" UIHint="Headline" />
                 <!-- Startup Delay pattern -->
@@ -111,17 +127,11 @@
 
               </ParameterBlock>
               <ParameterBlock Id="%AID%_PB-nnn" Name="Extended" Text="Erweitert" Icon="format-list-text" HelpContext="BASE-OpenKNX">
-
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitert" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00147_R-%TT%0014701" HelpContext="%DOC%" IndentLevel="1" />
-                
               </ParameterBlock>
-              <ParameterBlock Id="%AID%_PB-nnn" Name="InfoLeds" Text="Info LEDs" Icon="led-on" HelpContext="BASE-Info-LEDs">
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Funktion der Info LEDs" UIHint="Headline" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" IndentLevel="1" />
-              </ParameterBlock>
+
+              <op:usePart name="InfoLed" xpath="//Dynamic/ChannelIndependentBlock/*" />
 
               <ParameterBlock Id="%AID%_PB-nnn" Name="Docu" Text="Hilfe" Icon="help-circle-outline" HelpContext="BASE-OpenKNX">
 						

@@ -8,21 +8,27 @@
   <op:config name="%BASE_ManualSave%" value="0" />
   <op:config name="%BASE_StartupDelay%" value="1" />
   <op:config name="%BASE_ShowSyncModulesButton%" value="0" />
-  <op:nowarn id="7" regex="_R-100000202"/>
   <op:config name="%BASE_Info1LedLabel%" value=""></op:config>
   <op:config name="%BASE_Info2LedLabel%" value=""></op:config>
   <op:config name="%BASE_Info3LedLabel%" value=""></op:config>
   <op:config name="%BASE_Info1LedFunc%" value="0"></op:config>
   <op:config name="%BASE_Info2LedFunc%" value="0"></op:config>
   <op:config name="%BASE_Info3LedFunc%" value="0"></op:config>
+  <op:config name="%BASE_ShowInfoLedPanel%" value="1"></op:config>
+  <op:config name="%BASE_ShowInfo1LedFunc%" value="1"></op:config>
+  <op:config name="%BASE_ShowInfo2LedFunc%" value="1"></op:config>
+  <op:config name="%BASE_ShowInfo3LedFunc%" value="1"></op:config>
   <op:config name="%BASE_Info1LedFunc_Access%" value="ReadWrite"></op:config>
   <op:config name="%BASE_Info2LedFunc_Access%" value="ReadWrite"></op:config>
   <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
+  <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
+  <op:nowarn id="7" regex="_R-100000202"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
       <ApplicationPrograms>
         <ApplicationProgram>
+          <op:part name="InfoLed" href="InfoLed.part.xml" instances="1"></op:part>
           <Static>
             <ParameterTypes>
               <ParameterType Id="%AID%_PT-ETS" Name="ETS">
@@ -31,6 +37,10 @@
               <!-- short description -->
               <ParameterType Id="%AID%_PT-Text40Byte" Name="Text40Byte">
                 <TypeText SizeInBit="320" />
+              </ParameterType>
+              <!-- long description -->
+              <ParameterType Id="%AID%_PT-Text80Byte" Name="Text80Byte">
+                <TypeText SizeInBit="640" />
               </ParameterType>
               <!-- comment field -->
               <ParameterType Id="%AID%_PT-Text512Byte" Name="Text512Byte">
@@ -256,6 +266,12 @@
 
               <Parameter Id="%AID%_P-%TT%00023" Name="ProgLedFunc" ParameterType="%AID%_PT-SLEDFunc" Text="Prog" Value="1" Access="Read"/>
 
+              <!-- Info LED -->
+              <Parameter Id="%AID%_P-%TT%00040" Name="Info1LedFuncNotice" ParameterType="%AID%_PT-Text80Byte" Text="" Value="" />
+              <Parameter Id="%AID%_P-%TT%00041" Name="Info2LedFuncNotice" ParameterType="%AID%_PT-Text80Byte" Text="" Value="" />
+              <Parameter Id="%AID%_P-%TT%00042" Name="Info3LedFuncNotice" ParameterType="%AID%_PT-Text80Byte" Text="" Value="" />
+              <Parameter Id="%AID%_P-%TT%00049" Name="ShowLedFuncTable"   ParameterType="%AID%_PT-CheckBox"   Text="" Value="1" Access="None" />
+
               <!-- General -->
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="0" BitOffset="0" />
@@ -298,12 +314,12 @@
                 <Parameter Id="%AID%_UP-%TT%00037" Name="HeartbeatExtended" ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="3" Text="Erweitertes &quot;In Betrieb&quot;" Value="0" />
                 <!-- Hidden Options for external time control -->
                 <Parameter Id="%AID%_UP-%TT%00006" Name="InternalTime"      ParameterType="%AID%_PT-OnOffYesNo"   Offset="0" BitOffset="4" Text="InternalTime" Access="None" Value="0" />    
-                <!-- 3 Bit free  -->
                 <Parameter Id="%AID%_UP-%TT%00091" Name="ManualSave"        ParameterType="%AID%_PT-ManualSave"   Offset="0" BitOffset="5" Text="Manuelles speichern" Value="%BASE_ManualSave%"/>
                 <Parameter Id="%AID%_UP-%TT%00090" Name="PeriodicSave"      ParameterType="%AID%_PT-PeriodicSave" Offset="1" BitOffset="0" Text="Zyklisches speichern" Value="%BASE_PeriodicSave%" />
                 <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="2" BitOffset="0" Text="Info1%BASE_Info1LedLabel%" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="Info2%BASE_Info2LedLabel%" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="6" BitOffset="0" Text="Info3%BASE_Info3LedLabel%" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
+                <Parameter Id="%AID%_UP-%TT%00029" Name="DefaultLedFunc"    ParameterType="%AID%_PT-CheckBox"     Offset="7" BitOffset="0" Text="" Value="1"/>
                 <!--
                 
                   Reserved for new parameters
@@ -334,7 +350,12 @@
               <ParameterRef Id="%AID%_UP-%TT%00020_R-%TT%0002001" RefId="%AID%_UP-%TT%00020" />
               <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
               <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" />
+              <ParameterRef Id="%AID%_P-%TT%00040_R-%TT%0004001" RefId="%AID%_P-%TT%00040" />
+              <ParameterRef Id="%AID%_P-%TT%00041_R-%TT%0004101" RefId="%AID%_P-%TT%00041" />
+              <ParameterRef Id="%AID%_P-%TT%00042_R-%TT%0004201" RefId="%AID%_P-%TT%00042" />
+              <ParameterRef Id="%AID%_P-%TT%00049_R-%TT%0004901" RefId="%AID%_P-%TT%00049" />
               <ParameterRef Id="%AID%_P-%TT%00023_R-%TT%0002301" RefId="%AID%_P-%TT%00023" />
+              <ParameterRef Id="%AID%_UP-%TT%00029_R-%TT%0002901" RefId="%AID%_UP-%TT%00029" />
               <ParameterRef Id="%AID%_UP-%TT%00034_R-%TT%0003401" RefId="%AID%_UP-%TT%00034" />
               <!-- The follwing 2 IDs are used by logic module for update compatibility -->
               <!-- <ParameterRef Id="%AID%_UP-%TT%00035_R-%TT%0003501" RefId="%AID%_UP-%TT%00035" /> -->
@@ -628,13 +649,9 @@
                   </when>
                 </choose>
               </ParameterBlock>
-              <ParameterBlock Id="%AID%_PB-nnn" Name="InfoLeds" Text="Info LEDs" Icon="led-on" HelpContext="BASE-Info-LEDs">
-                <ParameterSeparator Id="%AID%_PS-nnn" Text="Funktion der Info LEDs" UIHint="Headline" />
-                <ParameterRefRef RefId="%AID%_P-%TT%00023_R-%TT%0002301" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00020_R-%TT%0002001" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00021_R-%TT%0002101" IndentLevel="1" />
-                <ParameterRefRef RefId="%AID%_UP-%TT%00022_R-%TT%0002201" IndentLevel="1" />
-              </ParameterBlock>
+
+              <op:usePart name="InfoLed" xpath="//Dynamic/ChannelIndependentBlock/*" />
+
        	      <ParameterBlock Id="%AID%_PB-nnn" Name="OpenKNXproducerGeneratedModules" Text="Module" Icon="puzzle-outline" HelpContext="BASE-Module">
                 <!-- OpenKNXproducer replacement area, do not add or delete anything within this ParameterBlock -->
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Module" UIHint="Headline" />
