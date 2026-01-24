@@ -294,7 +294,7 @@
         #define FUNC2_BUTTON_PIN 34
         #define FUNC3_BUTTON_PIN 35
 
-        #define ETH_PHY_TYPE  ETH_PHY_LAN8720   // type of PHY used, needed for IDF
+        #define ETH_PHY_TYPE  ETH_PHY_GENERIC   // type of PHY used, needed for IDF
         #define ETH_PHY_ADDR  0                 // PHYs I2C address
         #define ETH_PHY_MDC   33                
         #define ETH_PHY_MDIO  32
