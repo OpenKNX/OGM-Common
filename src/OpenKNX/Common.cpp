@@ -165,7 +165,7 @@ namespace OpenKNX
     {
         logInfoP("Init knx stack");
         logIndentUp();
-#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A || MASK_VERSION == 0x27B0
         openknx.hardware.initKnxInterface();
 #endif
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });

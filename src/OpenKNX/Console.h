@@ -37,7 +37,7 @@ namespace OpenKNX
         uint8_t _consoleCharLast = 0x0;
         bool _diagnoseKoOutput = false;
         bool _disableConsole = false;
-#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A || MASK_VERSION == 0x27B0
         bool _bcuDebug = false;
 #endif
 
@@ -73,7 +73,7 @@ namespace OpenKNX
 
         void showHelp();
 
-#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A || MASK_VERSION == 0x27B0
         bool bcuDebug()
         {
             return _bcuDebug;

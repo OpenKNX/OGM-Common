@@ -274,14 +274,16 @@ namespace OpenKNX
             dll->powerControl(true);
             return true;
         }
-        else if (cmd.compare("bcu debug") == 0)
+#endif
+#if MASK_VERSION == 0x27B0
+        else if (cmd.compare("rf debug") == 0)
         {
             if (_bcuDebug)
                 _bcuDebug = false;
             else
                 _bcuDebug = true;
 
-            openknx.logger.logWithPrefix("BCU<Debug>", _bcuDebug ? "Enabled" : "Disabled");
+            openknx.logger.logWithPrefix("RF<Debug>", _bcuDebug ? "Enabled" : "Disabled");
             return true;
         }
 #endif
@@ -570,10 +572,14 @@ namespace OpenKNX
         printHelpLine("aw <pin> 0-4095", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
+#if MASK_VERSION == 0x27B0
+        printHelpLine("rf debug", "Print received RF frames");
+#endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         printHelpLine("bcu", "Show BCU status");
         printHelpLine("bcu mon", "Start BCU monitoring");
         printHelpLine("bcu rst", "Reset BCU");
+        printHelpLine("bcu debug", "Print received BCU frames");
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         printHelpLine("tm ?", "Help for time related commands");

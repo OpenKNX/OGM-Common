@@ -160,9 +160,10 @@ namespace OpenKNX
 #endif
     }
 
-#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A || MASK_VERSION == 0x27B0
     void Hardware::initKnxInterface()
     {
+ #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
     #if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
         #if KNX_UART_NUM == 0
             #define KNX_UART UART_NUM_0
@@ -200,6 +201,17 @@ namespace OpenKNX
                 if (openknx.console.bcuDebug())
                     openknx.logger.logWithPrefixAndValues("BCU<Debug>", "Received frame: %s", tpFrame.printFrame().c_str());
             });
+ #endif
+ #if MASK_VERSION == 0x27B0
+        knx.bau().getDataLinkLayer()->registerReceivedFrame(
+            [](const char *telegram) {
+                // Process received frame
+                if (openknx.console.bcuDebug())
+                {
+                    openknx.logger.logWithPrefixAndValues("RF<Debug>", "Received frame: %s", telegram);
+                }
+            });
+ #endif
     }
 #endif
 
