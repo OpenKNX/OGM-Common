@@ -274,6 +274,16 @@ namespace OpenKNX
             dll->powerControl(true);
             return true;
         }
+        else if (cmd.compare("bcu debug") == 0)
+        {
+            if (_bcuDebug)
+                _bcuDebug = false;
+            else
+                _bcuDebug = true;
+
+            openknx.logger.logWithPrefix("BCU<Debug>", _bcuDebug ? "Enabled" : "Disabled");
+            return true;
+        }
 #endif
 #if MASK_VERSION == 0x27B0
         else if (cmd.compare("rf debug") == 0)
