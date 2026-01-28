@@ -1,6 +1,6 @@
 # Changes
 
-## 1.6.0: 
+## 1.6.0: 2026-01-28
 
 * Feature: New StatusLED Implementation see README_LED.md
 * Breaking changes: Old LED Apis (openknx.progLed and openknx.infoLeds) no longer available!
