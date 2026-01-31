@@ -1,12 +1,19 @@
 # Changes
 
-## 1.6.0: 
+## 1.6.0: 2026-01-28
 
 * Feature: New StatusLED Implementation see README_LED.md
 * Breaking changes: Old LED Apis (openknx.progLed and openknx.infoLeds) no longer available!
-* Update: RP2040 Framwork update to 5.4.4
+* Update: RP2040 Framework update to 5.4.4
+  * Fix: Network bug causing crashes (with 5.4.3)
 * Update: ESP32 Framework update to 3.3.6
 * Feature: Vcc2 shut off with DCU (POWER_SAVE_PIN)
+* Fix: Estimation of KNX-data size in flash layout display/check
+* Extension: Time Implementation
+  * Add inaccurate time flag
+  * Add callback support to time manager
+* Change (Minor) in ETS-App: Label for column "Aktiv" in module overview 
+* Add Build Check Action
 
 ## 1.5.1: 2025-10-24
 
