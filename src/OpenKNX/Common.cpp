@@ -31,6 +31,7 @@ namespace OpenKNX
 
     void Common::init(uint8_t firmwareRevision)
     {
+#ifndef OPENKNX_DEBUGGER
 #ifdef ARDUINO_ARCH_RP2040
         USB.disconnect();
         USB.setManufacturer("OpenKNX");
@@ -46,7 +47,7 @@ namespace OpenKNX
     #endif
         USB.connect();
 #endif
-
+#endif
         openknx.logger.init();
 
 #ifdef DEVICE_INIT

@@ -1,6 +1,15 @@
-# copy global config files knxprod.h and hardware.h to search path before we compile the projekt
-$env = $args[0]
-$target = $args[1]
+
+param (
+  [Parameter(Mandatory = $false, HelpMessage="Initiate debug build, -DebugBuild should be first odr last parameter")]
+  [switch]$DebugBuild,
+
+  [Parameter(Mandatory = $true)]
+  [ValidateNotNullOrEmpty()]
+  [string]$env,
+
+  [Parameter(Mandatory = $false)]
+  [string]$target
+)
 
 # pre build
 if (Test-Path -Path scripts/OpenKNX-Pre-Build.ps1) {
@@ -8,12 +17,13 @@ if (Test-Path -Path scripts/OpenKNX-Pre-Build.ps1) {
 }
 if (!$?) { exit 1 }
 
+$buildMode = if ($DebugBuild) { "debug"} else { "run" }
 if ($target) {
-    if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio run -e $env --target $target } 
-    else { ~/.platformio/penv/Scripts/pio.exe run -e $env --target $target }
+    if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio $buildMode -e $env --target $target } 
+    else { ~/.platformio/penv/Scripts/pio.exe $buildMode -e $env --target $target }
 } else {
-    if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio run -e $env }
-    else { ~/.platformio/penv/Scripts/pio.exe run -e $env } 
+    if ($IsMacOS -or $IsLinux) { ~/.platformio/penv/bin/pio $buildMode -e $env }
+    else { ~/.platformio/penv/Scripts/pio.exe $buildMode -e $env } 
 }
 
 # post build
