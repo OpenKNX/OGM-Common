@@ -15,7 +15,7 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     progress.setProgress(20);
     
     var data = [0]; // no input data
-    var resp = BASE_invokeFunctionPropertyWrapper(158, 2, data, device, online, progress);
+    var resp = online.invokeFunctionProperty(158, 2, data);
     online.disconnect();
 
     if (!resp || resp.length < 1 || resp[0] != 0) {
