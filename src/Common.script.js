@@ -15,7 +15,7 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     progress.setProgress(20);
     
     var data = [0]; // no input data
-    var resp = online.invokeFunctionProperty(158, 2, data);
+    var resp = BASE_invokeFunctionPropertyWrapper(158, 2, data, device, online, progress);
     online.disconnect();
 
     if (!resp || resp.length < 1 || resp[0] != 0) {
@@ -43,4 +43,139 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
         progress.setText("Common: Unterstützte Module wurden abgeglichen.");
     else
         progress.setText("Common: Nicht unterstützte Module wurden ausgeblendet.");
+}
+
+function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, device, online, progress) {
+    var apdu = device.getParameterByName("BASE_ApduLength");
+    var apduLength = apdu.value;
+    if (apduLength < 15)
+    {
+        try {
+            apduLength = online.getMaxApduLength();
+        } catch (error) {
+            apduLength = 15;
+        }
+        apdu.value = apduLength;
+    }
+
+    info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
+    var dataLength = data.length;
+    // calculate number of packages
+    var numPackages = Math.ceil(dataLength / (apduLength - 1));
+    // send header data
+    var header = [0, apduLength, numPackages >> 8, numPackages & 0xFF, 0];
+    var resp = online.invokeFunctionProperty(0x9E, 3, header);
+    if (!resp || resp.length < 1 || resp[0] != 0) {
+        throw new Error("Common: Keine Antwort vom Gerät!");
+    }
+    if (resp.length < 2) { // error
+        throw new Error("Common: Ungültige Antwort vom Gerät!");
+    }
+    // header accepted, we send now all data
+    var sequenceNumber = 0;
+    do {
+        sequenceNumber = resp[1];
+        var pkg = [sequenceNumber];
+        var offset = (sequenceNumber-2)*(apduLength-1);
+        var chunkLength = Math.min(dataLength, apduLength - 1);
+        for (var j = 0; j < chunkLength; j++) {
+            pkg.push(data[j+offset]);
+        }
+        // pkg.push(0);
+        dataLength -= chunkLength;
+        progress.setText("Übertrage Sequenz " + (sequenceNumber - 1) + "/" + numPackages);
+        resp = online.invokeFunctionProperty(0x9E, 3, pkg);       
+    } while (resp[0] == 0 && resp.length == 2 && resp[1] > 0 && resp[1] < 128 );
+    if (resp[0] == 1) {
+        throw new Error("Common: Fehler beim Senden von Daten");
+    }
+    // data sent, call target function property
+    header = [1, objectIndex, propertyId, 0];
+    resp = online.invokeFunctionProperty(0x9E, 3, header);
+    if (!resp || resp.length < 1 || resp[0] != 0) {
+        throw new Error("Common: Keine Antwort vom Gerät beim Datenempfang!");
+    }
+    if (resp.length < 4) { // error
+        throw new Error("Common: Ungültige Antwort nach Funktionsaufruf");
+    }
+    // we prepare data receive
+    dataLength = (resp[1] << 8) + resp[2];
+    sequenceNumber = (resp[3] << 24) >> 24;  // Sign-extend via bit shifts
+    numPackages = Math.ceil(dataLength / (apduLength - 1)) + 1;
+    var response = [];
+    pkg = 1;
+    do {
+        data = [sequenceNumber & 0xFF, 0];
+        progress.setText("Empfange Sequenz " + pkg++ + "/" + numPackages);
+        resp = online.invokeFunctionProperty(0x9E, 3, data);
+        var nextSequenceNumber = (resp[0] << 24) >> 24;  // Sign-extend via bit shifts
+        if (nextSequenceNumber == sequenceNumber) {
+            sequenceNumber--;
+            for (var j = 1; j < resp.length; j++) {
+                response.push(resp[j]);
+            }
+        }
+    } while (nextSequenceNumber < 0);
+    info("BASE_invokeFunctionPropertyWrapper: response = " + response);
+
+    return response;
+}
+
+function BASE_applyHardwareConfig(device, online, progress, context) {
+    progress.setText("Common: Frage Hardware nach passender ETS-Konfiguration...");
+    progress.setProgress(1);
+    online.connect();
+    progress.setProgress(20);
+    
+    var data = [0]; // no input data
+    var resp = BASE_invokeFunctionPropertyWrapper(0x9e, 5, data, device, online, progress);
+    online.disconnect();
+
+    if (!resp || resp.length < 1 || resp[0] != 92) {
+        throw new Error("Common: Keine Antwort vom Gerät!");
+    }
+    if (resp.length < 5) { // error
+        throw new Error("Common: Ungültige Antwort vom Gerät!");
+    }
+
+    progress.setText("Common: ETS wird jetzt konfiguriert...");
+    progress.setProgress(80);
+
+    var config = "";
+    var isValue = false;
+    var paramName = "";
+    var value = "";
+    for (var i = 1; i < resp.length; i++)
+    {
+        var char = resp[i];     
+        if (char == 10) continue;
+        if (!isValue && char == 32) continue;
+        if (char == 61)
+        {
+            paramName = config;
+            config = "";
+            isValue = true;
+            continue;
+        } 
+        if (char == 92)
+        {
+            value = config;
+            config = "";
+            isValue = false;
+            info("BASE_applyHardwareConfig: paramName='" + paramName + "', value='" + value + "'");
+            // apply parameter
+            try {
+                var param = device.getParameterByName(paramName);
+                if (param) param.value = value;
+            } catch (error) {
+                // do nothing
+            }
+            paramName = "";
+            value = "";
+            continue;
+        }
+        config += String.fromCharCode(char);
+    }
+    progress.setText("Common: ETS wurde passend zur Hardware konfiguriert.");
+    progress.setProgress(100);
 }

@@ -882,6 +882,130 @@ namespace OpenKNX
     #endif
 #endif
 
+    uint8_t _apduLength = 0;
+    uint16_t _packageCount = 0;
+    int8_t _sequenceNumber = 0;
+    uint8_t _receivedData[256];
+    uint8_t _receivedLength;
+    uint8_t _resultData[256];
+    uint8_t* _resultDataPointer;
+    int16_t _resultLength = 0;
+
+    // this function allows to use a normal property function with lower APDU. It allows receive data in small apdu packages, calls the target property function with
+    // the full dataset, and sends back resultData as packages
+    bool Common::processFunctionPropertyWrapper(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
+    {
+        const uint8_t sequenceStart = 2;
+
+        bool result = false;
+        int8_t cmd = (int8_t)data[0];
+        if (cmd == 0) 
+        {
+            // Header information for data transmission
+            _apduLength = data[1];
+            _packageCount = (data[2] << 8) + data[3];
+            _sequenceNumber = 2;
+            _receivedLength = 0;
+            resultData[0] = 0; //ok
+            resultData[1] = _sequenceNumber; // tells the client the next sequence number
+            resultLength = 2;
+            result = true;
+        }
+        else if (cmd == 1)
+        {
+            // execute target function property
+            uint8_t targetObjectIndex = data[1];
+            uint8_t targetPropertyId = data[2];
+            uint8_t tmpResultLength;
+            if (targetObjectIndex == 0x9E && targetPropertyId == 5) 
+            {
+                result = processFunctionPropertyLong(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, &_resultDataPointer, tmpResultLength);
+            }
+            else
+            {
+                result = processFunctionProperty(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, _resultData, tmpResultLength);
+                _resultDataPointer = _resultData;
+            }
+            _resultLength = tmpResultLength;
+            resultData[0] = !result;
+            resultData[1] = (_resultLength >> 8) & 0xFF; // reserved high byte for longer results;
+            resultData[2] = _resultLength & 0xFF;
+            resultData[3] = -sequenceStart;
+            resultLength = 4;
+            result = true;
+        } 
+        else if (cmd >= sequenceStart)
+        {
+            // ETS sends a package, data[0] contains sequence number
+            if (cmd == _sequenceNumber)
+            {
+                _sequenceNumber++;
+                if (_sequenceNumber >= 127) _sequenceNumber = sequenceStart;
+                // receive package
+                memcpy(_receivedData + _receivedLength, data + 1, length - 1);
+                _receivedLength += (length - 1);
+                result = true;
+                // check if all data received
+                if (--_packageCount == 0)
+                {
+                    _sequenceNumber = -sequenceStart;
+                }
+                // create answer                
+                resultData[0] = (bool)!result; //ok
+                resultData[1] = _sequenceNumber; // tells the client the next sequence number
+            }
+            else
+            {
+                // request correct sequence number again
+                resultData[0] = 1; //wrong sequence number
+                resultData[1] = _sequenceNumber; // tells the client the last correct to resend
+                result = true;
+            }
+            resultLength = 2;
+        }
+        else if (cmd <= -sequenceStart)
+        {
+            // check if all data sent
+            if (_resultLength <= 1)
+            {
+                // finish marker
+                resultData[0] = 0;
+                resultLength = 1;
+                return true;
+            }
+            // ETS wants to receive a package, data[0] contains sequence number
+            resultData[0] = data[0]; // return the requested sequence number
+            // calculate data offset based on apdu and sequenceNumber
+            uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1); 
+            // send package
+            resultLength = min(_apduLength, _resultLength);
+            memcpy(resultData + 1, _resultDataPointer + resultOffset, resultLength - 1);
+            _resultLength -= (resultLength - 1);
+            result = true;
+        }
+        return result;
+    }
+
+    bool Common::processFunctionPropertyLong(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t** resultData, uint8_t& resultLength)
+    {
+    #ifdef ETS_INIT
+        ETS_INIT();
+    #else
+        const char* ETSConfigShort = nullptr;
+    #endif
+        if (ETSConfigShort == nullptr)
+        {
+            *resultData = nullptr;
+            resultLength = 0;
+        } 
+        else
+        {
+            *resultData = (uint8_t*)ETSConfigShort;
+            for (resultLength = 0; ETSConfigShort[resultLength] > 0; resultLength++);
+        }     
+        return true;            
+    }
+
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         // Unsupported ETS Modules
@@ -894,6 +1018,21 @@ namespace OpenKNX
             resultData[4] = (_unsupportedEtsModules >> 24) & 0xFF;
             resultLength = 5;
             return true; // handled
+        } 
+        else if (objectIndex == 0x9E && propertyId == 3)
+        {
+            return processFunctionPropertyWrapper(objectIndex, propertyId, length, data, resultData, resultLength);
+        }
+        else if (objectIndex == 0x9E && propertyId == 4)
+        {
+            logInfoP("Empfangen %i bytes: ", length);
+            logHexInfoP(data, length);
+            const char *localData = "Das ist ein Ergebnis mit mehr Zeichen als die APDU";
+            resultData[0] = 33; // '!' as marker;
+            resultLength = 52;
+            memcpy(resultData + 1, localData, resultLength - 1);
+            resultData[resultLength] = 0; //zero termination
+            return true;
         }
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
