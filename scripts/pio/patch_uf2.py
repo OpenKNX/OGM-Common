@@ -13,8 +13,16 @@ class console_color:
     END = '\033[0m'
 
 def post_program_action(source, target, env):
+
     print()
-    print("{}Patching {}.u2f for KnxUpdater:{}".format(console_color.YELLOW, source[0].get_path()[0:-4], console_color.END))
+    print("{}Patching {}.u2f for KnxFileTransferClient:{}".format(console_color.YELLOW, source[0].get_path()[0:-4], console_color.END))
+    uf2source = source[0].get_path()[0:-4] + ".uf2"
+    elfsource = source[0].get_path()[0:-4] + ".elf"
+    if not os.path.exists(uf2source):
+        commandstring = 'picotool uf2 convert -t elf "' + elfsource + '" "' + uf2source +'"'
+        print("  Rebuilding firmware.uf2 from firmware.elf")
+        print("  " + commandstring)
+        exec_command(commandstring, shell=True)
     content = open("include/knxprod.h", 'r').read()
 
     m = re.search("#define MAIN_OpenKnxId (0x)?([0-9A-Fa-f]{1,2})", content)
@@ -44,21 +52,22 @@ def post_program_action(source, target, env):
     else:
         application_version = int(m.group(2))
 
-    content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()
-
-    m = re.search("const uint8_t firmwareRevision = ([0-9]+);", content)
+    m = re.search(r"#define MAIN_FirmwareRevision (\d{1,2})", content)
     if m is None:
-        print("{}  {}{}".format(console_color.RED, "Error: FirmwareRevision not readable", console_color.END))
-        return
-    else:
-        firmware_revision = int(m.group(1))
+        # Old style, read from main.cpp
+        content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()
+        m = re.search("const uint8_t firmwareRevision = ([0-9]+);", content)
+        if m is None:
+            print("{}  {}{}".format(console_color.RED, "Error: FirmwareRevision not readable", console_color.END))
+            return
+    firmware_revision = int(m.group(1))
 
     print("{}  OpenKnxId:          0x{} ({}){}".format(console_color.CYAN, format(openknxid, '02X'), openknxid, console_color.END))
     print("{}  ApplicationNumber:  0x{} ({}){}".format(console_color.CYAN, format(application_number, '02X'), application_number, console_color.END))
     print("{}  ApplicationVersion: 0x{} ({}){}".format(console_color.CYAN, format(application_version, '02X'), application_version, console_color.END))
     print("{}  FirmwareRevision:   0x{} ({}){}".format(console_color.CYAN, format(firmware_revision, '02X'), firmware_revision, console_color.END))
-
-    barray = bytearray(open(source[0].get_path()[0:-4] + ".uf2", "rb").read())
+    
+    barray = bytearray(open(uf2source, "rb").read())
     barray[9] = barray[9] | 0x80
     barray[288] = 8 #Tag Size
     barray[289] = 0x4B #Type
@@ -68,8 +77,8 @@ def post_program_action(source, target, env):
     barray[293] = application_number #Data
     barray[294] = application_version #Data
     barray[295] = firmware_revision #Data
-    open(source[0].get_path()[0:-4] + ".uf2","wb").write(barray)
 
+    open(uf2source,"wb").write(barray)
     print("{}  Patching completed{}".format(console_color.GREEN, console_color.END))
     print()
 
