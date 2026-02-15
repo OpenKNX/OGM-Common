@@ -1,5 +1,13 @@
 # Changes
 
+## 1.6.1: 2026-02-14
+
+- Fix: remove OpenKNXHardware.h (replaced by OGM-HardwareConfig)
+- Fix: skip initialization of USB-Port in case of Debug-Session
+- Feature: improve Build-Script with optional debug build and named parameters (full compatible with old calls to this script)
+- Feature: Force OpenKNXproducer to version 3.13.0
+
+
 ## 1.6.0: 2026-01-28
 
 * Feature: New StatusLED Implementation see README_LED.md

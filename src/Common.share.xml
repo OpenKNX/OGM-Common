@@ -2,7 +2,7 @@
 <?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   
-  <op:minOpenKNXproducerVersion value="3.13.0" />
+  <op:minOpenKNXproducerVersion value="3.13.6" />
   
   <op:config name="%BASE_ShowExtendedSave%" value="1" />
   <op:config name="%BASE_ExtendedSave%" value="0" />
@@ -337,7 +337,7 @@
               <Parameter Id="%AID%_P-0099901" Name="ApduLength" ParameterType="%AID%_PT-ValueDpt5" Text="APDU" Value="0" SuffixText="APDU                " />
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="110" BitOffset="0" />
-                <Parameter Id="%AID%_UP-00999%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" op:configTransfer="never" />
+                <Parameter Id="%AID%_UP-00998%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" op:configTransfer="never" />
               </Union>
 
             </Parameters>
@@ -383,7 +383,7 @@
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
               <ParameterRef Id="%AID%_P-0099900_R-009990001" RefId="%AID%_P-0099900" />
               <ParameterRef Id="%AID%_P-0099901_R-009990101" RefId="%AID%_P-0099901" />
-              <ParameterRef Id="%AID%_UP-00999%ProducerModuleRefId%" RefId="%AID%_UP-00999%ProducerModuleId%" />
+              <ParameterRef Id="%AID%_UP-00998%ProducerModuleRefId%" RefId="%AID%_UP-00998%ProducerModuleId%" />
 
             </ParameterRefs>
             <ComObjectTable>
@@ -674,7 +674,7 @@
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Aktiv" Cell="1,2" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Modul" Cell="1,3" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Version" Cell="1,4" UIHint="Headline" />
-                  <ParameterRefRef RefId="%AID%_UP-00999%ProducerModuleRefId%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
+                  <ParameterRefRef RefId="%AID%_UP-00998%ProducerModuleRefId%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleName%" Cell="%ModuleCount+1%,3" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleVersion%" Cell="%ModuleCount+1%,4" />
                 </ParameterBlock>
