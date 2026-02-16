@@ -46,23 +46,18 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
 }
 
 function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, device, online, progress) {
-    var apdu = device.getParameterByName("BASE_ApduLength");
-    var apduLength = apdu.value;
-    if (apduLength < 15)
-    {
-        try {
-            apduLength = online.getMaxApduLength();
-        } catch (error) {
-            apduLength = 15;
-        }
-        apdu.value = apduLength;
+    try {
+        apduLength = online.getMaxApduLength();
+    } catch (error) {
+        apduLength = 15;
     }
+    apdu.value = apduLength;
 
     info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
     var dataLength = data.length;
-    // calculate number of packages
+    // calculate number of packages (1 Byte sequence number)
     var numPackages = Math.ceil(dataLength / (apduLength - 1));
-    // send header data
+    // send header data (APDU length, Number of Packages)
     var header = [0, apduLength, numPackages >> 8, numPackages & 0xFF, 0];
     var resp = online.invokeFunctionProperty(0x9E, 3, header);
     if (!resp || resp.length < 1 || resp[0] != 0) {
@@ -74,6 +69,9 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
     // header accepted, we send now all data
     var sequenceNumber = 0;
     do {
+        // positive sequence numbers mean "send data to device"
+        // response contains always the next sequence number to send
+        // to repeat a package the device sends the sequence number again
         sequenceNumber = resp[1];
         var pkg = [sequenceNumber];
         var offset = (sequenceNumber-2)*(apduLength-1);
@@ -81,11 +79,11 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
         for (var j = 0; j < chunkLength; j++) {
             pkg.push(data[j+offset]);
         }
-        // pkg.push(0);
         dataLength -= chunkLength;
         progress.setText("Übertrage Sequenz " + (sequenceNumber - 1) + "/" + numPackages);
         resp = online.invokeFunctionProperty(0x9E, 3, pkg);       
     } while (resp[0] == 0 && resp.length == 2 && resp[1] > 0 && resp[1] < 128 );
+    // in case of any error during send of data
     if (resp[0] == 1) {
         throw new Error("Common: Fehler beim Senden von Daten");
     }
@@ -99,28 +97,37 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
         throw new Error("Common: Ungültige Antwort nach Funktionsaufruf");
     }
     // we prepare data receive
+    // response contains result length...
     dataLength = (resp[1] << 8) + resp[2];
+    // ... and the next (negative) sequence number
+    // negative sequence numbers mean "receive data from device"
+    // they are handles as abs(sequenceNumber)
     sequenceNumber = (resp[3] << 24) >> 24;  // Sign-extend via bit shifts
     numPackages = Math.ceil(dataLength / (apduLength - 1)) + 1;
     var response = [];
     pkg = 1;
     do {
+        // request data with a (negative) sequence number
         data = [sequenceNumber & 0xFF, 0];
         progress.setText("Empfange Sequenz " + pkg++ + "/" + numPackages);
         resp = online.invokeFunctionProperty(0x9E, 3, data);
-        var nextSequenceNumber = (resp[0] << 24) >> 24;  // Sign-extend via bit shifts
-        if (nextSequenceNumber == sequenceNumber) {
-            sequenceNumber--;
+        // device responds with same (negative) sequence number
+        var respSequenceNumber = (resp[0] << 24) >> 24;  // Sign-extend via bit shifts
+        if (respSequenceNumber == sequenceNumber) {
+            // as long as device returns the same sequence number we copy the packet in our response
             for (var j = 1; j < resp.length; j++) {
                 response.push(resp[j]);
             }
+            // ... and decrease the sequence number
+            sequenceNumber--;
         }
-    } while (nextSequenceNumber < 0);
+    // until the response sequence number is non-negative
+    } while (respSequenceNumber < 0);
     info("BASE_invokeFunctionPropertyWrapper: response = " + response);
-
     return response;
 }
 
+// test Hardware config script, not for productive use, do not use yet
 function BASE_applyHardwareConfig(device, online, progress, context) {
     progress.setText("Common: Frage Hardware nach passender ETS-Konfiguration...");
     progress.setProgress(1);
@@ -128,7 +135,7 @@ function BASE_applyHardwareConfig(device, online, progress, context) {
     progress.setProgress(20);
     
     var data = [0]; // no input data
-    var resp = BASE_invokeFunctionPropertyWrapper(0x9e, 5, data, device, online, progress);
+    var resp = BASE_invokeFunctionPropertyWrapper(0x9e, 4, data, device, online, progress);
     online.disconnect();
 
     if (!resp || resp.length < 1 || resp[0] != 92) {

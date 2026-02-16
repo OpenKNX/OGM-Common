@@ -882,15 +882,6 @@ namespace OpenKNX
     #endif
 #endif
 
-    uint8_t _apduLength = 0;
-    uint16_t _packageCount = 0;
-    int8_t _sequenceNumber = 0;
-    uint8_t _receivedData[256];
-    uint8_t _receivedLength;
-    uint8_t _resultData[256];
-    uint8_t* _resultDataPointer;
-    int16_t _resultLength = 0;
-
     // this function allows to use a normal property function with lower APDU. It allows receive data in small apdu packages, calls the target property function with
     // the full dataset, and sends back resultData as packages
     bool Common::processFunctionPropertyWrapper(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
@@ -898,14 +889,15 @@ namespace OpenKNX
         const uint8_t sequenceStart = 2;
 
         bool result = false;
-        int8_t cmd = (int8_t)data[0];
+        // first Byte is command (0, 1) or sequence number (<=-2 send data, >=2 receive data )
+        int8_t cmd = (int8_t)data[0]; 
         if (cmd == 0) 
         {
-            // Header information for data transmission
-            _apduLength = data[1];
-            _packageCount = (data[2] << 8) + data[3];
-            _sequenceNumber = 2;
-            _receivedLength = 0;
+            // receive header information for data transmission
+            _apduLength = data[1];  // available APDU length
+            _packageCount = (data[2] << 8) + data[3]; // number of expected packages
+            _sequenceNumber = sequenceStart; // first expected sequence number
+            _receivedLength = 0; // init length counter
             resultData[0] = 0; //ok
             resultData[1] = _sequenceNumber; // tells the client the next sequence number
             resultLength = 2;
@@ -914,33 +906,44 @@ namespace OpenKNX
         else if (cmd == 1)
         {
             // execute target function property
-            uint8_t targetObjectIndex = data[1];
+            uint8_t targetObjectIndex = data[1];  
             uint8_t targetPropertyId = data[2];
             uint8_t tmpResultLength;
-            if (targetObjectIndex == 0x9E && targetPropertyId == 5) 
+            if (targetObjectIndex == 0x9E && targetPropertyId == 4) 
             {
+                // test: extend result length > 254 Bytes
                 result = processFunctionPropertyLong(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, &_resultDataPointer, tmpResultLength);
             }
             else
             {
+                // call function property
                 result = processFunctionProperty(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, _resultData, tmpResultLength);
                 _resultDataPointer = _resultData;
             }
+            // send result to the client
             _resultLength = tmpResultLength;
-            resultData[0] = !result;
+            resultData[0] = !result;    // success indicator
             resultData[1] = (_resultLength >> 8) & 0xFF; // reserved high byte for longer results;
-            resultData[2] = _resultLength & 0xFF;
-            resultData[3] = -sequenceStart;
+            resultData[2] = _resultLength & 0xFF; // result length
+            resultData[3] = -sequenceStart; // first sequence number to send
             resultLength = 4;
             result = true;
         } 
         else if (cmd >= sequenceStart)
         {
+            // sequence number >=2, we receive data
             // ETS sends a package, data[0] contains sequence number
             if (cmd == _sequenceNumber)
             {
+                // we got correct sequence number, increase for next one
                 _sequenceNumber++;
-                if (_sequenceNumber >= 127) _sequenceNumber = sequenceStart;
+                if (_sequenceNumber >= 127) 
+                {
+                    // max sequence number reached
+                    resultData[0] = 2;
+                    resultLength = 1;
+                    return false;
+                }
                 // receive package
                 memcpy(_receivedData + _receivedLength, data + 1, length - 1);
                 _receivedLength += (length - 1);
@@ -986,6 +989,7 @@ namespace OpenKNX
         return result;
     }
 
+    // Test, do not use
     bool Common::processFunctionPropertyLong(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t** resultData, uint8_t& resultLength)
     {
     #ifdef ETS_INIT

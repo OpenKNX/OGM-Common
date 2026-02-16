@@ -25,6 +25,7 @@
   <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
   <op:nowarn id="7" regex="_R-100000202"/>
+  <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">

@@ -47,6 +47,17 @@ namespace OpenKNX
 #endif
         Led::Functions _ledFunctions = Led::Functions();
 
+        // propertyFunctionWrapper global storage
+        uint8_t _apduLength = 0;
+        uint16_t _packageCount = 0;
+        int8_t _sequenceNumber = 0;
+        uint8_t _receivedData[256];
+        uint8_t _receivedLength;
+        uint8_t _resultData[256];
+        uint8_t* _resultDataPointer;
+        int16_t _resultLength = 0;
+
+
         void initKnx();
 
         void processModulesLoop();
