@@ -25,6 +25,7 @@
   <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
   <op:nowarn id="7" regex="_R-100000202"/>
+  <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -334,6 +335,7 @@
               <!-- Local parameters for module visibility -->
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
               <Parameter Id="%AID%_P-0099900" Name="ShowModuleSyncButton" ParameterType="%AID%_PT-CheckBox" Text="Module abgleichen zeigen?" Value="1" Access="None" />
+              <Parameter Id="%AID%_P-0099901" Name="ApduLength" ParameterType="%AID%_PT-ValueDpt5" Text="APDU" Value="0" SuffixText="APDU                " />
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="110" BitOffset="0" />
                 <Parameter Id="%AID%_UP-00998%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" op:configTransfer="never" />
@@ -381,6 +383,7 @@
               <!-- Local parameters for module visibility -->
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
               <ParameterRef Id="%AID%_P-0099900_R-009990001" RefId="%AID%_P-0099900" />
+              <ParameterRef Id="%AID%_P-0099901_R-009990101" RefId="%AID%_P-0099901" />
               <ParameterRef Id="%AID%_UP-00998%ProducerModuleRefId%" RefId="%AID%_UP-00998%ProducerModuleId%" />
 
             </ParameterRefs>
@@ -687,6 +690,7 @@
                       <Rows>
                         <Row Id="%AID%_PB-nnn_R-1" />
                         <Row Id="%AID%_PB-nnn_R-2" />
+                        <Row Id="%AID%_PB-nnn_R-3" />
                       </Rows>
                       <Columns>
                         <Column Id="%AID%_PB-nnn_C-1" Width="2%" />
@@ -695,8 +699,10 @@
                       </Columns>
                       <Button Id="%AID%_B-%TT%00001" Text="Nicht unterstützte Module deaktivieren" Name="UnsupportedModules" Cell="1,2" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 0}" EventHandlerOnline="ConnectionOriented" />
                       <Button Id="%AID%_B-%TT%00002" Text="Komplettabgleich aller Module"          Name="SyncModules"        Cell="2,2" EventHandler="BASE_getUnsupportedEtsModules" EventHandlerParameters="{&quot;Sync&quot;: 1}" EventHandlerOnline="ConnectionOriented" />
+                      <Button Id="%AID%_B-%TT%00003" Text="ETS-Init über Hardware"                 Name="HardwareConfig"     Cell="3,2" EventHandler="BASE_applyHardwareConfig"      EventHandlerOnline="ConnectionOriented" />
                       <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,3" Text="Die nicht unterstützten Module werden ausgeblendet. Die vom Benutzer ausgeblendeten Module bleiben ausgeblendet." />
                       <ParameterSeparator Id="%AID%_PS-nnn" Cell="2,3" Text="Es werden sowohl die unterstützten wie auch die nicht unterstützten Module abgeglichen. Die vom Benutzer vorgenommene Auswahl wird überschrieben." />
+                      <ParameterRefRef RefId="%AID%_P-0099901_R-009990101" Cell="3,3" />
                     </ParameterBlock>
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="&#10;" />
                   </when>
