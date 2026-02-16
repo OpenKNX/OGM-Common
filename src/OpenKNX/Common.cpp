@@ -882,8 +882,10 @@ namespace OpenKNX
     #endif
 #endif
 
-    // this function allows to use a normal property function with lower APDU. It allows receive data in small apdu packages, calls the target property function with
-    // the full dataset, and sends back resultData as packages
+    // this function allows to use a normal property function with lower APDU. 
+    // It allows receive data in small apdu packages, 
+    // then calls the target property function with the full dataset, 
+    // and finally sends back resultData as packages
     bool Common::processFunctionPropertyWrapper(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
         const uint8_t sequenceStart = 2;
@@ -908,18 +910,9 @@ namespace OpenKNX
             // execute target function property
             uint8_t targetObjectIndex = data[1];  
             uint8_t targetPropertyId = data[2];
-            uint8_t tmpResultLength;
-            if (targetObjectIndex == 0x9E && targetPropertyId == 4) 
-            {
-                // test: extend result length > 254 Bytes
-                result = processFunctionPropertyLong(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, &_resultDataPointer, tmpResultLength);
-            }
-            else
-            {
-                // call function property
-                result = processFunctionProperty(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, _resultData, tmpResultLength);
-                _resultDataPointer = _resultData;
-            }
+            uint8_t tmpResultLength = 0;
+            // call function property
+            result = processFunctionProperty(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, _resultData, tmpResultLength);
             // send result to the client
             _resultLength = tmpResultLength;
             resultData[0] = !result;    // success indicator
@@ -982,32 +975,11 @@ namespace OpenKNX
             uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1); 
             // send package
             resultLength = min(_apduLength, _resultLength);
-            memcpy(resultData + 1, _resultDataPointer + resultOffset, resultLength - 1);
+            memcpy(resultData + 1, _resultData + resultOffset, resultLength - 1);
             _resultLength -= (resultLength - 1);
             result = true;
         }
         return result;
-    }
-
-    // Test, do not use
-    bool Common::processFunctionPropertyLong(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t** resultData, uint8_t& resultLength)
-    {
-    #ifdef ETS_INIT
-        ETS_INIT();
-    #else
-        const char* ETSConfigShort = nullptr;
-    #endif
-        if (ETSConfigShort == nullptr)
-        {
-            *resultData = nullptr;
-            resultLength = 0;
-        } 
-        else
-        {
-            *resultData = (uint8_t*)ETSConfigShort;
-            for (resultLength = 0; ETSConfigShort[resultLength] > 0; resultLength++);
-        }     
-        return true;            
     }
 
     bool Common::processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
@@ -1026,17 +998,6 @@ namespace OpenKNX
         else if (objectIndex == 0x9E && propertyId == 3)
         {
             return processFunctionPropertyWrapper(objectIndex, propertyId, length, data, resultData, resultLength);
-        }
-        else if (objectIndex == 0x9E && propertyId == 4)
-        {
-            logInfoP("Empfangen %i bytes: ", length);
-            logHexInfoP(data, length);
-            const char *localData = "Das ist ein Ergebnis mit mehr Zeichen als die APDU";
-            resultData[0] = 33; // '!' as marker;
-            resultLength = 52;
-            memcpy(resultData + 1, localData, resultLength - 1);
-            resultData[resultLength] = 0; //zero termination
-            return true;
         }
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)

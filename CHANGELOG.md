@@ -1,12 +1,15 @@
 # Changes
 
-## 1.6.1: 2026-02-14
+## 1.7: 2026-02-16
 
 - Fix: remove OpenKNXHardware.h (replaced by OGM-HardwareConfig)
 - Fix: skip initialization of USB-Port in case of Debug-Session
 - Feature: improve Build-Script with optional debug build and named parameters (full compatible with old calls to this script)
-- Feature: Force OpenKNXproducer to version 3.13.0
-
+- Feature: Force OpenKNXproducer to version 3.13.6
+- Hotfix: Modules list could not handle Modules inserted in between during ETS update - is fixed now. All modules are selected after Update.
+- Fix: Typo "Noitz" -> "Notiz" (PR#130)
+- Feature: Restore script can also restore just links (without checkout) (PR#129)
+- Feature: propertyFunctionWrapper for APDU aware execution of propertyFunction calls. Not for productive use yet!
 
 ## 1.6.0: 2026-01-28
 

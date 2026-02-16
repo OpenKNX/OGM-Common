@@ -109,7 +109,6 @@ namespace OpenKNX
         }
         else if (!diagnoseKo && (cmd == "r" || cmd == "restart"))
         {
-            openknx.common.processBeforeRestart();
             delay(20);
             openknx.restart();
         }
