@@ -48,6 +48,16 @@ namespace OpenKNX
 #endif
         Led::Functions _ledFunctions = Led::Functions();
 
+        // propertyFunctionWrapper global storage
+        uint8_t _apduLength = 0;
+        uint16_t _packageCount = 0;
+        int8_t _sequenceNumber = 0;
+        uint8_t _receivedData[256];
+        uint8_t _receivedLength;
+        uint8_t _resultData[256];
+        int16_t _resultLength = 0;
+
+
         void initKnx();
 
         void processModulesLoop();
@@ -72,6 +82,7 @@ namespace OpenKNX
         void processPeriodicSave();
 #endif
 
+        bool processFunctionPropertyWrapper(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionProperty(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
         bool processFunctionPropertyState(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength);
 

@@ -2,6 +2,8 @@
 <?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   
+  <op:minOpenKNXproducerVersion value="3.13.6" />
+  
   <op:config name="%BASE_ShowExtendedSave%" value="1" />
   <op:config name="%BASE_ExtendedSave%" value="0" />
   <op:config name="%BASE_PeriodicSave%" value="0" />
@@ -23,6 +25,7 @@
   <op:config name="%BASE_Info3LedFunc_Access%" value="ReadWrite"></op:config>
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
   <op:nowarn id="7" regex="_R-100000202"/>
+  <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -334,7 +337,7 @@
               <Parameter Id="%AID%_P-0099900" Name="ShowModuleSyncButton" ParameterType="%AID%_PT-CheckBox" Text="Module abgleichen zeigen?" Value="1" Access="None" />
               <Union SizeInBit="32">
                 <Memory CodeSegment="%MID%" Offset="110" BitOffset="0" />
-                <Parameter Id="%AID%_UP-00999%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" op:configTransfer="never" />
+                <Parameter Id="%AID%_UP-00998%ProducerModuleId%" Name="%ProducerModuleName%" ParameterType="%AID%_PT-CheckBox" Offset="0" BitOffset="0" Text="%ProducerModuleText%" Value="1" op:configTransfer="never" />
               </Union>
 
             </Parameters>
@@ -379,7 +382,7 @@
               <!-- Local parameters for module visibility -->
               <!-- OpenKNXproducer replacement area, do not add or delete anything below this line -->
               <ParameterRef Id="%AID%_P-0099900_R-009990001" RefId="%AID%_P-0099900" />
-              <ParameterRef Id="%AID%_UP-00999%ProducerModuleRefId%" RefId="%AID%_UP-00999%ProducerModuleId%" />
+              <ParameterRef Id="%AID%_UP-00998%ProducerModuleRefId%" RefId="%AID%_UP-00998%ProducerModuleId%" />
 
             </ParameterRefs>
             <ComObjectTable>
@@ -670,7 +673,7 @@
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Aktiv" Cell="1,2" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Modul" Cell="1,3" UIHint="Headline" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="Version" Cell="1,4" UIHint="Headline" />
-                  <ParameterRefRef RefId="%AID%_UP-00999%ProducerModuleRefId%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
+                  <ParameterRefRef RefId="%AID%_UP-00998%ProducerModuleRefId%" Cell="%ModuleCount+1%,2" HelpContext="BASE-Modul-aktivieren"/>
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleName%" Cell="%ModuleCount+1%,3" />
                   <ParameterSeparator Id="%AID%_PS-nnn" Text="%ProducerModuleVersion%" Cell="%ModuleCount+1%,4" />
                 </ParameterBlock>
@@ -685,6 +688,7 @@
                       <Rows>
                         <Row Id="%AID%_PB-nnn_R-1" />
                         <Row Id="%AID%_PB-nnn_R-2" />
+                        <Row Id="%AID%_PB-nnn_R-3" />
                       </Rows>
                       <Columns>
                         <Column Id="%AID%_PB-nnn_C-1" Width="2%" />
