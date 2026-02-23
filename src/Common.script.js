@@ -51,7 +51,6 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
     } catch (error) {
         apduLength = 15;
     }
-    apdu.value = apduLength;
 
     info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
     var dataLength = data.length;
