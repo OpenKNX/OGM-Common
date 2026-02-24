@@ -1,5 +1,9 @@
 # Changes
 
+## 1.7.1: 2026-02-24
+
+- Fix: Parameter Memory Management for StatusLED Implementation
+
 ## 1.7: 2026-02-16
 
 - Fix: remove OpenKNXHardware.h (replaced by OGM-HardwareConfig)

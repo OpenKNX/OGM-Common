@@ -54,7 +54,7 @@
                 <Parameter Id="%AID%_UP-%TT%00020" Name="Info1LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="0" BitOffset="0" Text="Info1%BASE_Info1LedLabel%" Value="%BASE_Info1LedFunc%" Access="%BASE_Info1LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00021" Name="Info2LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="2" BitOffset="0" Text="Info2%BASE_Info2LedLabel%" Value="%BASE_Info2LedFunc%" Access="%BASE_Info2LedFunc_Access%"/>
                 <Parameter Id="%AID%_UP-%TT%00022" Name="Info3LedFunc"      ParameterType="%AID%_PT-SLEDFunc"     Offset="4" BitOffset="0" Text="Info3%BASE_Info3LedLabel%" Value="%BASE_Info3LedFunc%" Access="%BASE_Info3LedFunc_Access%"/>
-                <Parameter Id="%AID%_UP-%TT%00029" Name="DefaultLedFunc"    ParameterType="%AID%_PT-CheckBox"     Offset="6" BitOffset="0" Text="" Value="1"/>
+                <Parameter Id="%AID%_UP-%TT%00029" Name="DefaultLedFunc"    ParameterType="%AID%_PT-CheckBox"     Offset="6" BitOffset="0" Text="" Value="0"/>
               </Union>
 
               <!-- Time & Date -->
@@ -83,6 +83,7 @@
               <ParameterRef Id="%AID%_UP-%TT%00021_R-%TT%0002101" RefId="%AID%_UP-%TT%00021" />
               <ParameterRef Id="%AID%_UP-%TT%00022_R-%TT%0002201" RefId="%AID%_UP-%TT%00022" />
               <ParameterRef Id="%AID%_UP-%TT%00029_R-%TT%0002901" RefId="%AID%_UP-%TT%00029" />
+              <ParameterRef Id="%AID%_UP-%TT%00029_R-%TT%0002902" RefId="%AID%_UP-%TT%00029" Access="None" Value="0"/>
               <ParameterRef Id="%AID%_P-%TT%00099_R-%TT%0009901" RefId="%AID%_P-%TT%00099" />
             </ParameterRefs>
           </Static>
