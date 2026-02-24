@@ -3,6 +3,8 @@
 ## 1.7.1: 2026-02-24
 
 - Fix: Parameter Memory Management for StatusLED Implementation
+- Fix: resultLength calculation in functionPropertyWrapper
+- Fix: removed non existing apdu object in Common.script.js
 
 ## 1.7: 2026-02-16
 
