@@ -5,20 +5,114 @@
 
 ---
 
+## Overview
+
+```
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  platformio.ini  ·  extra_configs  (loaded in order, LAST WINS)                 │
+ │                                                                                 │
+ │  platformio.base.ini ───────────────────────────────► base defines              │
+ │  platformio.esp32.ini  (OGM-Common submodule) ──────► [ESP32] platform=55.03.36 │
+ │  platformio.esp32idf.ini ───────────────────────────► [esp32idf] extra_scripts  │
+ │  platformio.boards.ini ─────────────────────────────► per-board pin/flash defs  │
+ │  platformio.custom.sdkcfg.ini ──────────────────────► chip sdkconfig presets    │
+ │  platformio.custom.ini  ────────────────────────────► [ESP32] platform override │
+ │       └─ [ESP32] platform=55.03.37  ◄── shadow submodule (last wins)            │
+ └───────────────────────────────┬─────────────────────────────────────────────────┘
+                                 │ resolves
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  [env:release_BOARD_CHIP]                                                       │
+ │  extends = …, esp32XX_sdkcfg_low_power, esp32idf   ◄─ esp32idf LAST (shadows)   │
+ │  custom_idf_build  = true          ◄─ MUST be directly here (not via extends)   │
+ │  custom_sdkconfig  = ${…}          ◄─ MUST be directly here (not via extends)   │
+ │  build_flags       = … ${custom_ofm_nuki_config.build_flags}                    │
+ └───────────────────────────────┬─────────────────────────────────────────────────┘
+                                 │ pio run
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  PRE-SCRIPT  idf_generate_crt_asm.py                                            │
+ │                                                                                 │
+ │  custom_idf_build=true? ──NO──► skip (Arduino env, no side effects)             │
+ │          │ YES                                                                  │
+ │          ├─ write sdkconfig.<envname>  from custom_sdkconfig values             │
+ │          ├─ invalidate cmake cache if config changed                            │
+ │          ├─ generate .S files  for TLS certificates  (.incbin)                  │
+ │          └─ inject  __wrap_esp_get_idf_version()  + -Wl,--wrap linker flag      │
+ └───────────────────────────────┬─────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  pioarduino  arduino.py                                                         │
+ │                                                                                 │
+ │  custom_sdkconfig in env  AND  no cached libs?                                  │
+ │          │ YES                       │ NO                                       │
+ │          │                          ▼                                           │
+ │          │               TASMOTA hash matches cached sdkconfig.defaults?        │
+ │          │                    │ YES                 │ NO                        │
+ │          │                    ▼                     │                           │
+ │          │             compile changed         ◄────┘                           │
+ │          │             Arduino sources                                          │
+ │          │             (~37 s incremental)                                      │
+ │          ▼                                                                      │
+ │   call_compile_libs()  →  espidf.py                                             │
+ │   ├─ merge base sdkconfig + custom_sdkconfig → sdkconfig.defaults               │
+ │   ├─ cmake configure  (reads sdkconfig.defaults + sdkconfig.<envname>)          │
+ │   └─ compile all IDF components  (~30–60 min, result cached in pkg dir)         │
+ └───────────────────────────────┬─────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LINK  &  IMAGE                                                                 │
+ │                                                                                 │
+ │  firmware.elf / firmware.bin                                                    │
+ │  factory.bin  (bootloader + partition-table + app, merged by create_esp32_image)│
+ └─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Contents
 
-1. [Why Custom Scripts?](#1-why-custom-scripts)
-2. [How pioarduino Works by Default](#2-how-pioarduino-works-by-default)
-3. [How We Trigger a Custom IDF Build](#3-how-we-trigger-a-custom-idf-build)
-4. [File Overview](#4-file-overview)
-5. [Build Flow Step by Step](#5-build-flow-step-by-step)
-6. [Guard Flag: custom_idf_build](#6-guard-flag-custom_idf_build)
-7. [sdkconfig Files and Their Roles](#7-sdkconfig-files-and-their-roles)
-8. [Clean Behaviour](#8-clean-behaviour)
-9. [Certificate / Binary Data (.S Files)](#9-certificate--binary-data-s-files)
-10. [IDF Version Tagging (--wrap)](#10-idf-version-tagging---wrap)
-11. [Runtime Verification (Console)](#11-runtime-verification-console)
-12. [Setting Up a New Project](#12-setting-up-a-new-project)
+- [IDF Build Architecture — OGM-Common](#idf-build-architecture--ogm-common)
+  - [Overview](#overview)
+  - [Contents](#contents)
+  - [1. Why Custom Scripts?](#1-why-custom-scripts)
+    - [The Problem with Pre-built IDF Libs](#the-problem-with-pre-built-idf-libs)
+    - [The Solution](#the-solution)
+  - [2. How pioarduino Works by Default](#2-how-pioarduino-works-by-default)
+  - [3. How We Trigger a Custom IDF Build](#3-how-we-trigger-a-custom-idf-build)
+    - [Two Separate Mechanisms](#two-separate-mechanisms)
+  - [4. File Overview](#4-file-overview)
+    - [`platformio.esp32idf.ini`](#platformioesp32idfini)
+  - [5. Build Flow Step by Step](#5-build-flow-step-by-step)
+    - [First Build (no IDF libs in cache)](#first-build-no-idf-libs-in-cache)
+    - [Follow-up Builds (IDF libs already cached)](#follow-up-builds-idf-libs-already-cached)
+  - [6. Guard Flag: `custom_idf_build`](#6-guard-flag-custom_idf_build)
+  - [7. sdkconfig Files and Their Roles](#7-sdkconfig-files-and-their-roles)
+    - [Why `sdkconfig.defaults` matters](#why-sdkconfigdefaults-matters)
+    - [Why we write `sdkconfig.<envname>` (not `sdkconfig.defaults`)](#why-we-write-sdkconfigenvname-not-sdkconfigdefaults)
+  - [8. Clean Behaviour](#8-clean-behaviour)
+  - [9. Certificate / Binary Data (.S Files)](#9-certificate--binary-data-s-files)
+    - [Problem with PlatformIO](#problem-with-platformio)
+    - [Our Solution](#our-solution)
+    - [Certificate Details](#certificate-details)
+  - [10. IDF Version Tagging (--wrap)](#10-idf-version-tagging---wrap)
+    - [How it works](#how-it-works)
+    - [Why --wrap instead of a #define?](#why---wrap-instead-of-a-define)
+  - [11. Runtime Verification (Console)](#11-runtime-verification-console)
+    - [What is shown and why](#what-is-shown-and-why)
+    - [Why no CONFIG\_\* values?](#why-no-config_-values)
+  - [12. Setting Up a New Project](#12-setting-up-a-new-project)
+    - [Minimal Configuration](#minimal-configuration)
+    - [Checklist](#checklist)
+  - [13. Per-Chip sdkconfig Presets \& Platform Override](#13-per-chip-sdkconfig-presets--platform-override)
+    - [platformio.custom.sdkcfg.ini](#platformiocustomsdkcfgini)
+    - [Per-Chip Preset Naming](#per-chip-preset-naming)
+    - [Platform Version Override](#platform-version-override)
+    - [Optional App Build Flags (custom\_ofm\_nuki\_config)](#optional-app-build-flags-custom_ofm_nuki_config)
+  - [14. Chip-Specific Build Quirks](#14-chip-specific-build-quirks)
+    - [ESP32-C5: CONFIG\_PM\_ENABLE Linker Gap Error](#esp32-c5-config_pm_enable-linker-gap-error)
 
 ---
 
@@ -219,7 +313,7 @@ custom_idf_build = true
 
 Why a separate flag instead of using `custom_sdkconfig` as guard:
 
-- `custom_sdkconfig` can be inherited via `extends` (e.g. `[sdkcfg_low_power]`)
+- `custom_sdkconfig` can be inherited via `extends` (e.g. `[esp32s3_sdkcfg_low_power]`)
 - `env.GetProjectOption("custom_sdkconfig")` follows the `extends` chain → would  
   trigger for pure Arduino envs too (Adafruit Feather, etc.)
 - `custom_idf_build = true` makes the intent **explicit and unambiguous**
@@ -410,30 +504,32 @@ extra_configs =
   lib/OGM-Common/platformio.base.ini
   lib/OGM-Common/platformio.esp32.ini
   lib/OGM-Common/platformio.esp32idf.ini   ; ← provides [esp32idf] section
-  platformio.custom.ini
+  platformio.boards.ini
+  platformio.custom.sdkcfg.ini             ; ← per-chip sdkconfig presets (see §13)
+  platformio.custom.ini                    ; ← last: shadows everything above
 
-; platformio.custom.ini
-[sdkcfg_my_config]
+; platformio.custom.sdkcfg.ini — chip-specific sdkconfig presets
+[esp32s3_sdkcfg_low_power]
+board_build.f_cpu = 80000000L
 custom_sdkconfig =
   CONFIG_BT_ENABLED=y
   CONFIG_BT_BLE_ENABLED=y
   CONFIG_BT_NIMBLE_ENABLED=y
+  CONFIG_PM_ENABLE=y
   ...
 
-; Standard Arduino env — no IDF, uses pre-built libs:
+; platformio.custom.ini — Standard Arduino env (no IDF, uses pre-built libs):
 [env:my_release_arduino]
 extends = custom_release_ESP32, ESP32_8MB, board_MY_BOARD
-board = seeed_xiao_esp32s3
 framework = arduino
 
 ; Custom IDF env — esp32idf at END of extends (shadows [ESP32]'s extra_scripts):
-[env:my_release_idf]
-extends = ESP32_8MB, board_MY_BOARD, custom_release_ESP32, sdkcfg_my_config, esp32idf
-board = seeed_xiao_esp32s3
+[env:my_release_idf_s3]
+extends = custom_release_ESP32, board_MY_S3_BOARD, esp32s3_sdkcfg_low_power, esp32idf
 framework = arduino
 ; BOTH flags must be directly here (not only in extends):
 custom_idf_build = true
-custom_sdkconfig = ${sdkcfg_my_config.custom_sdkconfig}
+custom_sdkconfig = ${esp32s3_sdkcfg_low_power.custom_sdkconfig}
 ```
 
 > **Key:** `esp32idf` must be the **last** entry in `extends` so its `extra_scripts`
@@ -444,9 +540,114 @@ custom_sdkconfig = ${sdkcfg_my_config.custom_sdkconfig}
 ### Checklist
 
 - [ ] `platformio.esp32idf.ini` listed in `extra_configs`
+- [ ] `platformio.custom.sdkcfg.ini` listed in `extra_configs` (before `platformio.custom.ini`)
+- [ ] Per-chip preset section (e.g. `[esp32s3_sdkcfg_low_power]`) defined in `platformio.custom.sdkcfg.ini`
 - [ ] `esp32idf` at the **end** of the `extends` list in the `[env:*]` section
 - [ ] `custom_idf_build = true` **directly** in the `[env:*]` section
 - [ ] `custom_sdkconfig = ...` **directly** in the `[env:*]` section (not only via extends)
 - [ ] `sdkconfig` and `sdkconfig.*` are in `.gitignore` (all variants are generated)
 - [ ] `managed_components/` is in `.gitignore`
 - [ ] `components/certs/` is committed to git (certificate files)
+
+---
+
+## 13. Per-Chip sdkconfig Presets & Platform Override
+
+### platformio.custom.sdkcfg.ini
+
+Chip-specific sdkconfig tuning is kept in its own file (`platformio.custom.sdkcfg.ini`),
+listed in `extra_configs` **before** `platformio.custom.ini` so it can be referenced
+by any `[env:*]` section. This keeps `platformio.custom.ini` readable and avoids
+duplicating `CONFIG_*` values across environments.
+
+### Per-Chip Preset Naming
+
+Each supported chip has its own section following the pattern `[esp32XX_sdkcfg_low_power]`:
+
+| Section | Chip | Key differences |
+|---|---|---|
+| `[esp32s3_sdkcfg_low_power]` | ESP32-S3 | `CONFIG_ESP_BROWNOUT_DET=n` (KNX bus power, unstable at BLE init) |
+| `[esp32c3_sdkcfg_low_power]` | ESP32-C3 | No USB-JTAG redirect (UART0 layout differs), brownout `LVL=7` |
+| `[esp32c5_sdkcfg_low_power]` | ESP32-C5 | `CONFIG_PM_ENABLE=n` (linker bug — see §14) |
+| `[esp32c6_sdkcfg_low_power]` | ESP32-C6 | 802.15.4/Zigbee/Thread radio block (commented out), USB-JTAG |
+
+All presets set `board_build.f_cpu = 80000000L` (80 MHz, lowest clock for WiFi+BLE).
+
+### Platform Version Override
+
+The base platform version is defined in `lib/OGM-Common/platformio.esp32.ini` (submodule —
+do not edit directly). To override it without touching the submodule, add an `[ESP32]`
+section to `platformio.custom.ini` with only the `platform` key. Since `platformio.custom.ini`
+is loaded **last** in `extra_configs`, this value shadows the submodule's definition:
+
+```ini
+; platformio.custom.ini
+; Override platform version from OGM-Common submodule.
+; pioarduino 55.03.37 = Arduino 3.3.7, ESP-IDF 5.5.2.260206 (2026-02-13)
+[ESP32]
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.37/platform-espressif32.zip
+```
+
+Removing this section reverts to the submodule default.
+
+### Optional App Build Flags (custom_ofm_nuki_config)
+
+Application-level timing and BLE parameters that should be tunable **per deployment**
+(without touching library code) are collected in a single `[custom_ofm_nuki_config]`
+section in `platformio.custom.ini`. All flags are active by default (matching the
+in-code `#ifndef` defaults). Comment out any line whose default you accept; uncomment
+and adjust only what you want to change:
+
+```ini
+[custom_ofm_nuki_config]
+build_flags =
+  ; -D BLE_INIT_DELAY_MS=3000           ; default: 3000 ms
+  ; -D BLE_INITIAL_STATE_TIMEOUT_MS=60000
+  ; -D BLE_SCAN_INTERVAL_BOOT=23
+  ; -D BLE_SCAN_WINDOW_BOOT=23
+  ; -D BLE_SCAN_INTERVAL_LP=160
+  ; -D BLE_SCAN_WINDOW_LP=48
+  ; -D NUKI_STATE_POLL_INTERVAL_MS=43200000
+  ...
+```
+
+Every `[env:*]` that wants tuneable timing adds `custom_ofm_nuki_config` to its
+`extends` list and `${custom_ofm_nuki_config.build_flags}` to its `build_flags`.
+
+---
+
+## 14. Chip-Specific Build Quirks
+
+### ESP32-C5: CONFIG_PM_ENABLE Linker Gap Error
+
+**Affected platform versions:** pioarduino ≤ 55.03.36 (ESP-IDF 5.5.2.260116)
+
+**Symptom:**
+```
+ld: warning: orphan section `.rodata.esp_sleep_sub_mode_config.str1.4'
+     from libesp_hw_support.a(sleep_modes.c.o)'
+ld: The gap between .eh_frame and .flash.tdata must not exist
+collect2: error: ld returned 1 exit status
+```
+
+**Root cause:** The C5 prebuilt libs (`libesp_hw_support.a`) contain `sleep_modes.c.o`
+which emits the orphan section `.rodata.esp_sleep_sub_mode_config.str1.4`. This section
+has no placement rule in the C5 linker script, so the linker places it between
+`.eh_frame` and `.flash.tdata` — a gap that the ESP-IDF linker script explicitly
+forbids via an assertion.
+
+Setting `CONFIG_PM_SLP_IRAM_OPT=n` alone does **not** help: `sleep_modes.c.o` is
+still linked when `CONFIG_PM_ENABLE=y`.
+
+**Fix:** Disable the entire IDF power management framework for C5:
+```ini
+CONFIG_PM_ENABLE=n     ; MUST be n — linker script incomplete in current pioarduino libs
+CONFIG_PM_SLP_IRAM_OPT=n
+```
+
+**Impact:** IDF DFS (Dynamic Frequency Scaling) is inactive on C5. BLE controller
+sleep (`CONFIG_BT_CTRL_SLEEP_MODE_EFF=1`) works independently and is **not** affected.
+
+**Resolution:** Expected to be fixed in pioarduino ≥ 55.03.37 once the C5 linker
+script is complete. Re-enable `CONFIG_PM_ENABLE=y` on C5 after verifying the build
+suceeds with a newer platform version.

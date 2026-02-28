@@ -10,6 +10,22 @@ Import("env")
 import os
 import shutil
 
+class _C:
+    CYAN   = '\033[96m'
+    GREEN  = '\033[92m'
+    YELLOW = '\033[93m'
+    RED    = '\033[91m'
+    DIM    = '\033[2m'
+    END    = '\033[0m'
+
+_TAG = f"{_C.YELLOW}[clean_idf]{_C.END}"
+
+def _log(msg, c=""):
+    if c:
+        print(f"{_TAG} {c}{msg}{_C.END}")
+    else:
+        print(f"{_TAG} {msg}")
+
 # Guard: only run for IDF environments that build custom IDF libs.
 # Detection marker: custom_idf_build = true must be set DIRECTLY in [env:*].
 # Envs without this flag (e.g. Adafruit Arduino envs) are skipped.
@@ -60,14 +76,17 @@ for fname in os.listdir(PROJECT_DIR):
         if os.path.isfile(fpath):
             extra_clean.append(fpath)
 
-print(f"\n[clean_idf] Cleaning IDF artifacts for '{ENV_NAME}' ...")
+print()
+_log(f"Cleaning IDF artifacts for '{_C.CYAN}{ENV_NAME}{_C.END}' ...")
 for path in extra_clean:
+    rel = os.path.relpath(path, PROJECT_DIR)
     if os.path.exists(path):
-        print(f"[clean_idf]  Deleting: {os.path.relpath(path, PROJECT_DIR)}")
+        _log(f" Deleting:   {rel}", _C.RED)
         if os.path.isdir(path):
             shutil.rmtree(path, ignore_errors=True)
         else:
             os.remove(path)
     else:
-        print(f"[clean_idf]  (not found): {os.path.relpath(path, PROJECT_DIR)}")
-print("[clean_idf] Done.\n")
+        _log(f" (skip): {rel}", _C.DIM)
+_log(f"{_C.GREEN}Done.{_C.END}")
+print()

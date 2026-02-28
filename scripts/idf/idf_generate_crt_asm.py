@@ -19,6 +19,27 @@ import shutil
 import subprocess
 import sys
 
+# ─────────────────────────────────────────────────────────────────────────── #
+# Console color helpers -- same definitions as generate_versions.py
+# ─────────────────────────────────────────────────────────────────────────── #
+class _C:
+    BLUE   = '\033[94m'
+    CYAN   = '\033[96m'
+    GREEN  = '\033[92m'
+    YELLOW = '\033[93m'
+    RED    = '\033[91m'
+    BOLD   = '\033[1m'
+    END    = '\033[0m'
+
+_PRE = f"{_C.CYAN}[pre_generate]{_C.END}"
+
+def _pre(msg, c=""):
+    """Print a colored [pre_generate] prefixed message."""
+    if c:
+        print(f"{_PRE} {c}{msg}{_C.END}")
+    else:
+        print(f"{_PRE} {msg}")
+
 Import("env")  # noqa: F821  -- PlatformIO SCons environment injection
 
 # Guard: only run for IDF environments that build custom IDF libs.
@@ -50,16 +71,16 @@ os.makedirs(certs_dir, exist_ok=True)
 # __file__ and sys.argv[0] are unreliable in SCons context, so the path is
 # reconstructed from project_dir (always correct via env.subst("$PROJECT_DIR")).
 setup_script = os.path.join(project_dir, "lib", "OGM-Common", "scripts", "idf", "idf_setup_components.py")
-print(f"[pre_generate] Looking for idf_setup_components.py at: {setup_script}")
+_pre(f"Looking for idf_setup_components.py at: {setup_script}")
 if os.path.isfile(setup_script):
-    print(f"[pre_generate] Running idf_setup_components.py ...")
+    _pre("Running idf_setup_components.py ...")
     result = subprocess.run([sys.executable, setup_script, project_dir], capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"[pre_generate] ERROR: idf_setup_components.py failed with exit code {result.returncode}")
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        _pre(f"ERROR: idf_setup_components.py failed with exit code {result.returncode}", _C.RED)
+        print(f"{_C.RED}stdout:\n{result.stdout}{_C.END}")
+        print(f"{_C.RED}stderr:\n{result.stderr}{_C.END}")
 else:
-    print(f"[pre_generate] WARNING: idf_setup_components.py not found -- skipping component setup")
+    _pre("WARNING: idf_setup_components.py not found -- skipping component setup", _C.YELLOW)
 
 # --------------------------------------------------------------------------- #
 # Apply custom_sdkconfig overrides to sdkconfig.<envname>
@@ -86,7 +107,7 @@ def _apply_custom_sdkconfig_to_file(sdkconfig_path, config_lines, env_label):
         # File was deleted (e.g. by a previous clean) -- create it so our
         # overrides are still written.  ESP-IDF uses Kconfig built-in defaults
         # for anything not specified in the file.
-        print(f"[pre_generate] (sdkconfig) {env_label}: file missing, creating: {os.path.basename(sdkconfig_path)}")
+        _pre(f"(sdkconfig) {env_label}: file missing, creating: {os.path.basename(sdkconfig_path)}", _C.YELLOW)
         original = ""
     else:
         with open(sdkconfig_path, "r", encoding="utf-8") as f:
@@ -109,13 +130,13 @@ def _apply_custom_sdkconfig_to_file(sdkconfig_path, config_lines, env_label):
 
     # Only write + report change if content actually differs
     if new_content == original:
-        print(f"[pre_generate] (sdkconfig) {env_label}: no changes → {os.path.basename(sdkconfig_path)}")
+        _pre(f"(sdkconfig) {env_label}: no changes \u2192 {os.path.basename(sdkconfig_path)}", _C.GREEN)
         return False
 
     with open(sdkconfig_path, "w", encoding="utf-8") as f:
         f.write(new_content)
 
-    print(f"[pre_generate] (sdkconfig) {env_label}: applied {len(config_lines)} override(s) → {os.path.basename(sdkconfig_path)}")
+    _pre(f"(sdkconfig) {env_label}: applied {len(config_lines)} override(s) \u2192 {os.path.basename(sdkconfig_path)}", _C.GREEN)
     return True
 
 def _apply_custom_sdkconfig(env, project_dir):
@@ -132,11 +153,11 @@ def _apply_custom_sdkconfig(env, project_dir):
         if line.strip() and not line.strip().startswith("#")
     ]
     if not config_lines:
-        print("[pre_generate] (sdkconfig) custom_sdkconfig is empty -- no overrides written")
+        _pre("(sdkconfig) custom_sdkconfig is empty -- no overrides written", _C.YELLOW)
         return
 
     env_name = env.subst("$PIOENV")
-    print(f"[pre_generate] (sdkconfig) applying {len(config_lines)} custom_sdkconfig override(s) for env '{env_name}' ...")
+    _pre(f"(sdkconfig) applying {len(config_lines)} custom_sdkconfig override(s) for env '{env_name}' ...")
 
     changed = False
     # sdkconfig.defaults: pioarduino's arduino.py / espidf.py besitzt diese Datei!
@@ -174,11 +195,19 @@ def _apply_custom_sdkconfig(env, project_dir):
                 invalidated.append(os.path.relpath(cache_path, project_dir))
 
         if invalidated:
-            print(f"[pre_generate] (sdkconfig) ESP-IDF cache invalidated: {', '.join(invalidated)} → re-configure forced")
+            _pre(f"(sdkconfig) ESP-IDF cache invalidated: {', '.join(invalidated)} \u2192 re-configure forced", _C.YELLOW)
         else:
-            print("[pre_generate] (sdkconfig) no ESP-IDF cache found (first build or already clean)")
+            _pre("(sdkconfig) no ESP-IDF cache found (first build or already clean)")
 
 _apply_custom_sdkconfig(env, project_dir)
+
+# --------------------------------------------------------------------------- #
+# IDF cache-hit prediction: check if sdkconfig.defaults already exists.
+# pioarduino owns sdkconfig.defaults and rebuilds IDF libs (Phase 1, ~60 min)
+# only when its TASMOTA hash header no longer matches the current custom_sdkconfig.
+# If sdkconfig.defaults is present we assume a prior successful Phase 1 run.
+# --------------------------------------------------------------------------- #
+_sdkconfig_defaults_exists = os.path.isfile(os.path.join(project_dir, "sdkconfig.defaults"))
 
 # --------------------------------------------------------------------------- #
 # Helper functions
@@ -254,12 +283,12 @@ if os.path.isdir(managed_dir):
             file_type = m.group(2)
 
             if rel_path.startswith("${"):
-                print(f"[pre_generate] Skipping cmake variable path: {rel_path}")
+                _pre(f"Skipping cmake variable path: {rel_path}", _C.YELLOW)
                 continue
 
             src_file = os.path.abspath(os.path.join(root, rel_path))
             if not os.path.isfile(src_file):
-                print(f"[pre_generate] WARNING: not found: {src_file}")
+                _pre(f"WARNING: not found: {src_file}", _C.YELLOW)
                 continue
 
             fname      = os.path.basename(src_file)
@@ -273,10 +302,10 @@ if os.path.isdir(managed_dir):
             s_name = fname + ".S"
             dest_s = os.path.join(build_dir, s_name)
             if not os.path.isfile(dest_s):
-                print(f"[pre_generate] Generating: {s_name}")
+                _pre(f"Generating: {s_name}", _C.GREEN)
                 _write_asm(cert_file, dest_s, file_type)
             else:
-                print(f"[pre_generate] Already exists: {s_name}")
+                _pre(f"Already exists: {s_name}", _C.CYAN)
 
     _save_known_entries(known_entries)
 
@@ -286,21 +315,21 @@ if os.path.isdir(managed_dir):
 else:
     known_entries = _load_known_entries()
     if not known_entries:
-        print("[pre_generate] WARNING: components/certs/.known_entries is empty or missing.")
-        print("[pre_generate]   Run a build once with managed_components/ present to populate it.")
+        _pre("WARNING: components/certs/.known_entries is empty or missing.", _C.YELLOW)
+        _pre("  Run a build once with managed_components/ present to populate it.", _C.YELLOW)
     else:
         for fname, file_type in known_entries.items():
             cert_file = os.path.join(certs_dir, fname)
             if not os.path.isfile(cert_file):
-                print(f"[pre_generate] WARNING: {fname} not found in components/certs/ -- skipping")
+                _pre(f"WARNING: {fname} not found in components/certs/ -- skipping", _C.YELLOW)
                 continue
             s_name = fname + ".S"
             dest_s = os.path.join(build_dir, s_name)
             if not os.path.isfile(dest_s):
-                print(f"[pre_generate] Generating (from components/certs/): {s_name}")
+                _pre(f"Generating (from components/certs/): {s_name}", _C.GREEN)
                 _write_asm(cert_file, dest_s, file_type)
             else:
-                print(f"[pre_generate] Already exists: {s_name}")
+                _pre(f"Already exists: {s_name}", _C.CYAN)
 
 
 # --------------------------------------------------------------------------- #
@@ -314,7 +343,7 @@ if os.path.isfile(RAINMAKER_CERT):
         env.Append(CFLAGS=["-Wno-discarded-qualifiers"])
     if "-Wno-error=discarded-qualifiers" not in str(env.get("CXXFLAGS", [])):
         env.Append(CXXFLAGS=["-Wno-error=discarded-qualifiers"])
-    print("[pre_generate] Fixed const-qualifier flags for espressif__esp_rainmaker")
+    _pre("Fixed const-qualifier flags for espressif__esp_rainmaker", _C.GREEN)
 
 # --------------------------------------------------------------------------- #
 # 4) Override esp_get_idf_version() via linker --wrap
@@ -374,7 +403,7 @@ def _read_idf_version(env):
 idf_version = _read_idf_version(env)
 if idf_version:
     idf_ver_string = f"OpenKNX-IDF-v{idf_version}"
-    print(f"[pre_generate] esp_get_idf_version() → {idf_ver_string}")
+    _pre(f"esp_get_idf_version() \u2192 {_C.BOLD}{idf_ver_string}{_C.END}", _C.BLUE)
 
     # Generate the --wrap override source file
     gen_dir = os.path.join(env.subst("$BUILD_DIR"), "openknx_idf_wrap")
@@ -395,10 +424,56 @@ if idf_version:
     if existing_content != new_content:
         with open(gen_c, "w", encoding="utf-8") as _f:
             _f.write(new_content)
-        print(f"[pre_generate] Written: {gen_c}")
+        _pre(f"Written: {gen_c}", _C.GREEN)
 
     # Compile the wrapper and link it; --wrap redirects all calls
     env.BuildSources(os.path.join("$BUILD_DIR", "openknx_idf_wrap_obj"), gen_dir)
     env.Append(LINKFLAGS=["-Wl,--wrap=esp_get_idf_version"])
 else:
-    print("[pre_generate] WARNING: could not determine IDF version -- esp_get_idf_version() not wrapped")
+    _pre("WARNING: could not determine IDF version -- esp_get_idf_version() not wrapped", _C.YELLOW)
+
+# --------------------------------------------------------------------------- #
+# Write IDF build marker file → .pio/build/<env>/idf_build.marker
+#
+# This is the authoritative back-channel to PowerShell build scripts (Build-Step.ps1).
+# PowerShell cannot inspect PlatformIO internals, but it CAN read this file after
+# 'pio run' completes.  The file exists IFF this pre-script ran, i.e. IFF
+# custom_idf_build=true and no --target clean was executed.
+#
+# Fields:
+#   build_type      = idf_arduino  (constant; distinguishes from plain Arduino builds)
+#   env             = PlatformIO env name
+#   idf_version     = ESP-IDF version string (e.g. 5.3.2)
+#   idf_cache_hit   = true  → sdkconfig.defaults was present → Phase 1 likely SKIPPED
+#                     false → sdkconfig.defaults was absent  → Phase 1 WILL RUN (~60 min)
+#   timestamp       = ISO-8601 timestamp of when this pre-script ran
+# --------------------------------------------------------------------------- #
+import datetime as _dt
+
+_cache_hit_str = "true" if _sdkconfig_defaults_exists else "false"
+_cache_hit_info = (
+    "sdkconfig.defaults present → Phase 1 (IDF libs) likely skipped"
+    if _sdkconfig_defaults_exists
+    else "sdkconfig.defaults absent → Phase 1 (IDF libs) will be built from source (~60 min)"
+)
+
+_env_name_marker   = env.subst("$PIOENV")
+_marker_path       = os.path.join(build_dir, "idf_build.marker")
+_marker_content    = (
+    "# OpenKNX IDF build marker -- written by idf_generate_crt_asm.py\n"
+    "# PowerShell back-channel: confirms this was a custom IDF (Arduino+espidf) build.\n"
+    "# DO NOT EDIT -- auto-generated on every build.\n"
+    "\n"
+    "build_type=idf_arduino\n"
+    f"env={_env_name_marker}\n"
+    f"idf_version={idf_version or 'unknown'}\n"
+    f"idf_cache_hit={_cache_hit_str}\n"
+    f"idf_cache_hit_info={_cache_hit_info}\n"
+    f"timestamp={_dt.datetime.now().isoformat(timespec='seconds')}\n"
+)
+
+with open(_marker_path, "w", encoding="utf-8") as _mf:
+    _mf.write(_marker_content)
+
+_pre(f"IDF build marker written \u2192 idf_build.marker  (idf_cache_hit={_cache_hit_str})", _C.GREEN)
+_pre(_cache_hit_info, _C.GREEN if _sdkconfig_defaults_exists else _C.YELLOW)
