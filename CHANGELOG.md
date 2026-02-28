@@ -1,10 +1,11 @@
 # Changes
 
-## 1.7.1: 2026-02-24
+## 1.7.1: 2026-02-26
 
 - Fix: Parameter Memory Management for StatusLED Implementation
 - Fix: resultLength calculation in functionPropertyWrapper
 - Fix: removed non existing apdu object in Common.script.js
+- Revert: ESP32 Framework back to 3.2.1 (IDF 5.4)
 
 ## 1.7: 2026-02-16
 
