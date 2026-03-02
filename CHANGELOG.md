@@ -1,5 +1,9 @@
 # Changes
 
+## 1.7.2: 2026-03-02
+
+- Fix: Default brightness of dimmable GPIO-LED 100/255 changed to 255/255
+
 ## 1.7.1: 2026-02-26
 
 - Fix: Parameter Memory Management for StatusLED Implementation

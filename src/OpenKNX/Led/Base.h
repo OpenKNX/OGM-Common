@@ -16,7 +16,7 @@ namespace OpenKNX
         {
           protected:
             volatile uint32_t _lastMillis = 0;
-            volatile uint8_t _maxBrightness = 100;
+            volatile uint8_t _maxBrightness = 255;
             volatile uint8_t _currentLedBrightness = 0;
             volatile bool _state = false;
             volatile bool _effectMode = false;
