@@ -1,5 +1,9 @@
 # Changes
 
+## (upcoming release >= 1.7.3)
+
+* Fix: Restore script showed success when git checkout failed
+
 ## 1.7.2: 2026-03-02
 
 - Fix: Default brightness of dimmable GPIO-LED 100/255 changed to 255/255

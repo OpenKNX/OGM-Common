@@ -420,17 +420,19 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
           Invoke-Expression "$GitCmd fetch --all -q" | Out-Null
           Invoke-Expression "$GitCmd $CheckOutMethod $($CheckOutTarget) -q" | Out-Null
         }
+        if ($LASTEXITCODE -ne 0) {
+          throw "Git checkout failed with exit code $LASTEXITCODE"
+        }
 
         if($true) { 
           $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { "Branch '$($dependedProject.Branch)'" }
           Write-Host "- CloneRepository - '$($dependedProject.ProjectName)' $($checkoutTarget) Checked out."([Char]0x221A) -ForegroundColor Green 
         }
       }
-      # If cannot check out to the branch, catch the error
       catch {
-        if($Verbose) {
-          $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { "Branch '$($dependedProject.Branch)'" }
-          Write-Host "- CloneRepository - $($dependedProject.ProjectName) - Checkout Error! Cannot checkout $($checkoutTarget)."([Char]0x2717) -ForegroundColor Red }
+        # If cannot check out to the branch, catch the error
+        $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { "Branch '$($dependedProject.Branch)'" }
+        Write-Host "- CloneRepository - $($dependedProject.ProjectName) - Checkout Error! Cannot checkout $($checkoutTarget)."([Char]0x2717) -ForegroundColor Red
       }
     }
 
