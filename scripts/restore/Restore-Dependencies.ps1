@@ -406,10 +406,11 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
           $CheckOutTarget = $($dependedProject.Branch) # If the CloneModeHash is false (default), use the Branch
         }
 
+        # For git-version >=2.23, use the 'switch' command for branch-restore
         if ((& git --version) -ge 'git version 2.23' -and $CloneModeHash -eq $false ) {
-          $CheckOutMethod = "switch"    # If the Git version is 2.23 or higher, use the 'switch' command
+          $CheckOutMethod = "switch"
         } else {
-          $CheckOutMethod = "checkout"  # If the Git version is 2.23 or higher, use the 'switch' command
+          $CheckOutMethod = "checkout"
         }
 
         # Let's do the git checkout

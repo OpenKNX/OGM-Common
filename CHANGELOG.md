@@ -3,6 +3,7 @@
 ## (upcoming release >= 1.7.3)
 
 * Fix: Restore script showed success when git checkout failed
+* Refactor: Restore script
 
 ## 1.7.2: 2026-03-02
 
