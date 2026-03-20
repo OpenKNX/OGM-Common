@@ -768,6 +768,8 @@ namespace OpenKNX
 
         openknx.flash.save();
         logIndentDown();
+        logInfoP("System will restart now");
+        delay(10);
     }
 
     void Common::processBeforeTablesUnload()
@@ -1018,8 +1020,7 @@ namespace OpenKNX
 
     void Common::restart()
     {
-        logInfoP("System will restart now");
-        delay(10);
+        openknx.common.processBeforeRestart(); // this function also saves the flash
         knx.platform().restart();
     }
 
