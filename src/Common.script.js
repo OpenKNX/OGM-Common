@@ -45,18 +45,34 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
         progress.setText("Common: Nicht unterstützte Module wurden ausgeblendet.");
 }
 
-function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, device, online, progress) {
+function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, device, online, progress, progress_start, progress_end) {
     try {
         apduLength = online.getMaxApduLength();
     } catch (error) {
         apduLength = 15;
     }
-
     info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
+
+    // set optional parameter values
+    progress_start = progress_start || 0;
+    progress_end = progress_end || 0;
+    
+    // derived values for easier understandable calculations
+    var effectiveApduLength = apduLength - 1;
+    var useProgressBar = progress_end > progress_start;
+    var progress_interval = progress_end - progress_start + 1;
+    var progress_half = progress_start + Math.ceil(progress_interval / 2);
     var dataLength = data.length;
     // calculate number of packages (1 Byte sequence number)
-    var numPackages = Math.ceil(dataLength / (apduLength - 1));
-    // send header data (APDU length, Number of Packages)
+    var numPackages = Math.ceil(dataLength / (effectiveApduLength));
+
+    // general idea:
+    // 1. Send metadata like APDU, Number of Packages to receive
+    // 2. Send all input data in packages according to apdu size
+    // 3. Call the target functionProperty
+    // 4. Receive the response data in packages according to apdu size
+
+    // 1. Send header data (APDU length, Number of Packages)
     var header = [0, apduLength, numPackages >> 8, numPackages & 0xFF, 0];
     var resp = online.invokeFunctionProperty(0x9E, 3, header);
     if (!resp || resp.length < 1 || resp[0] != 0) {
@@ -65,7 +81,7 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
     if (resp.length < 2) { // error
         throw new Error("Common: Ungültige Antwort vom Gerät!");
     }
-    // header accepted, we send now all data
+    // 2. Header accepted, we send now all data
     var sequenceNumber = 0;
     do {
         // positive sequence numbers mean "send data to device"
@@ -73,12 +89,16 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
         // to repeat a package the device sends the sequence number again
         sequenceNumber = resp[1];
         var pkg = [sequenceNumber];
-        var offset = (sequenceNumber-2)*(apduLength-1);
-        var chunkLength = Math.min(dataLength, apduLength - 1);
+        var offset = (sequenceNumber - 2) * (effectiveApduLength);
+        var chunkLength = Math.min(dataLength, effectiveApduLength);
         for (var j = 0; j < chunkLength; j++) {
             pkg.push(data[j+offset]);
         }
         dataLength -= chunkLength;
+        if (useProgressBar) {
+            // output progress bar only if requested by caller
+            progress.setProgress(Math.min(progress_start + (progress_end - progress_start) / numPackages * (sequenceNumber - 1), progress_end));
+        }
         progress.setText("Übertrage Sequenz " + (sequenceNumber - 1) + "/" + numPackages);
         resp = online.invokeFunctionProperty(0x9E, 3, pkg);       
     } while (resp[0] == 0 && resp.length == 2 && resp[1] > 0 && resp[1] < 128 );
@@ -86,7 +106,7 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
     if (resp[0] == 1) {
         throw new Error("Common: Fehler beim Senden von Daten");
     }
-    // data sent, call target function property
+    // 3. Data sent, call target function property
     header = [1, objectIndex, propertyId, 0];
     resp = online.invokeFunctionProperty(0x9E, 3, header);
     if (!resp || resp.length < 1 || resp[0] != 0) {
@@ -95,14 +115,14 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
     if (resp.length < 4) { // error
         throw new Error("Common: Ungültige Antwort nach Funktionsaufruf");
     }
-    // we prepare data receive
+    // 4. we prepare data receive
     // response contains result length...
     dataLength = (resp[1] << 8) + resp[2];
     // ... and the next (negative) sequence number
     // negative sequence numbers mean "receive data from device"
     // they are handles as abs(sequenceNumber)
     sequenceNumber = (resp[3] << 24) >> 24;  // Sign-extend via bit shifts
-    numPackages = Math.ceil(dataLength / (apduLength - 1)) + 1;
+    numPackages = Math.ceil(dataLength / effectiveApduLength) + 1;
     var response = [];
     pkg = 1;
     do {

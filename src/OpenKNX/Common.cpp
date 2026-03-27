@@ -964,7 +964,7 @@ namespace OpenKNX
         else if (cmd <= -sequenceStart)
         {
             // check if all data sent
-            if (_resultLength <= 1)
+            if (_resultLength < 1)
             {
                 // finish marker
                 resultData[0] = 0;
