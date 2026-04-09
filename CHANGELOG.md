@@ -1,7 +1,12 @@
 # Changes
 
-## (upcoming release >= 1.7.3)
+## (upcoming release 1.8.0)
 
+* Fix: DST switch for NTP client
+* Fix/Change: Save data to flash in case of restart from console
+* Update/Fix for OpenKNXproducer v4.3.5: Suppress warnings for intentionally overlapping parameters
+* Fixes/Extension: FunctionPropertyWrapper
+* Fix: Small memory leak in case of calling readFlash for modules without saved data
 * Fix: Restore script showed success when git checkout failed
 * Refactor: Restore script
 
