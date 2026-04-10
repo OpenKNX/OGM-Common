@@ -32,21 +32,21 @@ namespace OpenKNX
     void Common::init(uint8_t firmwareRevision)
     {
 #ifndef OPENKNX_DEBUGGER
-#ifdef ARDUINO_ARCH_RP2040
+    #ifdef ARDUINO_ARCH_RP2040
         USB.disconnect();
         USB.setManufacturer("OpenKNX");
-    #ifdef FIRMWARE_NAME
+        #ifdef FIRMWARE_NAME
         USB.setProduct(FIRMWARE_NAME);
-    #endif
+        #endif
 
-    #ifdef OPENKNX_USB_MSC
+        #ifdef OPENKNX_USB_MSC
         uint8_t epIn = USB.registerEndpointIn();
         uint8_t epOut = USB.registerEndpointOut();
         static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, 64)};
         USB.registerInterface(1, USBClass::simpleInterface, msd_desc, sizeof(msd_desc), 2, 0);
-    #endif
+        #endif
         USB.connect();
-#endif
+    #endif
 #endif
         openknx.logger.init();
 
@@ -61,7 +61,7 @@ namespace OpenKNX
         openknx.ledFunctions.init();
 #if defined(POWER_SAVE_PIN) && POWER_SAVE_PIN >= 0
         openknx.gpio.pinMode(POWER_SAVE_PIN, OUTPUT);
-        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON); 
+        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON);
 #endif
 
         _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);
@@ -294,19 +294,7 @@ namespace OpenKNX
 #endif // OPENKNX_DUALCORE
 
 #ifndef OPENKNX_DUALCORE
-        _progLedFunc->off();
-        _progLedFunc->color(Led::Color::Red);
-
-        if (knx.configured())
-        {
-            _stateLedFunc->color(Led::Color::Yellow);
-            _stateLedFunc->on(Led::Capability::COLOR);
-        }
-        else
-        {
-            _stateLedFunc->color(Led::Color::Orange);
-            _stateLedFunc->blinking(500);
-        }
+        afterSetupLedStatus();
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
@@ -341,6 +329,12 @@ namespace OpenKNX
 
         _setup1Ready = true;
 
+        afterSetupLedStatus();
+    }
+#endif
+
+    void Common::afterSetupLedStatus()
+    {
         _progLedFunc->off();
         _progLedFunc->color(Led::Color::Red);
 
@@ -351,11 +345,13 @@ namespace OpenKNX
         }
         else
         {
+            uint8_t count = knx.individualAddress() == 0xFFFF ? 2 : 1;
+            _progLedFunc->flash(OPENKNX_LEDEFFECT_FLASH_DURATION, count, 3000);
+
             _stateLedFunc->color(Led::Color::Orange);
-            _stateLedFunc->blinking(500);
+            _stateLedFunc->flash(OPENKNX_LEDEFFECT_FLASH_DURATION, count, 3000);
         }
     }
-#endif
 
     // main loop
     void Common::loop()
@@ -696,8 +692,8 @@ namespace OpenKNX
 #endif
 
 #if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
-            logInfoP("Shut off aux power with pin %i", SAVE_POWER_PIN);
-            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
+        logInfoP("Shut off aux power with pin %i", SAVE_POWER_PIN);
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
 #endif
 
         logInfoP("Completed (%ims)", millis() - start);
@@ -731,8 +727,8 @@ namespace OpenKNX
 #endif
 
 #if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
-            logInfoP("Switch on aux power with pin %i", SAVE_POWER_PIN);
-            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
+        logInfoP("Switch on aux power with pin %i", SAVE_POWER_PIN);
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
 #endif
 
         bool reboot = false;
@@ -884,9 +880,9 @@ namespace OpenKNX
     #endif
 #endif
 
-    // this function allows to use a normal property function with lower APDU. 
-    // It allows receive data in small apdu packages, 
-    // then calls the target property function with the full dataset, 
+    // this function allows to use a normal property function with lower APDU.
+    // It allows receive data in small apdu packages,
+    // then calls the target property function with the full dataset,
     // and finally sends back resultData as packages
     bool Common::processFunctionPropertyWrapper(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
@@ -894,36 +890,36 @@ namespace OpenKNX
 
         bool result = false;
         // first Byte is command (0, 1) or sequence number (<=-2 send data, >=2 receive data )
-        int8_t cmd = (int8_t)data[0]; 
-        if (cmd == 0) 
+        int8_t cmd = (int8_t)data[0];
+        if (cmd == 0)
         {
             // receive header information for data transmission
-            _apduLength = data[1];  // available APDU length
+            _apduLength = data[1];                    // available APDU length
             _packageCount = (data[2] << 8) + data[3]; // number of expected packages
-            _sequenceNumber = sequenceStart; // first expected sequence number
-            _receivedLength = 0; // init length counter
-            resultData[0] = 0; //ok
-            resultData[1] = _sequenceNumber; // tells the client the next sequence number
+            _sequenceNumber = sequenceStart;          // first expected sequence number
+            _receivedLength = 0;                      // init length counter
+            resultData[0] = 0;                        // ok
+            resultData[1] = _sequenceNumber;          // tells the client the next sequence number
             resultLength = 2;
             result = true;
         }
         else if (cmd == 1)
         {
             // execute target function property
-            uint8_t targetObjectIndex = data[1];  
+            uint8_t targetObjectIndex = data[1];
             uint8_t targetPropertyId = data[2];
             uint8_t tmpResultLength = 0;
             // call function property
             result = processFunctionProperty(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, _resultData, tmpResultLength);
             // send result to the client
             _resultLength = tmpResultLength;
-            resultData[0] = !result;    // success indicator
+            resultData[0] = !result;                     // success indicator
             resultData[1] = (_resultLength >> 8) & 0xFF; // reserved high byte for longer results;
-            resultData[2] = _resultLength & 0xFF; // result length
-            resultData[3] = -sequenceStart; // first sequence number to send
+            resultData[2] = _resultLength & 0xFF;        // result length
+            resultData[3] = -sequenceStart;              // first sequence number to send
             resultLength = 4;
             result = true;
-        } 
+        }
         else if (cmd >= sequenceStart)
         {
             // sequence number >=2, we receive data
@@ -932,7 +928,7 @@ namespace OpenKNX
             {
                 // we got correct sequence number, increase for next one
                 _sequenceNumber++;
-                if (_sequenceNumber >= 127) 
+                if (_sequenceNumber >= 127)
                 {
                     // max sequence number reached
                     resultData[0] = 2;
@@ -948,14 +944,14 @@ namespace OpenKNX
                 {
                     _sequenceNumber = -sequenceStart;
                 }
-                // create answer                
-                resultData[0] = (bool)!result; //ok
+                // create answer
+                resultData[0] = (bool)!result;   // ok
                 resultData[1] = _sequenceNumber; // tells the client the next sequence number
             }
             else
             {
                 // request correct sequence number again
-                resultData[0] = 1; //wrong sequence number
+                resultData[0] = 1;               // wrong sequence number
                 resultData[1] = _sequenceNumber; // tells the client the last correct to resend
                 result = true;
             }
@@ -974,7 +970,7 @@ namespace OpenKNX
             // ETS wants to receive a package, data[0] contains sequence number
             resultData[0] = data[0]; // return the requested sequence number
             // calculate data offset based on apdu and sequenceNumber
-            uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1); 
+            uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1);
             // send package
             resultLength = (_apduLength < (_resultLength + 1) ? _apduLength : (_resultLength + 1));
             memcpy(resultData + 1, _resultData + resultOffset, resultLength - 1);
@@ -996,7 +992,7 @@ namespace OpenKNX
             resultData[4] = (_unsupportedEtsModules >> 24) & 0xFF;
             resultLength = 5;
             return true; // handled
-        } 
+        }
         else if (objectIndex == 0x9E && propertyId == 3)
         {
             return processFunctionPropertyWrapper(objectIndex, propertyId, length, data, resultData, resultLength);
