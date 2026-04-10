@@ -148,13 +148,13 @@ namespace OpenKNX
             _state = true;
         }
 
-        void Base::flash(uint16_t duration, uint8_t count, uint16_t repeatCycleTime)
+        void Base::flash(uint8_t count, uint16_t repeatCycleTime)
         {
             // do nothing if not initialized
             if (!_initialized) return;
 
-            logTraceP("flash (duration %i ms, count %i, time %i ms)", duration, count, repeatCycleTime);
-            loadEffect(new Led::Effects::Flash(duration, count, repeatCycleTime));
+            logTraceP("flash (count %i, time %i ms)", count, repeatCycleTime);
+            loadEffect(new Led::Effects::Flash(count, repeatCycleTime));
             _state = true;
         }
 

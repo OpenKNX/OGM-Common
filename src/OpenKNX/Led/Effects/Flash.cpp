@@ -1,14 +1,20 @@
 #include "OpenKNX/Led/Effects/Flash.h"
 
+#ifndef OPENKNX_LEDEFFECT_FLASH_DURATION
+    #define OPENKNX_LEDEFFECT_FLASH_DURATION 50
+#endif
+#ifndef OPENKNX_LEDEFFECT_FLASH_GAP
+    #define OPENKNX_LEDEFFECT_FLASH_GAP 100
+#endif
+
 namespace OpenKNX
 {
     namespace Led
     {
         namespace Effects
         {
-            Flash::Flash(uint16_t duration, uint8_t count, uint16_t repeatCycleTime)
+            Flash::Flash(uint8_t count, uint16_t repeatCycleTime)
             {
-                _duration = duration;
                 _count = count > 0 ? count : 1;
                 _repeatCycleTime = repeatCycleTime;
                 _lastMillis = millis();
@@ -16,11 +22,6 @@ namespace OpenKNX
 
             uint8_t __time_critical_func(Flash::value)()
             {
-                // Total time the burst needs: count flashes + (count-1) gaps,
-                // each of length _duration.
-                // Example count=3, duration=100: ON(100) OFF(100) ON(100) OFF(100) ON(100) = 500ms
-                uint32_t burstLength = _count * _duration + (_count - 1) * _duration;
-
                 // Time elapsed since effect was created.
                 // millis() is only read here, never written – safe in interrupt context.
                 uint32_t elapsed = millis() - _lastMillis;
@@ -33,11 +34,20 @@ namespace OpenKNX
                     elapsed = elapsed % _repeatCycleTime;
                 }
 
+                // One flash slot = DURATION + GAP
+                // Each slot: [ON for DURATION] [OFF for GAP]
+                // The last flash has a trailing GAP too, which just becomes part of the pause.
+                uint32_t flashCycle = OPENKNX_LEDEFFECT_FLASH_DURATION + OPENKNX_LEDEFFECT_FLASH_GAP;
+
+                // Total burst length: count full slots
+                // Example count=3: ON(50) GAP(100) ON(50) GAP(100) ON(50) GAP(100) = 450ms
+                uint32_t burstLength = _count * flashCycle;
+
                 if (elapsed < burstLength)
                 {
-                    // Inside the burst: alternate on/off every _duration ms
-                    uint32_t posInBurst = elapsed % (_duration * 2);
-                    _state = (posInBurst < _duration);
+                    // Position within current slot: ON during DURATION, OFF during GAP
+                    uint32_t posInSlot = elapsed % flashCycle;
+                    _state = (posInSlot < OPENKNX_LEDEFFECT_FLASH_DURATION);
                 }
                 else
                 {

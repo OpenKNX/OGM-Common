@@ -113,7 +113,7 @@ namespace OpenKNX
              * Normal "On" with flash effect
              * -> Prio 5
              */
-            virtual void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, uint8_t count = 1, uint16_t repeatCycleTime = 0);
+            virtual void flash(uint8_t count = 1, uint16_t repeatCycleTime = 0);
 
             /*
              * Normal "On" with activity effect

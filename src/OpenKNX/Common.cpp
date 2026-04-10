@@ -346,10 +346,10 @@ namespace OpenKNX
         else
         {
             uint8_t count = knx.individualAddress() == 0xFFFF ? 2 : 1;
-            _progLedFunc->flash(OPENKNX_LEDEFFECT_FLASH_DURATION, count, 3000);
+            _progLedFunc->flash(count, 3000);
 
             _stateLedFunc->color(Led::Color::Orange);
-            _stateLedFunc->flash(OPENKNX_LEDEFFECT_FLASH_DURATION, count, 3000);
+            _stateLedFunc->flash(count, 3000);
         }
     }
 
