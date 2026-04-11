@@ -335,3 +335,24 @@ Mit dieser Funktion werden Module nur ausgeblendet, nicht eingeblendet.
 
 Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die vom Gerät unterstützten Module werden eingeblendet, die nicht unterstützten ausgeblendet. Eine vom Benutzer vorher getroffene Auswahl wird überschrieben.
 
+
+## Kommunikationsobjekte
+
+| KO |    DPT | Bezeichnung                  | Erklärung                                                                                                                                                                                                           |
+|---:|-------:|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  1 |  1.011 | In Betrieb                   | (bei [Erweitertes "In Betrieb"](#erweitertes-in-betrieb) *= Nein*) Sendet eine 1 im unter [In Betrieb senden alle](#in-betrieb-senden-alle) eingestellten Zyklus                                                    |
+|  1 |  5.005 | In Betrieb                   | (bei [Erweitertes "In Betrieb"](#erweitertes-in-betrieb) *= Ja*) Sendet eine [Kombination von Status-Bits](#erweitertes-in-betrieb) im unter [In Betrieb senden alle](#in-betrieb-senden-alle) eingestellten Zyklus |
+|  2 | 10.001 | Uhrzeit                      | (nur bei [Empfang Uhrzeit & Datum über](#empfangen-über) zwei getrennte KOs) Nimmt die aktuelle Uhrzeit/Tageszeit entgegen                                                                                          |
+|  3 | 11.001 | Datum                        | (nur bei [Empfang Uhrzeit & Datum über](#empfangen-über) zwei getrennte KOs) Nimmt den aktuellen Tag entgegen                                                                                                       |
+|  4 | 19.001 | Uhrzeit/Datum                | (nur bei [Empfang Uhrzeit & Datum über](#empfangen-über) ein kombiniertes KO) Nimmt die aktuelle Zeit entgegen                                                                                                      |
+|  5 |  1.001 | Sommerzeit aktiv             | (optional, mit [Kommunikationsobjekt 'Sommerzeit aktiv'](#kommunikationsobjekt-sommerzeit-aktiv))                                                                                                                   |
+|  6 |  1.017 | speichern                    | (optional, bei [Manuelles Speichern](#manuelles-speichern)) Löst eine sofortige Speicheroperation aus, sofern innerhalb des eingestellen Schreibschutzzeitraums noch keine erfolgt ist.                             |
+|  7 | 16.001 | Diagnose                     | (optional, bei [Diagnoseobjekt anzeigen](#diagnoseobjekt-anzeigen)) Erlaubt den gezielten Abruf von Diagnose-Information, über Modul-spezifische Kommandos                                                          |
+<!-- TODO add time output configuration? -->
+<!-- in LogikModul
+| 15 |  1.    | Urlaub                       |                                                                                                                                                                                                                     |
+| 16 |  5.005 | Welcher Feiertag ist heute?  |                                                                                                                                                                                                                     |
+| 17 |  5.005 | Welcher Feiertag ist morgen? |                                                                                                                                                                                                                     |
+| 18 |  1     | LED sperren                  |                                                                                                                                                                                                                     |
+| 19 |  1.    | Buzzer sperren               |                                                                                                                                                                                                                     |
+-->
