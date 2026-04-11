@@ -4,11 +4,15 @@
 
 * Fix: DST switch for NTP client
 * Fix/Change: Save data to flash in case of restart from console
-* Update/Fix for OpenKNXproducer v4.3.5: Suppress warnings for intentionally overlapping parameters
+* Update: Increase minimum OpenKNXproducer version to 4.3.5
+  * Fix: Suppress warnings for intentionally overlapping parameters
+* Feature: Indicate unconfigured and PA not set via PROG-LED
+  * Extension (LED): Add count and repeat to effect "Flash"  
 * Fixes/Extension: FunctionPropertyWrapper
 * Fix: Small memory leak in case of calling readFlash for modules without saved data
 * Fix: Restore script showed success when git checkout failed
 * Refactor: Restore script
+
 
 ## 1.7.2: 2026-03-02
 
