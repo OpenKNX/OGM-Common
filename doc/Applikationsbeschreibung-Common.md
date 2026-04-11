@@ -11,42 +11,29 @@ DOCCONTENT -->
 
 ## Inhalte
 
-Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
+Nachfolgend werden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
 
-- [OpenKNX](#openknx)
-  - [Inhalte](#inhalte)
-  - [**Allgemein**](#allgemein)
-    - [**Startverzögerung**](#startverzögerung)
-    - [**In Betrieb senden alle**](#in-betrieb-senden-alle)
-  - [**Uhrzeit \& Datum**](#uhrzeit--datum)
-    - [**Empfangen über**](#empfangen-über)
-      - [**Ein kombiniertes KO**](#ein-kombiniertes-ko)
-      - [**Zwei getrennte KOs**](#zwei-getrennte-kos)
-    - [**Bei Neustart vom Bus lesen**](#bei-neustart-vom-bus-lesen)
-    - [**Zeitzone**](#zeitzone)
-      - [**POSIX TZ-String**\*](#posix-tz-string)
-    - [**Sommerzeit ermitteln durch**](#sommerzeit-ermitteln-durch)
-      - [**Kommunikationsobjekt 'Sommerzeit aktiv'**](#kommunikationsobjekt-sommerzeit-aktiv)
-      - [**Kombiniertem Datum/Zeit-KO (DPT 19)**](#kombiniertem-datumzeit-ko-dpt-19)
-      - [**Interne Berechnung**](#interne-berechnung)
-  - [**Gerätestandort**](#gerätestandort)
-    - [**Breitengrad**](#breitengrad)
-    - [**Längengrad**](#längengrad)
+ETS-Konfiguration **OpenKNX**: 
+- [**Allgemein**](#allgemein)
+  - [Startverzögerung](#startverzögerung)
+  - [In Betrieb senden alle](#in-betrieb-senden-alle)
+  - [Uhrzeit \& Datum](#uhrzeit--datum)
+    - [Empfangen über](#empfangen-über)
+    - [Bei Neustart vom Bus lesen](#bei-neustart-vom-bus-lesen)
+    - [Zeitzone](#zeitzone)
+    - [Sommerzeit ermitteln durch](#sommerzeit-ermitteln-durch)
+  - [Gerätestandort](#gerätestandort)
   - [**Erweitert**](#erweitert)
-    - [**Watchdog aktivieren**](#watchdog-aktivieren)
-    - [**Diagnoseobjekt anzeigen**](#diagnoseobjekt-anzeigen)
-    - [**Erweitertes "In Betrieb"**](#erweitertes-in-betrieb)
+    - [Watchdog aktivieren](#watchdog-aktivieren)
+    - [Diagnoseobjekt anzeigen](#diagnoseobjekt-anzeigen)
+    - [Erweitertes "In Betrieb"](#erweitertes-in-betrieb)
     - [Erweitertes Speichern](#erweitertes-speichern)
-      - [Flashspeicher](#flashspeicher)
-      - [Auswirkung beim RP2040/RP2350](#auswirkung-beim-rp2040rp2350)
-      - [Zyklisches speichern](#zyklisches-speichern)
-      - [Manuelles speichern](#manuelles-speichern)
   - [**Info-LEDs**](#info-leds)
   - [**Module**](#module)
-    - [**Modul aktivieren**](#modul-aktivieren)
-    - [**Abgleich mit dem Gerät**](#abgleich-mit-dem-gerät)
-      - [**Nicht unterstützte Module ausblenden**](#nicht-unterstützte-module-ausblenden)
-      - [**Komplettabgleich aller Module**](#komplettabgleich-aller-module)
+    - [Modul aktivieren](#modul-aktivieren)
+    - [Abgleich mit dem Gerät](#abgleich-mit-dem-gerät)
+  - **Hilfe**
+- [**Kommunikationsobjekte**](#kommunikationsobjekte)
 
 ## **Allgemein**
 

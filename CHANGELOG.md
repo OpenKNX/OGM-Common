@@ -12,7 +12,9 @@
 * Fix: Small memory leak in case of calling readFlash for modules without saved data
 * Fix: Restore script showed success when git checkout failed
 * Refactor: Restore script
-* Doc: Add list of KOs with short description
+* Doc: Application Descriotion
+  * Add list of KOs with short description
+  * Cleanup TOC 
 
 
 ## 1.7.2: 2026-03-02
