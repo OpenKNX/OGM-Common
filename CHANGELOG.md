@@ -14,7 +14,7 @@
 * Refactor: Restore script
 * Doc: Application Description
   * Add list of KOs with short description
-  * Cleanup TOC
+  * Cleanup TOC, Minor Fixes and Improvements
   * Link from Readme
 
 

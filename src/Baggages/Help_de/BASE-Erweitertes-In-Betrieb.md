@@ -8,13 +8,13 @@ Durch eine Bitmaske lassen sich dabei verschiedene Zustandsinformationen gezielt
 Struktur: `0b NRRR_TWSB`
 
 * Das Bit **B** (`1`) repräsentiert das normale Signal "In Betrieb" (immer aktiv).
-* Das Bit **S** (`2`) repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
-* Das Bit **W** (`4`) repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
-* Das Bit **T** (`8`) repräsentiert, ob die BCU einen Übertemperaturalarm hat.
-* Das Bit **R** (`16`) repräsentiert, eine Reserve.
-* Das Bit **R** (`32`) repräsentiert, eine Reserve.
-* Das Bit **R** (`64`) repräsentiert, eine Reserve.
-* Das Bit **N** (`128`) repräsentiert, ob eine Netzwerkverbindung besteht.
+* Das Bit **S** (`2`) signalisiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
+* Das Bit **W** (`4`) signalisiert einen durch den Watchdog ausgelösten Neustart und wird nur in Verbindung mit dem **S**-Bit einmalig gesendet.
+* Das Bit **T** (`8`) zeigt einen Übertemperaturalarm der BCU an.
+* Das Bit **R** (`16`) ist für zukünftige Anwendungen reserviert.
+* Das Bit **R** (`32`) ist für zukünftige Anwendungen reserviert.
+* Das Bit **R** (`64`) ist für zukünftige Anwendungen reserviert.
+* Das Bit **N** (`128`) zeigt an, ob eine Netzwerkverbindung besteht.
 
 **Hinweis:** Wenn eine neue Firmware auf das Gerät übertragen wird, kommt es in manchen Fällen dazu, dass das Flag für den "Neustart durch den Watchdog" gesetzt wurde.
 
