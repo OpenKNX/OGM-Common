@@ -82,4 +82,4 @@ jobs:
       ref: ${{ github.event.inputs.ref }}
       KNXPROD_PREFIX: ${{ github.event.inputs.KNXPROD_PREFIX }}
       target: ${{ github.event.inputs.target }}
-      restore_branch: ${{ github.event.inputs.restore_branch }}
+      restore_branch: ${{ github.event.inputs.restore_branch == 'true' }}
