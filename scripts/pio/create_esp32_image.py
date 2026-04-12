@@ -55,11 +55,11 @@ def esp32_create_combined_bin(source, target, env):
         "merge_bin",
         "-o",
         new_file_name,
-        "--flash_mode",
+        "--flash-mode",
         flash_mode,
-        "--flash_freq",
+        "--flash-freq",
         flash_freq,
-        "--flash_size",
+        "--flash-size",
         flash_size,
     ]
     
