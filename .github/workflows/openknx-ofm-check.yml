@@ -1,6 +1,6 @@
 # Check build of OpenKNX OFM with Reference OAM (merging/building of OpenKNX knxprod + build of full releases)
 # SPDX-License-Identifier: AGPL-3.0-only
-# Copyright (C) 2024-2025 Cornelius Koepp
+# Copyright (C) 2024-2026 Cornelius Koepp
 
 name: openknx-ofm-check
 run-name: Check OpenKNX OFM Build in Reference OAM
@@ -56,19 +56,18 @@ jobs:
           echo "ref_name=$BRANCH" >> $GITHUB_OUTPUT
           echo "Selected branch: $BRANCH"
 
+      # 1. checkout OAM
+      # 2. restore
+      # 3. overwrite OFM with current commit
+
       - name: Checkout Reference OAM
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: openknx/${{ inputs.oam }}
           # TODO fixme: branch-handling
           # ref: ${{ steps.oam_branch.outputs.ref_name }}
           ref: ${{ inputs.ref }}
           path: ${{ inputs.oam }}
-
-      # - name: DEBUG paths
-      #   run: |
-      #     pwd
-      #     find
 
       - name: Restore OAM
         shell: pwsh
@@ -77,7 +76,7 @@ jobs:
           ./Restore-Dependencies.ps1
 
       - name: Restore Current OFM Commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # ref: ${{ github.ref_name }}
           # TODO introduce parameter?
@@ -126,7 +125,7 @@ jobs:
           OpenKNXproducer create --Debug -h include/knxprod.h src/${{inputs.KNXPROD_PREFIX}}${{ inputs.target != '' && format('-{0}', inputs.target) || '' }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
