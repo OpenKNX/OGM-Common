@@ -17,9 +17,10 @@ on:
       target:
         required: true
         type: string
-      # restore_branch:
-      #   required: true
-      #   type: boolean
+      restore_branch:
+        default: false
+        required: true
+        type: boolean
       KNXPROD_PREFIX:
         required: true
         type: string
@@ -39,11 +40,6 @@ jobs:
         run: |
           echo "PRODUCER_URL=${PRODUCER_URL}" >> $GITHUB_ENV
           echo "PRODUCER_FILENAME=${PRODUCER_FILENAME}" >> $GITHUB_ENV
-
-      # DO this after restore the use current commit
-      # - uses: actions/checkout@v4
-      #   with:
-      #     path: OFM-DFA
 
       - name: ((IGNORED)) Check for Same Name Branch in Reference OAM
         id: oam_branch
