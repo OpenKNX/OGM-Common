@@ -70,15 +70,14 @@ Die Einstellungen für Uhrzeit, Datum und zeitabhängige Berechnungen werden hie
 <!-- DOC -->
 ### **Empfangen über**
 
-Dieses Gerät kann Uhrzeit und Datum vom Bus empfangen. Dabei kann man wählen, ob man Uhrzeit über ein Kommunikationsobjekt und das Datum über ein anders empfangen will oder beides, Uhrzeit und Datum, über ein kombiniertes Kommunikationsobjekt.
+Dieses Gerät kann Uhrzeit und Datum vom Bus empfangen.
+Die Zeitinformationen können dabei auf zwei Arten entgegengenommen werden:
 
-#### **Ein kombiniertes KO**
-
-Wählt man diesen Punkt, wird ein kombiniertes Kommunikationsobjekt für Uhrzeit/Datum (DPT 19) bereitgestellt. Der KNX-Zeitgeber im System muss die kombinierte Uhrzeit/Datum entsprechend liefern können.
-
-#### **Zwei getrennte KOs**
-
-Wählt man diesen Punkt, wird je ein Kommunikationsobjekt für Uhrzeit (DPT 10) und Datum (DPT 11) bereitgestellt. Der KNX-Zeitgeber im System muss die Uhrzeit und das Datum für die beiden Kommunikationsobjekte liefern können.
+* **Ein kombiniertes KO**:
+  Stellt ein kombiniertes Kommunikationsobjekt für Uhrzeit/Datum (DPT 19) bereit.
+* **Zwei getrennte KOs**:
+  Stellt je ein Kommunikationsobjekt für Uhrzeit (DPT 10) und Datum (DPT 11) bereit.
+  Nur empfohlen für KNX-Installationen mit (altem) Zeitgeber, der noch kein DPT19 liefern kann.
 
 <!-- DOC -->
 ### **Bei Neustart vom Bus lesen**
