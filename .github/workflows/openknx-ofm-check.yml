@@ -28,8 +28,8 @@ jobs:
   oam-build:
     runs-on: ubuntu-latest
     env:
-      PRODUCER_VERSION: 3.12.2
-      PRODUCER_CHECKSUM: ad8e6ba491849b401e01f237c427cd61643d1d4e8fb4b0c9f9dffc097506f0c2
+      PRODUCER_VERSION: 4.3.5
+      PRODUCER_CHECKSUM: 0322b8bd5bf2fae4e0045c779534f6b7013f8e82d3452f7ed943ab2aa1f984c6
       PRODUCER_URL: https://github.com/OpenKNX/OpenKNXproducer/releases/download/v${PRODUCER_VERSION}/OpenKNXproducer-${PRODUCER_VERSION}.zip
       PRODUCER_FILENAME: OpenKNXproducer-${PRODUCER_VERSION}.zip
 
