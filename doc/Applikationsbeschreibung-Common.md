@@ -93,7 +93,7 @@ Wenn dieser Parameter gesetzt ist, wird die Uhrzeit und das Datum alle 20-30 Sek
 Für die korrekte Berechnung der Zeit wird die Zeitzone des Standortes benötigt.
 
 <!-- DOC -->
-#### **POSIX TZ-String***
+#### **POSIX TZ-String**
 
 <!-- DOC Skip="2" -->
 Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
@@ -298,7 +298,7 @@ Hier wird eine Liste aller in dieser Applikation enthaltenen OpenKNX-Module und 
 
 Ist die Checkbox ausgewählt, ist das entsprechende Modul aktiv und dessen Parameterseite erscheint in der ETS.
 
-Wird die Checkbox ausgeschaltet, wird das Module deaktiviert und alles Grupppenadressenzuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos, da das Modul auf dem Gerät nicht ausgeführt wird.
+Wird die Checkbox ausgeschaltet, wird das Modul deaktiviert und alle Gruppenadresszuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos, da das Modul auf dem Gerät nicht ausgeführt wird.
 
 ### **Abgleich mit dem Gerät**
 
