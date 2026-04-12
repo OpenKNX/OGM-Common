@@ -345,7 +345,11 @@ namespace OpenKNX
         }
         else
         {
+#if MASK_VERSION == 0x091A
+            uint8_t count = knx.individualAddress() == 0xFF00 ? 2 : 1;
+#else
             uint8_t count = knx.individualAddress() == 0xFFFF ? 2 : 1;
+#endif
             _progLedFunc->flash(count, 3000);
 
             _stateLedFunc->color(Led::Color::Orange);
