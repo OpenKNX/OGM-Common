@@ -995,7 +995,7 @@ namespace OpenKNX
             // calculate data offset based on apdu and sequenceNumber
             uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1); 
             // send package
-            resultLength = (_apduLength < _resultLength ? _apduLength : _resultLength);
+            resultLength = (_apduLength < (_resultLength + 1) ? _apduLength : (_resultLength + 1));
             memcpy(resultData + 1, _resultData + resultOffset, resultLength - 1);
             _resultLength -= (resultLength - 1);
             result = true;

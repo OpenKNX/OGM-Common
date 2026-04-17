@@ -19,6 +19,7 @@ namespace OpenKNX
         {
             if (useDefaultFunction())
             {
+                logDebugP("useDefaultFunction %i", ParamBASE_DefaultLedFunc);
 #ifdef OPENKNX_INFOLED1_DEFAULT
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), OPENKNX_INFOLED1_DEFAULT);
 #else
@@ -33,7 +34,8 @@ namespace OpenKNX
             }
             else if (knx.configured())
             {
-                // setup the prog and info1-3 led according to knx parameters
+                // setup info1-3 led according to knx parameters
+                logDebugP("setup info1-3 by parameters");
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO1), ParamBASE_Info1LedFunc);
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO2), ParamBASE_Info2LedFunc);
                 assignLed2Function(openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3), ParamBASE_Info3LedFunc);
