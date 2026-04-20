@@ -46,12 +46,11 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
 }
 
 function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, device, online, progress, progress_start, progress_end) {
-    try {
+    var apduLength = 15;
+    if (typeof online.getMaxApduLength == "function") {
         apduLength = online.getMaxApduLength();
-    } catch (error) {
-        apduLength = 15;
     }
-    info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
+    Log.info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
 
     // set optional parameter values
     progress_start = progress_start || 0;
@@ -142,7 +141,7 @@ function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, devic
         }
     // until the response sequence number is non-negative
     } while (respSequenceNumber < 0);
-    info("BASE_invokeFunctionPropertyWrapper: response = " + response);
+    Log.info("BASE_invokeFunctionPropertyWrapper: response = " + response);
     return response;
 }
 
