@@ -46,10 +46,9 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
 }
 
 function BASE_invokeFunctionPropertyWrapper(objectIndex, propertyId, data, device, online, progress, progress_start, progress_end) {
-    try {
+    var apduLength = 15;
+    if (typeof online.getMaxApduLength == "function") {
         apduLength = online.getMaxApduLength();
-    } catch (error) {
-        apduLength = 15;
     }
     info("BASE_invokeFunctionPropertyWrapper: APDU = " + apduLength);
 
