@@ -1038,25 +1038,36 @@ namespace OpenKNX
         logInfoP("Runtime Statistics: (Uptime=%dms)", millis());
         logIndentUp();
         {
+    #ifdef OPENKNX_DUALCORE
+        #ifdef ARDUINO_ARCH_ESP32
+            const uint8_t coreMain = 1;
+            const uint8_t coreOther = 0;
+        #else
+            const uint8_t coreMain = 0;
+            const uint8_t coreOther = 1;
+        #endif
+    #else
+            const uint8_t coreMain = 0;
+    #endif
             Stat::RuntimeStat::showStatHeader();
             // Use prefix '_' to preserve structure on sorting
-            _runtimeLoop.showStat("___Loop", 0, stat, hist);
-            _runtimeConsole.showStat("__Console", 0, stat, hist);
-            _runtimeKnxStack.showStat("__KnxStack", 0, stat, hist);
-            _runtimeGPIO.showStat("__GPIO", 0, stat, hist);
-            _runtimeTimeManager.showStat("__Time", 0, stat, hist);
+            _runtimeLoop.showStat("___Loop", coreMain, stat, hist);
+            _runtimeConsole.showStat("__Console", coreMain, stat, hist);
+            _runtimeKnxStack.showStat("__KnxStack", coreMain, stat, hist);
+            _runtimeGPIO.showStat("__GPIO", coreMain, stat, hist);
+            _runtimeTimeManager.showStat("__Time", coreMain, stat, hist);
     #ifdef ParamBASE_Latitude
-            _runtimeSunCalculation.showStat("__Sun", 0, stat, hist);
+            _runtimeSunCalculation.showStat("__Sun", coreMain, stat, hist);
     #endif
-            _runtimeModuleLoop.showStat("_All_Modules_Loop", 0, stat, hist);
+            _runtimeModuleLoop.showStat("_All_Modules_Loop", coreMain, stat, hist);
     #ifdef OPENKNX_DUALCORE
-            _runtimeModuleLoop1.showStat("_All_Modules_Loop", 1, stat, hist);
+            _runtimeModuleLoop1.showStat("_All_Modules_Loop", coreOther, stat, hist);
     #endif
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
-                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), 0, stat, hist);
+                openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), coreMain, stat, hist);
     #ifdef OPENKNX_DUALCORE
-                openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), 1, stat, hist);
+                openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), coreOther, stat, hist);
     #endif
             }
         }
