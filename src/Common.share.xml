@@ -247,7 +247,7 @@
                 <TypeRestriction Base="Value" SizeInBit="16" UIHint="DropDown">
                   <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
                   <Enumeration Text="Prog-LED" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Gerätestatus" Value="2" Id="%ENID%" />
                   <Enumeration Text="Busstatus" Value="3" Id="%ENID%" />
                   <Enumeration Text="Zeitstatus" Value="4" Id="%ENID%" />
                 </TypeRestriction>
