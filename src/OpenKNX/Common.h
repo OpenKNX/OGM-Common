@@ -90,6 +90,9 @@ namespace OpenKNX
         Stat::RuntimeStat _runtimeConsole;
         Stat::RuntimeStat _runtimeKnxStack;
         Stat::RuntimeStat _runtimeModuleLoop;
+    #ifdef OPENKNX_DUALCORE
+        Stat::RuntimeStat _runtimeModuleLoop1;
+    #endif        
         Stat::RuntimeStat _runtimeGPIO;
         Stat::RuntimeStat _runtimeTimeManager;
     #ifdef ParamBASE_Latitude

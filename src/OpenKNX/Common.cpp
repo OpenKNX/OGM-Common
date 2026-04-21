@@ -564,12 +564,14 @@ namespace OpenKNX
 
         bool configured = knx.configured();
 
+        RUNTIME_MEASURE_BEGIN(_runtimeModuleLoop1);
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
             RUNTIME_MEASURE_BEGIN(openknx.modules.runtime1[i]);
             openknx.modules.list[i]->loop1(configured);
             RUNTIME_MEASURE_END(openknx.modules.runtime1[i]);
         }
+        RUNTIME_MEASURE_END(_runtimeModuleLoop1);
     }
 #endif
 
@@ -1047,6 +1049,9 @@ namespace OpenKNX
             _runtimeSunCalculation.showStat("__Sun", 0, stat, hist);
     #endif
             _runtimeModuleLoop.showStat("_All_Modules_Loop", 0, stat, hist);
+    #ifdef OPENKNX_DUALCORE
+            _runtimeModuleLoop1.showStat("_All_Modules_Loop", 1, stat, hist);
+    #endif
             for (uint8_t i = 0; i < openknx.modules.count; i++)
             {
                 openknx.modules.runtime[i].showStat(openknx.modules.list[i]->name().c_str(), 0, stat, hist);
