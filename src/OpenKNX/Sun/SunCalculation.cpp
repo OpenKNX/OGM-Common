@@ -58,12 +58,18 @@ namespace OpenKNX
             _sunRiseUtc.hour = (((int)floor(rise) % 24) + 24) % 24, // ensure positive hour in [0;24[
             _sunRiseUtc.minute = (int)(60 * (rise - floor(rise)));
             _sunRiseUtc.second = 0;
-            _sunRiseLocalTime = DateTime(utc.year, utc.month, utc.day, _sunRiseUtc.hour, _sunRiseUtc.minute, _sunRiseUtc.second, DateTimeTypeUTC).toLocalTime();
+            OpennKNX::DateTime dtRise = DateTime(utc.year, utc.month, utc.day, _sunRiseUtc.hour, _sunRiseUtc.minute, _sunRiseUtc.second, DateTimeTypeUTC);
+            if (rise < 0) // compensate different utc-day, to prevent issues with local time conversion around DST-change
+                dtRise.addDays(-1); // expected exactly one day in past only
+            _sunRiseLocalTime = dtRise.toLocalTime();
 
             _sunSetUtc.hour = (((int)floor(set) % 24) + 24) % 24, // ensure positive hour in [0;24[ // Note: negative values expected for rise only
             _sunSetUtc.minute = (int)(60 * (set - floor(set)));
             _sunSetUtc.second = 0;
-            _sunSetLocalTime = DateTime(utc.year, utc.month, utc.day, _sunSetUtc.hour, _sunSetUtc.minute, _sunSetUtc.second, DateTimeTypeUTC).toLocalTime();
+            OpennKNX::DateTime dtSet = DateTime(utc.year, utc.month, utc.day, _sunSetUtc.hour, _sunSetUtc.minute, _sunSetUtc.second, DateTimeTypeUTC);
+            if (set < 0) // compensate different utc-day, to prevent issues with local time conversion around DST-change
+                dtSet.addDays(-1); // expected exactly one day in past only
+            _sunSetLocalTime = dtSet.toLocalTime();
 
             _sunCalculationValid = true;
         }
