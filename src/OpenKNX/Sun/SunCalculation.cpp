@@ -51,15 +51,16 @@ namespace OpenKNX
 
             double rise, set;
             // sunrise/sunset calculation
+            // TODO check the return {<,=,>}0 for special cases
             SunRiseAndSet::sunRiseSet(utc.year, utc.month, utc.day,
                                       longitude, latitude, -35.0 / 60.0, 1, &rise, &set);
 
-            _sunRiseUtc.hour = (int)floor(rise);
+            _sunRiseUtc.hour = (((int)floor(rise) % 24) + 24) % 24, // ensure positive hour in [0;24[
             _sunRiseUtc.minute = (int)(60 * (rise - floor(rise)));
             _sunRiseUtc.second = 0;
             _sunRiseLocalTime = DateTime(utc.year, utc.month, utc.day, _sunRiseUtc.hour, _sunRiseUtc.minute, _sunRiseUtc.second, DateTimeTypeUTC).toLocalTime();
 
-            _sunSetUtc.hour = (int)floor(set);
+            _sunSetUtc.hour = (((int)floor(set) % 24) + 24) % 24, // ensure positive hour in [0;24[ // Note: negative values expected for rise only
             _sunSetUtc.minute = (int)(60 * (set - floor(set)));
             _sunSetUtc.second = 0;
             _sunSetLocalTime = DateTime(utc.year, utc.month, utc.day, _sunSetUtc.hour, _sunSetUtc.minute, _sunSetUtc.second, DateTimeTypeUTC).toLocalTime();
