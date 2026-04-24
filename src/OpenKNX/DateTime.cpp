@@ -26,17 +26,28 @@ namespace OpenKNX
         }
     }
 
-    DateTime::DateTime(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, DateTimeType type)
+    DateTime::DateTime(uint16_t year, uint8_t month, uint8_t day, int32_t hour, uint8_t minute, uint8_t second, DateTimeType type)
     {
+        // TODO: Check need and support for handling out of range field values.
+        // Note: Hotfix for negative hours to solve broken SunRise
+
+        // 1. setting fiels ONLY
         this->year = year;
         this->month = month;
         this->day = day;
-        this->hour = hour;
+        this->hour = hour; // note: additional special handling at the end, for handle hours out of range
         this->minute = minute;
         this->second = second;
         this->isDst = type == DateTimeTypeLocalTimeDST;
         this->isUtc = type == DateTimeTypeUTC;
         this->isLocalTime = type != DateTimeTypeUTC;
+
+        // 2. after setting all values, handle hours out of range (e.g. negative!)
+        if (hour < 0 || 24 <= hour)
+        {
+            this->hour = 0;
+            addHours(hour);
+        }
     }
 
     DateTime::DateTime(time_t time, bool createUtc)

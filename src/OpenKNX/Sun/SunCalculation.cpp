@@ -55,20 +55,22 @@ namespace OpenKNX
             SunRiseAndSet::sunRiseSet(utc.year, utc.month, utc.day,
                                       longitude, latitude, -35.0 / 60.0, 1, &rise, &set);
 
-            _sunRiseUtc.hour = (((int)floor(rise) % 24) + 24) % 24, // ensure positive hour in [0;24[
-            _sunRiseUtc.minute = (int)(60 * (rise - floor(rise)));
-            _sunRiseUtc.second = 0;
-            DateTime dtRise = DateTime(utc.year, utc.month, utc.day, _sunRiseUtc.hour, _sunRiseUtc.minute, _sunRiseUtc.second, DateTimeTypeUTC);
-            if (rise < 0) // compensate different utc-day, to prevent issues with local time conversion around DST-change
-                dtRise.addDays(-1); // expected exactly one day in past only
+            const int32_t sunRiseUtcHour = (int32_t)floor(rise)
+            const uint8_t sunRiseUtcMinute = (int32_t)(60 * (rise - floor(rise)));
+            const uint8_t sunRiseUtcSecond = 0;
+            DateTime dtRise = DateTime(utc.year, utc.month, utc.day, sunRiseUtcHour, sunRiseUtcMinute, sunRiseUtcSecond, DateTimeTypeUTC);
+            _sunRiseUtc.hour = dtRise.hour;
+            _sunRiseUtc.minute = dtRise.minute;
+            _sunRiseUtc.second = dtRise.second;
             _sunRiseLocalTime = dtRise.toLocalTime();
 
-            _sunSetUtc.hour = (((int)floor(set) % 24) + 24) % 24, // ensure positive hour in [0;24[ // Note: negative values expected for rise only
-            _sunSetUtc.minute = (int)(60 * (set - floor(set)));
-            _sunSetUtc.second = 0;
-            DateTime dtSet = DateTime(utc.year, utc.month, utc.day, _sunSetUtc.hour, _sunSetUtc.minute, _sunSetUtc.second, DateTimeTypeUTC);
-            if (set < 0) // compensate different utc-day, to prevent issues with local time conversion around DST-change
-                dtSet.addDays(-1); // expected exactly one day in past only
+            const int32_t sunSetUtcHour = (int32_t)floor(set);
+            const uint8_t sunSetUtcMinute = (int32_t)(60 * (set - floor(set)));
+            const uint8_t sunSetUtcSecond = 0;
+            DateTime dtSet = DateTime(utc.year, utc.month, utc.day, sunSetUtcHour, sunSetUtcMinute, sunSetUtcSecond, DateTimeTypeUTC);
+            _sunSetUtc.hour = dtSet.hour;
+            _sunSetUtc.minute = dtSet.minute;
+            _sunSetUtc.second = dtSet.second;
             _sunSetLocalTime = dtSet.toLocalTime();
 
             _sunCalculationValid = true;
