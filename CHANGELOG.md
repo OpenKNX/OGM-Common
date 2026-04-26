@@ -18,6 +18,7 @@
   * Add list of KOs with short description
   * Cleanup TOC, Minor Fixes and Improvements
   * Link from Readme
+* Doc: Improve build script parameter documentation, no coding change
 
 
 ## 1.7.2: 2026-03-02
@@ -28,7 +29,7 @@
 
 - Fix: Parameter Memory Management for StatusLED Implementation
 - Fix: resultLength calculation in functionPropertyWrapper
-- Fix: removed non existing apdu object in Common.script.js
+- Fix: removed non-existing apdu object in Common.script.js
 - Revert: ESP32 Framework back to 3.2.1 (IDF 5.4)
 
 ## 1.7: 2026-02-16
