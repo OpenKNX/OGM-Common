@@ -55,7 +55,7 @@ namespace OpenKNX
             SunRiseAndSet::sunRiseSet(utc.year, utc.month, utc.day,
                                       longitude, latitude, -35.0 / 60.0, 1, &rise, &set);
 
-            const int32_t sunRiseUtcHour = (int32_t)floor(rise)
+            const int32_t sunRiseUtcHour = (int32_t)floor(rise);
             const uint8_t sunRiseUtcMinute = (int32_t)(60 * (rise - floor(rise)));
             const uint8_t sunRiseUtcSecond = 0;
             DateTime dtRise = DateTime(utc.year, utc.month, utc.day, sunRiseUtcHour, sunRiseUtcMinute, sunRiseUtcSecond, DateTimeTypeUTC);
