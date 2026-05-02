@@ -4,6 +4,8 @@
 
 * Fix: DST switch for NTP client
 * Fix/Change: Save data to flash in case of restart from console
+* Fix: SunRise-Calculation was wrong for UTC-day-change (this was not an issue for Europe, but e.g. New Zealand)
+  * Fix/Change: Support negative hours in TimeDate constructor
 * Update: Increase minimum OpenKNXproducer version to 4.3.5
   * Fix: Suppress warnings for intentionally overlapping parameters
 * Feature: Indicate unconfigured and PA not set via PROG-LED

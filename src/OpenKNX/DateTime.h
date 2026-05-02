@@ -37,7 +37,7 @@ namespace OpenKNX
     struct DateTime : public DateOnly, public TimeOnly
     {
         DateTime() = default;
-        DateTime(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, DateTimeType type);
+        DateTime(uint16_t year, uint8_t month, uint8_t day, int32_t hour, uint8_t minute, uint8_t second, DateTimeType type);
 
         DateTime(time_t time, bool createUtc = false);
 
