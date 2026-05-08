@@ -18,27 +18,42 @@ namespace OpenKNX
         {
             if (openknx.time.isValid())
             {
-                DateTime utc = openknx.time.getUtcTime();
-                if (utc.hour != _lastHour || utc.minute != _lastMinute)
+                const DateTime localTime = openknx.time.getLocalTime();
+                const bool dayChanged = localTime.day != _lastDay || localTime.month != _lastMonth || localTime.year != _lastYear;
+                if (dayChanged)
                 {
-                    _lastHour = utc.hour;
-                    _lastMinute = utc.minute;
-                    recalculateSunCalculation(utc);
+                    _lastYear = localTime.year;
+                    _lastMonth = localTime.month;
+                    _lastDay = localTime.day;
                 }
+                const bool minuteChanged = dayChanged || localTime.hour != _lastHour || localTime.minute != _lastMinute || localTime.isDst != _lastDst;
+                if (minuteChanged)
+                {
+                    _lastHour = localTime.hour;
+                    _lastMinute = localTime.minute;
+                    _lastDst = localTime.isDst;
+
+                    recalculateSunPos(localTime.toUtc());
+                }
+                if (dayChanged)
+                    recalculateSunRiseSet(localTime);
+                if (dayChanged && minuteChanged) // TODO check again: should the case for dayChanged. As dayChanged => minuteChanged
+                    _sunCalculationValid = true;
             }
         }
 
-        void SunCalculation::recalculateSunCalculation(DateTime &utc)
+        void SunCalculation::recalculateSunPos(const DateTime& utc)
         {
-            double latitude = ParamBASE_Latitude;
-            double longitude = ParamBASE_Longitude;
+            const double latitude = ParamBASE_Latitude;
+            const double longitude = ParamBASE_Longitude;
+
             cTime cTime = {0};
             cTime.iYear = utc.year;
             cTime.iMonth = utc.month;
             cTime.iDay = utc.day;
             cTime.dHours = utc.hour;
             cTime.dMinutes = utc.minute;
-            cTime.dSeconds = 0;
+            cTime.dSeconds = 0; // ignore seconds, as typically calculated every minute only!
 
             cLocation cLocation = {0};
             cLocation.dLatitude = latitude;
@@ -48,32 +63,32 @@ namespace OpenKNX
             sunpos(cTime, cLocation, &cSunCoordinates);
             _azimuth = cSunCoordinates.dAzimuth;
             _elevation = 90 - cSunCoordinates.dZenithAngle;
+        }
+
+        void SunCalculation::recalculateSunRiseSet(const DateTime& localTime)
+        {
+            const double latitude = ParamBASE_Latitude;
+            const double longitude = ParamBASE_Longitude;
 
             double rise, set;
             // sunrise/sunset calculation
             // TODO check the return {<,=,>}0 for special cases
-            SunRiseAndSet::sunRiseSet(utc.year, utc.month, utc.day,
+            SunRiseAndSet::sunRiseSet(localTime.year, localTime.month, localTime.day,
                                       longitude, latitude, -35.0 / 60.0, 1, &rise, &set);
 
             const int32_t sunRiseUtcHour = (int32_t)floor(rise);
             const uint8_t sunRiseUtcMinute = (int32_t)(60 * (rise - floor(rise)));
             const uint8_t sunRiseUtcSecond = 0;
-            DateTime dtRise = DateTime(utc.year, utc.month, utc.day, sunRiseUtcHour, sunRiseUtcMinute, sunRiseUtcSecond, DateTimeTypeUTC);
-            _sunRiseUtc.hour = dtRise.hour;
-            _sunRiseUtc.minute = dtRise.minute;
-            _sunRiseUtc.second = dtRise.second;
+            DateTime dtRise = DateTime(localTime.year, localTime.month, localTime.day, sunRiseUtcHour, sunRiseUtcMinute, sunRiseUtcSecond, DateTimeTypeUTC);
+            _sunRiseUtc = dtRise;
             _sunRiseLocalTime = dtRise.toLocalTime();
 
             const int32_t sunSetUtcHour = (int32_t)floor(set);
             const uint8_t sunSetUtcMinute = (int32_t)(60 * (set - floor(set)));
             const uint8_t sunSetUtcSecond = 0;
-            DateTime dtSet = DateTime(utc.year, utc.month, utc.day, sunSetUtcHour, sunSetUtcMinute, sunSetUtcSecond, DateTimeTypeUTC);
-            _sunSetUtc.hour = dtSet.hour;
-            _sunSetUtc.minute = dtSet.minute;
-            _sunSetUtc.second = dtSet.second;
+            DateTime dtSet = DateTime(localTime.year, localTime.month, localTime.day, sunSetUtcHour, sunSetUtcMinute, sunSetUtcSecond, DateTimeTypeUTC);
+            _sunSetUtc = dtSet;
             _sunSetLocalTime = dtSet.toLocalTime();
-
-            _sunCalculationValid = true;
         }
 
         bool SunCalculation::processCommand(std::string &cmd, bool diagnoseKo)
