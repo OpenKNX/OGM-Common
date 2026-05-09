@@ -25,6 +25,8 @@ namespace OpenKNX
                     _lastYear = localTime.year;
                     _lastMonth = localTime.month;
                     _lastDay = localTime.day;
+
+                    recalculateSunRiseSet(localTime);
                 }
                 const bool minuteChanged = dayChanged || localTime.hour != _lastHour || localTime.minute != _lastMinute || localTime.isDst != _lastDst;
                 if (minuteChanged)
@@ -34,11 +36,9 @@ namespace OpenKNX
                     _lastDst = localTime.isDst;
 
                     recalculateSunPos(localTime.toUtc());
+
+                    _sunCalculationValid = true; // both were calculcated as dayChanged => minuteChanged
                 }
-                if (dayChanged)
-                    recalculateSunRiseSet(localTime);
-                if (dayChanged && minuteChanged) // TODO check again: should the case for dayChanged. As dayChanged => minuteChanged
-                    _sunCalculationValid = true;
             }
         }
 
