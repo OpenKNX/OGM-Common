@@ -6,11 +6,12 @@ namespace OpenKNX
 {
     namespace Led
     {
-        GPIO::GPIO(long pin /*= -1*/, long activeOn /*= HIGH*/, bool isDimmable /*= true*/)
+        GPIO::GPIO(long pin /*= -1*/, long activeOn /*= HIGH*/, bool isDimmable /*= true*/, uint8_t maxBrightness /*= OPENKNX_LEDGPIO_MAX_BRIGHTNESS*/)
         {
             _pin = pin;
             _activeOn = activeOn;
             _isDimmable = isDimmable;
+            _maxBrightness = maxBrightness;
         }
 
         void GPIO::init()
