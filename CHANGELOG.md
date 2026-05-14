@@ -1,5 +1,26 @@
 # Changes
 
+## (upcoming release 1.8.0)
+
+* Fix: DST switch for NTP client
+* Fix/Change: Save data to flash in case of restart from console
+* Fix: SunRise-Calculation was wrong for UTC-day-change (this was not an issue for Europe, but e.g. New Zealand)
+  * Fix/Change: Support negative hours in TimeDate constructor
+* Update: Increase minimum OpenKNXproducer version to 4.3.5
+  * Fix: Suppress warnings for intentionally overlapping parameters
+* Feature: Indicate unconfigured and PA not set via PROG-LED
+  * Extension (LED): Add count and repeat to effect "Flash"  
+* Fixes/Extension: FunctionPropertyWrapper
+* Fix: Small memory leak in case of calling readFlash for modules without saved data
+* Fix: Restore script showed success when git checkout failed
+* Refactor: Restore script
+* Doc: Application Description
+  * Add list of KOs with short description
+  * Cleanup TOC, Minor Fixes and Improvements
+  * Link from Readme
+* Doc: Improve build script parameter documentation, no coding change
+
+
 ## 1.7.2: 2026-03-02
 
 - Fix: Default brightness of dimmable GPIO-LED 100/255 changed to 255/255
@@ -8,7 +29,7 @@
 
 - Fix: Parameter Memory Management for StatusLED Implementation
 - Fix: resultLength calculation in functionPropertyWrapper
-- Fix: removed non existing apdu object in Common.script.js
+- Fix: removed non-existing apdu object in Common.script.js
 - Revert: ESP32 Framework back to 3.2.1 (IDF 5.4)
 
 ## 1.7: 2026-02-16

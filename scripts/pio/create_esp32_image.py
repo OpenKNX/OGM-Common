@@ -112,8 +112,18 @@ def esp32_create_combined_bin(source, target, env):
     if memory_type in ["opi_opi", "opi_qspi"]: flash_mode = "dout"
 
     cmd = [
-        "esptool", "--chip", chip, "merge-bin", "-o", new_file,
-        "--flash-mode", flash_mode, "--flash-freq", flash_freq, "--flash-size", flash_size
+        "esptool",
+        "--chip",
+        chip,
+        "merge-bin",
+        "-o",
+        new_file,
+        "--flash-mode",
+        flash_mode,
+        "--flash-freq",
+        flash_freq,
+        "--flash-size",
+        flash_size,
     ]
 
     print(f"{C.BOLD}Firmware Info{C.END}: {C.BLUE}{chip}{C.END} | Mode:{C.GREEN} {flash_mode}{C.END} | Size:{C.BLUE} {flash_size}{C.END} | Freq:{C.GREEN} {flash_freq}{C.END}")

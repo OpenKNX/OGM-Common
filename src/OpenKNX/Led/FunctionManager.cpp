@@ -176,7 +176,7 @@ namespace OpenKNX
             }
         }
 
-        void FunctionGroup::flash(uint16_t duration, Capability capability)
+        void FunctionGroup::flash(uint8_t count, uint16_t repeatCycleTime, Capability capability)
         {
             for (auto led : _leds)
             {
@@ -184,7 +184,7 @@ namespace OpenKNX
                     (capability == Capability::MONOCHROME && !led->isColor()) ||
                     (capability == Capability::COLOR && led->isColor()))
                 {
-                    led->flash(duration);
+                    led->flash(count, repeatCycleTime);
                 }
             }
         }

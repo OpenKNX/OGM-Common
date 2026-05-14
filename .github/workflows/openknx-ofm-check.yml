@@ -1,6 +1,6 @@
 # Check build of OpenKNX OFM with Reference OAM (merging/building of OpenKNX knxprod + build of full releases)
 # SPDX-License-Identifier: AGPL-3.0-only
-# Copyright (C) 2024-2025 Cornelius Koepp
+# Copyright (C) 2024-2026 Cornelius Koepp
 
 name: openknx-ofm-check
 run-name: Check OpenKNX OFM Build in Reference OAM
@@ -17,9 +17,10 @@ on:
       target:
         required: true
         type: string
-      # restore_branch:
-      #   required: true
-      #   type: boolean
+      restore_branch:
+        default: false
+        required: true
+        type: boolean
       KNXPROD_PREFIX:
         required: true
         type: string
@@ -28,8 +29,8 @@ jobs:
   oam-build:
     runs-on: ubuntu-latest
     env:
-      PRODUCER_VERSION: 3.12.2
-      PRODUCER_CHECKSUM: ad8e6ba491849b401e01f237c427cd61643d1d4e8fb4b0c9f9dffc097506f0c2
+      PRODUCER_VERSION: 4.3.5
+      PRODUCER_CHECKSUM: 0322b8bd5bf2fae4e0045c779534f6b7013f8e82d3452f7ed943ab2aa1f984c6
       PRODUCER_URL: https://github.com/OpenKNX/OpenKNXproducer/releases/download/v${PRODUCER_VERSION}/OpenKNXproducer-${PRODUCER_VERSION}.zip
       PRODUCER_FILENAME: OpenKNXproducer-${PRODUCER_VERSION}.zip
 
@@ -39,11 +40,6 @@ jobs:
         run: |
           echo "PRODUCER_URL=${PRODUCER_URL}" >> $GITHUB_ENV
           echo "PRODUCER_FILENAME=${PRODUCER_FILENAME}" >> $GITHUB_ENV
-
-      # DO this after restore the use current commit
-      # - uses: actions/checkout@v4
-      #   with:
-      #     path: OFM-DFA
 
       - name: ((IGNORED)) Check for Same Name Branch in Reference OAM
         id: oam_branch
@@ -56,19 +52,18 @@ jobs:
           echo "ref_name=$BRANCH" >> $GITHUB_OUTPUT
           echo "Selected branch: $BRANCH"
 
+      # 1. checkout OAM
+      # 2. restore
+      # 3. overwrite OFM with current commit
+
       - name: Checkout Reference OAM
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: openknx/${{ inputs.oam }}
           # TODO fixme: branch-handling
           # ref: ${{ steps.oam_branch.outputs.ref_name }}
           ref: ${{ inputs.ref }}
           path: ${{ inputs.oam }}
-
-      # - name: DEBUG paths
-      #   run: |
-      #     pwd
-      #     find
 
       - name: Restore OAM
         shell: pwsh
@@ -77,7 +72,7 @@ jobs:
           ./Restore-Dependencies.ps1
 
       - name: Restore Current OFM Commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # ref: ${{ github.ref_name }}
           # TODO introduce parameter?

@@ -192,7 +192,7 @@ namespace OpenKNX
                 if (moduleSize > 0 && !loadedModules[moduleId])
                 {
                     logDebugP("Init unloaded module %s (%i)", module->name().c_str(), moduleId);
-                    module->readFlash(new uint8_t[0], 0);
+                    module->readFlash(nullptr, 0);
                 }
             }
         }
