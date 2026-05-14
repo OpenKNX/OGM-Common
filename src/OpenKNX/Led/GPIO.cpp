@@ -23,8 +23,16 @@ namespace OpenKNX
             // I2C LEDs now support software PWM simulation (via pending pattern)
 
             _initialized = true;
-            openknx.gpio.pinMode(_pin, OUTPUT);
-            openknx.gpio.digitalWrite(_pin, !_activeOn);
+            if (!_isI2C && _isDimmable)
+            {
+                pinMode(_pin, ANALOG);
+                analogWrite(_pin, !_activeOn ? 255 : 0); // Start with OFF state
+            }
+            else
+            {
+                openknx.gpio.pinMode(_pin, OUTPUT);
+                openknx.gpio.digitalWrite(_pin, !_activeOn);
+            }
         }
 
         void GPIO::writeLed(uint8_t brightness)
@@ -69,10 +77,13 @@ namespace OpenKNX
             else
             {
                 // Direct GPIO write (non-I2C pin)
-                if (calcBrightness == 0)
-                    openknx.gpio.digitalWrite(_pin, !_activeOn);
-                else if (calcBrightness == 255)
-                    openknx.gpio.digitalWrite(_pin, _activeOn);
+                if (!_isDimmable)
+                {
+                    if (calcBrightness == 0)
+                        openknx.gpio.digitalWrite(_pin, !_activeOn);
+                    else if (calcBrightness == 255)
+                        openknx.gpio.digitalWrite(_pin, _activeOn);
+                }
                 else
                     analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness)); // Invert for LOW active
                 _currentLedBrightness = calcBrightness;
