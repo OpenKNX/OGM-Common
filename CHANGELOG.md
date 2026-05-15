@@ -1,6 +1,6 @@
 # Changes
 
-## (upcoming release 1.8.0)
+## 1.8.0: 2026-05-15
 
 * Fix: DST switch for NTP client
 * Fix/Change: Save data to flash in case of restart from console
