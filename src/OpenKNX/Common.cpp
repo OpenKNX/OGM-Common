@@ -59,9 +59,9 @@ namespace OpenKNX
         openknx.gpio.init();
         openknx.leds.init();
         openknx.ledFunctions.init();
-#if defined(POWER_SAVE_PIN) && POWER_SAVE_PIN >= 0
-        openknx.gpio.pinMode(POWER_SAVE_PIN, OUTPUT);
-        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON);
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+        openknx.gpio.pinMode(SAVE_POWER_PIN, OUTPUT);
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON); 
 #endif
 
         _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);

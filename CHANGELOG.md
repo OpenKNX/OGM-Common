@@ -1,5 +1,9 @@
 # Changes
 
+## 1.8.1: 2026-05-18
+
+* Fix Vcc2 shut off with DCU initialization (POWER_SAVE_PIN vs. SAVE_POWER_PIN)
+
 ## 1.8.0: 2026-05-15
 
 * Fix: DST switch for NTP client
