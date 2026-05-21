@@ -1,5 +1,6 @@
 #pragma once
 #include "Arduino.h"
+#include <functional>
 #include <string>
 #ifdef ARDUINO_ARCH_RP2040
     #include "pico/sync.h"
@@ -121,14 +122,24 @@ namespace OpenKNX
     {
         class Logger
         {
+          public:
+#ifdef OPENKNX_WEBCONSOLE
+    #ifndef OPENKNX_WEBCONSOLE_BUFSIZE
+        #define OPENKNX_WEBCONSOLE_BUFSIZE 4096
+    #endif
+            static constexpr uint32_t RING_SIZE = OPENKNX_WEBCONSOLE_BUFSIZE;
+            const char* ringBuf() const { return _ringBuf; }
+            uint32_t ringWritePos() const { return _ringWritePos; }
+#endif
+
           private:
-            struct {
-                const char magic[4] = {0x06, 0x9F, 0xFD, 0xCC}; // magic values for comparison of _wall
+            struct
+            {
+                const char magic[4] = {0x06, 0x9F, 0xFD, 0xCC};
                 char output[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
                 char wall[4] = {0x06, 0x9F, 0xFD, 0xCC};
             } _buffer;
 #ifdef ARDUINO_ARCH_RP2040
-            // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
             volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
             recursive_mutex_t _mutex;
@@ -160,6 +171,12 @@ namespace OpenKNX
             void printColorCode();
             void printIndent();
             uint8_t getIndent();
+#ifdef OPENKNX_WEBCONSOLE
+            void appendWebconsoleBuffer(const char* s);
+            void appendWebconsoleBuffer(int n);
+            char _ringBuf[RING_SIZE] = {};
+            uint32_t _ringWritePos = 0;
+#endif
 
           public:
 #ifdef OPENKNX_RTT
@@ -168,18 +185,7 @@ namespace OpenKNX
             Logger();
             void init();
 
-            /*
-             * Fetches an exclusive lock to allow contiguous output.
-             * This can be called multiple times per thread.
-             *
-             * Attention: The function blocks the other core if it also wants to output something.
-             * The lock should be active as short as possible. Do not use it if you do not know what you are doing!
-             */
             void begin();
-
-            /*
-             * Release the exclusive lock.
-             */
             void end();
 
             std::string buildPrefix(const char* prefix, const char* id);
@@ -200,7 +206,7 @@ namespace OpenKNX
 
             void logHeader(const char* header);
             void logDividingLine();
-       
+
             void logHex(const uint8_t* data, size_t size);
             void logHexWithPrefix(const char* prefix, const uint8_t* data, size_t size);
             void logHexWithPrefix(const std::string& prefix, const uint8_t* data, size_t size);
