@@ -26,7 +26,9 @@ namespace OpenKNX
             _initialized = true;
             if (!_isI2C && _isDimmable)
             {
+#ifdef ANALOG
                 pinMode(_pin, ANALOG);
+#endif
                 analogWrite(_pin, !_activeOn ? 255 : 0); // Start with OFF state
             }
             else
