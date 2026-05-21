@@ -1,5 +1,9 @@
 # Changes
 
+## 1.8.x: comming
+
+* Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
+
 ## 1.8.1: 2026-05-18
 
 * Fix Vcc2 shut off with DCU initialization (POWER_SAVE_PIN vs. SAVE_POWER_PIN)
