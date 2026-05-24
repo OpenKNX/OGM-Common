@@ -14,22 +14,26 @@ Use this exact section structure for each version.
 # Release Notes
 
 ## 1.2.3
+### Breaking Changes
+- Renamed API ... to ...
+
 ### Feature
 - Added support for ...
 
 ### Bug
 - Fixed crash when ...
-
-### Breaking Changes
-- Renamed API ... to ...
 ```
 
 ## Rules
 - Version heading `## <version>` must match module `library.json`.
 - Categories must be exactly:
+  - `### Breaking Changes`
   - `### Feature`
   - `### Bug`
-  - `### Breaking Changes`
+- Category order inside each version must be exactly:
+  1. `### Breaking Changes`
+  2. `### Feature`
+  3. `### Bug`
 - Keep bullet points short, one change per line.
 - If no entries are available in a category, use `- none`.
 - Put incompatible changes only in `Breaking Changes`.
@@ -54,26 +58,26 @@ Example with no breaking changes:
 
 ```markdown
 ## 0.6.0
+### Breaking Changes
+- none
+
 ### Feature
 - Added KNX reconnect diagnostics.
 
 ### Bug
 - Fixed timezone offset handling for sunrise calculation.
-
-### Breaking Changes
-- none
 ```
 
 Example with breaking changes:
 
 ```markdown
 ## 1.4.0
+### Breaking Changes
+- Changed KO numbering for core objects 2-19.
+
 ### Feature
 - Added new GPIO abstraction for expanders.
 
 ### Bug
 - Fixed memory layout overlap detection output.
-
-### Breaking Changes
-- Changed KO numbering for core objects 2-19.
 ```

@@ -15,11 +15,13 @@ Target format for each module file `release_notes.md`:
 # Release Notes
 
 ## <version>
+### Breaking Changes
+- ...
+
 ### Feature
 - ...
+
 ### Bug
-- ...
-### Breaking Changes
 - ...
 
 Requirements:
@@ -35,6 +37,7 @@ Requirements:
    - Bug: fixes, hotfixes, error corrections
    - Breaking Changes: incompatible behavior or migration-impacting changes
 6. If a category has no entries for a version, set `- none`.
+6a. Enforce heading order per version exactly as: Breaking Changes, Feature, Bug.
 7. Preserve version ordering from newest to oldest where possible.
 8. Keep wording close to original source text; do not invent new release facts.
 9. After migration, update README sections that still carry old release lists to a short pointer:

@@ -12,19 +12,20 @@ Required structure:
 # Release Notes
 
 ## <version>
+### Breaking Changes
+- ...
+
 ### Feature
 - ...
 
 ### Bug
-- ...
-
-### Breaking Changes
 - ...
 ```
 
 Rules:
 - Use exactly the three category headings shown above.
 - Every version section must include all categories.
+- Category order per version is mandatory: `Breaking Changes`, then `Feature`, then `Bug`.
 - If no items exist in a category, write `- none`.
 - Version heading must match `version` from the module `library.json`.
 - Keep change items concise and suitable for automatic aggregation.

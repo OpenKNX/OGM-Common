@@ -144,17 +144,18 @@ Required format per version:
 # Release Notes
 
 ## <version>
+### Breaking Changes
+- ...
 ### Feature
 - ...
 ### Bug
-- ...
-### Breaking Changes
 - ...
 ```
 
 Rules:
 - `## <version>` must match the semantic version from the module `library.json`.
 - All three categories are mandatory for each version section.
+- Category order per version is mandatory: `Breaking Changes`, then `Feature`, then `Bug`.
 - If a category has no entries, use `- none`.
 - Breaking changes must be listed only under `### Breaking Changes`.
 - Keep entries short and actionable for automated aggregation.

@@ -1,26 +1,29 @@
 # Release Notes
 
 ## 1.8.x
+### Breaking Changes
+- none
+
 ### Feature
 - none
 
 ### Bug
 - Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
 
+## 1.8.1
 ### Breaking Changes
 - none
 
-## 1.8.1
 ### Feature
 - none
 
 ### Bug
 - Fix Vcc2 shut off with DCU initialization (POWER_SAVE_PIN vs. SAVE_POWER_PIN)
 
+## 1.8.0
 ### Breaking Changes
 - none
 
-## 1.8.0
 ### Feature
 - Update: Increase minimum OpenKNXproducer version to 4.3.5
 - Feature: Indicate unconfigured and PA not set via PROG-LED
@@ -42,20 +45,20 @@
 - Fix: Restore script showed success when git checkout failed
 - Cleanup TOC, Minor Fixes and Improvements
 
+## 1.7.2
 ### Breaking Changes
 - none
 
-## 1.7.2
 ### Feature
 - none
 
 ### Bug
 - Fix: Default brightness of dimmable GPIO-LED 100/255 changed to 255/255
 
+## 1.7.1
 ### Breaking Changes
 - none
 
-## 1.7.1
 ### Feature
 - Revert: ESP32 Framework back to 3.2.1 (IDF 5.4)
 
@@ -64,10 +67,10 @@
 - Fix: resultLength calculation in functionPropertyWrapper
 - Fix: removed non-existing apdu object in Common.script.js
 
+## 1.7
 ### Breaking Changes
 - none
 
-## 1.7
 ### Feature
 - Feature: Force OpenKNXproducer to version 3.13.6
 - Feature: Restore script can also restore just links (without checkout) (PR#129)
@@ -80,10 +83,10 @@
 - Hotfix: Modules list could not handle Modules inserted in between during ETS update - is fixed now. All modules are selected after Update.
 - Fix: Typo "Noitz" -> "Notiz" (PR#130)
 
-### Breaking Changes
-- none
-
 ## 1.6.0
+### Breaking Changes
+- Breaking changes: Old LED Apis (openknx.progLed and openknx.infoLeds) no longer available!
+
 ### Feature
 - Feature: New StatusLED Implementation see README_LED.md
 - Update: RP2040 Framework update to 5.4.4
@@ -99,10 +102,10 @@
 - Fix: Network bug causing crashes (with 5.4.3)
 - Fix: Estimation of KNX-data size in flash layout display/check
 
-### Breaking Changes
-- Breaking changes: Old LED Apis (openknx.progLed and openknx.infoLeds) no longer available!
-
 ## 1.5.1
+### Breaking Changes
+- none
+
 ### Feature
 - Update: RP2040 Environment
 - platform: platform-raspberrypi 6af38e2 to 22a4cc6
@@ -125,10 +128,10 @@
 - Fix: improve texts for ESP-USB-Firmware-Upload
 - Fix: suppress KNX-Upload-Firmware script for ESP as long as KNX-OTA is not available
 
+## 1.5.0
 ### Breaking Changes
 - none
 
-## 1.5.0
 ### Feature
 - Feature: Sun elevation and azimuth can be displayed by diagnose object (`sun elevation`, `sun azimuth`)
 - Feature: Release scripts build now a release with a directory structure per supported Hardware. Provides better overview.
@@ -156,10 +159,10 @@
 - Fix: Prevent issues with ADC usage, after showing console info;
 - Fix: Console help-line for `aw` presented wrong value range (maximum is 4095)
 
+## 1.4.3
 ### Breaking Changes
 - none
 
-## 1.4.3
 ### Feature
 - *Impact:* This resulted in malfunction of timer-switches in Logikmodul (Kanaltype "ZEITSCHALTUHR") depending on day
 - See also changes of 1.4.0 especially the new KO-numbers.
@@ -167,10 +170,10 @@
 ### Bug
 - Hotfix: Day-of-week was not set in `DateTime::toTm(..)` provided by *new time implementation* of v1.4.0
 
+## 1.4.2
 ### Breaking Changes
 - none
 
-## 1.4.2
 ### Feature
 - Feature: Enhancement for extended "In Betrieb"
 - See also changes of 1.4.0 especially the new KO-numbers.
@@ -178,10 +181,10 @@
 ### Bug
 - none
 
+## 1.4.1
 ### Breaking Changes
 - none
 
-## 1.4.1
 ### Feature
 - Improvement: Context-Help in ETS-App
 - Change: Use Standard Build Process for Context-Help
@@ -190,10 +193,10 @@
 ### Bug
 - Fix: Broken Context-Help in ETS-App
 
-### Breaking Changes
-- none
-
 ## 1.4.0
+### Breaking Changes
+- Breaking: Changes in KO-Numbers 2 to 19. See [table below](#änderung-von-zentralen-ko-nummern-mit-v14x).
+
 ### Feature
 - Feature: New KNX TPUart Implementation of KNX Stack
 - Feature: New time implementation and sun calculation
@@ -222,20 +225,20 @@
 ### Bug
 - none
 
-### Breaking Changes
-- Breaking: Changes in KO-Numbers 2 to 19. See [table below](#änderung-von-zentralen-ko-nummern-mit-v14x).
-
 ## 1.4.x
+### Breaking Changes
+- none
+
 ### Feature
 - none
 
 ### Bug
 - none
 
+## 1.2.1
 ### Breaking Changes
 - none
 
-## 1.2.1
 ### Feature
 - Update: RP2040 Platform to Core 4.1.1 + Rpi Base Platform
 - Add: Now allows you to delete the KNX or OpenKNX flash area on all platforms
@@ -252,10 +255,10 @@
 - Fix: Misspelling writeDiagenoseKo -> writeDiagnoseKo
 - Change: Set JLink und JTAG as default debugger and USB as default uploader
 
-### Breaking Changes
-- none
-
 ## 1.2.0
+### Breaking Changes
+- Breaking changes: No support for old knx stack
+
 ### Feature
 - Update: RP2040 Platform to Core 3.9.3
 - Update: ESP Platform to Core 6.7.0
@@ -270,10 +273,10 @@
 ### Bug
 - none
 
-### Breaking Changes
-- Breaking changes: No support for old knx stack
-
 ## 1.1.2
+### Breaking Changes
+- none
+
 ### Feature
 - Update: RP2040 & ESP32 Platform
 - Refactor/Feature: Refactor watchdog to support ESP32
@@ -281,10 +284,10 @@
 ### Bug
 - none
 
+## 1.1.1
 ### Breaking Changes
 - none
 
-## 1.1.1
 ### Feature
 - Improvement: Project restore scripts
 
@@ -292,10 +295,10 @@
 - Fix: Add typedef for missing pin_size_t for esp32
 - Fix: Button handling when using short, long and double click
 
-### Breaking Changes
-- none
-
 ## 1.1.0
+### Breaking Changes
+- Breaking changes: Remove the call addModule with pointer to prevent duplicate instances.
+
 ### Feature
 - Enhancement: Reusable scripts for compatibility with MacOS and Linux.
 - Feature: Adds new periodic & manual (by ko) save
@@ -304,10 +307,10 @@
 ### Bug
 - Fix: Sent heartbeat in configured format
 
-### Breaking Changes
-- Breaking changes: Remove the call addModule with pointer to prevent duplicate instances.
-
 ## 1.0.12
+### Breaking Changes
+- none
+
 ### Feature
 - ESP32 Platform: Call `setup1()` and `loop1()`
 - Change: Use mklink as default in new restore-script
@@ -318,10 +321,10 @@
 - Fix: Watchdog in fatal error
 - Fix: Flash Write Protection
 
+## 1.0.11
 ### Breaking Changes
 - none
 
-## 1.0.11
 ### Feature
 - Feature: Include network-state in 8-bit heartbeat ko
 - Baggages: Adds new icons
@@ -335,10 +338,10 @@
 - Improvement: Watchdog and memory debug output
 - Fix LED-handling
 
+## 1.0.10
 ### Breaking Changes
 - none
 
-## 1.0.10
 ### Feature
 - Feature: Adds a recovery mode during bootup by hold knx prog button
 - Refactor: Heartbeat with new advanced info
@@ -361,10 +364,10 @@
 ### Bug
 - Refactor/Fix: Watchdog
 
+## 1.0.9
 ### Breaking Changes
 - none
 
-## 1.0.9
 ### Feature
 - Feature: Adds an inverted mode for the led effect activity
 - Feature: Adds custom button processing to offer short click, long click and double click
@@ -372,10 +375,10 @@
 ### Bug
 - none
 
+## 1.0.8
 ### Breaking Changes
 - none
 
-## 1.0.8
 ### Feature
 - Feature: Allows to pass a module reference to addModule
 - Improvement: Swap the meaning of info1Led and progLed in the boot phase.
@@ -383,10 +386,10 @@
 ### Bug
 - none
 
+## 1.0.7
 ### Breaking Changes
 - none
 
-## 1.0.7
 ### Feature
 - Refactor: Led handling to optimize ram usage
 - Refactor: Rename openknx.ledInfo to openknx.led1Info and also the defines
@@ -397,10 +400,10 @@
 ### Bug
 - none
 
+## 1.0.6
 ### Breaking Changes
 - none
 
-## 1.0.6
 ### Feature
 - Refactor: Force an overload of the name() and version().
 - Feature: Hide modules with blank version on the console.
@@ -408,10 +411,10 @@
 ### Bug
 - none
 
+## 1.0.5
 ### Breaking Changes
 - none
 
-## 1.0.5
 ### Feature
 - Restore-Scripts:
 - Use knx from OpenKNX-Repository
@@ -423,10 +426,10 @@
 ### Bug
 - Improve error-handling: Restore working-directory before exit 1
 
+## 1.0.4
 ### Breaking Changes
 - none
 
-## 1.0.4
 ### Feature
 - Stability: Initialize string buffers
 - Stability/Improvement: Read hardware serial once on startup only, not in console output
@@ -434,10 +437,10 @@
 ### Bug
 - Fix: [Skip processModulesLoop with 0 modules (for testing)](https://github.com/OpenKNX/OGM-Common/commit/c663b51cadbfc9ae9b2c9ca61a919f20e5632598)
 
+## 1.0.3
 ### Breaking Changes
 - none
 
-## 1.0.3
 ### Feature
 - Improvement: Console-Output
 - Version-Listing on Console
@@ -453,10 +456,10 @@
 - Increase log-level in loading module data from debug to info
 - Fix: Add help-entry for uptime
 
+## 1.0.2
 ### Breaking Changes
 - none
 
-## 1.0.2
 ### Feature
 - Feature: Show uptime in human-readable form (days hh:mm:ss)
 - Feature #9: Optional Runtime Statistics Measurement to Support Development, available setting `OPENKNX_RUNTIME_STAT`
@@ -470,10 +473,10 @@
 - Fix: [Show versions only for request from console](https://github.com/OpenKNX/OGM-Common/commit/76935a146fda62f25f3538abe97fe69110f2ed44)
 - Fix: [Update RP2040 platform and platform_packages](https://github.com/OpenKNX/OGM-Common/commit/90ebc9d4f7618a905ca8a38617a844ee7f130452)
 
+## 1.0.1
 ### Breaking Changes
 - none
 
-## 1.0.1
 ### Feature
 - Improvement: [Show commons version in console and show running firmware version first](https://github.com/OpenKNX/OGM-Common/commit/05c58c60fa8ffc4406be2c6e058be3110b2430e3)
 - Documentation: Reformat Tables in README
@@ -487,17 +490,14 @@
 ### Bug
 - Fix: [Parsing of application number](https://github.com/OpenKNX/OGM-Common/commit/86f6f77f338c310ac4f687f9650e90a829e16a35)
 
+## 1.0.0
 ### Breaking Changes
 - none
 
-## 1.0.0
+
 ### Feature
 - none
 
 ### Bug
 - none
-
-### Breaking Changes
-- none
-
 
