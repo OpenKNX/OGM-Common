@@ -2,11 +2,11 @@
 
 # == Content of "dependencies.txt" ==
 # Each line represents a dependency and should contain the following information:
-# Hash value, branch, folder path, Git URL, and optionally the branch name.
+# Hash value, branch, library version, folder path, Git URL.
 #
 # Example:
-# a1b2c3d4 master lib/MyProject https://github.com/username/myproject.git#master
-# a2b3c4d5 dev_1 lib/OpenKNX https://github.com/username/OpenKNX.git
+# a1b2c3d4 master 1.2.3 lib/MyProject https://github.com/username/myproject.git#master
+# a2b3c4d5 dev_1 0.9.0 lib/OpenKNX https://github.com/username/OpenKNX.git
 #
 # You can also add comments by starting a line with '#'.
 # Example:
@@ -61,7 +61,23 @@ foreach ($subproject in $projects) {
 
         $commitHash = git --git-dir $subproject/.git log -1 --pretty=format:"%h"
         $remoteUrl = git --git-dir $subproject/.git config --get remote.origin.url
-        $dependencies += "$commitHash $branch $subproject $remoteUrl"
+
+        $libraryVersion = "unknown"
+        $libraryJsonPath = Join-Path $subproject "library.json"
+        if (Test-Path $libraryJsonPath) {
+            try {
+                $libraryJson = Get-Content $libraryJsonPath -Raw | ConvertFrom-Json
+                if ($libraryJson.PSObject.Properties.Name -contains "version" -and $libraryJson.version) {
+                    $libraryVersion = $libraryJson.version
+                }
+            } catch {
+                Write-Host "WARN: Cannot parse '$libraryJsonPath'. Using version 'unknown'." -ForegroundColor Magenta
+            }
+        } else {
+            Write-Host "WARN: Missing '$libraryJsonPath'. Using version 'unknown'." -ForegroundColor Magenta
+        }
+
+        $dependencies += "$commitHash $branch $libraryVersion $subproject $remoteUrl"
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
         Write-Output $info

@@ -133,3 +133,30 @@ Rules:
 - Keep READMEs in sync with the code — never leave them stale after a change
 - Do not create new README files unless the user explicitly asks
 - Do not add a "Changed in this session" or similar meta-section — just update the relevant content inline
+
+## Release Notes Instructions
+
+Each library project under `lib/` must contain a `release_notes.md` file in a machine-readable markdown format.
+
+Required format per version:
+
+```markdown
+# Release Notes
+
+## <version>
+### Feature
+- ...
+### Bug
+- ...
+### Breaking Changes
+- ...
+```
+
+Rules:
+- `## <version>` must match the semantic version from the module `library.json`.
+- All three categories are mandatory for each version section.
+- If a category has no entries, use `- none`.
+- Breaking changes must be listed only under `### Breaking Changes`.
+- Keep entries short and actionable for automated aggregation.
+
+For full authoring and migration guidance, see `doc/Release-Notes-Guide.md`.
