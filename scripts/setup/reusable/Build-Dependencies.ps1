@@ -2,11 +2,11 @@
 
 # == Content of "dependencies.txt" ==
 # Each line represents a dependency and should contain the following information:
-# Hash value, branch, library version, folder path, Git URL.
+# Hash value, library version, branch, folder path, Git URL.
 #
 # Example:
-# a1b2c3d4 master 1.2.3 lib/MyProject https://github.com/username/myproject.git#master
-# a2b3c4d5 dev_1 0.9.0 lib/OpenKNX https://github.com/username/OpenKNX.git
+# a1b2c3d4 1.2.3 master lib/MyProject https://github.com/username/myproject.git#master
+# a2b3c4d5 0.9.0 dev_1 lib/OpenKNX https://github.com/username/OpenKNX.git
 #
 # You can also add comments by starting a line with '#'.
 # Example:
@@ -77,7 +77,7 @@ foreach ($subproject in $projects) {
             Write-Host "WARN: Missing '$libraryJsonPath'. Using version 'unknown'." -ForegroundColor Magenta
         }
 
-        $dependencies += "$commitHash $branch $libraryVersion $subproject $remoteUrl"
+        $dependencies += "$commitHash $libraryVersion $branch $subproject $remoteUrl"
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
         Write-Output $info
