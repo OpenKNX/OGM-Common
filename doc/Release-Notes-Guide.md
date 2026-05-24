@@ -40,6 +40,14 @@ Use this exact section structure for each version.
 3. For each version, map entries into required categories.
 4. When category cannot be determined, default to `Bug` and refine later.
 
+## Reusable AI Prompt
+
+For migration in additional projects, use:
+
+- `doc/Release-Notes-Conversion.prompt.md`
+
+This prompt covers extraction from `CHANGELOG.md`, `README.md`, and application docs, then merges entries into the required machine-readable format.
+
 ## Examples
 
 Example with no breaking changes:
