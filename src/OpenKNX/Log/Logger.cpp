@@ -17,6 +17,8 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_init(&_mutex);
+#elif defined(ARDUINO_ARCH_ESP32)
+            _mutex = xSemaphoreCreateRecursiveMutex();
 #endif
         }
 
@@ -47,6 +49,8 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_enter_blocking(&_mutex);
+#elif defined(ARDUINO_ARCH_ESP32)
+            xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
 #endif
         }
 
@@ -54,6 +58,8 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_exit(&_mutex);
+#elif defined(ARDUINO_ARCH_ESP32)
+            xSemaphoreGiveRecursive(_mutex);
 #endif
         }
 
@@ -464,8 +470,7 @@ namespace OpenKNX
             if (getIndent() == 10)
                 logError("Logger", "Indent error!");
             else
-                STATE_BY_CORE(_indent)
-                ++;
+                STATE_BY_CORE(_indent) += 1;
         }
 
         void Logger::indentDown()
@@ -473,8 +478,7 @@ namespace OpenKNX
             if (getIndent() == 0)
                 logError("Logger", "Indent error!");
             else
-                STATE_BY_CORE(_indent)
-                --;
+                STATE_BY_CORE(_indent) -= 1;
         }
 
         void Logger::indent(uint8_t indent)
