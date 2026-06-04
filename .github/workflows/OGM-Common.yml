@@ -62,10 +62,12 @@ jobs:
             prefix: StateEngine
             target: DFA16-Release
 
-    uses: ./.github/workflows/openknx-ofm-check.yml
+    uses: openknx/actions/.github/workflows/openknx-ofm-check.yml@v0
     with:
+      # use repo vars for ofm and ofm_ref
+      ofm_prefix: BASE
       oam: ${{ matrix.oam }}
-      ref: ${{ matrix.ref }}
+      oam_ref: ${{ matrix.ref }}
       KNXPROD_PREFIX: ${{ matrix.prefix }}
       target: ${{ matrix.target }}
       # restore_branch: ${{ matrix.restore_branch }}
@@ -76,10 +78,10 @@ jobs:
   manual:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Manual check for '${{ github.event.inputs.oam }}' in '${{ github.event.inputs.ref }}'
-    uses: ./.github/workflows/openknx-ofm-check.yml
+    uses: openknx/actions/.github/workflows/openknx-ofm-check.yml@v0
     with:
       oam: ${{ github.event.inputs.oam }}
-      ref: ${{ github.event.inputs.ref }}
+      oam_ref: ${{ github.event.inputs.ref }}
       KNXPROD_PREFIX: ${{ github.event.inputs.KNXPROD_PREFIX }}
       target: ${{ github.event.inputs.target }}
       restore_branch: ${{ github.event.inputs.restore_branch == 'true' }}
