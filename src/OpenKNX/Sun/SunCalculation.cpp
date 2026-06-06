@@ -51,18 +51,27 @@ namespace OpenKNX
 
             double rise, set;
             // sunrise/sunset calculation
+            // TODO check the return {<,=,>}0 for special cases
             SunRiseAndSet::sunRiseSet(utc.year, utc.month, utc.day,
                                       longitude, latitude, -35.0 / 60.0, 1, &rise, &set);
 
-            _sunRiseUtc.hour = (int)floor(rise);
-            _sunRiseUtc.minute = (int)(60 * (rise - floor(rise)));
-            _sunRiseUtc.second = 0;
-            _sunRiseLocalTime = DateTime(utc.year, utc.month, utc.day, _sunRiseUtc.hour, _sunRiseUtc.minute, _sunRiseUtc.second, DateTimeTypeUTC).toLocalTime();
+            const int32_t sunRiseUtcHour = (int32_t)floor(rise);
+            const uint8_t sunRiseUtcMinute = (int32_t)(60 * (rise - floor(rise)));
+            const uint8_t sunRiseUtcSecond = 0;
+            DateTime dtRise = DateTime(utc.year, utc.month, utc.day, sunRiseUtcHour, sunRiseUtcMinute, sunRiseUtcSecond, DateTimeTypeUTC);
+            _sunRiseUtc.hour = dtRise.hour;
+            _sunRiseUtc.minute = dtRise.minute;
+            _sunRiseUtc.second = dtRise.second;
+            _sunRiseLocalTime = dtRise.toLocalTime();
 
-            _sunSetUtc.hour = (int)floor(set);
-            _sunSetUtc.minute = (int)(60 * (set - floor(set)));
-            _sunSetUtc.second = 0;
-            _sunSetLocalTime = DateTime(utc.year, utc.month, utc.day, _sunSetUtc.hour, _sunSetUtc.minute, _sunSetUtc.second, DateTimeTypeUTC).toLocalTime();
+            const int32_t sunSetUtcHour = (int32_t)floor(set);
+            const uint8_t sunSetUtcMinute = (int32_t)(60 * (set - floor(set)));
+            const uint8_t sunSetUtcSecond = 0;
+            DateTime dtSet = DateTime(utc.year, utc.month, utc.day, sunSetUtcHour, sunSetUtcMinute, sunSetUtcSecond, DateTimeTypeUTC);
+            _sunSetUtc.hour = dtSet.hour;
+            _sunSetUtc.minute = dtSet.minute;
+            _sunSetUtc.second = dtSet.second;
+            _sunSetLocalTime = dtSet.toLocalTime();
 
             _sunCalculationValid = true;
         }

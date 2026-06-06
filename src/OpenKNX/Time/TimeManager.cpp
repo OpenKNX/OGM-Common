@@ -794,7 +794,7 @@ namespace OpenKNX
             // <Enumeration Text="Kommunikationsobjekt 'Sommerzeit aktiv'" Value="0" Id="%ENID%" />
             // <Enumeration Text="Kombiniertes Datum/Zeit-KO (DPT 19)" Value="1" Id="%ENID%" />
             // <Enumeration Text="Interne Berechnung" Value="2" Id="%ENID%" />
-            if (!_timeProvideSupportKnxDaylightSavingTimeSwitch && ko.asap() == BASE_KoIsSummertime && ParamBASE_SummertimeAll == 0)
+            if (!ParamBASE_InternalTime && !_timeProvideSupportKnxDaylightSavingTimeSwitch && ko.asap() == BASE_KoIsSummertime && ParamBASE_SummertimeAll == 0)
             {
                 _waitTimerReadKo = 0;
                 bool dst = (bool)ko.value(DPT_Switch);

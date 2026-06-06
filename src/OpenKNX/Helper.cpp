@@ -44,12 +44,17 @@ uint32_t uptime(bool result)
     static uint32_t uptimeLastMillis = 0;
 
     const uint32_t uptimeCurrentMillis = millis();
-    if (uptimeCurrentMillis < uptimeLastMillis)
-        uptimeRolloverCount++;
-    uptimeLastMillis = uptimeCurrentMillis;
 
     if (!result)
+    {
+        // Only this path writes uptimeLastMillis — called exclusively from Common::loop() (single writer).
+        if (uptimeCurrentMillis < uptimeLastMillis)
+            uptimeRolloverCount++;
+        uptimeLastMillis = uptimeCurrentMillis;
         return 0;
+    }
+
+    // Read path: no writes to shared state, safe to call from any context.
     return ((uint64_t)uptimeRolloverCount << 32 | uptimeCurrentMillis) / 1000UL;
 }
 

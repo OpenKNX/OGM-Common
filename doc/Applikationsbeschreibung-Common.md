@@ -11,42 +11,29 @@ DOCCONTENT -->
 
 ## Inhalte
 
-Hier werden die Geräteübergreifenden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
+Nachfolgend werden Parameter und Kommunikationsobjekte beschrieben, die man in fast allen OpenKNX Geräten findet. 
 
-- [OpenKNX](#openknx)
-  - [Inhalte](#inhalte)
-  - [**Allgemein**](#allgemein)
-    - [**Startverzögerung**](#startverzögerung)
-    - [**In Betrieb senden alle**](#in-betrieb-senden-alle)
-  - [**Uhrzeit \& Datum**](#uhrzeit--datum)
-    - [**Empfangen über**](#empfangen-über)
-      - [**Ein kombiniertes KO**](#ein-kombiniertes-ko)
-      - [**Zwei getrennte KOs**](#zwei-getrennte-kos)
-    - [**Bei Neustart vom Bus lesen**](#bei-neustart-vom-bus-lesen)
-    - [**Zeitzone**](#zeitzone)
-      - [**POSIX TZ-String**\*](#posix-tz-string)
-    - [**Sommerzeit ermitteln durch**](#sommerzeit-ermitteln-durch)
-      - [**Kommunikationsobjekt 'Sommerzeit aktiv'**](#kommunikationsobjekt-sommerzeit-aktiv)
-      - [**Kombiniertem Datum/Zeit-KO (DPT 19)**](#kombiniertem-datumzeit-ko-dpt-19)
-      - [**Interne Berechnung**](#interne-berechnung)
-  - [**Gerätestandort**](#gerätestandort)
-    - [**Breitengrad**](#breitengrad)
-    - [**Längengrad**](#längengrad)
+ETS-Konfiguration **OpenKNX**: 
+- [**Allgemein**](#allgemein)
+  - [Startverzögerung](#startverzögerung)
+  - [In Betrieb senden alle](#in-betrieb-senden-alle)
+  - [Uhrzeit \& Datum](#uhrzeit--datum)
+    - [Empfangen über](#empfangen-über)
+    - [Bei Neustart vom Bus lesen](#bei-neustart-vom-bus-lesen)
+    - [Zeitzone](#zeitzone)
+    - [Sommerzeit ermitteln durch](#sommerzeit-ermitteln-durch)
+  - [Gerätestandort](#gerätestandort)
   - [**Erweitert**](#erweitert)
-    - [**Watchdog aktivieren**](#watchdog-aktivieren)
-    - [**Diagnoseobjekt anzeigen**](#diagnoseobjekt-anzeigen)
-    - [**Erweitertes "In Betrieb"**](#erweitertes-in-betrieb)
+    - [Watchdog aktivieren](#watchdog-aktivieren)
+    - [Diagnoseobjekt anzeigen](#diagnoseobjekt-anzeigen)
+    - [Erweitertes "In Betrieb"](#erweitertes-in-betrieb)
     - [Erweitertes Speichern](#erweitertes-speichern)
-      - [Flashspeicher](#flashspeicher)
-      - [Auswirkung beim RP2040/RP2350](#auswirkung-beim-rp2040rp2350)
-      - [Zyklisches speichern](#zyklisches-speichern)
-      - [Manuelles speichern](#manuelles-speichern)
   - [**Info-LEDs**](#info-leds)
   - [**Module**](#module)
-    - [**Modul aktivieren**](#modul-aktivieren)
-    - [**Abgleich mit dem Gerät**](#abgleich-mit-dem-gerät)
-      - [**Nicht unterstützte Module ausblenden**](#nicht-unterstützte-module-ausblenden)
-      - [**Komplettabgleich aller Module**](#komplettabgleich-aller-module)
+    - [Modul aktivieren](#modul-aktivieren)
+    - [Abgleich mit dem Gerät](#abgleich-mit-dem-gerät)
+  - **Hilfe**
+- [**Kommunikationsobjekte**](#kommunikationsobjekte)
 
 ## **Allgemein**
 
@@ -83,15 +70,14 @@ Die Einstellungen für Uhrzeit, Datum und zeitabhängige Berechnungen werden hie
 <!-- DOC -->
 ### **Empfangen über**
 
-Dieses Gerät kann Uhrzeit und Datum vom Bus empfangen. Dabei kann man wählen, ob man Uhrzeit über ein Kommunikationsobjekt und das Datum über ein anders empfangen will oder beides, Uhrzeit und Datum, über ein kombiniertes Kommunikationsobjekt.
+Dieses Gerät kann Uhrzeit und Datum vom Bus empfangen.
+Die Zeitinformationen können dabei auf zwei Arten entgegengenommen werden:
 
-#### **Ein kombiniertes KO**
-
-Wählt man diesen Punkt, wird ein kombiniertes Kommunikationsobjekt für Uhrzeit/Datum (DPT 19) bereitgestellt. Der KNX-Zeitgeber im System muss die kombinierte Uhrzeit/Datum entsprechend liefern können.
-
-#### **Zwei getrennte KOs**
-
-Wählt man diesen Punkt, wird je ein Kommunikationsobjekt für Uhrzeit (DPT 10) und Datum (DPT 11) bereitgestellt. Der KNX-Zeitgeber im System muss die Uhrzeit und das Datum für die beiden Kommunikationsobjekte liefern können.
+* **Ein kombiniertes KO**:
+  Stellt ein kombiniertes Kommunikationsobjekt für Uhrzeit/Datum (DPT 19) bereit.
+* **Zwei getrennte KOs**:
+  Stellt je ein Kommunikationsobjekt für Uhrzeit (DPT 10) und Datum (DPT 11) bereit.
+  Nur empfohlen für KNX-Installationen mit (altem) Zeitgeber, der noch kein DPT19 liefern kann.
 
 <!-- DOC -->
 ### **Bei Neustart vom Bus lesen**
@@ -106,7 +92,7 @@ Wenn dieser Parameter gesetzt ist, wird die Uhrzeit und das Datum alle 20-30 Sek
 Für die korrekte Berechnung der Zeit wird die Zeitzone des Standortes benötigt.
 
 <!-- DOC -->
-#### **POSIX TZ-String***
+#### **POSIX TZ-String**
 
 <!-- DOC Skip="2" -->
 Diese Einstellung wird angezeigt, wenn bei Zeitzone "Benutzerdefiniert" ausgwählt wurde.
@@ -178,7 +164,7 @@ Diese Option berechnet anhand der eingestellten Zeitzone die Sommerzeit.
 
 Für die korrekte Berechnung der Zeit für Sonnenauf- und -untergang werden die genauen Koordinaten des Standorts benötigt sowie auch die Zeitzone und die Information, ob gerade die Sommerzeit aktiv ist.
 
-Die Geo-Koordinaten können bei Google Maps nachgeschaut werden, indem man mit der rechten Maustaste auf das Objekt klickt und die unten erscheinenden Koordinaten benutzt.
+**Tipp:** Die Geo-Koordinaten können z.B. über OpenSteetMap (https://osm.org/ mit Rechtsklick / Adresse anzeigen) ermittelt werden.
 
 Die Standard-Koordinaten stehen für Frankfurt am Main, Innenstadt.
 
@@ -227,13 +213,13 @@ Durch eine Bitmaske lassen sich dabei verschiedene Zustandsinformationen gezielt
 Struktur: `0b NRRR_TWSB`
 
 * Das Bit **B** (`1`) repräsentiert das normale Signal "In Betrieb" (immer aktiv).
-* Das Bit **S** (`2`) repräsentiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
-* Das Bit **W** (`4`) repräsentiert, ob das Gerät durch einen Watchdog neu gestartet wurde und wird nur in Verbindung mit dem Startup-Bit einmalig gesendet.
-* Das Bit **T** (`8`) repräsentiert, ob die BCU einen Übertemperaturalarm hat.
-* Das Bit **R** (`16`) repräsentiert, eine Reserve.
-* Das Bit **R** (`32`) repräsentiert, eine Reserve.
-* Das Bit **R** (`64`) repräsentiert, eine Reserve.
-* Das Bit **N** (`128`) repräsentiert, ob eine Netzwerkverbindung besteht.
+* Das Bit **S** (`2`) signalisiert den Startvorgang und wird einmalig nach Ablauf der Startverzögerung übermittelt.
+* Das Bit **W** (`4`) signalisiert einen durch den Watchdog ausgelösten Neustart und wird nur in Verbindung mit dem **S**-Bit einmalig gesendet.
+* Das Bit **T** (`8`) zeigt einen Übertemperaturalarm der BCU an.
+* Das Bit **R** (`16`) ist für zukünftige Anwendungen reserviert.
+* Das Bit **R** (`32`) ist für zukünftige Anwendungen reserviert.
+* Das Bit **R** (`64`) ist für zukünftige Anwendungen reserviert.
+* Das Bit **N** (`128`) zeigt an, ob eine Netzwerkverbindung besteht.
 
 **Hinweis:** Wenn eine neue Firmware auf das Gerät übertragen wird, kommt es in manchen Fällen dazu, dass das Flag für den "Neustart durch den Watchdog" gesetzt wurde.
 
@@ -311,7 +297,7 @@ Hier wird eine Liste aller in dieser Applikation enthaltenen OpenKNX-Module und 
 
 Ist die Checkbox ausgewählt, ist das entsprechende Modul aktiv und dessen Parameterseite erscheint in der ETS.
 
-Wird die Checkbox ausgeschaltet, wird das Module deaktiviert und alles Grupppenadressenzuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos, da das Modul auf dem Gerät nicht ausgeführt wird.
+Wird die Checkbox ausgeschaltet, wird das Modul deaktiviert und alle Gruppenadresszuordnungen entfernt. Die eingestellten Parameter bleiben erhalten, sind aber wirkungslos, da das Modul auf dem Gerät nicht ausgeführt wird.
 
 ### **Abgleich mit dem Gerät**
 
@@ -335,3 +321,24 @@ Mit dieser Funktion werden Module nur ausgeblendet, nicht eingeblendet.
 
 Das Gerät wird für jedes Modul gefragt, ob es dieses Modul unterstützt. Die vom Gerät unterstützten Module werden eingeblendet, die nicht unterstützten ausgeblendet. Eine vom Benutzer vorher getroffene Auswahl wird überschrieben.
 
+
+## Kommunikationsobjekte
+
+| KO |    DPT | Bezeichnung                  | Erklärung                                                                                                                                                                                                           |
+|---:|-------:|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  1 |  1.011 | In Betrieb                   | (bei [Erweitertes "In Betrieb"](#erweitertes-in-betrieb) *= Nein*) Sendet eine 1 im unter [In Betrieb senden alle](#in-betrieb-senden-alle) eingestellten Zyklus                                                    |
+|  1 |  5.005 | In Betrieb                   | (bei [Erweitertes "In Betrieb"](#erweitertes-in-betrieb) *= Ja*) Sendet eine [Kombination von Status-Bits](#erweitertes-in-betrieb) im unter [In Betrieb senden alle](#in-betrieb-senden-alle) eingestellten Zyklus |
+|  2 | 10.001 | Uhrzeit                      | (nur bei [Empfang Uhrzeit & Datum über](#empfangen-über) zwei getrennte KOs) Nimmt die aktuelle Uhrzeit/Tageszeit entgegen                                                                                          |
+|  3 | 11.001 | Datum                        | (nur bei [Empfang Uhrzeit & Datum über](#empfangen-über) zwei getrennte KOs) Nimmt den aktuellen Tag entgegen                                                                                                       |
+|  4 | 19.001 | Uhrzeit/Datum                | (nur bei [Empfang Uhrzeit & Datum über](#empfangen-über) ein kombiniertes KO) Nimmt die aktuelle Zeit entgegen                                                                                                      |
+|  5 |  1.001 | Sommerzeit aktiv             | (optional, mit [Kommunikationsobjekt 'Sommerzeit aktiv'](#kommunikationsobjekt-sommerzeit-aktiv))                                                                                                                   |
+|  6 |  1.017 | speichern                    | (optional, bei [Manuelles Speichern](#manuelles-speichern)) Löst eine sofortige Speicheroperation aus, sofern innerhalb des eingestellen Schreibschutzzeitraums noch keine erfolgt ist.                             |
+|  7 | 16.001 | Diagnose                     | (optional, bei [Diagnoseobjekt anzeigen](#diagnoseobjekt-anzeigen)) Erlaubt den gezielten Abruf von Diagnose-Information, über Modul-spezifische Kommandos                                                          |
+<!-- TODO add time output configuration? -->
+<!-- in LogikModul
+| 15 |  1.    | Urlaub                       |                                                                                                                                                                                                                     |
+| 16 |  5.005 | Welcher Feiertag ist heute?  |                                                                                                                                                                                                                     |
+| 17 |  5.005 | Welcher Feiertag ist morgen? |                                                                                                                                                                                                                     |
+| 18 |  1     | LED sperren                  |                                                                                                                                                                                                                     |
+| 19 |  1.    | Buzzer sperren               |                                                                                                                                                                                                                     |
+-->

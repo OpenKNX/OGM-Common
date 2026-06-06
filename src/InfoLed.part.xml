@@ -29,7 +29,8 @@
                                             </when>
                                             <when test="=%BASE_ShowDeviceDependentLedSelector%">
                                                 <!-- Hide Default Checkbox-->
-
+                                                <!-- hidden parameter for parameter memory-->
+                                                <ParameterRefRef RefId="%AID%_UP-%TT%00029_R-%TT%0002902" />
                                                 <!-- Show Func Table-->
                                                 <Assign TargetParamRefRef="%AID%_P-%TT%00049_R-%TT%0004901" Value="1" />
                                             </when>
