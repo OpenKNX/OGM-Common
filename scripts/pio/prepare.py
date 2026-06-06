@@ -6,6 +6,7 @@ import pathlib
 import os
 import subprocess
 import re
+import datetime
 
 class console_color:
     BLUE = '\033[94m'
@@ -150,7 +151,14 @@ for name, version in openknx_modules.items():
   
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
+now = datetime.datetime.now()
+build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+build_timestamp = int(now.timestamp())
+version_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
+version_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
+
 version_file.close()
+print("{}  Build: {}{}".format(console_color.CYAN, build_datetime, console_color.END))
 print()
 
 # delete old file
