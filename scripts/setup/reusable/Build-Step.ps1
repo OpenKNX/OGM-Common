@@ -199,7 +199,7 @@ if ($withIP) {
   }
 
   # Write the script file content to the file 
-  $scriptContent = "../../data/OTA-Upload-Firmware-Generic.ps1 $firmwareName.$OTAbinaryFormat $espotaArgs"
+  $scriptContent = "& `"`$PSScriptRoot/../../data/OTA-Upload-Firmware-Generic.ps1`" $firmwareName.$OTAbinaryFormat $espotaArgs"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
@@ -213,7 +213,7 @@ if ($withTP) {
   $fileName = "$CopyItem_Target_Dir/KNX-Upload-Firmware.ps1"
 
   # Write the script file content to the file 
-  $scriptContent = "../../data/KNX-Upload-Firmware-Generic.ps1 $CopyItem_Target_Name"
+  $scriptContent = "& `"`$PSScriptRoot/../../data/KNX-Upload-Firmware-Generic.ps1`" $CopyItem_Target_Name"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
@@ -227,7 +227,7 @@ if ($withTP) {
 $fileName = "$CopyItem_Target_Dir/USB-Upload-Firmware.ps1"
 
 # Write the script file content to the file 
-$scriptContent = "../../data/Upload-Firmware-Generic-$processor.ps1 $CopyItem_Target_Name"
+$scriptContent = "& `"`$PSScriptRoot/../../data/Upload-Firmware-Generic.ps1`" $CopyItem_Target_Name"
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
 if (!$?) {
