@@ -8,7 +8,9 @@ run-name: Check OGM-Common Module Build
 on:
   push:
     branches:
-      test/actions
+      - test/actions
+      - v1dev
+      - v1
   pull_request:
     # only run for PRs whose base (target) branch is v1dev or v1
     branches:
@@ -70,11 +72,11 @@ jobs:
       # use repo vars for ofm and ofm_ref
       ofm_prefix: BASE
       oam: ${{ matrix.oam }}
-      oam_ref: ${{ matrix.ref }}
+      # TODO FIXME needs support for oam_ref: ${{ matrix.ref }}
       KNXPROD_PREFIX: ${{ matrix.prefix }}
       target: ${{ matrix.target }}
       # restore_branch: ${{ matrix.restore_branch }}
-      restore_branch: false
+      # TODO check support for: restore_branch: false
 
   # This job runs only when the workflow is started manually (workflow_dispatch).
   # It uses the input fields above so you can run one specific combination on demand.
@@ -83,8 +85,9 @@ jobs:
     name: Manual check for '${{ github.event.inputs.oam }}' in '${{ github.event.inputs.ref }}'
     uses: openknx/actions/.github/workflows/openknx-ofm-check.yml@v0
     with:
+      ofm_prefix: BASE
       oam: ${{ github.event.inputs.oam }}
-      oam_ref: ${{ github.event.inputs.ref }}
+      # TODO FIXME needs support for oam_ref: ${{ github.event.inputs.ref }}
       KNXPROD_PREFIX: ${{ github.event.inputs.KNXPROD_PREFIX }}
       target: ${{ github.event.inputs.target }}
-      restore_branch: ${{ github.event.inputs.restore_branch == 'true' }}
+      # TODO check support for: restore_branch: ${{ github.event.inputs.restore_branch == 'true' }}
