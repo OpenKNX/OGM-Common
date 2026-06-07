@@ -6,6 +6,9 @@ name: BASE-check
 run-name: Check OGM-Common Module Build
 
 on:
+  push:
+    branches:
+      test/actions
   pull_request:
     # only run for PRs whose base (target) branch is v1dev or v1
     branches:
