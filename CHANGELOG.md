@@ -1,8 +1,14 @@
 # Changes
 
-## 1.8.x: comming
+## upcomming releases
 
 * Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
+* Fix: USB MSC support in Common.cpp
+* Change: Generate build timestamp in prepare hook and use ISO-DateTime format in console instead of __DATE__/__TIME__
+* Refactor: Optimize CPU temperature logging and remove unused ADC temperature sensor initialization
+* Update: RP2040 Environment
+  * platform: platform-raspberrypi cc24cfef37ed22ca9f2a6aead28c2deb76c39f24 to 79ce473e1a8010ed8096388690222fd2c94858a6
+  * platform_packages: framework-arduinopico 5.4.4 to 5.6.0
 
 ## 1.8.1: 2026-05-18
 
