@@ -17,21 +17,40 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_init(&_mutex);
+#elif defined(ARDUINO_ARCH_ESP32)
+            _mutex = xSemaphoreCreateRecursiveMutex();
 #endif
         }
 
         void Logger::init()
         {
-
 #ifdef OPENKNX_LOGGER_DEVICE
             OPENKNX_LOGGER_DEVICE.begin(115200);
 #endif
         }
 
+#ifdef OPENKNX_WEBCONSOLE
+        void Logger::appendWebconsoleBuffer(const char* s)
+        {
+            if (!s) return;
+            while (*s)
+                _ringBuf[_ringWritePos++ % RING_SIZE] = *s++;
+        }
+
+        void Logger::appendWebconsoleBuffer(int n)
+        {
+            char tmp[12];
+            snprintf(tmp, sizeof(tmp), "%d", n);
+            appendWebconsoleBuffer(tmp);
+        }
+#endif // OPENKNX_WEBCONSOLE
+
         void Logger::begin()
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_enter_blocking(&_mutex);
+#elif defined(ARDUINO_ARCH_ESP32)
+            xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
 #endif
         }
 
@@ -39,6 +58,8 @@ namespace OpenKNX
         {
 #ifdef ARDUINO_ARCH_RP2040
             recursive_mutex_exit(&_mutex);
+#elif defined(ARDUINO_ARCH_ESP32)
+            xSemaphoreGiveRecursive(_mutex);
 #endif
         }
 
@@ -86,6 +107,9 @@ namespace OpenKNX
             if (isColorSet())
                 printColorCode(0);
             OPENKNX_LOGGER_DEVICE.println();
+#ifdef OPENKNX_WEBCONSOLE
+            appendWebconsoleBuffer("\n");
+#endif
             printPrompt();
             end();
         }
@@ -214,14 +238,9 @@ namespace OpenKNX
             color(logColor);
             const char* found = strchr(message, '%');
             if (found != NULL)
-            {
                 logWithPrefixAndValues(prefix, message, values);
-            }
             else
-            {
                 logWithPrefix(prefix, message);
-            }
-
             color(0);
         }
 
@@ -269,6 +288,11 @@ namespace OpenKNX
             OPENKNX_LOGGER_DEVICE.print("\x1B[");
             OPENKNX_LOGGER_DEVICE.print((int)color);
             OPENKNX_LOGGER_DEVICE.print("m");
+#ifdef OPENKNX_WEBCONSOLE
+            appendWebconsoleBuffer("\x1B[");
+            appendWebconsoleBuffer((int)color);
+            appendWebconsoleBuffer("m");
+#endif
         }
 
         void Logger::printColorCode()
@@ -281,10 +305,19 @@ namespace OpenKNX
             for (size_t i = 0; i < size; i++)
             {
                 if (data[i] < 0x10)
+                {
                     OPENKNX_LOGGER_DEVICE.print("0");
-
+#ifdef OPENKNX_WEBCONSOLE
+                    appendWebconsoleBuffer("0");
+#endif
+                }
                 OPENKNX_LOGGER_DEVICE.print(data[i], HEX);
                 OPENKNX_LOGGER_DEVICE.print(" ");
+#ifdef OPENKNX_WEBCONSOLE
+                char hex[4];
+                snprintf(hex, sizeof(hex), "%X ", data[i]);
+                appendWebconsoleBuffer(hex);
+#endif
             }
         }
 
@@ -312,14 +345,24 @@ namespace OpenKNX
                 if (i < prefixLen)
                 {
                     OPENKNX_LOGGER_DEVICE.print(prefix[i]);
+#ifdef OPENKNX_WEBCONSOLE
+                    char c[2] = {prefix[i], '\0'};
+                    appendWebconsoleBuffer(c);
+#endif
                 }
                 else if (i == prefixLen && prefixLen > 0)
                 {
                     OPENKNX_LOGGER_DEVICE.print(":");
+#ifdef OPENKNX_WEBCONSOLE
+                    appendWebconsoleBuffer(":");
+#endif
                 }
                 else
                 {
                     OPENKNX_LOGGER_DEVICE.print(" ");
+#ifdef OPENKNX_WEBCONSOLE
+                    appendWebconsoleBuffer(" ");
+#endif
                 }
             }
         }
@@ -330,9 +373,14 @@ namespace OpenKNX
             if (openknx.usesDualCore())
             {
     #if defined(ARDUINO_ARCH_RP2040)
-                OPENKNX_LOGGER_DEVICE.print(rp2040.cpuid() ? "_1> " : "0_> ");
+                const char* coreStr = rp2040.cpuid() ? "_1> " : "0_> ";
+                OPENKNX_LOGGER_DEVICE.print(coreStr);
     #elif defined(ARDUINO_ARCH_ESP32)
-                OPENKNX_LOGGER_DEVICE.print(xPortGetCoreID() ? "_1> " : "0_> ");
+                const char* coreStr = xPortGetCoreID() ? "_1> " : "0_> ";
+                OPENKNX_LOGGER_DEVICE.print(coreStr);
+    #endif
+    #ifdef OPENKNX_WEBCONSOLE
+                appendWebconsoleBuffer(coreStr);
     #endif
             }
 #endif
@@ -341,6 +389,9 @@ namespace OpenKNX
         void Logger::printMessage(const char* message)
         {
             OPENKNX_LOGGER_DEVICE.print(message);
+#ifdef OPENKNX_WEBCONSOLE
+            appendWebconsoleBuffer(message);
+#endif
         }
 
         void Logger::printMessage(const char* message, va_list& values)
@@ -349,26 +400,31 @@ namespace OpenKNX
             if (found == NULL)
             {
                 OPENKNX_LOGGER_DEVICE.print(message);
+#ifdef OPENKNX_WEBCONSOLE
+                appendWebconsoleBuffer(message);
+#endif
                 return;
             }
 
             memset(_buffer.output, 0, OPENKNX_MAX_LOG_MESSAGE_LENGTH);
             uint16_t len = vsnprintf(_buffer.output, OPENKNX_MAX_LOG_MESSAGE_LENGTH, message, values);
             OPENKNX_LOGGER_DEVICE.print(_buffer.output);
+#ifdef OPENKNX_WEBCONSOLE
+            appendWebconsoleBuffer(_buffer.output);
+#endif
             if (len >= OPENKNX_MAX_LOG_MESSAGE_LENGTH)
             {
-                // check if buffer overflow really happened
                 for (uint8_t i = 0; i < 4; i++)
                     if (_buffer.wall[i] != _buffer.magic[i])
                         openknx.hardware.fatalError(FATAL_SYSTEM, "BufferOverflow: increase OPENKNX_MAX_LOG_MESSAGE_LENGTH");
 #ifdef OPENKNX_DEBUG
-                // if there was no buffer overflow, we warn the developer to shorten the message to prevent a potential overflow
-                printColorCode(33); // yellow
+                printColorCode(33);
                 OPENKNX_LOGGER_DEVICE.print("<-- Potential buffer overflow, please shorten your message");
                 printColorCode(0);
 #endif
             }
         }
+
 #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
         bool Logger::checkTrace(const std::string& prefix)
         {
@@ -394,7 +450,6 @@ namespace OpenKNX
             if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE5)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE5)))
                 return true;
     #endif
-
             return false;
         }
 #endif
@@ -402,33 +457,28 @@ namespace OpenKNX
         void Logger::printIndent()
         {
             for (size_t i = 0; i < getIndent(); i++)
+            {
                 OPENKNX_LOGGER_DEVICE.print("  ");
+#ifdef OPENKNX_WEBCONSOLE
+                appendWebconsoleBuffer("  ");
+#endif
+            }
         }
 
         void Logger::indentUp()
         {
             if (getIndent() == 10)
-            {
                 logError("Logger", "Indent error!");
-            }
             else
-            {
-                STATE_BY_CORE(_indent)
-                ++;
-            }
+                STATE_BY_CORE(_indent) += 1;
         }
 
         void Logger::indentDown()
         {
             if (getIndent() == 0)
-            {
                 logError("Logger", "Indent error!");
-            }
             else
-            {
-                STATE_BY_CORE(_indent)
-                --;
-            }
+                STATE_BY_CORE(_indent) -= 1;
         }
 
         void Logger::indent(uint8_t indent)
@@ -441,9 +491,6 @@ namespace OpenKNX
             return STATE_BY_CORE(_indent);
         }
 
-        // Open #
-        // +----+
-        // # KNX
         void Logger::logOpenKnxHeader()
         {
             // OLD - No output
@@ -453,11 +500,28 @@ namespace OpenKNX
         {
 #ifndef ARDUINO_ARCH_SAMD
             if (openknx.time.isValid())
-                OPENKNX_LOGGER_DEVICE.printf("%04i-%02i-%02i %02i:%02i:%02i", openknx.time.getUtcTime().year, openknx.time.getUtcTime().month, openknx.time.getUtcTime().day, openknx.time.getUtcTime().hour, openknx.time.getUtcTime().minute, openknx.time.getUtcTime().second);
+            {
+                char tsBuf[24];
+                auto t = openknx.time.getUtcTime();
+                snprintf(tsBuf, sizeof(tsBuf), "%04i-%02i-%02i %02i:%02i:%02i", t.year, t.month, t.day, t.hour, t.minute, t.second);
+                OPENKNX_LOGGER_DEVICE.print(tsBuf);
+    #ifdef OPENKNX_WEBCONSOLE
+                appendWebconsoleBuffer(tsBuf);
+    #endif
+            }
             else
 #endif
-                OPENKNX_LOGGER_DEVICE.print(buildUptime().c_str());
+            {
+                std::string up = buildUptime();
+                OPENKNX_LOGGER_DEVICE.print(up.c_str());
+#ifdef OPENKNX_WEBCONSOLE
+                appendWebconsoleBuffer(up.c_str());
+#endif
+            }
             OPENKNX_LOGGER_DEVICE.print(": ");
+#ifdef OPENKNX_WEBCONSOLE
+            appendWebconsoleBuffer(": ");
+#endif
         }
 
         std::string Logger::buildUptime()
