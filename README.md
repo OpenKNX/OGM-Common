@@ -2,6 +2,9 @@
 
 OpenKNX Common is a comprehensive library designed to be used once in every OpenKNX Device firmware, providing core functionality and hardware abstraction.
 
+Includes ETS configuration and own group objects, see
+[application description (German only)](doc/Applikationsbeschreibung-Common.md#openknx).
+
 ## Table of Contents
 
 - [Overview](#overview)

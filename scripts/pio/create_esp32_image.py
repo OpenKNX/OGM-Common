@@ -112,19 +112,33 @@ def esp32_create_combined_bin(source, target, env):
     if memory_type in ["opi_opi", "opi_qspi"]: flash_mode = "dout"
 
     cmd = [
-        "esptool", "--chip", chip, "merge-bin", "-o", new_file,
-        "--flash-mode", flash_mode, "--flash-freq", flash_freq, "--flash-size", flash_size
+        "esptool",
+        "--chip",
+        chip,
+        "merge-bin",
+        "-o",
+        new_file,
+        "--flash-mode",
+        flash_mode,
+        "--flash-freq",
+        flash_freq,
+        "--flash-size",
+        flash_size,
     ]
 
     print(f"{C.BOLD}Firmware Info{C.END}: {C.BLUE}{chip}{C.END} | Mode:{C.GREEN} {flash_mode}{C.END} | Size:{C.BLUE} {flash_size}{C.END} | Freq:{C.GREEN} {flash_freq}{C.END}")
     print(LINE)
 
+    resolved_extra_images = []
     for offset, image in env["FLASH_EXTRA_IMAGES"]:
-        cmd += [offset, image]
+        resolved_offset = env.subst(str(offset))
+        resolved_image = env.subst(str(image))
+        resolved_extra_images.append((resolved_offset, resolved_image))
+        cmd += [resolved_offset, resolved_image]
     cmd += [hex(0x10000), fw]
 
     # Visualisierung mit beiden Balken
-    print_flash_layout(env["FLASH_EXTRA_IMAGES"], fw, 8 * 1024 * 1024)
+    print_flash_layout(resolved_extra_images, fw, 8 * 1024 * 1024)
 
     print(f"{C.BOLD}Esptool-Args:{C.END}\n'{C.GRAY}{' '.join(cmd)}'{C.END}")
     print(LINE)

@@ -7,6 +7,7 @@ import os
 import subprocess
 import re
 import datetime
+import json
 
 class console_color:
     BLUE = '\033[94m'
@@ -84,6 +85,60 @@ def get_all_library_dependencies(root, level=0):
         if lb.depbuilders:
             get_all_library_dependencies(lb, level + 1)
 
+def add_local_lib_folder_versions(all_lib_builders):
+  global library_versions
+  local_lib_dir = (pathlib.Path().resolve() / "lib").resolve()
+
+  for lb in all_lib_builders:
+    try:
+      lib_path = pathlib.Path(lb.path).resolve()
+    except OSError:
+      continue
+
+    # Include every library that comes from the project's local lib folder.
+    try:
+      lib_path.relative_to(local_lib_dir)
+    except ValueError:
+      continue
+
+    pkg = PackageItem(lb.path)
+    lib_name = lb.name
+    lib_version = pkg.metadata.version if pkg.metadata else lb.version
+    library_versions[str(lib_name)] = str(lib_version)
+
+def add_all_local_lib_dirs():
+  global library_versions
+  local_lib_dir = (pathlib.Path().resolve() / "lib").resolve()
+
+  if not local_lib_dir.exists():
+    return
+
+  for lib_dir in local_lib_dir.iterdir():
+    if not lib_dir.is_dir() or lib_dir.name.startswith("."):
+      continue
+
+    lib_name = lib_dir.name
+    lib_version = None
+
+    # Prefer metadata from library.json if available.
+    library_json = lib_dir / "library.json"
+    if library_json.exists():
+      try:
+        with open(library_json, "r") as handle:
+          manifest = json.load(handle)
+        if manifest.get("name"):
+          lib_name = manifest.get("name")
+        if manifest.get("version"):
+          lib_version = manifest.get("version")
+      except (json.JSONDecodeError, OSError):
+        pass
+
+    if lib_version is None:
+      pkg = PackageItem(str(lib_dir))
+      if pkg.metadata and pkg.metadata.version:
+        lib_version = pkg.metadata.version
+
+    library_versions[str(lib_name)] = str(lib_version)
 # print("PRINTING DEP TREE")
 # _print_deps_tree(project)
 
@@ -110,6 +165,8 @@ def get_ets_version(version_string):
 
 
 get_all_library_dependencies(project)
+add_local_lib_folder_versions(lib_builders)
+add_all_local_lib_dirs()
 
 print()
 print("{}Read OpenKNX Module version and build defines:{}".format(console_color.YELLOW, console_color.END))
