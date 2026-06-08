@@ -3,6 +3,9 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
 #ifdef ARDUINO_ARCH_RP2040
     #include <USB.h>
+    #ifdef OPENKNX_USB_MSC
+        #include <tusb-msc.h>
+    #endif
     #include <class/msc/msc.h>
     #include <device/usbd.h>
 #endif
@@ -42,7 +45,7 @@ namespace OpenKNX
         #ifdef OPENKNX_USB_MSC
         uint8_t epIn = USB.registerEndpointIn();
         uint8_t epOut = USB.registerEndpointOut();
-        static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, 64)};
+        static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, CFG_TUD_MSC_EP_BUFSIZE)};
         USB.registerInterface(1, USBClass::simpleInterface, msd_desc, sizeof(msd_desc), 2, 0);
         #endif
         USB.connect();
@@ -61,7 +64,7 @@ namespace OpenKNX
         openknx.ledFunctions.init();
 #if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
         openknx.gpio.pinMode(SAVE_POWER_PIN, OUTPUT);
-        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON); 
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
 #endif
 
         _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);

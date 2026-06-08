@@ -5,6 +5,9 @@
 #ifdef ARDUINO_ARCH_RP2040
     #include "pico/sync.h"
 #endif
+#ifdef ARDUINO_ARCH_ESP32
+    #include "freertos/semphr.h"
+#endif
 
 #ifdef OPENKNX_RTT
     #include <RTTStream.h>
@@ -98,6 +101,8 @@
 
 #ifdef ARDUINO_ARCH_RP2040
     #define STATE_BY_CORE(X) X[rp2040.cpuid()]
+#elif defined(ARDUINO_ARCH_ESP32)
+    #define STATE_BY_CORE(X) X[xPortGetCoreID()]
 #else
     #define STATE_BY_CORE(X) X
 #endif
@@ -143,6 +148,10 @@ namespace OpenKNX
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
             volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
             recursive_mutex_t _mutex;
+#elif defined(ARDUINO_ARCH_ESP32)
+            volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
+            volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
+            SemaphoreHandle_t _mutex = nullptr;
 #else
             uint8_t _color = 0;
             uint8_t _indent = 0;

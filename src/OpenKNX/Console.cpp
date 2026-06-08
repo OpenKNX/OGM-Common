@@ -527,8 +527,7 @@ namespace OpenKNX
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
         openknx.logger.logDividingLine();
-        openknx.logger.logWithPrefix("Builddate", __DATE__);
-        openknx.logger.logWithPrefix("Buildtime", __TIME__);
+        openknx.logger.logWithPrefix("Buildtime", BUILD_DATETIME);
         openknx.logger.logDividingLine();
         logEnd();
     }
