@@ -57,13 +57,11 @@ jobs:
       matrix:
         include:
           - oam: OAM-RaumController
-            ref: v1
             prefix: RaumController
             target: Release
 
           - oam: OAM-StateEngine
             # knxprod_xml: StateEngine-DFA16-Release
-            ref: v1
             prefix: StateEngine
             target: DFA16-Release
 
@@ -72,11 +70,9 @@ jobs:
       # use repo vars for ofm and ofm_ref
       ofm_prefix: BASE
       oam: ${{ matrix.oam }}
-      # TODO FIXME needs support for oam_ref: ${{ matrix.ref }}
-      KNXPROD_PREFIX: ${{ matrix.prefix }}
+      oam_ref: v1
       target: ${{ matrix.target }}
-      # restore_branch: ${{ matrix.restore_branch }}
-      # TODO check support for: restore_branch: false
+      KNXPROD_PREFIX: ${{ matrix.prefix }}
 
   # This job runs only when the workflow is started manually (workflow_dispatch).
   # It uses the input fields above so you can run one specific combination on demand.
@@ -87,7 +83,7 @@ jobs:
     with:
       ofm_prefix: BASE
       oam: ${{ github.event.inputs.oam }}
-      # TODO FIXME needs support for oam_ref: ${{ github.event.inputs.ref }}
+      oam_ref: ${{ github.event.inputs.ref }}
       KNXPROD_PREFIX: ${{ github.event.inputs.KNXPROD_PREFIX }}
       target: ${{ github.event.inputs.target }}
-      # TODO check support for: restore_branch: ${{ github.event.inputs.restore_branch == 'true' }}
+      restore_branch: ${{ github.event.inputs.restore_branch == 'true' }}
