@@ -69,6 +69,24 @@ namespace OpenKNX
             logErrorP("The knx flash is erased due to too many restarts (%i)", __openKnxWatchdogFasts);
             openknx.knxFlash.erase();
         }
+        else if (__openKnxWatchdogFasts > 0 && __openKnxWatchdogFasts == OPENKNX_WATCHDOG_AUTOERASE_RESETS - 1)
+        {
+            logErrorP("Emergency mode: device has restarted %i times, entering emergency loop", __openKnxWatchdogFasts);
+            openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->errorCode(2);
+
+            uint32_t lastWarning = 0;
+            while (true)
+            {
+                loop();     // feed watchdog
+                knx.loop(); // KNX stack; if this hangs -> WD fires -> next fast restart -> flash erase
+
+                if (delayCheck(lastWarning, 5000))
+                {
+                    logErrorP("Emergency mode: device has restarted %i times. Next restart will erase the KNX flash.", __openKnxWatchdogFasts);
+                    lastWarning = millis();
+                }
+            }
+        }
     #endif
 #endif
     }
