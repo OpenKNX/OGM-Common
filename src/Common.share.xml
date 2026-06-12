@@ -41,6 +41,10 @@
               <ParameterType Id="%AID%_PT-Text40Byte" Name="Text40Byte">
                 <TypeText SizeInBit="320" />
               </ParameterType>
+              <!-- short description with inactive sign -->
+              <ParameterType Id="%AID%_PT-Text45Byte" Name="Text45Byte">
+                <TypeText SizeInBit="360" />
+              </ParameterType>
               <!-- long description -->
               <ParameterType Id="%AID%_PT-Text80Byte" Name="Text80Byte">
                 <TypeText SizeInBit="640" />
