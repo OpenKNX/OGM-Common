@@ -6,6 +6,15 @@ function newline(device, online, progress, context) {
     text.value = replaced;
 }
 
+// this function does nothing, inteded use is in ParameterCalculations for inverse calculation without any changes to the value
+function BASE_Nop(input, output, context) { }
+
+
+// used to mark the text of an inactive channel with a "inactive" symbol in front of the text
+function BASE_MarkInactive(input, output, context) {
+    output.TextOutput = (input.CheckboxInactive ? '\u26D4 ' : '') + input.TextInput;
+}
+
 function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     var sync = context.Sync;
 
