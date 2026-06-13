@@ -51,3 +51,34 @@ bool __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count);
 void printFreeStackSize();
 #endif
 #endif
+
+/*
+ * PSRAM allocation helper macros
+ */
+
+// Normalisiere RP2350 PSRAM auf BOARD_HAS_PSRAM
+#if defined(PICO_RP2350_PSRAM_CS)
+    #define BOARD_HAS_PSRAM 1
+#endif
+
+// Dynamische Allocation
+#if defined(BOARD_HAS_PSRAM)
+    #define HS_MALLOC ps_malloc
+    #define HS_CALLOC ps_calloc
+    #define HS_REALLOC ps_realloc
+    #define ps_new(X) new (ps_malloc(sizeof(X))) X
+#else
+    #define HS_MALLOC malloc
+    #define HS_CALLOC calloc
+    #define HS_REALLOC realloc
+    #define ps_new(X) new X
+#endif
+
+// Statische Daten/Funktionen in PSRAM
+#if defined(BOARD_HAS_PSRAM)
+    #define PSRAM_DATA __attribute__((section(".psram_data")))
+    #define PSRAM_CODE __attribute__((section(".psram_code")))
+#else
+    #define PSRAM_DATA
+    #define PSRAM_CODE
+#endif
