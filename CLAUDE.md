@@ -97,7 +97,7 @@ This code runs on microcontrollers with severe resource limits — treat every b
 
 - **No `delay()`** — everything non-blocking, state machines with `millis()`
 - **Platform guards**: `#ifdef ARDUINO_ARCH_ESP32` / `#ifdef ARDUINO_ARCH_RP2040` / `#ifdef ARDUINO_ARCH_RP2350`
-- **PSRAM**: For ESP32/RP2350, use `PSRAM_MALLOC`/`PSRAM_CALLOC`/`PSRAM_REALLOC` and `psram_new()` for dynamic allocation. Use `PSRAM_DATA` for large static buffers and `PSRAM_CODE` for heavy functions. Controlled by `OPENKNX_PSRAM` (auto-detected, can disable with `OPENKNX_DISABLE_PSRAM`). Defined in `src/OpenKNX/helper.h`.
+- **PSRAM**: For ESP32/RP2350, use `PSRAM_MALLOC`/`PSRAM_CALLOC`/`PSRAM_REALLOC` and `psram_new()` for dynamic allocation. Use `psram_delete()` as the counterpart to `psram_new()`. Use `PsramAllocator<T>` for STL containers. Use `PSRAM_DATA` for large static buffers and `PSRAM_CODE` for heavy functions. Controlled by `OPENKNX_PSRAM` (auto-detected, can disable with `OPENKNX_DISABLE_PSRAM`). Defined in `src/OpenKNX/helper.h`.
 - No external libraries in `library.json` — only Arduino framework builtins
 - Comments in German or English (mixed OK, but consistent per file)
 
