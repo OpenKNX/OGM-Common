@@ -56,26 +56,26 @@ void printFreeStackSize();
  * PSRAM allocation helper macros
  */
 
-// Normalisiere RP2350 PSRAM auf BOARD_HAS_PSRAM
-#if defined(PICO_RP2350_PSRAM_CS)
-    #define BOARD_HAS_PSRAM 1
+// Normalisiere PSRAM-Verfügbarkeit zu OPENKNX_PSRAM
+#if (defined(BOARD_HAS_PSRAM) || defined(PICO_RP2350_PSRAM_CS)) && !defined(OPENKNX_DISABLE_PSRAM)
+    #define OPENKNX_PSRAM
 #endif
 
 // Dynamische Allocation
-#if defined(BOARD_HAS_PSRAM)
-    #define HS_MALLOC ps_malloc
-    #define HS_CALLOC ps_calloc
-    #define HS_REALLOC ps_realloc
-    #define ps_new(X) new (ps_malloc(sizeof(X))) X
+#ifdef OPENKNX_PSRAM
+    #define PSRAM_MALLOC ps_malloc
+    #define PSRAM_CALLOC ps_calloc
+    #define PSRAM_REALLOC ps_realloc
+    #define psram_new(X) new (ps_malloc(sizeof(X))) X
 #else
-    #define HS_MALLOC malloc
-    #define HS_CALLOC calloc
-    #define HS_REALLOC realloc
-    #define ps_new(X) new X
+    #define PSRAM_MALLOC malloc
+    #define PSRAM_CALLOC calloc
+    #define PSRAM_REALLOC realloc
+    #define psram_new(X) new X
 #endif
 
 // Statische Daten/Funktionen in PSRAM
-#if defined(BOARD_HAS_PSRAM)
+#ifdef OPENKNX_PSRAM
     #define PSRAM_DATA __attribute__((section(".psram_data")))
     #define PSRAM_CODE __attribute__((section(".psram_code")))
 #else
