@@ -82,3 +82,35 @@ void printFreeStackSize();
     #define PSRAM_DATA
     #define PSRAM_CODE
 #endif
+
+#ifdef OPENKNX_PSRAM
+
+// psram_delete — ruft Destruktor, dann free() (Gegenstück zu psram_new)
+template <typename T>
+inline void psram_delete(T* p)
+{
+    if (p)
+    {
+        p->~T();
+        free(p);
+    }
+}
+
+// PsramAllocator — Standard-Allocator für STL-Container mit PSRAM
+template <typename T>
+struct PsramAllocator
+{
+    using value_type = T;
+    T* allocate(size_t n) { return static_cast<T*>(ps_malloc(n * sizeof(T))); }
+    void deallocate(T* p, size_t) { free(p); }
+};
+
+#else
+
+template <typename T>
+inline void psram_delete(T* p) { delete p; }
+
+template <typename T>
+using PsramAllocator = std::allocator<T>;
+
+#endif
