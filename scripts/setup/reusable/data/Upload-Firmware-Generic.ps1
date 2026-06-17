@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 Open ■
 ┬────┴  Upload-Firmware-Generic
@@ -55,6 +55,18 @@ if ($null -eq (Get-Variable -Name 'IsMacOS' -ErrorAction SilentlyContinue)) {
     $IsWindows = $true
 }
 
+# Render Unicode glyphs (box drawing, bullets •/▸, umlauts) correctly on the
+# Windows console. Windows PowerShell 5.1 defaults to the OEM code page
+# (e.g. 850/437) where these become "?"; UTF-8 output fixes it. Best-effort.
+if ($IsWindows) {
+    try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+}
+
+# ─── Config (hier anpassbar) ─────────────────────────────────────────────────────
+$VerifyEspChip       = $true   # vor dem ESP-Flash den Chip via esptool prüfen (true/false)
+$VerifyRpFamily      = $true   # vor dem uf2-Flash prüfen, ob RP2040/RP2350 zum Laufwerk passt
+$AbortOnChipMismatch = $true   # bei Chip/Firmware-Mismatch abbrechen (sonst nur warnen)
+
 # ─── Chip auto-detection ───────────────────────────────────────────────────────
 $chipWasAutoDetected = (-not $Chip)
 if (-not $Chip) {
@@ -91,6 +103,7 @@ $_strings = @{
         SelectManual       = "Selection (1-{0})"
         InvalidInput       = "Invalid input. Selection (1-{0})"
         OptAgain           = "Auto-detect (plug in device, or unplug and replug)"
+        OptRescan          = "Re-read / refresh the device list"
         CancelKey          = "[ESC/Q] Cancel"
         ChoicePrompt       = "Choice"
         WaitUnplug         = "Please UNPLUG the device NOW..."
@@ -113,6 +126,9 @@ $_strings = @{
         AttemptBootsel     = "Attempting to set port {0} into BOOTSEL mode..."
         Installing         = "Device found, installing firmware `"{0}`"..."
         FlashError         = "Error writing firmware! Device may not be mounted correctly."
+        RpMismatch         = "Firmware is for {0}, but the BOOTSEL device is {1}. Flash aborted (wrong variant would brick the device)."
+        RpMismatchWarn     = "Warning: firmware is for {0}, device is {1} - flashing anyway!"
+        RpFamilyOk         = "Firmware matches the device ({0})"
         Done               = "Done!"
         ManualInstrTitle   = "Tip: Put the RP2040/RP2350 into BOOTSEL mode manually"
         ManualInstr        = @(
@@ -144,6 +160,12 @@ $_strings = @{
         FlashingEsp32      = "Flashing firmware via esptool..."
         FlashDoneEsp32     = "Done!"
         FlashErrorEsp32    = "esptool returned an error. Flash may have failed."
+        VerifyChip         = "Checking chip type via esptool..."
+        ChipOk             = "Detected: {0}"
+        ChipMatch          = "Detected: {0}  (matches firmware)"
+        ChipNotEsp         = "No ESP detected on this port (wrong port, or device not in bootloader). Flash aborted."
+        ChipMismatch       = "Chip {0} does NOT match the firmware ({1}). Flash aborted."
+        ChipMismatchWarn   = "Warning: chip {0} does not match the firmware ({1}) - flashing anyway."
         # Console / device info
         OptCancel          = "Cancel"
         OptFlashBootsel    = "Flash this device (will be put into BOOTSEL mode)"
@@ -158,6 +180,7 @@ $_strings = @{
         InfoHeader         = "─── Device Information ──────────────────────────────────────────"
         InfoFooter         = "────────────────────────────────────────────────────────────────"
         InfoReadingDevices  = "Reading device info for serial devices..."
+        InfoUnavailableShort = "Device info not available"
         ConfirmFlash        = "Flash this device? [Y/N]"
         PsVersionRequired   = "PowerShell 5.1 or higher required."
         PsVersionFound      = "Found: PowerShell {0}"
@@ -217,6 +240,7 @@ $_strings = @{
         SelectManual       = "Auswahl (1-{0})"
         InvalidInput       = "Ungültige Eingabe. Auswahl (1-{0})"
         OptAgain           = "Automatisch erkennen (Gerät einstecken oder aus-/einstecken)"
+        OptRescan          = "Geräteliste neu einlesen / aktualisieren"
         CancelKey          = "[ESC/Q] Abbrechen"
         ChoicePrompt       = "Auswahl"
         WaitUnplug         = "Bitte das Gerät JETZT AUSSTECKEN..."
@@ -239,6 +263,9 @@ $_strings = @{
         AttemptBootsel     = "Versuche über Port {0} in den BOOTSEL-Modus zu versetzen..."
         Installing         = "Gerät gefunden, installiere Firmware `"{0}`"..."
         FlashError         = "Fehler beim Schreiben der Firmware! Gerät ggf. nicht korrekt gemountet."
+        RpMismatch         = "Firmware ist für {0}, das Gerät im BOOTSEL ist {1}. Flash abgebrochen (falsche Variante würde das Gerät unbrauchbar machen)."
+        RpMismatchWarn     = "Achtung: Firmware ist für {0}, Gerät ist {1} - wird trotzdem geflasht!"
+        RpFamilyOk         = "Firmware passt zum Gerät ({0})"
         Done               = "Fertig!"
         ManualInstrTitle   = "Tipp: RP2040/RP2350 manuell in den BOOTSEL-Modus versetzen"
         ManualInstr        = @(
@@ -270,6 +297,12 @@ $_strings = @{
         FlashingEsp32      = "Flashe Firmware über esptool..."
         FlashDoneEsp32     = "Fertig!"
         FlashErrorEsp32    = "esptool meldet einen Fehler. Flash möglicherweise fehlgeschlagen."
+        VerifyChip         = "Prüfe Chip-Typ via esptool..."
+        ChipOk             = "Erkannt: {0}"
+        ChipMatch          = "Erkannt: {0}  (passt zur Firmware)"
+        ChipNotEsp         = "Kein ESP an diesem Port erkannt (falscher Port, oder Gerät nicht im Bootloader). Flash abgebrochen."
+        ChipMismatch       = "Chip {0} passt NICHT zur Firmware ({1}). Flash abgebrochen."
+        ChipMismatchWarn   = "Achtung: Chip {0} passt nicht zur Firmware ({1}) - wird trotzdem geflasht."
         # Konsole / Geräteinformationen
         OptCancel          = "Abbrechen"
         OptFlashBootsel    = "Dieses Gerät flashen (wird in BOOTSEL-Modus versetzt)"
@@ -284,6 +317,7 @@ $_strings = @{
         InfoHeader         = "─── Geräteinformationen ─────────────────────────────────────────"
         InfoFooter         = "────────────────────────────────────────────────────────────────"
         InfoReadingDevices  = "Lese Geräteinformationen der seriellen Geräte..."
+        InfoUnavailableShort = "Sysinfo konnte nicht ausgelesen werden"
         ConfirmFlash        = "Dieses Gerät flashen? [J/N]"
         PsVersionRequired   = "PowerShell 5.1 oder höher erforderlich."
         PsVersionFound      = "Gefunden: PowerShell {0}"
@@ -441,28 +475,156 @@ function Copy-FirmwareWithSpinner($label, $sourcePath, $devicePath) {
         }
         return $true
     }
-    # macOS / Linux: cp is synchronous – run in background job and show spinner
-    $spinChars = @('-', '\', '|', '/')
+    # macOS / Linux: cp does the robust copy in the background; we poll the target file
+    # size for a real progress bar (manual chunked copy is unsafe – the RP BOOTSEL drive
+    # ejects itself on the last block). Best-effort: if the volume reports the final size
+    # immediately, the bar simply jumps to 100%.
+    Write-Host "  $label" -ForegroundColor Yellow
     $job = Start-Job -ScriptBlock {
         param($src, $dst)
         & /bin/cp $src $dst
         return ($LASTEXITCODE -eq 0)
     } -ArgumentList $sourcePath, $devicePath
 
-    $i = 0
+    $total  = try { (Get-Item $sourcePath).Length } catch { 0 }
+    $target = Join-Path $devicePath ([System.IO.Path]::GetFileName($sourcePath))
+    $cells  = 24
+    try { [Console]::CursorVisible = $false } catch {}
     while ($job.State -eq 'Running') {
-        [Console]::Write("`r  $($spinChars[$i % 4])  $label  ")
-        $i++
-        Start-Sleep -Milliseconds 150
+        $cur = if (Test-Path $target) { try { (Get-Item $target).Length } catch { 0 } } else { 0 }
+        $pct = if ($total -gt 0) { [Math]::Min(100, [int](100 * $cur / $total)) } else { 0 }
+        $fill = [int]($cells * $pct / 100)
+        Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
+        Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
+        Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
+        Start-Sleep -Milliseconds 120
     }
-    [Console]::Write("`r$(' ' * ($label.Length + 8))`r")  # clear spinner line
+    try { [Console]::CursorVisible = $true } catch {}
 
     $result = Receive-Job $job -Wait -ErrorAction SilentlyContinue
     Remove-Job $job
+    if ($result -eq $true) {
+        Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
+        Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
+        Write-Host "]  100 %" -ForegroundColor DarkGray
+    } else {
+        Write-Host ("`r" + (' ' * ($cells + 14)) + "`r") -NoNewline
+    }
     return ($result -eq $true)
 }
 
 # ── ESP32 functions ────────────────────────────────────────────────────────────
+
+# Reduces a chip name or firmware variant to a comparable model token:
+#   "ESP32-D0WD-V3" / "ESP32" / "ESP32-PICO-D4"  -> "ESP32"   (classic)
+#   "ESP32-S3" / "ESP32S3_V1"                     -> "ESP32S3" (also S2/C3/C5/C6/H2/P4)
+function Get-EspModel([string]$chipOrName) {
+    $n = ($chipOrName -replace '[-_ ]', '').ToUpper()
+    $m = [regex]::Match($n, '^ESP32([SCHP]\d)?')
+    if ($m.Success) {
+        if ($m.Groups[1].Value) { return 'ESP32' + $m.Groups[1].Value }
+        return 'ESP32'
+    }
+    return $n
+}
+
+# esptool v5 renamed subcommands to the hyphen form ("flash-id", "write-flash"); v4 uses
+# the underscore form. Detect the generation once (cached) and map names accordingly, so
+# v5 no longer prints the "deprecated" warning and v4 keeps working.
+$script:EsptoolV5 = $null
+function Test-EsptoolV5($esptool) {
+    if ($null -eq $script:EsptoolV5) {
+        $ver = try { & $esptool version 2>&1 | Out-String } catch { '' }
+        $m = [regex]::Match($ver, 'v(\d+)\.')
+        $script:EsptoolV5 = ($m.Success -and [int]$m.Groups[1].Value -ge 5)
+        dbg "esptool v5+? $($script:EsptoolV5)  ($($ver.Trim()))"
+    }
+    return $script:EsptoolV5
+}
+# Maps an underscore subcommand ("flash_id" / "write_flash") to the hyphen form on v5.
+function Get-EsptoolCmd($esptool, $name) {
+    if (Test-EsptoolV5 $esptool) { return ($name -replace '_', '-') }
+    return $name
+}
+
+# Probes a serial port with esptool. Returns @{ Chip='ESP32-S3'; Mac='..' } or $null.
+# esptool v5 prints "Chip type:  ESP32-S3" + "MAC: ..", older versions "Chip is ESP32-S3".
+# Retries once on a busy port (native-USB CDC needs longer to be released).
+function Get-Esp32Info($esptool, $port) {
+    $idCmd = Get-EsptoolCmd $esptool 'flash_id'
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        Start-Sleep -Milliseconds ($attempt * 500)
+        dbg "esptool chip-detect (try $attempt): `"$esptool`" --port $port $idCmd"
+        $out = try { & $esptool --port $port $idCmd 2>&1 | Out-String } catch { "EXCEPTION: $_" }
+        if ($script:DebugSerial) {
+            foreach ($line in ($out -split "`r?`n")) { if ($line.Trim()) { Write-Host "  [DBG-ESPTOOL] $line" -ForegroundColor DarkMagenta } }
+        }
+        $cm = [regex]::Match($out, 'Chip (?:is|type:)\s+(ESP32\S*)')
+        if ($cm.Success) {
+            $macM = [regex]::Match($out, 'MAC:\s*([0-9A-Fa-f:]{17})')
+            return [PSCustomObject]@{ Chip = $cm.Groups[1].Value; Mac = $(if ($macM.Success) { $macM.Groups[1].Value } else { $null }) }
+        }
+        if ($out -notmatch 'busy|temporarily unavailable|could not open|exclusively lock') { break }
+        dbg "esptool: port busy -> retry"
+    }
+    dbg "esptool: no chip detected"
+    return $null
+}
+
+# Extracts the expected ESP variant from a firmware file name (e.g.
+# "...KNeoPiX-ESP32S3_V1.bin" -> "ESP32S3"), or $null if none is present.
+function Get-EspFwVariant([string]$fileName) {
+    $m = [regex]::Match($fileName, '(?i)ESP32[A-Z0-9]*')
+    if ($m.Success) { return $m.Value }
+    return $null
+}
+
+# Fallback chip identification when OpenKNX sysinfo could not be read.
+# ESP-like ports (CH340/CP210x/Espressif/FTDI) are probed with esptool.
+# Returns a short label like "ESP32-S3 (via esptool)" or $null if not identifiable.
+function Get-ChipFallbackLabel($port, $esptool, $espPorts) {
+    if ($esptool -and ($espPorts -contains $port)) {
+        $info = Get-Esp32Info $esptool $port
+        if ($info) {
+            $label = $info.Chip
+            if ($info.Mac) { $label += "  ·  MAC: $($info.Mac)" }
+            return "$label  ·  via esptool"
+        }
+    }
+    return $null
+}
+
+# Family of a BOOTSEL drive from its volume name: "RP2350" or "RP2040".
+# On Windows the path is a drive id (e.g. "E:") -> re-query the volume name.
+function Get-BootselFamily([string]$path) {
+    $name = $path
+    if ($IsWindows) {
+        $vol = Get-CimInstance Win32_LogicalDisk -ErrorAction SilentlyContinue |
+               Where-Object { $_.DeviceID -eq $path }
+        if ($vol) { $name = $vol.VolumeName }
+    }
+    if ($name -match 'RP2350') { return 'RP2350' } else { return 'RP2040' }
+}
+
+# Reads the family ID from a .uf2 file's first block and maps it to "RP2040" / "RP2350".
+# Returns $null for non-UF2 files or UF2s without a family ID. (Only the first 32 bytes
+# are read.) Family IDs: RP2040 0xE48BFF56 ; RP2350 0xE48BFF59/5A/5B.
+function Get-Uf2Family([string]$path) {
+    $buf = New-Object byte[] 32
+    try {
+        $fs = [System.IO.File]::OpenRead($path)
+        $read = $fs.Read($buf, 0, 32)
+        $fs.Close(); $fs.Dispose()
+    } catch { return $null }
+    if ($read -lt 32) { return $null }
+    if ([System.BitConverter]::ToUInt32($buf, 0) -ne [uint32]0x0A324655) { return $null }   # magicStart0
+    if ([System.BitConverter]::ToUInt32($buf, 4) -ne [uint32]0x9E5D5157) { return $null }   # magicStart1
+    if (-not ([System.BitConverter]::ToUInt32($buf, 8) -band 0x00002000)) { return $null }  # familyID present?
+    $fam = [System.BitConverter]::ToUInt32($buf, 28)
+    if ($fam -eq [uint32]0xE48BFF56) { return 'RP2040' }
+    if ($fam -eq [uint32]0xE48BFF59 -or $fam -eq [uint32]0xE48BFF5A -or $fam -eq [uint32]0xE48BFF5B) { return 'RP2350' }
+    return $null
+}
 
 # Returns the path to the esptool binary, or $null if not found.
 function FindEsptool() {
@@ -520,6 +682,132 @@ function WaitOrPause($seconds = -1) {
     }
 }
 
+# ── Reusable activity panel (header/text/right/status) ───────────────────────
+$script:ActivityPanelVisible = $false
+$script:ActivityPanelTop     = -1
+$script:ActivityPanelHeight  = 0
+
+$script:WaitAnimFrameMs      = 250
+$script:WaitAnimStatus       = ''
+$script:WaitAnimHeader       = ''
+
+function Get-WaitAnimFrame([int]$frame) {
+    switch ($frame % 5) {
+        0 { return [PSCustomObject]@{ TL='□'; TR='■'; BL='■'; BR='□' } } # F0
+        1 { return [PSCustomObject]@{ TL=' '; TR='■'; BL='■'; BR='□' } } # F1 (1 ausgeblendet)
+        2 { return [PSCustomObject]@{ TL='□'; TR=' '; BL='■'; BR='□' } } # F2 (2 ausgeblendet)
+        3 { return [PSCustomObject]@{ TL='□'; TR='■'; BL=' '; BR='□' } } # F3 (3 ausgeblendet)
+        default { return [PSCustomObject]@{ TL='□'; TR='■'; BL='■'; BR=' ' } } # F4 (4 ausgeblendet)
+    }
+}
+
+function Format-WaitAnimPixel([string]$pixel) {
+    $esc = [char]27
+    if ($pixel -eq '■') { return "$esc[92m■$esc[0m" }
+    if ($pixel -eq '□') { return "$esc[90m□$esc[0m" }
+    return ' '
+}
+
+function Write-ActivityPanelLineAt([int]$y, [string]$line) {
+    $width = [Math]::Max(1, [Console]::WindowWidth - 1)
+    [Console]::SetCursorPosition(0, $y)
+    [Console]::Write(' ' * $width)
+    [Console]::SetCursorPosition(0, $y)
+    [Console]::Write($line)
+}
+
+function Start-ActivityPanel([int]$height) {
+    if ($script:ActivityPanelVisible) {
+        if ($script:ActivityPanelHeight -eq $height) { return }
+        Stop-ActivityPanel
+    }
+    for ($i = 0; $i -lt $height; $i++) { Write-Host }
+    $script:ActivityPanelTop = [Math]::Max(0, [Console]::CursorTop - $height)
+    $script:ActivityPanelHeight = $height
+    $script:ActivityPanelVisible = $true
+}
+
+function Stop-ActivityPanel {
+    if (-not $script:ActivityPanelVisible) { return }
+    for ($i = 0; $i -lt $script:ActivityPanelHeight; $i++) {
+        Write-ActivityPanelLineAt ($script:ActivityPanelTop + $i) ''
+    }
+    [Console]::SetCursorPosition(0, [Math]::Max(0, $script:ActivityPanelTop))
+    $script:ActivityPanelVisible = $false
+    $script:ActivityPanelTop = -1
+    $script:ActivityPanelHeight = 0
+}
+
+function Render-ActivityPanel {
+    param(
+        [ValidateSet('corners','spinner')]
+        [string]$Style,
+        [int]$Frame,
+        [string]$Header = '',
+        [string]$Text = '',
+        [string]$RightText = '',
+        [string]$Status = ''
+    )
+
+    $esc = [char]27
+
+    if ($Style -eq 'corners') {
+        Start-ActivityPanel 5
+        $f = Get-WaitAnimFrame $Frame
+        $tl = Format-WaitAnimPixel $f.TL
+        $tr = Format-WaitAnimPixel $f.TR
+        $bl = Format-WaitAnimPixel $f.BL
+        $br = Format-WaitAnimPixel $f.BR
+
+        $line0 = if ($Header) { "  $Header" } else { '' }
+        $line1 = "  $tl  $tr"
+        $line2 = "  ${esc}[92m┬──┴${esc}[0m $Text"
+        if ($RightText) { $line2 += "  $RightText" }
+        $line3 = "  $bl  $br"
+        $line4 = if ($Status) { "  ${esc}[90m$Status${esc}[0m" } else { '' }
+
+        Write-ActivityPanelLineAt $script:ActivityPanelTop $line0
+        Write-ActivityPanelLineAt ($script:ActivityPanelTop + 1) $line1
+        Write-ActivityPanelLineAt ($script:ActivityPanelTop + 2) $line2
+        Write-ActivityPanelLineAt ($script:ActivityPanelTop + 3) $line3
+        Write-ActivityPanelLineAt ($script:ActivityPanelTop + 4) $line4
+        [Console]::SetCursorPosition(0, $script:ActivityPanelTop + 4)
+        return
+    }
+
+    Start-ActivityPanel 3
+    $spinChars = @('-', '\', '|', '/')
+    $spin = $spinChars[$Frame % $spinChars.Count]
+    $line0 = if ($Header) { "  $Header" } else { '' }
+    $line1 = "  $spin  $Text"
+    if ($RightText) { $line1 += "  $RightText" }
+    $line2 = if ($Status) { "  ${esc}[90m$Status${esc}[0m" } else { '' }
+
+    Write-ActivityPanelLineAt $script:ActivityPanelTop $line0
+    Write-ActivityPanelLineAt ($script:ActivityPanelTop + 1) $line1
+    Write-ActivityPanelLineAt ($script:ActivityPanelTop + 2) $line2
+    [Console]::SetCursorPosition(0, $script:ActivityPanelTop + 2)
+}
+
+function Write-WaitAnimFrame([int]$remaining, [int]$frame, [string]$waitTemplate) {
+    $msg = ($waitTemplate -f $remaining.ToString().PadLeft(2)).Trim()
+    Render-ActivityPanel -Style corners -Frame $frame -Header $script:WaitAnimHeader -Text $msg -Status $script:WaitAnimStatus
+}
+
+function Stop-WaitAnim {
+    Stop-ActivityPanel
+    $script:WaitAnimStatus = ''
+    $script:WaitAnimHeader = ''
+}
+
+function Write-WaitAnimMessageBelow([string]$text, [string]$color = 'Gray') {
+    if ($script:ActivityPanelVisible) {
+        $script:WaitAnimStatus = $text
+        return
+    }
+    Write-Host $text -ForegroundColor $color
+}
+
 # Waits up to 60s for EITHER a new device to appear OR an existing one to unplug+replug.
 # Shows a single combined prompt. Returns the new/reappeared path, or $null on cancel/timeout.
 function Wait-AutoDetect([string[]]$knownPaths, [scriptblock]$scanScript) {
@@ -528,15 +816,18 @@ function Wait-AutoDetect([string[]]$knownPaths, [scriptblock]$scanScript) {
     $deadline     = (Get-Date).AddSeconds(60)
     $disappeared  = $null
     $afterPaths   = $knownPaths
+    $frame        = 0
+    $script:WaitAnimStatus = ''
+    $script:WaitAnimHeader = $script:s.WaitReplug
     while ((Get-Date) -lt $deadline) {
         $remaining = [int]($deadline - (Get-Date)).TotalSeconds
-        $label = if ($disappeared) { $script:s.WaitingReplug } else { $script:s.WaitingReplug }
-        [Console]::Write("`r$($label -f $remaining.ToString().PadLeft(2))")
-        Start-Sleep -Milliseconds 400
+        Write-WaitAnimFrame -remaining $remaining -frame $frame -waitTemplate $script:s.WaitingReplug
+        $frame++
+        Start-Sleep -Milliseconds $script:WaitAnimFrameMs
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
             if ($key.Key -eq 'Escape' -or $key.KeyChar -match '^[Qq]$') {
-                [Console]::WriteLine()
+                Stop-WaitAnim
                 Write-Host $script:s.OptCancel -ForegroundColor DarkGray
                 return $null
             }
@@ -546,7 +837,7 @@ function Wait-AutoDetect([string[]]$knownPaths, [scriptblock]$scanScript) {
         if (-not $disappeared) {
             $new = @($cur | Where-Object { $knownPaths -notcontains $_ })
             if ($new.Count -gt 0) {
-                [Console]::WriteLine()
+                Stop-WaitAnim
                 Write-Host ($script:s.DeviceDetected -f $new[0]) -ForegroundColor Green
                 return $new[0]
             }
@@ -555,21 +846,19 @@ function Wait-AutoDetect([string[]]$knownPaths, [scriptblock]$scanScript) {
             if ($gone.Count -gt 0) {
                 $disappeared = $gone[0]
                 $afterPaths  = @($knownPaths | Where-Object { $_ -ne $disappeared })
-                [Console]::WriteLine()
-                Write-Host ($script:s.DeviceUnplugged -f $disappeared) -ForegroundColor DarkGray
-                [Console]::Write("`r$($script:s.WaitingReplug -f $remaining.ToString().PadLeft(2))")
+                Write-WaitAnimMessageBelow ($script:s.DeviceUnplugged -f $disappeared) 'DarkGray'
             }
         } else {
             # Phase 2: waiting for replug after unplug
             $new = @($cur | Where-Object { $afterPaths -notcontains $_ })
             if ($new.Count -gt 0) {
-                [Console]::WriteLine()
+                Stop-WaitAnim
                 Write-Host ($script:s.DeviceDetected -f $new[0]) -ForegroundColor Green
                 return $new[0]
             }
         }
     }
-    [Console]::WriteLine()
+    Stop-WaitAnim
     Write-Host $script:s.NoReplug -ForegroundColor Red
     return $null
 }
@@ -579,24 +868,27 @@ function WaitForAnyDevice($scanScript) {
     Write-Host $script:s.WaitReplug -ForegroundColor Yellow
     Write-Host "  $($script:s.CancelKey)" -ForegroundColor DarkGray
     $deadline = (Get-Date).AddSeconds(60)
+    $frame = 0
+    $script:WaitAnimHeader = $script:s.WaitReplug
     while ((Get-Date) -lt $deadline) {
         $remaining = [int]($deadline - (Get-Date)).TotalSeconds
-        [Console]::Write("`r$($script:s.WaitingReplug -f $remaining.ToString().PadLeft(2))")
-        Start-Sleep -Milliseconds 500
+        Write-WaitAnimFrame -remaining $remaining -frame $frame -waitTemplate $script:s.WaitingReplug
+        $frame++
+        Start-Sleep -Milliseconds $script:WaitAnimFrameMs
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
             if ($key.Key -eq 'Escape' -or $key.KeyChar -match '^[Qq]$') {
-                [Console]::WriteLine()
+                Stop-WaitAnim
                 Write-Host $script:s.OptCancel -ForegroundColor DarkGray
                 return $false
             }
         }
         if (@(& $scanScript).Count -gt 0) {
-            [Console]::WriteLine()
+            Stop-WaitAnim
             return $true
         }
     }
-    [Console]::WriteLine()
+    Stop-WaitAnim
     Write-Host $script:s.NoReplug -ForegroundColor Red
     return $false
 }
@@ -607,14 +899,17 @@ function WaitUnplugReplug($allPaths, $scanScript) {
     Write-Host "  $($script:s.CancelKey)" -ForegroundColor DarkGray
     $disappeared = $null
     $deadline = (Get-Date).AddSeconds(30)
+    $frame = 0
+    $unplugPrefix = (($script:s.WaitingUnplug -split '\{0\}', 2)[0]).Trim()
     while ((Get-Date) -lt $deadline) {
         $remaining = [int]($deadline - (Get-Date)).TotalSeconds
-        [Console]::Write("`r$($script:s.WaitingUnplug -f $remaining.ToString().PadLeft(2))")
-        Start-Sleep -Milliseconds 500
+        Render-ActivityPanel -Style spinner -Frame $frame -Header $script:s.WaitUnplug -Text $unplugPrefix -RightText ("{0}s" -f $remaining)
+        $frame++
+        Start-Sleep -Milliseconds $script:WaitAnimFrameMs
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
             if ($key.Key -eq 'Escape' -or $key.KeyChar -match '^[Qq]$') {
-                [Console]::WriteLine()
+                Stop-ActivityPanel
                 Write-Host $script:s.OptCancel -ForegroundColor DarkGray
                 return $null
             }
@@ -623,7 +918,7 @@ function WaitUnplugReplug($allPaths, $scanScript) {
         $gone = @($allPaths | Where-Object { $cur -notcontains $_ })
         if ($gone.Count -gt 0) { $disappeared = $gone[0]; break }
     }
-    [Console]::WriteLine()
+    Stop-ActivityPanel
     if (-not $disappeared) {
         Write-Host $script:s.NoUnplug -ForegroundColor Red
         return $null
@@ -634,14 +929,17 @@ function WaitUnplugReplug($allPaths, $scanScript) {
     $afterPaths  = @($allPaths | Where-Object { $_ -ne $disappeared })
     $deadline    = (Get-Date).AddSeconds(30)
     $appearedPath = $null
+    $frame = 0
+    $script:WaitAnimHeader = $script:s.WaitReplug
     while ((Get-Date) -lt $deadline) {
         $remaining = [int]($deadline - (Get-Date)).TotalSeconds
-        [Console]::Write("`r$($script:s.WaitingReplug -f $remaining.ToString().PadLeft(2))")
-        Start-Sleep -Milliseconds 500
+        Write-WaitAnimFrame -remaining $remaining -frame $frame -waitTemplate $script:s.WaitingReplug
+        $frame++
+        Start-Sleep -Milliseconds $script:WaitAnimFrameMs
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
             if ($key.Key -eq 'Escape' -or $key.KeyChar -match '^[Qq]$') {
-                [Console]::WriteLine()
+                Stop-WaitAnim
                 Write-Host $script:s.OptCancel -ForegroundColor DarkGray
                 return $null
             }
@@ -650,7 +948,7 @@ function WaitUnplugReplug($allPaths, $scanScript) {
         $new = @($cur | Where-Object { $afterPaths -notcontains $_ })
         if ($new.Count -gt 0) { $appearedPath = $new[0]; break }
     }
-    [Console]::WriteLine()
+    Stop-WaitAnim
     if (-not $appearedPath) {
         Write-Host $script:s.NoReplug -ForegroundColor Red
         return $null
@@ -662,22 +960,25 @@ function WaitUnplugReplug($allPaths, $scanScript) {
 # Waits up to $timeoutSec for a port not in $knownPorts to appear. Returns path or $null.
 function Wait-ForSerialPort($scanScript, $timeoutSec, [string[]]$knownPorts) {
     $deadline = (Get-Date).AddSeconds($timeoutSec)
+    $frame = 0
+    $prefix = (($script:s.InfoWaitPort -split '\{0\}', 2)[0]).Trim()
     while ((Get-Date) -lt $deadline) {
         $remaining = [int]($deadline - (Get-Date)).TotalSeconds
-        [Console]::Write("`r$($script:s.InfoWaitPort -f $remaining.ToString().PadLeft(2))")
-        Start-Sleep -Milliseconds 500
+        Render-ActivityPanel -Style spinner -Frame $frame -Header $script:s.SearchDevices -Text $prefix -RightText ("{0}s" -f $remaining)
+        $frame++
+        Start-Sleep -Milliseconds $script:WaitAnimFrameMs
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
             if ($key.Key -eq 'Escape' -or $key.KeyChar -match '^[Qq]$') {
-                [Console]::WriteLine()
+                Stop-ActivityPanel
                 return $null
             }
         }
         $current = @(& $scanScript)
         $new = @($current | Where-Object { $knownPorts -notcontains $_ })
-        if ($new.Count -gt 0) { [Console]::WriteLine(); return $new[0] }
+        if ($new.Count -gt 0) { Stop-ActivityPanel; return $new[0] }
     }
-    [Console]::WriteLine()
+    Stop-ActivityPanel
     return $null
 }
 
@@ -724,6 +1025,7 @@ function Read-DeviceInfo($port) {
             }
         }
         $sp.Close()
+        $sp.Dispose()   # release the OS handle so esptool can open the port right after
         dbg "Port closed. Total received: $($received.Length) chars"
         if ($script:DebugSerial -and $received) {
             Write-Host "  [DBG] Raw output:" -ForegroundColor Magenta
@@ -734,6 +1036,7 @@ function Read-DeviceInfo($port) {
     } catch {
         dbg "Exception: $_"
         if ($sp.IsOpen) { try { $sp.Close() } catch {} }
+        try { $sp.Dispose() } catch {}
         return $null
     }
 }
@@ -758,12 +1061,12 @@ function Invoke-SerialCommand([string]$port, [string]$command, [int]$timeoutSec 
         $deadline     = (Get-Date).AddSeconds($timeoutSec)
         $lastActivity = Get-Date
         $silenceMs    = 2500   # stop after 2.5s silence once data received
-        $spinChars    = @('-', '\', '|', '/')
         $spinIdx      = 0
+        $wipePrefix   = (($script:s.WipeWaiting -split '\{0\}', 2)[0]).Trim()
 
         while ((Get-Date) -lt $deadline) {
             $remaining = [int]($deadline - (Get-Date)).TotalSeconds
-            [Console]::Write("`r  $($spinChars[$spinIdx % 4])  $($script:s.WipeWaiting -f $remaining.ToString().PadLeft(2))")
+            Render-ActivityPanel -Style spinner -Frame $spinIdx -Header $script:s.WipeTitle -Text $wipePrefix -RightText ("{0}s" -f $remaining)
             $spinIdx++
             Start-Sleep -Milliseconds 200
 
@@ -783,11 +1086,12 @@ function Invoke-SerialCommand([string]$port, [string]$command, [int]$timeoutSec 
             if ([Console]::KeyAvailable) {
                 $key = [Console]::ReadKey($true)
                 if ($key.Key -eq 'Escape' -or $key.KeyChar -match '^[Qq]$') {
-                    [Console]::WriteLine(); break
+                    Stop-ActivityPanel
+                    break
                 }
             }
         }
-        [Console]::Write("`r$(' ' * 55)`r")  # clear spinner
+        Stop-ActivityPanel
         $sp.Close()
         dbg "Invoke-SerialCommand: Finished. Total=$($received.Length) chars"
         if ($received.Trim()) { return $received } else { return $null }
@@ -906,6 +1210,58 @@ function Parse-DeviceInfo([string]$rawText) {
     return $r
 }
 
+# Builds the compact one-line device label parts from a parsed info object:
+#   "Device Name"  ·  Firmware vX.Y.Z  ·  SN: ....
+# The hardware id is intentionally NOT included here (too wide for lists);
+# it is shown on its own line in the pre-flash confirm screen instead.
+function Format-DeviceLabelParts($info) {
+    $parts = @()
+    if ($info.DeviceName)          { $parts += "`"$($info.DeviceName)`"" }
+    if ($info.FirmwareName -and $info.FirmwareVersion) { $parts += "$($info.FirmwareName) v$($info.FirmwareVersion)" }
+    elseif ($info.FirmwareName)    { $parts += $info.FirmwareName }
+    if ($info.DeviceSerial)        { $parts += "SN: $($info.DeviceSerial)" }
+    return ($parts -join '  ·  ')
+}
+
+# Prints the device header used in the pre-flash confirm screens:
+#   "Device Name"   (or the port as fallback)
+#   [Hardware-Id (HW ID: 0x....)]   (own line, only if present)
+#   Firmware: Name  vX.Y.Z          (only if present)
+#   SN: ....                        (only if present; serial is normally always there)
+function Show-DeviceConfirmHeader($info, $fallbackPath) {
+    $namePart = if ($info.DeviceName) { "`"$($info.DeviceName)`"" } else { $fallbackPath }
+    Write-Host "  $namePart" -ForegroundColor Cyan
+    if ($info.DeviceId) {
+        Write-Host "  [$($info.DeviceId)]" -ForegroundColor DarkCyan
+    }
+    if ($info.FirmwareName) {
+        $verPart = if ($info.FirmwareVersion) { "  v$($info.FirmwareVersion)" } else { '' }
+        Write-Host "  Firmware: $($info.FirmwareName)$verPart" -ForegroundColor DarkCyan
+    }
+    if ($info.DeviceSerial) {
+        Write-Host "  SN: $($info.DeviceSerial)" -ForegroundColor DarkCyan
+    }
+}
+
+# Returns the per-device columns (Port / Name / Fw / Sn) used to render the
+# selection list as a left-aligned table. Falls back to the plain Label suffix
+# for devices without parsed info (BOOTSEL drives, failed reads).
+function Get-DeviceListRow($d) {
+    $port = $d.Path
+    $info = if ($d.PSObject.Properties['DeviceInfo']) { $d.DeviceInfo } else { $null }
+    if ($info) {
+        $name = if ($info.DeviceName) { "`"$($info.DeviceName)`"" } else { '' }
+        $fw   = if ($info.FirmwareName -and $info.FirmwareVersion) { "$($info.FirmwareName) v$($info.FirmwareVersion)" }
+                elseif ($info.FirmwareName) { $info.FirmwareName } else { '' }
+        $sn   = if ($info.DeviceSerial) { "SN: $($info.DeviceSerial)" } else { '' }
+        return [PSCustomObject]@{ Port = $port; Name = $name; Fw = $fw; Sn = $sn; HasInfo = $true }
+    }
+    $rest = $d.Label
+    $pfx  = "$port  "
+    if ($rest -and $rest.StartsWith($pfx)) { $rest = $rest.Substring($pfx.Length) }
+    return [PSCustomObject]@{ Port = $port; Name = $rest; Fw = ''; Sn = ''; HasInfo = $false }
+}
+
 # Tries to read + parse device info from a serial port.
 # Returns a compact one-line label string, or $null if unavailable.
 function Get-SerialDeviceLabel($port) {
@@ -913,13 +1269,9 @@ function Get-SerialDeviceLabel($port) {
     if (-not $raw) { return $null }
     $info = Parse-DeviceInfo $raw
     if (-not $info) { return $null }
-    $parts = @()
-    if ($info.DeviceName) { $parts += $info.DeviceName }
-    if ($info.FirmwareName -and $info.FirmwareVersion) { $parts += "$($info.FirmwareName) v$($info.FirmwareVersion)" }
-    elseif ($info.FirmwareName)    { $parts += $info.FirmwareName }
-    if ($info.DeviceSerial)        { $parts += "SN: $($info.DeviceSerial)" }
-    if ($parts.Count -eq 0) { return $null }
-    return $parts -join '  ·  '
+    $label = Format-DeviceLabelParts $info
+    if (-not $label) { return $null }
+    return $label
 }
 
 # Wipe / Erase menu – only accessible from Dev Settings ([W]).
@@ -1052,8 +1404,12 @@ function Show-WipeMenu {
 
 # Shows the about/info screen with author, version (git hash) and feature overview.
 function Show-About {
-    $sep  = [string][char]0x2550 * 54
-    $sep2 = [string][char]0x2500 * 54
+    $w    = 64
+    $sep  = [string][char]0x2550 * $w   # ═  double rule
+    $sep2 = [string][char]0x2500 * $w   # ─  light rule
+    $tri  = [char]0x25B8                 # ▸  section marker
+    $dot  = [char]0x2022                 # •  bullet
+
     # Retrieve git hash + date of this script
     $scriptDir = Split-Path $PSCommandPath -Parent
     $gitHash = try {
@@ -1064,38 +1420,54 @@ function Show-About {
         $d = & git -C $scriptDir log -1 --format='%ci' HEAD 2>&1
         if ($LASTEXITCODE -eq 0 -and $d -match '\d{4}-\d{2}-\d{2}') { $Matches[0] } else { 'n/a' }
     } catch { 'n/a' }
+
+    # Small helpers for consistent, aligned rows
+    function Meta($label, $value, [ConsoleColor]$valColor = [ConsoleColor]::White) {
+        Write-Host ("    {0,-9}" -f $label) -ForegroundColor DarkGray -NoNewline
+        Write-Host $value -ForegroundColor $valColor
+    }
+    function Head($text) {
+        Write-Host "  $sep2" -ForegroundColor DarkGray
+        Write-Host "  $tri $text" -ForegroundColor Cyan
+        Write-Host "  $sep2" -ForegroundColor DarkGray
+    }
+    function Item($text, [ConsoleColor]$color = [ConsoleColor]::White) {
+        Write-Host "     $dot  " -ForegroundColor DarkCyan -NoNewline
+        Write-Host $text -ForegroundColor $color
+    }
+
     Clear-Host
-    Write-Host
+    OpenKNX_ShowLogo('Generic Firmware Upload  -  About')
+
     Write-Host "  $sep" -ForegroundColor DarkCyan
-    Write-Host "  Upload-Firmware-Generic  -  About" -ForegroundColor Cyan
+    Write-Host "  Upload-Firmware-Generic" -ForegroundColor Cyan -NoNewline
+    Write-Host "   RP2040 / RP2350  &  ESP32" -ForegroundColor DarkGray
     Write-Host "  $sep" -ForegroundColor DarkCyan
     Write-Host
-    Write-Host "  OpenKNX  /  OGM-Common  /  2026" -ForegroundColor Cyan
-    Write-Host "  Author   Erkan Colak" -ForegroundColor White
-    Write-Host "  GitHub   github.com/GeminiServer" -ForegroundColor DarkCyan
+    Meta 'Projekt'  'OpenKNX  /  OGM-Common  /  2026'
+    Meta 'Autor'    'Erkan Çolak'
+    Meta 'GitHub'   'github.com/GeminiServer'      Cyan
+    Meta 'Version'  "$gitHash  /  $gitDate"        DarkYellow
     Write-Host
-    Write-Host "  $sep2" -ForegroundColor DarkGray
-    Write-Host "  Version  $gitHash  /  $gitDate" -ForegroundColor DarkYellow
-    Write-Host "  $sep2" -ForegroundColor DarkGray
+
+    Head 'Was dieses Tool kann'
+    Item 'Auto-Erkennung RP2040/RP2350 und ESP32'
+    Item 'Gerät einstecken oder aus-/einstecken wird automatisch erkannt'
+    Item 'Multi-Flash - mehrere Geräte in einem Durchlauf (-Multi)'
+    Item 'Geräteinformationen auslesen (seriell / -DebugSerial)'
+    Item 'Sprache Deutsch / English - automatisch oder via -Lang'
+    Item 'macOS / Linux / Windows'
     Write-Host
-    Write-Host "  Was dieses Tool kann:" -ForegroundColor White
-    Write-Host "    -  Auto-Erkennung RP2040/RP2350 und ESP32" -ForegroundColor White
-    Write-Host "    -  Gerät einstecken oder aus-/einstecken wird automatisch erkannt" -ForegroundColor White
-    Write-Host "    -  Multi-Flash - mehrere Geräte in einem Durchlauf (-Multi)" -ForegroundColor White
-    Write-Host "    -  Geräteinformationen auslesen (seriell / -DebugSerial)" -ForegroundColor White
-    Write-Host "    -  Sprache Deutsch / English - automatisch oder via -Lang" -ForegroundColor White
-    Write-Host "    -  macOS / Linux / Windows" -ForegroundColor White
+
+    Head 'Entwickler-Features  (?? an jedem Prompt)'
+    Item 'Wipe / Erase  -  Firmware-Daten löschen via OpenKNX-Console' DarkCyan
+    Write-Host "          erase knx / erase openknx / erase files / erase all" -ForegroundColor DarkGray
+    Item 'Debug-Ausgabe  (serieller Traffic sichtbar)' DarkCyan
+    Item 'Multi-Modus  (zur Laufzeit umschaltbar)'     DarkCyan
     Write-Host
-    Write-Host "  $sep2" -ForegroundColor DarkGray
-    Write-Host "  Entwickler-Features  (?? an jedem Prompt):" -ForegroundColor DarkCyan
-    Write-Host "    -  Wipe / Erase  -  Firmware-Daten löschen via OpenKNX-Console" -ForegroundColor DarkCyan
-    Write-Host "         erase knx / erase openknx / erase files / erase all" -ForegroundColor DarkGray
-    Write-Host "    -  Debug-Ausgabe  (serieller Traffic sichtbar)" -ForegroundColor DarkCyan
-    Write-Host "    -  Multi-Modus  (zur Laufzeit umschaltbar)" -ForegroundColor DarkCyan
-    Write-Host
-    Write-Host "  $sep2" -ForegroundColor DarkGray
-    Write-Host "  Geplante Features:" -ForegroundColor DarkGray
-    Write-Host "    -  Online-Update-Suche  (coming soon)" -ForegroundColor DarkGray
+
+    Head 'Geplante Features'
+    Item 'Online-Update-Suche  (coming soon)' DarkGray
     Write-Host "  $sep2" -ForegroundColor DarkGray
     Write-Host
     Read-Host "  [Enter] Zurueck / Back" | Out-Null
@@ -1209,6 +1581,7 @@ function Select-FirmwareFile {
         Clear-Host
         $sep = [string][char]0x2500 * 62
         Write-Host
+        OpenKNX_ShowLogo('OpenKNX - Generic Firmware Upload  -  RP2040/RP2350  &  ESP32')
         Write-Host "  $sep" -ForegroundColor DarkCyan
         Write-Host "  $($script:s.SelectFwTitle)" -ForegroundColor Cyan
         Write-Host "  $sep" -ForegroundColor DarkCyan
@@ -1257,7 +1630,7 @@ function Select-FirmwareFile {
     }
 }
 
-# Displays device list + [A]/[X] options. Returns: chosen $device object, 'A', or 'X'.
+# Displays device list + [A]/[R]/[X] options. Returns: chosen $device object, 'A', 'R', or 'X'.
 function Select-Device([object[]]$devices) {
     if ($devices.Count -eq 1) {
         # Nur den Port anzeigen – Label-Suffix (z.B. BOOTSEL-Hint) kommt erst beim Confirm
@@ -1265,22 +1638,42 @@ function Select-Device([object[]]$devices) {
         Write-Host
         return $devices[0]
     }
-    $validChoices = @('A','X') + (1..$devices.Count | ForEach-Object { "$_" })
-    $promptParts  = (1..$devices.Count | ForEach-Object { "$_" }) + @('A','X')
+    $validChoices = @('A','R','X') + (1..$devices.Count | ForEach-Object { "$_" })
+    $promptParts  = (1..$devices.Count | ForEach-Object { "$_" }) + @('A','R','X')
     $printList = {
         Write-Host
-        Write-Host $script:s.MultipleDevices -ForegroundColor Yellow
+        Write-Host $script:s.MultipleDevices -ForegroundColor Cyan
+        # Build a left-aligned table: Port / Name / Firmware / SN (HW id omitted here).
+        $rows  = @(foreach ($d in $devices) { Get-DeviceListRow $d })
+        # Column widths are driven only by rows with real device info; BOOTSEL/
+        # failed-read fallback rows may overflow (no further columns follow them).
+        $wPort = 0; $wName = 0; $wFw = 0
+        foreach ($r in $rows) {
+            if ($r.Port.Length -gt $wPort) { $wPort = $r.Port.Length }
+            if (-not $r.HasInfo) { continue }
+            if ($r.Name.Length -gt $wName) { $wName = $r.Name.Length }
+            if ($r.Fw.Length   -gt $wFw)   { $wFw   = $r.Fw.Length }
+        }
+        $idxW = ([string]$devices.Count).Length
         for ($i = 0; $i -lt $devices.Count; $i++) {
-            Write-Host "  [$($i+1)] $($devices[$i].Label)" -ForegroundColor Green
+            $entryColor = 'Green'
+            if ($devices[$i].PSObject.Properties['InfoReadFailed'] -and $devices[$i].InfoReadFailed) {
+                $entryColor = 'DarkYellow'
+            }
+            $r    = $rows[$i]
+            $num  = ([string]($i + 1)).PadLeft($idxW)
+            $line = ("{0}  {1}  {2}  {3}" -f $r.Port.PadRight($wPort), $r.Name.PadRight($wName), $r.Fw.PadRight($wFw), $r.Sn).TrimEnd()
+            Write-Host "  [$num] $line" -ForegroundColor $entryColor
         }
         Write-Host "  [A]  $($script:s.OptAgain)"
-        Write-Host "  [X]  $($script:s.OptCancel)"
+        Write-Host "  [R]  $($script:s.OptRescan)" -ForegroundColor DarkCyan
+        Write-Host "  [X]  $($script:s.OptCancel)" -ForegroundColor DarkGray
         Write-Host
     }
     & $printList
     $choice = Read-Choice "$($script:s.ChoicePrompt) [$(($promptParts -join '/'))]" $validChoices $printList
     if ($choice -match '^\d+$') { return $devices[[int]$choice - 1] }
-    return $choice   # 'A' or 'X'
+    return $choice   # 'A', 'R' or 'X'
 }
 
 # ── File picker (wenn keine Firmware-Datei angegeben) ─────────────────────────
@@ -1345,6 +1738,7 @@ if ($Chip -eq 'RP2040') {
 
     $flashCount = 0
     $continueFlashing = $true
+    $esptool = FindEsptool   # optional: used only as a chip-id fallback when sysinfo fails
 
     while ($continueFlashing) {
 
@@ -1355,49 +1749,60 @@ if ($Chip -eq 'RP2040') {
 
         $devices = @()
         foreach ($p in $bootselPaths) {
-            $devices += [PSCustomObject]@{ Type='bootsel'; Path=$p; Label="$p  $($s.DeviceInBootsel)" }
+            $fam = Get-BootselFamily $p
+            $devices += [PSCustomObject]@{ Type='bootsel'; Path=$p; Label="$p  $fam  $($s.DeviceInBootsel)"; InfoReadFailed=$false }
         }
         foreach ($p in $serialPorts) {
-            $devices += [PSCustomObject]@{ Type='serial'; Path=$p; Label="$p  $($s.DeviceSerial)"; DeviceInfo=$null }
+            $devices += [PSCustomObject]@{ Type='serial'; Path=$p; Label="$p  $($s.DeviceSerial)"; DeviceInfo=$null; InfoReadFailed=$false }
         }
 
         # ── Enrich serial labels with device info (only when multiple devices) ──
         if ($devices.Count -gt 1 -and $serialPorts.Count -gt 0) {
             Write-Host $s.InfoReadingDevices -ForegroundColor DarkGray
+            $espPorts = @(ScanEsp32Ports)
             $totalSerial = $serialPorts.Count
             $sIdx = 0
             for ($i = 0; $i -lt $devices.Count; $i++) {
                 if ($devices[$i].Type -ne 'serial') { continue }
                 $sIdx++
                 $p = $devices[$i].Path
-                [Console]::Write("`r  [$sIdx/$totalSerial] $p...")
+                Write-Host "  [$sIdx/$totalSerial] $p... " -NoNewline
                 $rawText = Read-DeviceInfo $p
                 $parsed  = if ($rawText) { Parse-DeviceInfo $rawText } else { $null }
                 $devices[$i].DeviceInfo = $parsed
                 if ($parsed) {
-                    $parts = @()
-                    if ($parsed.DeviceName) { $parts += $parsed.DeviceName }
-                    if ($parsed.FirmwareName -and $parsed.FirmwareVersion) { $parts += "$($parsed.FirmwareName) v$($parsed.FirmwareVersion)" }
-                    elseif ($parsed.FirmwareName) { $parts += $parsed.FirmwareName }
-                    if ($parsed.DeviceSerial) { $parts += "SN: $($parsed.DeviceSerial)" }
-                    if ($parts.Count -gt 0) { $devices[$i].Label = "$p  $($parts -join '  ·  ')" }
+                    $label = Format-DeviceLabelParts $parsed
+                    if ($label) { $devices[$i].Label = "$p  $label" }
+                    Write-Host "ok" -ForegroundColor DarkGray
+                } else {
+                    $devices[$i].InfoReadFailed = $true
+                    $chipLbl = Get-ChipFallbackLabel $p $esptool $espPorts
+                    if ($chipLbl) {
+                        $devices[$i].Label = "$p  $chipLbl"
+                        Write-Host $chipLbl -ForegroundColor DarkYellow
+                    } else {
+                        $devices[$i].Label = "$p  $($s.InfoUnavailableShort)"
+                        Write-Host $s.InfoUnavailableShort -ForegroundColor DarkYellow
+                    }
                 }
             }
-            [Console]::WriteLine()
         }
 
         if ($devices.Count -eq 0) {
             Write-Host $s.NoDeviceFound
             Write-Host
             Write-Host "  [A]  $($s.OptAgain)"
-            Write-Host "  [X]  $($s.OptCancel)"
+            Write-Host "  [R]  $($s.OptRescan)" -ForegroundColor DarkCyan
+            Write-Host "  [X]  $($s.OptCancel)" -ForegroundColor DarkGray
             Write-Host
             $choice = ""
-            $choice = Read-Choice "$($s.ChoicePrompt) [A/X]" @('A','X')
+            $choice = Read-Choice "$($s.ChoicePrompt) [A/R/X]" @('A','R','X')
             if ($choice -eq 'X') {
                 Show-ManualInstr
                 $continueFlashing = $false
                 continue
+            } elseif ($choice -eq 'R') {
+                continue   # rescan device list
             } else {
                 WaitForAnyDevice { @(ScanBootselPaths) + @(ScanPicoPorts) } | Out-Null
             }
@@ -1411,6 +1816,9 @@ if ($Chip -eq 'RP2040') {
             Show-ManualInstr
             $continueFlashing = $false
             continue
+        } elseif ($devResult -eq 'R') {
+            Write-Host
+            continue   # rescan device list
         } elseif ($devResult -eq 'A') {
             $allPaths     = @($devices | ForEach-Object { $_.Path })
             $appearedPath = Wait-AutoDetect $allPaths { @(ScanBootselPaths) + @(ScanPicoPorts) }
@@ -1419,8 +1827,9 @@ if ($Chip -eq 'RP2040') {
             $selected  = [PSCustomObject]@{
                 Type       = if ($isBootsel) { 'bootsel' } else { 'serial' }
                 Path       = $appearedPath
-                Label      = if ($isBootsel) { "$appearedPath  $($s.DeviceInBootsel)" } else { "$appearedPath  $($s.DeviceSerial)" }
+                Label      = if ($isBootsel) { "$appearedPath  $(Get-BootselFamily $appearedPath)  $($s.DeviceInBootsel)" } else { "$appearedPath  $($s.DeviceSerial)" }
                 DeviceInfo = $null
+                    InfoReadFailed = $false
             }
         } else {
             $selected = $devResult
@@ -1444,13 +1853,7 @@ if ($Chip -eq 'RP2040') {
             }
             if ($preInfo) {
                 Write-Host
-                $namePart = if ($preInfo.DeviceName) { "`"$($preInfo.DeviceName)`"" } else { $port }
-                $idPart   = if ($preInfo.DeviceId)   { "  [$($preInfo.DeviceId)]"   } else { '' }
-                Write-Host "  $namePart$idPart" -ForegroundColor Cyan
-                if ($preInfo.FirmwareName) {
-                    $verPart = if ($preInfo.FirmwareVersion) { "  v$($preInfo.FirmwareVersion)" } else { '' }
-                    Write-Host "  Firmware: $($preInfo.FirmwareName)$verPart" -ForegroundColor DarkCyan
-                }
+                Show-DeviceConfirmHeader $preInfo $port
                 Write-Host
                 Write-Host "  $($s.DeviceSerial)" -ForegroundColor DarkYellow
                 Write-Host
@@ -1465,6 +1868,13 @@ if ($Chip -eq 'RP2040') {
                 Write-Host $s.InfoFooter -ForegroundColor Cyan
                 Write-Host
                 Write-Host "  $($s.DeviceSerial)" -ForegroundColor DarkYellow
+                Write-Host
+            } else {
+                # Sysinfo nicht lesbar -> Fallback: Chip-Typ via esptool (ESP-artige Ports)
+                Write-Host
+                $chipLbl = Get-ChipFallbackLabel $port $esptool (@(ScanEsp32Ports))
+                if ($chipLbl) { Write-Host "  $chipLbl" -ForegroundColor DarkYellow }
+                else          { Write-Host "  $($s.InfoUnavailableShort)" -ForegroundColor DarkYellow }
                 Write-Host
             }
 
@@ -1490,6 +1900,7 @@ if ($Chip -eq 'RP2040') {
                     Path       = $appearedPath
                     Label      = $appearedPath
                     DeviceInfo = $null
+                    InfoReadFailed = $false
                 }
                 $port = $appearedPath
                 continue  # nächste Loop-Iteration: wieder Info lesen + J/A/N
@@ -1524,6 +1935,24 @@ if ($Chip -eq 'RP2040') {
         }
 
         if (-not $devicePath) { Write-Host; continue }
+
+        # ── Verify uf2 family matches the BOOTSEL device (RP2040 vs RP2350) ────
+        if ($VerifyRpFamily) {
+            $fwFam  = Get-Uf2Family $firmwarePath
+            $devFam = Get-BootselFamily $devicePath
+            if ($fwFam -and $devFam -and $fwFam -ne $devFam) {
+                Write-Host
+                if ($AbortOnChipMismatch) {
+                    Write-Host ("  " + ($s.RpMismatch -f $fwFam, $devFam)) -ForegroundColor Red
+                    if (-not $script:MultiMode) { $continueFlashing = $false }
+                    WaitOrPause 10
+                    continue
+                }
+                Write-Host ("  " + ($s.RpMismatchWarn -f $fwFam, $devFam)) -ForegroundColor DarkYellow
+            } elseif ($fwFam -and $devFam) {
+                Write-Host ("  " + ($s.RpFamilyOk -f $devFam)) -ForegroundColor Green
+            }
+        }
 
         # ── Flash ─────────────────────────────────────────────────────────────
         $serialBefore = @(ScanPicoPorts)   # snapshot before copy; device will reboot as serial
@@ -1561,14 +1990,14 @@ if ($Chip -eq 'RP2040') {
             if ($continueFlashing) { Write-Host }
         } else {
             $continueFlashing = $false
-            WaitOrPause 10
+            WaitOrPause 1
         }
     }
 
     if ($script:MultiMode -and $flashCount -gt 0) {
         Write-Host
         Write-Host ($s.FlashedTotal -f $flashCount) -ForegroundColor Green
-        WaitOrPause 5
+        WaitOrPause 1
     }
 }
 
@@ -1595,21 +2024,52 @@ elseif ($Chip -eq 'ESP32') {
 
         $devices = @()
         foreach ($p in $ports) {
-            $devices += [PSCustomObject]@{ Type='esp32'; Path=$p; Label="$p  $($s.DeviceEsp32Serial)" }
+            $devices += [PSCustomObject]@{ Type='esp32'; Path=$p; Label="$p  $($s.DeviceEsp32Serial)"; DeviceInfo=$null; InfoReadFailed=$false }
+        }
+
+        # ── Enrich serial labels with device info (only when multiple devices) ──
+        if ($devices.Count -gt 1) {
+            Write-Host $s.InfoReadingDevices -ForegroundColor DarkGray
+            $totalSerial = $devices.Count
+            for ($i = 0; $i -lt $devices.Count; $i++) {
+                $p = $devices[$i].Path
+                Write-Host "  [$($i+1)/$totalSerial] $p... " -NoNewline
+                $rawText = Read-DeviceInfo $p
+                $parsed  = if ($rawText) { Parse-DeviceInfo $rawText } else { $null }
+                $devices[$i].DeviceInfo = $parsed
+                if ($parsed) {
+                    $label = Format-DeviceLabelParts $parsed
+                    if ($label) { $devices[$i].Label = "$p  $label" }
+                    Write-Host "ok" -ForegroundColor DarkGray
+                } else {
+                    $devices[$i].InfoReadFailed = $true
+                    $chipLbl = Get-ChipFallbackLabel $p $esptool $ports
+                    if ($chipLbl) {
+                        $devices[$i].Label = "$p  $chipLbl"
+                        Write-Host $chipLbl -ForegroundColor DarkYellow
+                    } else {
+                        $devices[$i].Label = "$p  $($s.InfoUnavailableShort)"
+                        Write-Host $s.InfoUnavailableShort -ForegroundColor DarkYellow
+                    }
+                }
+            }
         }
 
         if ($devices.Count -eq 0) {
             Write-Host $s.NoDeviceFound
             Write-Host
             Write-Host "  [A]  $($s.OptAgain)"
-            Write-Host "  [X]  $($s.OptCancel)"
+            Write-Host "  [R]  $($s.OptRescan)" -ForegroundColor DarkCyan
+            Write-Host "  [X]  $($s.OptCancel)" -ForegroundColor DarkGray
             Write-Host
             $choice = ""
-            $choice = Read-Choice "$($s.ChoicePrompt) [A/X]" @('A','X')
+            $choice = Read-Choice "$($s.ChoicePrompt) [A/R/X]" @('A','R','X')
             if ($choice -eq 'X') {
                 Show-Esp32Instr
                 $continueFlashing = $false
                 continue
+            } elseif ($choice -eq 'R') {
+                continue   # rescan device list
             } else {
                 WaitForAnyDevice { ScanEsp32Ports } | Out-Null
             }
@@ -1623,6 +2083,9 @@ elseif ($Chip -eq 'ESP32') {
             Show-Esp32Instr
             $continueFlashing = $false
             continue
+        } elseif ($devResult -eq 'R') {
+            Write-Host
+            continue   # rescan device list
         } elseif ($devResult -eq 'A') {
             $allPaths     = @($devices | ForEach-Object { $_.Path })
             $appearedPath = Wait-AutoDetect $allPaths { ScanEsp32Ports }
@@ -1634,7 +2097,14 @@ elseif ($Chip -eq 'ESP32') {
 
         # ── Confirm-Menü ─────────────────────────────────────────────────────
         Write-Host
-        Write-Host "  $($selected.Path)  $($s.DeviceEsp32Serial)" -ForegroundColor Cyan
+        $espInfo = if ($selected.PSObject.Properties['DeviceInfo']) { $selected.DeviceInfo } else { $null }
+        if ($espInfo) {
+            Show-DeviceConfirmHeader $espInfo $selected.Path
+            Write-Host
+            Write-Host "  $($selected.Path)  $($s.DeviceEsp32Serial)" -ForegroundColor DarkGray
+        } else {
+            Write-Host "  $($selected.Path)  $($s.DeviceEsp32Serial)" -ForegroundColor Cyan
+        }
         Write-Host
         Write-Host "  [J]  $($s.OptFlashEsp32)" -ForegroundColor Green
         Write-Host "  [A]  $($s.OptAgain)"
@@ -1653,13 +2123,42 @@ elseif ($Chip -eq 'ESP32') {
             $selected = [PSCustomObject]@{ Type='esp32'; Path=$appearedPath; Label="$appearedPath  $($s.DeviceEsp32Serial)" }
         }
 
+        # ── Verify chip type via esptool (safety gate, reuses esptool) ─────────
+        if ($VerifyEspChip) {
+            Write-Host
+            Write-Host "  $($s.VerifyChip)" -ForegroundColor DarkGray
+            $chipInfo = Get-Esp32Info $esptool $selected.Path
+            $detectedChip = if ($chipInfo) { $chipInfo.Chip } else { $null }
+            if (-not $detectedChip) {
+                Write-Host "  $($s.ChipNotEsp)" -ForegroundColor Red
+                Show-Esp32Instr
+                if (-not $script:MultiMode) { $continueFlashing = $false }
+                continue
+            }
+            $fwVariant = Get-EspFwVariant $fwFileName
+            if ($fwVariant -and (Get-EspModel $detectedChip) -ne (Get-EspModel $fwVariant)) {
+                if ($AbortOnChipMismatch) {
+                    Write-Host ("  " + ($s.ChipMismatch -f $detectedChip, $fwVariant)) -ForegroundColor Red
+                    if (-not $script:MultiMode) { $continueFlashing = $false }
+                    WaitOrPause 10
+                    continue
+                }
+                Write-Host ("  " + ($s.ChipMismatchWarn -f $detectedChip, $fwVariant)) -ForegroundColor DarkYellow
+            } elseif ($fwVariant) {
+                Write-Host ("  " + ($s.ChipMatch -f $detectedChip)) -ForegroundColor Green
+            } else {
+                Write-Host ("  " + ($s.ChipOk -f $detectedChip)) -ForegroundColor Green
+            }
+        }
+
         # ── Flash via esptool ─────────────────────────────────────────────────
         Write-Host
         Write-Host $s.FlashingEsp32 -ForegroundColor Yellow
-        Write-Host "  $esptool --port $($selected.Path) --baud 460800 write_flash 0x0 $firmwarePath" -ForegroundColor DarkGray
+        $wrCmd = Get-EsptoolCmd $esptool 'write_flash'
+        Write-Host "  $esptool --port $($selected.Path) --baud 460800 $wrCmd 0x0 $firmwarePath" -ForegroundColor DarkGray
         Write-Host
 
-        & $esptool --port $selected.Path --baud 460800 write_flash 0x0 $firmwarePath
+        & $esptool --port $selected.Path --baud 460800 $wrCmd 0x0 $firmwarePath
 
         if ($LASTEXITCODE -ne 0) {
             Write-Host $s.FlashErrorEsp32 -ForegroundColor Red
@@ -1698,6 +2197,6 @@ elseif ($Chip -eq 'ESP32') {
     if ($script:MultiMode -and $flashCount -gt 0) {
         Write-Host
         Write-Host ($s.FlashedTotal -f $flashCount) -ForegroundColor Green
-        WaitOrPause 5
+        #WaitOrPause 5
     }
 }
