@@ -4,6 +4,7 @@
 
 * Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
 * Fix: USB MSC support in Common.cpp
+* Breaking: Remove ETS-ModuleDef of KommentarModule, not used anymore since introduction of ConfigTransfer (not compatible).
 * Change: Generate build timestamp in prepare hook and use ISO-DateTime format in console instead of __DATE__/__TIME__
 * Refactor: Optimize CPU temperature logging and remove unused ADC temperature sensor initialization
 * Update: RP2040 Environment

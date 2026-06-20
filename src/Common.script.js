@@ -15,6 +15,17 @@ function BASE_MarkInactive(input, output, context) {
     output.TextOutput = (input.CheckboxInactive ? '\u26D4 ' : '') + input.TextInput;
 }
 
+// used to mark the text of an inactive channel with a "inactive" symbol in front of the text
+// input.InactiveControl might be any UI control with numeric content
+// the value, which represents inacive state is stored in context as.InactiveValue
+// the json for context.InactiveValue is something like this: {"InactiveValue":1},
+// but must be escaped properly for XML, e.g. by using &quot; instead of " directly in the XML
+// i.e. {"InactiveValue":1} is represented as {&quot;InactiveValue&quot;:1} in the XML
+function BASE_MarkInactiveChannel(input, output, context) {
+    var inactiveMarker = (Number(input.InactiveControl) == Number(context.InactiveValue)) ? '\u26D4 ' : '';
+    output.TextOutput = inactiveMarker + input.TextInput;
+}
+
 function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     var sync = context.Sync;
 
