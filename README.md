@@ -115,6 +115,44 @@ ParamBASE_HeartbeatDelayTimeMS
 
 ---
 
+### Memory Management
+
+#### PSRAM Helper Macros
+On ESP32 and RP2350, you can utilize PSRAM for both static data and dynamic memory allocation. The following macros are provided in `helper.h`:
+
+| Macro | Function | With OPENKNX_PSRAM | Without OPENKNX_PSRAM |
+|-------|----------|-------------------|----------------------|
+| `PSRAM_MALLOC(size)` | Allocate dynamic memory | `ps_malloc(size)` | `malloc(size)` |
+| `PSRAM_CALLOC(count, size)` | Allocate and zero memory | `ps_calloc(count, size)` | `calloc(count, size)` |
+| `PSRAM_REALLOC(ptr, size)` | Reallocate memory | `ps_realloc(ptr, size)` | `realloc(ptr, size)` |
+| `psram_new(Type)` | Placement-new in PSRAM | PSRAM allocation | Normal allocation |
+| `psram_delete(p)` | Destruct + free PSRAM object | `~T()` + `free()` | `delete p` |
+| `PsramAllocator<T>` | STL allocator using PSRAM | `ps_malloc`-backed | `std::allocator<T>` |
+| `PSRAM_DATA` | Place variable/array in PSRAM | section `.psram_data` | No-op |
+| `PSRAM_CODE` | Place function in PSRAM | section `.psram_code` | No-op |
+
+**Control defines:**
+- `OPENKNX_PSRAM` — automatically defined when ESP32 `BOARD_HAS_PSRAM` or RP2350 `PICO_RP2350_PSRAM_CS` is detected
+- `OPENKNX_DISABLE_PSRAM` — define in `hardware.h` to disable PSRAM and force fallback to normal RAM/Flash (useful for debugging with Segger, etc.)
+
+**Example usage:**
+```cpp
+// Dynamic allocation
+uint8_t *buf = (uint8_t*)PSRAM_MALLOC(8192);  // PSRAM if available
+free(buf);                                    // always free with free()
+
+MyClass *obj = psram_new(MyClass)();          // Placement-new in PSRAM
+psram_delete(obj);                            // destructs + frees correctly
+
+// STL container in PSRAM
+std::vector<uint8_t, PsramAllocator<uint8_t>> vec;
+vec.resize(8192);
+
+// Static allocation
+PSRAM_DATA uint8_t largeBuf[8192];            // Array in PSRAM
+PSRAM_CODE void heavyComputation() { }        // Function in PSRAM (frees Flash)
+```
+
 ### LEDs
 
 #### Basic LED Configuration

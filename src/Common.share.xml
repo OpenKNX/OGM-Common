@@ -26,6 +26,8 @@
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
   <op:nowarn id="7" regex="_R-100000202"/>
   <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
+  <op:nowarn id="3" regex="BASE_Nop"/>
+  <op:nowarn id="3" regex="BASE_MarkInactive"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -40,6 +42,10 @@
               <!-- short description -->
               <ParameterType Id="%AID%_PT-Text40Byte" Name="Text40Byte">
                 <TypeText SizeInBit="320" />
+              </ParameterType>
+              <!-- short description with inactive sign -->
+              <ParameterType Id="%AID%_PT-Text45Byte" Name="Text45Byte">
+                <TypeText SizeInBit="360" />
               </ParameterType>
               <!-- long description -->
               <ParameterType Id="%AID%_PT-Text80Byte" Name="Text80Byte">
