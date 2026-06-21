@@ -60,6 +60,16 @@ if ($null -eq (Get-Variable -Name 'IsMacOS' -ErrorAction SilentlyContinue)) {
 # (e.g. 850/437) where these become "?"; UTF-8 output fixes it. Best-effort.
 if ($IsWindows) {
     try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+    # Enable ANSI/VT processing so escape sequences (e.g. bold) render in the Win10 console.
+    try {
+        $vtSig = '[DllImport("kernel32.dll")] public static extern bool GetConsoleMode(System.IntPtr h, out uint m);' +
+                 '[DllImport("kernel32.dll")] public static extern bool SetConsoleMode(System.IntPtr h, uint m);' +
+                 '[DllImport("kernel32.dll")] public static extern System.IntPtr GetStdHandle(int n);'
+        $vt = Add-Type -MemberDefinition $vtSig -Name 'VtNative' -Namespace 'OpenKnxUpload' -PassThru -ErrorAction Stop
+        $h = $vt::GetStdHandle(-11)   # STD_OUTPUT_HANDLE
+        $mode = 0
+        if ($vt::GetConsoleMode($h, [ref]$mode)) { $null = $vt::SetConsoleMode($h, $mode -bor 0x0004) }  # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    } catch {}
 }
 
 # ─── Config (hier anpassbar) ─────────────────────────────────────────────────────
@@ -106,6 +116,17 @@ $_strings = @{
         OptRescan          = "Re-read / refresh the device list"
         CancelKey          = "[ESC/Q] Cancel"
         ChoicePrompt       = "Choice"
+        IdleCountdown      = "No input - closing automatically in {0,2} s ... (press any key to stay)"
+        IdleClose          = "No input - exited."
+        DevTitle           = "Developer options"
+        DevDebug           = "Debug output"
+        DevMulti           = "Multi mode"
+        DevAutoClose       = "Auto-close (timeout)"
+        DevWipe            = "Wipe / Erase"
+        DevInfo            = "Info / About"
+        DevBack            = "Back"
+        StateOn            = "ON "
+        StateOff           = "OFF"
         WaitUnplug         = "Please UNPLUG the device NOW..."
         WaitingUnplug      = "  Waiting for unplug... {0}s  "
         NoUnplug           = "No device unplugged detected - manual selection required."
@@ -243,6 +264,17 @@ $_strings = @{
         OptRescan          = "Geräteliste neu einlesen / aktualisieren"
         CancelKey          = "[ESC/Q] Abbrechen"
         ChoicePrompt       = "Auswahl"
+        IdleCountdown      = "Keine Eingabe - schließt automatisch in {0,2} s ... (Taste drücken zum Bleiben)"
+        IdleClose          = "Keine Eingabe - beendet."
+        DevTitle           = "Entwickleroptionen"
+        DevDebug           = "Debug-Ausgabe"
+        DevMulti           = "Multi-Modus"
+        DevAutoClose       = "Auto-Schließen (Timeout)"
+        DevWipe            = "Wipe / Erase"
+        DevInfo            = "Info / About"
+        DevBack            = "Zurück"
+        StateOn            = "AN "
+        StateOff           = "AUS"
         WaitUnplug         = "Bitte das Gerät JETZT AUSSTECKEN..."
         WaitingUnplug      = "  Warte auf Ausstecken... {0}s  "
         NoUnplug           = "Kein Gerät ausgesteckt erkannt – manuelle Auswahl erforderlich."
@@ -475,42 +507,52 @@ function Copy-FirmwareWithSpinner($label, $sourcePath, $devicePath) {
         }
         return $true
     }
-    # macOS / Linux: cp does the robust copy in the background; we poll the target file
-    # size for a real progress bar (manual chunked copy is unsafe – the RP BOOTSEL drive
-    # ejects itself on the last block). Best-effort: if the volume reports the final size
-    # immediately, the bar simply jumps to 100%.
+    # macOS / Linux: copy the uf2 ourselves in small blocks for a real, smooth progress
+    # bar. The RP BOOTSEL drive reboots/ejects on the final block, so an error on the last
+    # write/close (after all bytes were sent) counts as success.
     Write-Host "  $label" -ForegroundColor Yellow
-    $job = Start-Job -ScriptBlock {
-        param($src, $dst)
-        & /bin/cp $src $dst
-        return ($LASTEXITCODE -eq 0)
-    } -ArgumentList $sourcePath, $devicePath
-
-    $total  = try { (Get-Item $sourcePath).Length } catch { 0 }
-    $target = Join-Path $devicePath ([System.IO.Path]::GetFileName($sourcePath))
-    $cells  = 24
+    $total   = try { (Get-Item $sourcePath).Length } catch { 0 }
+    $target  = Join-Path $devicePath ([System.IO.Path]::GetFileName($sourcePath))
+    $bufSize = 16384
+    $buf     = New-Object byte[] $bufSize
+    $written = 0
+    $cells   = 24
+    $lastPct = -1
+    $src = $null; $dst = $null
     try { [Console]::CursorVisible = $false } catch {}
-    while ($job.State -eq 'Running') {
-        $cur = if (Test-Path $target) { try { (Get-Item $target).Length } catch { 0 } } else { 0 }
-        $pct = if ($total -gt 0) { [Math]::Min(100, [int](100 * $cur / $total)) } else { 0 }
-        $fill = [int]($cells * $pct / 100)
-        Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
-        Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
-        Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
-        Start-Sleep -Milliseconds 120
+    try {
+        $src = [System.IO.File]::OpenRead($sourcePath)
+        $dst = [System.IO.File]::Create($target)
+        while ($true) {
+            $n = $src.Read($buf, 0, $bufSize)
+            if ($n -le 0) { break }
+            try { $dst.Write($buf, 0, $n); $dst.Flush() } catch { $written += $n; break }  # device ejected on last block
+            $written += $n
+            $pct = if ($total -gt 0) { [Math]::Min(100, [int](100 * $written / $total)) } else { 0 }
+            if ($pct -ne $lastPct) {
+                $lastPct = $pct
+                $fill = [int]($cells * $pct / 100)
+                Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
+                Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
+                Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
+            }
+        }
+    } catch {
+        # completion is decided by the bytes written below, not by this error
+    } finally {
+        if ($dst) { try { $dst.Close() } catch {} }
+        if ($src) { try { $src.Close() } catch {} }
+        try { [Console]::CursorVisible = $true } catch {}
     }
-    try { [Console]::CursorVisible = $true } catch {}
-
-    $result = Receive-Job $job -Wait -ErrorAction SilentlyContinue
-    Remove-Job $job
-    if ($result -eq $true) {
+    $ok = ($total -gt 0 -and $written -ge $total)
+    if ($ok) {
         Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
         Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
         Write-Host "]  100 %" -ForegroundColor DarkGray
     } else {
         Write-Host ("`r" + (' ' * ($cells + 14)) + "`r") -NoNewline
     }
-    return ($result -eq $true)
+    return $ok
 }
 
 # ── ESP32 functions ────────────────────────────────────────────────────────────
@@ -545,6 +587,61 @@ function Test-EsptoolV5($esptool) {
 function Get-EsptoolCmd($esptool, $name) {
     if (Test-EsptoolV5 $esptool) { return ($name -replace '_', '-') }
     return $name
+}
+
+# Runs esptool write-flash and renders OUR progress bar from esptool's own "(NN %)" output.
+# esptool does the actual flashing (in a background job); we only read its captured output
+# to drive the bar. Returns @{ Code = <exit>; Output = '<full esptool log>' }.
+# Robust by design: the flash never depends on our parsing; if no % is seen we show an
+# indeterminate indicator, and on failure the caller prints the full esptool log.
+function Invoke-EsptoolWriteFlash($esptool, $port, $firmwarePath) {
+    $wrCmd = Get-EsptoolCmd $esptool 'write_flash'
+    $tmp   = New-TemporaryFile
+    $job = Start-Job -ScriptBlock {
+        param($e, $p, $cmd, $fw, $out)
+        & $e --port $p --baud 460800 $cmd 0x0 $fw *>&1 | Tee-Object -FilePath $out | Out-Null
+        return $LASTEXITCODE
+    } -ArgumentList $esptool, $port, $wrCmd, $firmwarePath, $tmp.FullName
+
+    $cells = 24; $lastPct = -1; $spin = 0
+    try { [Console]::CursorVisible = $false } catch {}
+    while ($job.State -eq 'Running') {
+        $txt = try { Get-Content $tmp.FullName -Raw -ErrorAction SilentlyContinue } catch { '' }
+        $pct = $null
+        if ($txt) {
+            $ms = [regex]::Matches($txt, '(\d{1,3})\s*%')
+            if ($ms.Count -gt 0) { $pct = [int]$ms[$ms.Count - 1].Groups[1].Value; if ($pct -gt 100) { $pct = 100 } }
+        }
+        if ($null -ne $pct) {
+            if ($pct -ne $lastPct) {
+                $lastPct = $pct
+                $fill = [int]($cells * $pct / 100)
+                Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
+                Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
+                Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
+            }
+        } else {
+            Write-Host ("`r  [" + ([string][char]0x25A1 * $cells) + ']  ' + ('.' * (($spin % 3) + 1)) + '  ') -ForegroundColor DarkGray -NoNewline
+        }
+        $spin++
+        Start-Sleep -Milliseconds 150
+    }
+    try { [Console]::CursorVisible = $true } catch {}
+
+    $raw = Receive-Job $job
+    Remove-Job $job
+    $output = try { Get-Content $tmp.FullName -Raw -ErrorAction SilentlyContinue } catch { '' }
+    Remove-Item $tmp.FullName -ErrorAction SilentlyContinue
+    $exit = if ($raw -is [array]) { [int]($raw[-1]) } elseif ($null -ne $raw) { [int]$raw } else { 0 }
+
+    if ($exit -eq 0) {
+        Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
+        Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
+        Write-Host "]  100 %" -ForegroundColor DarkGray
+    } else {
+        Write-Host ("`r" + (' ' * ($cells + 16)) + "`r") -NoNewline
+    }
+    return [PSCustomObject]@{ Code = $exit; Output = "$output" }
 }
 
 # Probes a serial port with esptool. Returns @{ Chip='ESP32-S3'; Mac='..' } or $null.
@@ -617,12 +714,14 @@ function Get-Uf2Family([string]$path) {
         $fs.Close(); $fs.Dispose()
     } catch { return $null }
     if ($read -lt 32) { return $null }
-    if ([System.BitConverter]::ToUInt32($buf, 0) -ne [uint32]0x0A324655) { return $null }   # magicStart0
-    if ([System.BitConverter]::ToUInt32($buf, 4) -ne [uint32]0x9E5D5157) { return $null }   # magicStart1
-    if (-not ([System.BitConverter]::ToUInt32($buf, 8) -band 0x00002000)) { return $null }  # familyID present?
+    # NOTE: 8-digit hex with the high bit set parses as a negative Int32 in PowerShell, and
+    # casting that to [uint32] throws. Use the 'L' (Int64) suffix so the literals stay positive.
+    if ([System.BitConverter]::ToUInt32($buf, 0) -ne 0x0A324655)  { return $null }   # magicStart0
+    if ([System.BitConverter]::ToUInt32($buf, 4) -ne 0x9E5D5157L) { return $null }   # magicStart1
+    if (-not ([System.BitConverter]::ToUInt32($buf, 8) -band 0x2000)) { return $null }  # familyID present?
     $fam = [System.BitConverter]::ToUInt32($buf, 28)
-    if ($fam -eq [uint32]0xE48BFF56) { return 'RP2040' }
-    if ($fam -eq [uint32]0xE48BFF59 -or $fam -eq [uint32]0xE48BFF5A -or $fam -eq [uint32]0xE48BFF5B) { return 'RP2350' }
+    if ($fam -eq 0xE48BFF56L) { return 'RP2040' }
+    if ($fam -eq 0xE48BFF59L -or $fam -eq 0xE48BFF5AL -or $fam -eq 0xE48BFF5BL) { return 'RP2350' }
     return $null
 }
 
@@ -1239,7 +1338,8 @@ function Show-DeviceConfirmHeader($info, $fallbackPath) {
         Write-Host "  Firmware: $($info.FirmwareName)$verPart" -ForegroundColor DarkCyan
     }
     if ($info.DeviceSerial) {
-        Write-Host "  SN: $($info.DeviceSerial)" -ForegroundColor DarkCyan
+        $esc = [char]27
+        Write-Host ("  " + $esc + "[1mSN: " + $info.DeviceSerial + $esc + "[0m") -ForegroundColor DarkCyan   # bold
     }
 }
 
@@ -1272,6 +1372,31 @@ function Get-SerialDeviceLabel($port) {
     $label = Format-DeviceLabelParts $info
     if (-not $label) { return $null }
     return $label
+}
+
+# Reads sysinfo for one serial device and updates it in place (Label / DeviceInfo /
+# InfoReadFailed); prints "ok", the esptool chip fallback, or "unavailable". Shared by
+# both main loops so the enrichment logic lives in exactly one place.
+function Update-DeviceLabel($device, $espPorts, $esptool) {
+    $p       = $device.Path
+    $rawText = Read-DeviceInfo $p
+    $parsed  = if ($rawText) { Parse-DeviceInfo $rawText } else { $null }
+    $device.DeviceInfo = $parsed
+    if ($parsed) {
+        $label = Format-DeviceLabelParts $parsed
+        if ($label) { $device.Label = "$p  $label" }
+        Write-Host "ok" -ForegroundColor DarkGray
+    } else {
+        $device.InfoReadFailed = $true
+        $chipLbl = Get-ChipFallbackLabel $p $esptool $espPorts
+        if ($chipLbl) {
+            $device.Label = "$p  $chipLbl"
+            Write-Host $chipLbl -ForegroundColor DarkYellow
+        } else {
+            $device.Label = "$p  $($script:s.InfoUnavailableShort)"
+            Write-Host $script:s.InfoUnavailableShort -ForegroundColor DarkYellow
+        }
+    }
 }
 
 # Wipe / Erase menu – only accessible from Dev Settings ([W]).
@@ -1481,20 +1606,25 @@ function Show-DevSettings {
         Clear-Host
         Write-Host
         Write-Host "  $sep" -ForegroundColor DarkCyan
-        Write-Host "  Entwickleroptionen / Dev Settings" -ForegroundColor Cyan
+        Write-Host "  $($script:s.DevTitle)" -ForegroundColor Cyan
         Write-Host "  $sep" -ForegroundColor DarkCyan
         Write-Host
-        $dState = if ($script:DebugSerial) { "[X] AN " } else { "[ ] AUS" }
-        $mState = if ($script:MultiMode)   { "[X] AN " } else { "[ ] AUS" }
-        Write-Host "  [D]  Debug-Ausgabe    $dState" -ForegroundColor White
-        Write-Host "  [M]  Multi-Modus      $mState" -ForegroundColor White
-        Write-Host "  [W]  Wipe / Erase" -ForegroundColor DarkRed
-        Write-Host "  [I]  Info / About" -ForegroundColor DarkCyan
-        Write-Host "  [X]  Zurück / Back" -ForegroundColor DarkGray
+        $on  = $script:s.StateOn
+        $off = $script:s.StateOff
+        $dState = if ($script:DebugSerial)     { "[X] $on" } else { "[ ] $off" }
+        $mState = if ($script:MultiMode)       { "[X] $on" } else { "[ ] $off" }
+        $tState = if (-not $script:NoTimeout)  { "[X] $on" } else { "[ ] $off" }   # auto-close active?
+        Write-Host ("  [D]  {0,-26}$dState" -f $script:s.DevDebug)     -ForegroundColor White
+        Write-Host ("  [M]  {0,-26}$mState" -f $script:s.DevMulti)     -ForegroundColor White
+        Write-Host ("  [T]  {0,-26}$tState" -f $script:s.DevAutoClose) -ForegroundColor White
+        Write-Host "  [W]  $($script:s.DevWipe)" -ForegroundColor DarkRed
+        Write-Host "  [I]  $($script:s.DevInfo)" -ForegroundColor DarkCyan
+        Write-Host "  [X]  $($script:s.DevBack)" -ForegroundColor DarkGray
         Write-Host
-        $c = (Read-Host "  [D/M/W/I/X]").Trim().ToUpper()
+        $c = (Read-Host "  [D/M/T/W/I/X]").Trim().ToUpper()
         if     ($c -eq 'D') { $script:DebugSerial = -not [bool]$script:DebugSerial }
         elseif ($c -eq 'M') { $script:MultiMode   = -not [bool]$script:MultiMode }
+        elseif ($c -eq 'T') { $script:NoTimeout   = -not [bool]$script:NoTimeout }
         elseif ($c -eq 'W') { Show-WipeMenu }
         elseif ($c -eq 'I') { Show-About }
     } while ($c -ne 'X')
@@ -1504,8 +1634,61 @@ function Show-DevSettings {
 # Reads a validated choice from the user. Typing ?? opens the dev settings menu.
 # Optional $Reprint ScriptBlock is called after the dev menu to redisplay context.
 function Read-Choice([string]$prompt, [string[]]$valid, [scriptblock]$Reprint = $null) {
+    $idleSec      = 5     # grace before the countdown starts
+    $countdownSec = 30    # then count down and close the tool
     while ($true) {
-        $v = (Read-Host $prompt).Trim()
+        # Use interactive key polling with idle auto-close; fall back to Read-Host when
+        # there is no real console (redirected / CI) so behaviour stays unchanged there.
+        $consoleOk = $true
+        try { $null = [Console]::KeyAvailable } catch { $consoleOk = $false }
+
+        if (-not $consoleOk -or $script:NoTimeout) {
+            $v = (Read-Host $prompt).Trim()
+        } else {
+            $promptText = $prompt + ': '
+            Write-Host $promptText -NoNewline
+            $buffer  = ''
+            $lastKey = Get-Date          # any keypress resets this -> resets the close timer
+            $cd      = $false            # countdown currently shown on the line?
+            $shown   = -1
+            $v       = $null
+            while ($true) {
+                if ([Console]::KeyAvailable) {
+                    $key = [Console]::ReadKey($true)
+                    if ($cd) {           # a key cancels the countdown -> restore the prompt
+                        Write-Host ("`r" + (' ' * 78) + "`r") -NoNewline
+                        Write-Host ($promptText + $buffer) -NoNewline
+                        $cd = $false; $shown = -1
+                    }
+                    $lastKey = Get-Date
+                    if ($key.Key -eq 'Enter') { $v = $buffer.Trim(); Write-Host ''; break }
+                    elseif ($key.Key -eq 'Backspace') {
+                        if ($buffer.Length -gt 0) { $buffer = $buffer.Substring(0, $buffer.Length - 1); Write-Host "`b `b" -NoNewline }
+                    } elseif ([int][char]$key.KeyChar -ge 32) {
+                        $buffer += [string]$key.KeyChar; Write-Host $key.KeyChar -NoNewline
+                    }
+                } elseif ($buffer -eq '') {
+                    $idle = ((Get-Date) - $lastKey).TotalSeconds
+                    if ($idle -ge $idleSec) {
+                        $remain = [int][Math]::Ceiling(($idleSec + $countdownSec) - $idle)
+                        if ($remain -le 0) {
+                            Write-Host ''
+                            Write-Host ('  ' + $script:s.IdleClose) -ForegroundColor DarkGray
+                            exit 0
+                        }
+                        if ($remain -ne $shown) {
+                            $shown = $remain
+                            Write-Host ("`r  " + ($script:s.IdleCountdown -f $remain) + '   ') -ForegroundColor DarkGray -NoNewline
+                            $cd = $true
+                        }
+                    }
+                    Start-Sleep -Milliseconds 150
+                } else {
+                    Start-Sleep -Milliseconds 150
+                }
+            }
+        }
+
         if ($v -eq '??') {
             Show-DevSettings
             if ($Reprint) { & $Reprint }
@@ -1609,7 +1792,7 @@ function Select-FirmwareFile {
         }
 
         Write-Host
-        Write-Host "  Hoch/Runter = navigieren  |  Enter = auswählen  |  ESC = abbrechen" -ForegroundColor DarkGray
+        Write-Host "  $($script:s.SelectFwHint)" -ForegroundColor DarkGray
 
         # ── Input ──────────────────────────────────────────────────────────
         $key = [Console]::ReadKey($true)
@@ -1730,6 +1913,7 @@ if (-not (Test-Path $firmwarePath)) {
 
 # Runtime-toggles (können über ?? Menü zur Laufzeit geändert werden)
 $script:MultiMode = [bool]$Multi
+$script:NoTimeout = $false   # disables the idle auto-close countdown in Read-Choice
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RP2040 main loop
@@ -1765,26 +1949,8 @@ if ($Chip -eq 'RP2040') {
             for ($i = 0; $i -lt $devices.Count; $i++) {
                 if ($devices[$i].Type -ne 'serial') { continue }
                 $sIdx++
-                $p = $devices[$i].Path
-                Write-Host "  [$sIdx/$totalSerial] $p... " -NoNewline
-                $rawText = Read-DeviceInfo $p
-                $parsed  = if ($rawText) { Parse-DeviceInfo $rawText } else { $null }
-                $devices[$i].DeviceInfo = $parsed
-                if ($parsed) {
-                    $label = Format-DeviceLabelParts $parsed
-                    if ($label) { $devices[$i].Label = "$p  $label" }
-                    Write-Host "ok" -ForegroundColor DarkGray
-                } else {
-                    $devices[$i].InfoReadFailed = $true
-                    $chipLbl = Get-ChipFallbackLabel $p $esptool $espPorts
-                    if ($chipLbl) {
-                        $devices[$i].Label = "$p  $chipLbl"
-                        Write-Host $chipLbl -ForegroundColor DarkYellow
-                    } else {
-                        $devices[$i].Label = "$p  $($s.InfoUnavailableShort)"
-                        Write-Host $s.InfoUnavailableShort -ForegroundColor DarkYellow
-                    }
-                }
+                Write-Host "  [$sIdx/$totalSerial] $($devices[$i].Path)... " -NoNewline
+                Update-DeviceLabel $devices[$i] $espPorts $esptool
             }
         }
 
@@ -2032,26 +2198,8 @@ elseif ($Chip -eq 'ESP32') {
             Write-Host $s.InfoReadingDevices -ForegroundColor DarkGray
             $totalSerial = $devices.Count
             for ($i = 0; $i -lt $devices.Count; $i++) {
-                $p = $devices[$i].Path
-                Write-Host "  [$($i+1)/$totalSerial] $p... " -NoNewline
-                $rawText = Read-DeviceInfo $p
-                $parsed  = if ($rawText) { Parse-DeviceInfo $rawText } else { $null }
-                $devices[$i].DeviceInfo = $parsed
-                if ($parsed) {
-                    $label = Format-DeviceLabelParts $parsed
-                    if ($label) { $devices[$i].Label = "$p  $label" }
-                    Write-Host "ok" -ForegroundColor DarkGray
-                } else {
-                    $devices[$i].InfoReadFailed = $true
-                    $chipLbl = Get-ChipFallbackLabel $p $esptool $ports
-                    if ($chipLbl) {
-                        $devices[$i].Label = "$p  $chipLbl"
-                        Write-Host $chipLbl -ForegroundColor DarkYellow
-                    } else {
-                        $devices[$i].Label = "$p  $($s.InfoUnavailableShort)"
-                        Write-Host $s.InfoUnavailableShort -ForegroundColor DarkYellow
-                    }
-                }
+                Write-Host "  [$($i+1)/$totalSerial] $($devices[$i].Path)... " -NoNewline
+                Update-DeviceLabel $devices[$i] $ports $esptool
             }
         }
 
@@ -2151,24 +2299,24 @@ elseif ($Chip -eq 'ESP32') {
             }
         }
 
-        # ── Flash via esptool ─────────────────────────────────────────────────
+        # ── Flash via esptool (our progress bar, fed by esptool's own % output) ─
         Write-Host
-        Write-Host $s.FlashingEsp32 -ForegroundColor Yellow
-        $wrCmd = Get-EsptoolCmd $esptool 'write_flash'
-        Write-Host "  $esptool --port $($selected.Path) --baud 460800 $wrCmd 0x0 $firmwarePath" -ForegroundColor DarkGray
-        Write-Host
+        Write-Host "  $($s.FlashingEsp32)" -ForegroundColor Cyan
+        if ($script:DebugSerial) {
+            Write-Host "  $esptool --port $($selected.Path) --baud 460800 $(Get-EsptoolCmd $esptool 'write_flash') 0x0 $firmwarePath" -ForegroundColor DarkGray
+        }
+        $flashRes = Invoke-EsptoolWriteFlash $esptool $selected.Path $firmwarePath
 
-        & $esptool --port $selected.Path --baud 460800 $wrCmd 0x0 $firmwarePath
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host $s.FlashErrorEsp32 -ForegroundColor Red
+        if ($flashRes.Code -ne 0) {
+            Write-Host "  $($s.FlashErrorEsp32)" -ForegroundColor Red
+            foreach ($line in ($flashRes.Output -split "`r?`n")) { if ($line.Trim()) { Write-Host "     $line" -ForegroundColor Red } }
             $continueFlashing = $false
             WaitOrPause 10
             continue
         }
 
         $flashCount++
-        Write-Host $s.FlashDoneEsp32 -ForegroundColor Green
+        Write-Host "  $($s.FlashDoneEsp32)" -ForegroundColor Green
 
         # ── Info option ──────────────────────────────────────────────────────
         $showInfo = $true

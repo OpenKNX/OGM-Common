@@ -15,15 +15,25 @@ function BASE_MarkInactive(input, output, context) {
     output.TextOutput = (input.CheckboxInactive ? '\u26D4 ' : '') + input.TextInput;
 }
 
-// used to mark the text of an inactive channel with a "inactive" symbol in front of the text
-// input.InactiveControl might be any UI control with numeric content
-// the value, which represents inacive state is stored in context as.InactiveValue
-// the json for context.InactiveValue is something like this: {"InactiveValue":1},
-// but must be escaped properly for XML, e.g. by using &quot; instead of " directly in the XML
-// i.e. {"InactiveValue":1} is represented as {&quot;InactiveValue&quot;:1} in the XML
+// Marks a channel's text with a state symbol in front of the text:
+//   - inactive state (context.InactiveValue) -> "no entry" symbol U+26D4 (no-entry)
+//   - paused   state (context.PausedValue)   -> "pause"    symbol U+23F8 (pause bars)
+// input.InactiveControl: any UI control with numeric content (the state value)
+// the value, which represents inactive state is stored in context as context.InactiveValue
+// context JSON example (XML-escaped): {&quot;InactiveValue&quot;:0,&quot;PausedValue&quot;:2}
+// i.e. {"InactiveValue":0} is represented as {&quot;InactiveValue&quot;:0} in the XML
+// Backward compatible: if PausedValue is not present in context, behaves exactly
+// like the original (inactive marker only) -> existing modules in common are unaffected.
 function BASE_MarkInactiveChannel(input, output, context) {
-    var inactiveMarker = (Number(input.InactiveControl) == Number(context.InactiveValue)) ? '\u26D4 ' : '';
-    output.TextOutput = inactiveMarker + input.TextInput;
+    var value = Number(input.InactiveControl);
+    var marker = '';
+    if (Number(context.InactiveValue) == value) {
+        marker = '\u26D4 ';   // inactive (no-entry)
+    } else if (typeof context.PausedValue != 'undefined' &&
+               Number(context.PausedValue) == value) {
+        marker = '\u23F8 ';   // paused (pause bars)
+    }
+    output.TextOutput = marker + input.TextInput;
 }
 
 function BASE_getUnsupportedEtsModules(device, online, progress, context) {
