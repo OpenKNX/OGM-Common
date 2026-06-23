@@ -125,24 +125,10 @@ namespace OpenKNX
     void Common::showDebugInfo()
     {
         logDebugP("Debug logging is enabled!");
-    #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+    #if defined(OPENKNX_TRACE)
         logDebugP("Trace logging is enabled with:");
         logIndentUp();
-        #ifdef OPENKNX_TRACE1
-        logDebugP("Filter 1: %s", TRACE_STRINGIFY(OPENKNX_TRACE1));
-        #endif
-        #ifdef OPENKNX_TRACE2
-        logDebugP("Filter 2: %s", TRACE_STRINGIFY(OPENKNX_TRACE2));
-        #endif
-        #ifdef OPENKNX_TRACE3
-        logDebugP("Filter 3: %s", TRACE_STRINGIFY(OPENKNX_TRACE3));
-        #endif
-        #ifdef OPENKNX_TRACE4
-        logDebugP("Filter 4: %s", TRACE_STRINGIFY(OPENKNX_TRACE4));
-        #endif
-        #ifdef OPENKNX_TRACE5
-        logDebugP("Filter 5: %s", TRACE_STRINGIFY(OPENKNX_TRACE5));
-        #endif
+        logDebugP("Filter: %s", TRACE_STRINGIFY(OPENKNX_TRACE));
         logIndentDown();
     #endif
     }
