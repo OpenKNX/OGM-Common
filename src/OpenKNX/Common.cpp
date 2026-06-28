@@ -280,6 +280,13 @@ namespace OpenKNX
         // setup0 is done
         _setup0Ready = true;
 
+#ifdef OPENKNX_WATCHDOG
+        // Mark a healthy, configured boot: from here on a watchdog/panic reset is a
+        // RUNTIME crash (e.g. IP flood, heap exhaustion), not an unloadable config -
+        // so it must not let the auto-erase wipe the KNX config (see Watchdog ctor).
+        if (configured) openknx.watchdog.markSetupCompleted();
+#endif
+
 #ifdef OPENKNX_DUALCORE
     #ifdef ARDUINO_ARCH_ESP32
         xTaskCreateUniversal([](void* parms) {

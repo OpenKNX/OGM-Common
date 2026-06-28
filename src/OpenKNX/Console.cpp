@@ -2,6 +2,10 @@
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Flash/Driver.h"
 
+#ifdef ARDUINO_ARCH_ESP32
+    #include "esp_heap_caps.h"
+#endif
+
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
 #endif
@@ -633,6 +637,22 @@ namespace OpenKNX
 #endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
 #ifdef ARDUINO_ARCH_ESP32
+        // Heap detail: free / minimum-ever-free / largest contiguous block. A healthy 'free'
+        // with a tiny 'largest' still means allocations fail (fragmentation). The DMA pool
+        // feeds EMAC/Wi-Fi/SPI -- a starved DMA pool is exactly the "no mem for receive buffer"
+        // failure. On the classic ESP32 the DMA pool equals the default pool, so the DMA line
+        // is only printed when it actually differs (diverges near exhaustion / on S3/PSRAM).
+        size_t heapFree = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+        size_t heapMin = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
+        size_t heapLargest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+        openknx.logger.logWithPrefixAndValues("Heap", "free %.3f / min %.3f / largest %.3f KiB",
+            ((float)heapFree / 1024), ((float)heapMin / 1024), ((float)heapLargest / 1024));
+        size_t dmaFree = heap_caps_get_free_size(MALLOC_CAP_DMA);
+        size_t dmaMin = heap_caps_get_minimum_free_size(MALLOC_CAP_DMA);
+        size_t dmaLargest = heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
+        if (dmaFree != heapFree || dmaMin != heapMin || dmaLargest != heapLargest)
+            openknx.logger.logWithPrefixAndValues("Heap DMA", "free %.3f / min %.3f / largest %.3f KiB",
+                ((float)dmaFree / 1024), ((float)dmaMin / 1024), ((float)dmaLargest / 1024));
     #if BOARD_HAS_PSRAM
         openknx.logger.logWithPrefixAndValues("Free PSRAM", "%.3f KiB (min. %.3f KiB)", ((float)ESP.getFreePsram() / 1024), ((float)ESP.getMinFreePsram() / 1024));
     #endif
