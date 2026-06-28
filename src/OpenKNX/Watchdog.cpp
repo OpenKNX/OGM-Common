@@ -24,22 +24,29 @@
 /*
  * Counting the restarts of the WD over the restart
  */
+// "Previous boot reached a healthy configured runtime" marker (__openKnxSetupCompleted):
+// lets the auto-erase wipe the config only for an unloadable config (crash before setup
+// completes), never for a runtime crash (IP flood, heap exhaustion) after a healthy boot.
+// Defined only with OPENKNX_WATCHDOG, since that is the only place it is used.
 #if defined(ARDUINO_ARCH_RP2040)
 static uint8_t __uninitialized_ram(__openKnxWatchdogResets);
 static uint8_t __uninitialized_ram(__openKnxWatchdogFasts);
-// "Previous boot reached a healthy configured runtime" marker: lets the auto-erase
-// wipe the config only for an unloadable config (crash before setup completes),
-// never for a runtime crash (IP flood, heap exhaustion) after a healthy boot.
+    #ifdef OPENKNX_WATCHDOG
 static uint8_t __uninitialized_ram(__openKnxSetupCompleted);
+    #endif
 #elif defined(ARDUINO_ARCH_ESP32)
 static RTC_NOINIT_ATTR uint8_t __openKnxWatchdogResets;
 static RTC_NOINIT_ATTR uint8_t __openKnxWatchdogFasts;
+    #ifdef OPENKNX_WATCHDOG
 static RTC_NOINIT_ATTR uint8_t __openKnxSetupCompleted;
+    #endif
 #else
 // Not supported
 static uint8_t __openKnxWatchdogResets = 0;
 static uint8_t __openKnxWatchdogFasts = 0;
+    #ifdef OPENKNX_WATCHDOG
 static uint8_t __openKnxSetupCompleted = 0;
+    #endif
 #endif
 
 namespace OpenKNX
