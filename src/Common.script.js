@@ -26,6 +26,17 @@ function BASE_MarkInactiveChannel(input, output, context) {
     output.TextOutput = inactiveMarker + input.TextInput;
 }
 
+// use this to sync channel type on channel page and on channel selection table
+// Only necessary if channel type is also changeable on the channel page itself (channel header)
+// and not only on channel selection page.
+function BASE_SyncChannelType(input, output, context) {
+    // Log.info("BASE_SyncChannelType: input.TypeValue = " + input.TypeValue + ", output.TypeValue = " + output.TypeValue);
+    if (input.TypeValue > 0 && input.TypeValue != output.TypeValue)
+    {
+        output.TypeValue = input.TypeValue;
+    }
+}
+
 function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     var sync = context.Sync;
 

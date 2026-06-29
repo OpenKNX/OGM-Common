@@ -82,6 +82,9 @@
               <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
                 <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
               </ParameterType>
+              <ParameterType Id="%AID%_PT-Suspended" Name="Suspended">
+                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
+              </ParameterType>
               <ParameterType Id="%AID%_PT-OnOffYesNo" Name="OnOffYesNo">
                 <TypeRestriction Base="Value" SizeInBit="1">
                   <Enumeration Text="Nein" Value="0" Id="%ENID%" />
