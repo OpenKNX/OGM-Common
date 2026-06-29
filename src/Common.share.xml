@@ -28,6 +28,7 @@
   <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
   <op:nowarn id="3" regex="BASE_Nop"/>
   <op:nowarn id="3" regex="BASE_MarkInactive"/>
+  <op:nowarn id="3" regex="BASE_SyncChannelType"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
