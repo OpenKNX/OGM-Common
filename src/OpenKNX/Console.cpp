@@ -414,11 +414,10 @@ namespace OpenKNX
 #else
         openknx.logger.logWithPrefixAndValues("KNX-Type", "%04X", MASK_VERSION);
 #endif
+        openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
         float cpuTemp = openknx.hardware.cpuTemperature();
         if (cpuTemp > 0)
-            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, cpuTemp);
-        else
-            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
+            openknx.logger.logWithPrefixAndValues("CPU-Temp", "%.1f °C", cpuTemp);
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Programming");
