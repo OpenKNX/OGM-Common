@@ -247,10 +247,17 @@ namespace OpenKNX
         {
             logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
-            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
+            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u",
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
                     statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
+#ifdef TPUART_BCU_HEALTH
+            logInfo("BCU<Health>", "Resets: %u | Disconnects: %u | CON-rescues: %u",
+                    statistics.getBcuResets(), statistics.getBcuDisconnects(), statistics.getBcuConRescues());
+            logInfo("BCU<NCN-Err>", "Slave-Collision: %u | Receive-Error: %u | Transmit-Error: %u | Protocol-Error: %u | Temp-Warning: %u",
+                    statistics.getBcuSlaveCollisions(), statistics.getBcuReceiveErrors(), statistics.getBcuTransmitErrors(),
+                    statistics.getBcuProtocolErrors(), statistics.getBcuTempWarnings());
+#endif
 
             return true;
         }
@@ -264,6 +271,13 @@ namespace OpenKNX
             dll->reset();
             return true;
         }
+#ifdef TPUART_BCU_DEBUG
+        else if (cmd.compare("bcu dis") == 0)
+        {
+            dll->getTPUart().forceDisconnect();
+            return true;
+        }
+#endif
         else if (cmd.compare("bcu poff") == 0)
         {
             dll->powerControl(false);
@@ -574,6 +588,9 @@ namespace OpenKNX
         printHelpLine("bcu", "Show BCU status");
         printHelpLine("bcu mon", "Start BCU monitoring");
         printHelpLine("bcu rst", "Reset BCU");
+#ifdef TPUART_BCU_DEBUG
+        printHelpLine("bcu dis", "Force BCU disconnect (test)");
+#endif
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         printHelpLine("tm ?", "Help for time related commands");
