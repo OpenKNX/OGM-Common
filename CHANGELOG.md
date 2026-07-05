@@ -1,6 +1,6 @@
 # Changes
 
-## upcomming releases
+## upcoming releases
 
 * Feature: `prepare.py` now generates `include/webassets.h` from every included module's (and the project's own) `web/assets/` folder — plain, readable `.css`/`.js`/`.svg`/`.jpg`/`.png` source files are minified and gzip-compressed into flash-resident byte arrays at build time, so modules no longer need to hand-minify web assets into C++ string literals
 * Feature: Add shared HelpContext topics `BASE-ChannelSelect` and `BASE-ChannelSuspended` for modules using the tab-based Kanalauswahl pattern, replacing per-module placeholder help texts
@@ -10,6 +10,7 @@
 * Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
 * Fix: USB MSC support in Common.cpp
 * Breaking: Remove ETS-ModuleDef of KommentarModule, not used anymore since introduction of ConfigTransfer (not compatible).
+* Add suffix °N/°O to location coordinates 
 * Change: Generate build timestamp in prepare hook and use ISO-DateTime format in console instead of __DATE__/__TIME__
 * Refactor: Optimize CPU temperature logging and remove unused ADC temperature sensor initialization
 * Update: RP2040 Environment
