@@ -8,6 +8,10 @@
     #include "esp_heap_caps.h"
 #endif
 
+#ifdef ARDUINO_ARCH_ESP32
+    #include "esp_heap_caps.h"
+#endif
+
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
 #endif
