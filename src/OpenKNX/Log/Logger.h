@@ -45,23 +45,7 @@
 #define logHexInfo(...) openknx.logger.logHexMacroWrapper(0, __VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHexMacroWrapper(0, logPrefix().c_str(), __VA_ARGS__)
 
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-
-    #ifndef OPENKNX_TRACE1
-        #define OPENKNX_TRACE1
-    #endif
-    #ifndef OPENKNX_TRACE2
-        #define OPENKNX_TRACE2
-    #endif
-    #ifndef OPENKNX_TRACE3
-        #define OPENKNX_TRACE3
-    #endif
-    #ifndef OPENKNX_TRACE4
-        #define OPENKNX_TRACE4
-    #endif
-    #ifndef OPENKNX_TRACE5
-        #define OPENKNX_TRACE5
-    #endif
+#if defined(OPENKNX_TRACE)
 
     #define TRACE_STRINGIFY2(X) #X
     #define TRACE_STRINGIFY(X) TRACE_STRINGIFY2(X)
@@ -231,8 +215,32 @@ namespace OpenKNX
             void indentDown();
             void indent(uint8_t indent);
 
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+#if defined(OPENKNX_TRACE)
             bool checkTrace(const std::string& prefix);
+
+          private:
+            /*
+             * Matches a target against a ';' separated list of trace filters (e.g.
+             * "Test1<1-4>;Test2<8>"). ';' is used as separator so commas stay reserved for
+             * list/range subs like "Channel<4,5,7>". Returns true if any single filter
+             * matches. Heap-free, works on const char*.
+             */
+            static bool matchTraceFilterList(const char* list, const char* target);
+            /*
+             * Matches a log prefix in the form PREFIX<SUB> (e.g. "Channel<4>") against a
+             * single trace filter (given by pointer + length) using the same format.
+             * Supports a trailing '*' wildcard on the prefix and within the sub part,
+             * numeric ranges (e.g. "1-19") and comma separated lists (e.g. "4,5,7") in the
+             * sub part. A filter without a <sub> part ignores the target's sub.
+             */
+            static bool matchTraceFilter(const char* filter, size_t filterLen, const char* target);
+            /*
+             * Compares a single part (prefix or sub list element) of length filterLen against
+             * target of length targetLen. A trailing '*' in the filter part means startsWith.
+             */
+            static bool matchPart(const char* filter, size_t filterLen, const char* target, size_t targetLen);
+
+          public:
 #endif
             void printPrompt();
             void clearPreviouseLine();

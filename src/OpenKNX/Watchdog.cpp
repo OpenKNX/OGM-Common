@@ -24,16 +24,29 @@
 /*
  * Counting the restarts of the WD over the restart
  */
+// "Previous boot reached a healthy configured runtime" marker (__openKnxSetupCompleted):
+// lets the auto-erase wipe the config only for an unloadable config (crash before setup
+// completes), never for a runtime crash (IP flood, heap exhaustion) after a healthy boot.
+// Defined only with OPENKNX_WATCHDOG, since that is the only place it is used.
 #if defined(ARDUINO_ARCH_RP2040)
 static uint8_t __uninitialized_ram(__openKnxWatchdogResets);
 static uint8_t __uninitialized_ram(__openKnxWatchdogFasts);
+    #ifdef OPENKNX_WATCHDOG
+static uint8_t __uninitialized_ram(__openKnxSetupCompleted);
+    #endif
 #elif defined(ARDUINO_ARCH_ESP32)
 static RTC_NOINIT_ATTR uint8_t __openKnxWatchdogResets;
 static RTC_NOINIT_ATTR uint8_t __openKnxWatchdogFasts;
+    #ifdef OPENKNX_WATCHDOG
+static RTC_NOINIT_ATTR uint8_t __openKnxSetupCompleted;
+    #endif
 #else
 // Not supported
 static uint8_t __openKnxWatchdogResets = 0;
 static uint8_t __openKnxWatchdogFasts = 0;
+    #ifdef OPENKNX_WATCHDOG
+static uint8_t __openKnxSetupCompleted = 0;
+    #endif
 #endif
 
 namespace OpenKNX
@@ -70,6 +83,15 @@ namespace OpenKNX
             openknx.knxFlash.erase();
         }
     #endif
+#endif
+    }
+
+    // Records that this boot reached a healthy, configured runtime. Consulted by the
+    // ctor on the NEXT boot so a runtime crash (after setup) never triggers auto-erase.
+    void Watchdog::markSetupCompleted()
+    {
+#ifdef OPENKNX_WATCHDOG
+        __openKnxSetupCompleted = 1;
 #endif
     }
 
@@ -276,7 +298,16 @@ namespace OpenKNX
         {
             if (__openKnxWatchdogResets < 255) __openKnxWatchdogResets++;
     #ifdef OPENKNX_WATCHDOG_AUTOERASE_RESETS
-            if (__openKnxWatchdogFasts < 255) __openKnxWatchdogFasts++;
+            // Only count toward auto-erase if the PREVIOUS boot did NOT reach a
+            // healthy configured runtime. A WDT/panic reset after setup completed is
+            // a runtime crash (IP flood, heap exhaustion, ...) - NOT an unloadable
+            // config - so it must never drive the fast counter that wipes the KNX
+            // config. __openKnxSetupCompleted is carried over from the last boot
+            // (set at the end of setup, re-armed to 0 below for this boot).
+            if (!__openKnxSetupCompleted)
+            {
+                if (__openKnxWatchdogFasts < 255) __openKnxWatchdogFasts++;
+            }
     #endif
         }
         else
@@ -284,6 +315,11 @@ namespace OpenKNX
             __openKnxWatchdogResets = 0;
             __openKnxWatchdogFasts = 0;
         }
+
+        // Re-arm for THIS boot: cleared now, set back to 1 only if setup() reaches a
+        // healthy configured runtime (Watchdog::markSetupCompleted()). So the next
+        // boot's classification above reflects whether THIS boot booted cleanly.
+        __openKnxSetupCompleted = 0;
 
 #endif
     }

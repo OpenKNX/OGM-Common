@@ -28,6 +28,7 @@
   <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
   <op:nowarn id="3" regex="BASE_Nop"/>
   <op:nowarn id="3" regex="BASE_MarkInactive"/>
+  <op:nowarn id="3" regex="BASE_SyncChannelType"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -80,6 +81,9 @@
               <!-- end of delay pattern -->
               <!-- Boolean values -->
               <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
+                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Suspended" Name="Suspended">
                 <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-OnOffYesNo" Name="OnOffYesNo">

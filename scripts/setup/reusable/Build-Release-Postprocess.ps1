@@ -41,7 +41,7 @@ if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
 
 # cleanup
 if (Test-Path -Path "release/$($settings.targetName).knxprod" -PathType Leaf) {
-  #Remove-Item "release/$($settings.targetName).knxprod"
+  Remove-Item "release/$($settings.targetName).knxprod"
 }
 
 # calculate version string

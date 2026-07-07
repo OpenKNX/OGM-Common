@@ -154,6 +154,8 @@ namespace OpenKNX
     {
 #if defined(ARDUINO_ARCH_RP2040)
         return analogReadTemp();
+#elif defined(ARDUINO_ARCH_ESP32)
+        return temperatureRead(); // internal die-temperature sensor (rough, but a useful thermal indicator)
 #else
         return 0.0f;
 #endif

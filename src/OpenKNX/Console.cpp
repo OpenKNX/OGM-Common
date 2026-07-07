@@ -4,6 +4,10 @@
 #include "OpenKNX/I2C/Console.h"
 #include "OpenKNX/Led/Console.h"
 
+#ifdef ARDUINO_ARCH_ESP32
+    #include "esp_heap_caps.h"
+#endif
+
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
 #endif
@@ -257,10 +261,17 @@ namespace OpenKNX
         {
             logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
-            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
+            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u",
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
                     statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
+#ifdef TPUART_BCU_HEALTH
+            logInfo("BCU<Health>", "Resets: %u | Disconnects: %u | CON-rescues: %u",
+                    statistics.getBcuResets(), statistics.getBcuDisconnects(), statistics.getBcuConRescues());
+            logInfo("BCU<NCN-Err>", "Slave-Collision: %u | Receive-Error: %u | Transmit-Error: %u | Protocol-Error: %u | Temp-Warning: %u",
+                    statistics.getBcuSlaveCollisions(), statistics.getBcuReceiveErrors(), statistics.getBcuTransmitErrors(),
+                    statistics.getBcuProtocolErrors(), statistics.getBcuTempWarnings());
+#endif
 
             return true;
         }
@@ -274,6 +285,13 @@ namespace OpenKNX
             dll->reset();
             return true;
         }
+#ifdef TPUART_BCU_DEBUG
+        else if (cmd.compare("bcu dis") == 0)
+        {
+            dll->getTPUart().forceDisconnect();
+            return true;
+        }
+#endif
         else if (cmd.compare("bcu poff") == 0)
         {
             dll->powerControl(false);
@@ -416,11 +434,10 @@ namespace OpenKNX
 #else
         openknx.logger.logWithPrefixAndValues("KNX-Type", "%04X", MASK_VERSION);
 #endif
+        openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
         float cpuTemp = openknx.hardware.cpuTemperature();
         if (cpuTemp > 0)
-            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, cpuTemp);
-        else
-            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
+            openknx.logger.logWithPrefixAndValues("CPU-Temp", "%.1f °C", cpuTemp);
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Programming");
@@ -592,6 +609,9 @@ namespace OpenKNX
         printHelpLine("bcu", "Show BCU status");
         printHelpLine("bcu mon", "Start BCU monitoring");
         printHelpLine("bcu rst", "Reset BCU");
+#ifdef TPUART_BCU_DEBUG
+        printHelpLine("bcu dis", "Force BCU disconnect (test)");
+#endif
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         printHelpLine("tm ?", "Help for time related commands");
@@ -651,6 +671,22 @@ namespace OpenKNX
 #endif
         openknx.logger.logWithPrefixAndValues("Free memory", "%.3f KiB (min. %.3f KiB)", ((float)freeMemory() / 1024), ((float)openknx.common.freeMemoryMin() / 1024));
 #ifdef ARDUINO_ARCH_ESP32
+        // Heap detail: free / minimum-ever-free / largest contiguous block. A healthy 'free'
+        // with a tiny 'largest' still means allocations fail (fragmentation). The DMA pool
+        // feeds EMAC/Wi-Fi/SPI -- a starved DMA pool is exactly the "no mem for receive buffer"
+        // failure. On the classic ESP32 the DMA pool equals the default pool, so the DMA line
+        // is only printed when it actually differs (diverges near exhaustion / on S3/PSRAM).
+        size_t heapFree = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+        size_t heapMin = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
+        size_t heapLargest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+        openknx.logger.logWithPrefixAndValues("Heap", "free %.3f / min %.3f / largest %.3f KiB",
+            ((float)heapFree / 1024), ((float)heapMin / 1024), ((float)heapLargest / 1024));
+        size_t dmaFree = heap_caps_get_free_size(MALLOC_CAP_DMA);
+        size_t dmaMin = heap_caps_get_minimum_free_size(MALLOC_CAP_DMA);
+        size_t dmaLargest = heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
+        if (dmaFree != heapFree || dmaMin != heapMin || dmaLargest != heapLargest)
+            openknx.logger.logWithPrefixAndValues("Heap DMA", "free %.3f / min %.3f / largest %.3f KiB",
+                ((float)dmaFree / 1024), ((float)dmaMin / 1024), ((float)dmaLargest / 1024));
     #if BOARD_HAS_PSRAM
         openknx.logger.logWithPrefixAndValues("Free PSRAM", "%.3f KiB (min. %.3f KiB)", ((float)ESP.getFreePsram() / 1024), ((float)ESP.getMinFreePsram() / 1024));
     #endif
