@@ -57,6 +57,13 @@ namespace OpenKNX
          */
         void fastCheck();
 
+        /*
+         * Mark that setup completed with a valid config loaded. Used so the auto-erase
+         * only triggers for an unloadable config (crash before setup completes), never
+         * for a runtime crash (e.g. IP flood / heap exhaustion) after a healthy boot.
+         */
+        void markSetupCompleted();
+
         String logPrefix()
         {
             return String("Watchdog");
