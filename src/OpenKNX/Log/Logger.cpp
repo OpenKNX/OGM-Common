@@ -5,9 +5,6 @@
     #include "SEGGER_RTT.h"
 #endif
 
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-    #include <Regexp.h>
-#endif
 
 namespace OpenKNX
 {
@@ -425,31 +422,113 @@ namespace OpenKNX
             }
         }
 
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+#if defined(OPENKNX_TRACE)
+        bool Logger::matchPart(const char* filter, size_t filterLen, const char* target, size_t targetLen)
+        {
+            // trailing '*' -> startsWith
+            if (filterLen > 0 && filter[filterLen - 1] == '*')
+            {
+                size_t prefixLen = filterLen - 1;
+                return targetLen >= prefixLen && strncmp(filter, target, prefixLen) == 0;
+            }
+            // exact match
+            return filterLen == targetLen && strncmp(filter, target, filterLen) == 0;
+        }
+
+        bool Logger::matchTraceFilterList(const char* list, const char* target)
+        {
+            // split list at ';'; commas are reserved for sub lists (e.g. "Channel<4,5,7>")
+            const char* start = list;
+            for (const char* p = list;; ++p)
+            {
+                if (*p == '\0' || *p == ';')
+                {
+                    size_t len = (size_t)(p - start);
+                    if (len > 0 && matchTraceFilter(start, len, target))
+                        return true;
+                    if (*p == '\0')
+                        break;
+                    start = p + 1;
+                }
+            }
+            return false;
+        }
+
+        bool Logger::matchTraceFilter(const char* filter, size_t filterLen, const char* target)
+        {
+            const char* filterEnd = filter + filterLen;
+
+            // split filter into prefix and optional sub (between '<' and '>')
+            const char* fSub = (const char*)memchr(filter, '<', filterLen);
+            size_t fPrefixLen = fSub ? (size_t)(fSub - filter) : filterLen;
+
+            // split target into prefix and optional sub
+            const char* tSub = strchr(target, '<');
+            size_t tPrefixLen = tSub ? (size_t)(tSub - target) : strlen(target);
+
+            // compare prefix
+            if (!matchPart(filter, fPrefixLen, target, tPrefixLen))
+                return false;
+
+            // no sub part in filter -> ignore target's sub
+            if (!fSub)
+                return true;
+
+            // filter has a sub part but target has none -> no match
+            if (!tSub)
+                return false;
+
+            // determine sub contents (strip surrounding '<' and trailing '>')
+            const char* fSubStart = fSub + 1;
+            const char* fSubEnd = (const char*)memchr(fSubStart, '>', (size_t)(filterEnd - fSubStart));
+            size_t fSubLen = fSubEnd ? (size_t)(fSubEnd - fSubStart) : (size_t)(filterEnd - fSubStart);
+
+            const char* tSubStart = tSub + 1;
+            const char* tSubEnd = strchr(tSubStart, '>');
+            size_t tSubLen = tSubEnd ? (size_t)(tSubEnd - tSubStart) : strlen(tSubStart);
+
+            // iterate over comma separated list elements of the filter sub
+            const char* elem = fSubStart;
+            const char* fSubLimit = fSubStart + fSubLen;
+            while (elem < fSubLimit)
+            {
+                const char* comma = (const char*)memchr(elem, ',', (size_t)(fSubLimit - elem));
+                size_t elemLen = comma ? (size_t)(comma - elem) : (size_t)(fSubLimit - elem);
+
+                // numeric range "lo-hi" (only when no wildcard and a '-' separates two numbers)
+                const char* dash = (const char*)memchr(elem, '-', elemLen);
+                if (dash && dash != elem && (elemLen == 0 || elem[elemLen - 1] != '*'))
+                {
+                    char* endLo = nullptr;
+                    char* endHi = nullptr;
+                    long lo = strtol(elem, &endLo, 10);
+                    long hi = strtol(dash + 1, &endHi, 10);
+                    // valid range only if both sides fully numeric
+                    if (endLo == dash && endHi == elem + elemLen)
+                    {
+                        char* endTarget = nullptr;
+                        long val = strtol(tSubStart, &endTarget, 10);
+                        if (endTarget == tSubStart + tSubLen && val >= lo && val <= hi)
+                            return true;
+                        elem = comma ? comma + 1 : fSubLimit;
+                        continue;
+                    }
+                }
+
+                if (matchPart(elem, elemLen, tSubStart, tSubLen))
+                    return true;
+
+                elem = comma ? comma + 1 : fSubLimit;
+            }
+
+            return false;
+        }
+
         bool Logger::checkTrace(const std::string& prefix)
         {
-            MatchState ms;
-            ms.Target((char*)prefix.c_str());
-    #ifdef OPENKNX_TRACE1
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE1)) > 0)
+            const char* target = prefix.c_str();
+            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE)) > 0 && matchTraceFilterList(TRACE_STRINGIFY(OPENKNX_TRACE), target))
                 return true;
-    #endif
-    #ifdef OPENKNX_TRACE2
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE2)) > 0)
-                return true;
-    #endif
-    #ifdef OPENKNX_TRACE3
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE3)) > 0)
-                return true;
-    #endif
-    #ifdef OPENKNX_TRACE4
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE4)) > 0)
-                return true;
-    #endif
-    #ifdef OPENKNX_TRACE5
-            if (strlen(TRACE_STRINGIFY(OPENKNX_TRACE5)) > 0 && ms.MatchCount(TRACE_STRINGIFY(OPENKNX_TRACE5)))
-                return true;
-    #endif
             return false;
         }
 #endif
