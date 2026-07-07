@@ -2,7 +2,7 @@
 
 Für die korrekte Berechnung der Zeit für Sonnenauf- und -untergang werden die genauen Koordinaten des Standorts benötigt sowie auch die Zeitzone und die Information, ob gerade die Sommerzeit aktiv ist.
 
-Die Geo-Koordinaten können bei Google Maps nachgeschaut werden, indem man mit der rechten Maustaste auf das Objekt klickt und die unten erscheinenden Koordinaten benutzt.
+**Tipp:** Die Geo-Koordinaten können z.B. über OpenSteetMap (https://osm.org/ mit Rechtsklick / Adresse anzeigen) ermittelt werden.
 
 Die Standard-Koordinaten stehen für Frankfurt am Main, Innenstadt.
 

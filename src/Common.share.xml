@@ -2,7 +2,7 @@
 <?xml-model href="../../../../Organization/knxprod-support/knx_project_20/knx-editor.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <KNX xmlns:op="http://github.com/OpenKNX/OpenKNXproducer" xmlns="http://knx.org/xml/project/20" CreatedBy="KNX MT" ToolVersion="5.1.255.16695">
   
-  <op:minOpenKNXproducerVersion value="3.13.6" />
+  <op:minOpenKNXproducerVersion value="4.3.5" />
   
   <op:config name="%BASE_ShowExtendedSave%" value="1" />
   <op:config name="%BASE_ExtendedSave%" value="0" />
@@ -26,6 +26,9 @@
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
   <op:nowarn id="7" regex="_R-100000202"/>
   <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
+  <op:nowarn id="3" regex="BASE_Nop"/>
+  <op:nowarn id="3" regex="BASE_MarkInactive"/>
+  <op:nowarn id="3" regex="BASE_SyncChannelType"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -40,6 +43,10 @@
               <!-- short description -->
               <ParameterType Id="%AID%_PT-Text40Byte" Name="Text40Byte">
                 <TypeText SizeInBit="320" />
+              </ParameterType>
+              <!-- short description with inactive sign -->
+              <ParameterType Id="%AID%_PT-Text45Byte" Name="Text45Byte">
+                <TypeText SizeInBit="360" />
               </ParameterType>
               <!-- long description -->
               <ParameterType Id="%AID%_PT-Text80Byte" Name="Text80Byte">
@@ -74,6 +81,9 @@
               <!-- end of delay pattern -->
               <!-- Boolean values -->
               <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
+                <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Suspended" Name="Suspended">
                 <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
               </ParameterType>
               <ParameterType Id="%AID%_PT-OnOffYesNo" Name="OnOffYesNo">
@@ -247,7 +257,7 @@
                 <TypeRestriction Base="Value" SizeInBit="16" UIHint="DropDown">
                   <Enumeration Text="Deaktiviert" Value="0" Id="%ENID%" />
                   <Enumeration Text="Prog-LED" Value="1" Id="%ENID%" />
-                  <Enumeration Text="Gerätetatus" Value="2" Id="%ENID%" />
+                  <Enumeration Text="Gerätestatus" Value="2" Id="%ENID%" />
                   <Enumeration Text="Busstatus" Value="3" Id="%ENID%" />
                   <Enumeration Text="Zeitstatus" Value="4" Id="%ENID%" />
                 </TypeRestriction>
@@ -290,10 +300,10 @@
                 <Parameter Id="%AID%_UP-%TT%00144" Name="Timezone"         ParameterType="%AID%_PT-Timezone"         Offset="0" BitOffset="0" Text="Zeitzone" Value="1" />
                 <Parameter op:configTransfer="always"
                            Id="%AID%_UP-%TT%00156" Name="CombinedTimeDate" ParameterType="%AID%_PT-CombinedTimeDate" Offset="0" BitOffset="5" Text="Empfangen über" Value="1" />
-                <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" />
-                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />
-                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" />          
+                <Parameter Id="%AID%_UP-%TT%00159" Name="SummertimeAll"    ParameterType="%AID%_PT-SummertimeAll"    Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" op:nowarn="true" />
+                <Parameter Id="%AID%_UP-%TT%00160" Name="SummertimeDE"     ParameterType="%AID%_PT-SummertimeDE"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="2" op:nowarn="true" />
+                <Parameter Id="%AID%_UP-%TT%00161" Name="SummertimeWorld"  ParameterType="%AID%_PT-SummertimeWorld"  Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" op:nowarn="true" />
+                <Parameter Id="%AID%_UP-%TT%00162" Name="SummertimeKO"     ParameterType="%AID%_PT-SummertimeKO"     Offset="0" BitOffset="6" Text="Sommerzeit ermitteln durch" Value="0" op:nowarn="true" />          
                 <Parameter Id="%AID%_UP-%TT%00175" Name="TimezoneCustom"   ParameterType="%AID%_PT-TimezoneCustom"   Offset="1" BitOffset="0" Text="POSIX TZ-String" Value="CET-1CEST,M3.5.0/2:00:00,M10.5.0/3:00:00" />          
                 <!-- ^^^ 63 Characters + 0 terminator = 64 bytes ^^^ -->
               </Union>
@@ -426,27 +436,6 @@
               <op:include href="Common.script.js" prefix="BASE" type="script" />
             </Script>            
           </Static>
-          <ModuleDefs>
-            <ModuleDef Id="%AID%_MD-%TT%00001" Name="KommentarModule">
-              <!-- <Arguments>
-                <Argument Id="%AID%_MD-%TT%00001_A-1" Name="argHelpContext" Type="Text" />
-              </Arguments> -->
-              <Static>
-                <Parameters>
-                  <Parameter Id="%AID%_MD-%TT%00001_P-%TT%00001" Name="Kommentar-%TT%00001" ParameterType="%AID%_PT-Text512Byte" Text="Kommentar" Value="" />
-                </Parameters>
-                <ParameterRefs>
-                  <ParameterRef Id="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" RefId="%AID%_MD-%TT%00001_P-%TT%00001" />
-                </ParameterRefs>
-              </Static>
-              <Dynamic>
-                <ParameterBlock Id="%AID%_MD-%TT%00001_PB-nnn" Inline="true">
-                  <ParameterRefRef RefId="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" HelpContext="BASE-Comment" />
-                  <Button Id="%AID%_MD-%TT%00001_B-%TT%00001" Text="Alle '\n' im Text durch neue Zeile(n) ersetzen" EventHandler="newline" EventHandlerParameters="{ &quot;textbox&quot;:&quot;BASE_Kommentar-%TT%00001&quot; }" />
-                </ParameterBlock>
-              </Dynamic>
-            </ModuleDef> 
-          </ModuleDefs>
           <Dynamic>
             <!-- <ChannelIndependentBlock> -->
             <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="OpenKNX" Icon="openknx" HelpContext="BASE-OpenKNX">

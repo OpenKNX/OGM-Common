@@ -56,7 +56,6 @@ namespace OpenKNX
         uint8_t _resultData[256];
         int16_t _resultLength = 0;
 
-
         void initKnx();
 
         void processModulesLoop();
@@ -64,6 +63,7 @@ namespace OpenKNX
         void processRestoreSavePin();
         void initMemoryTimerInterrupt();
         void debugWait();
+        void afterSetupLedStatus();
 
 #ifdef OPENKNX_DEBUG
         void showDebugInfo();

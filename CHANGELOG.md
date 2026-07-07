@@ -1,10 +1,51 @@
 # Changes
 
+## upcomming releases
+
+* Breaking: Trace filter reworked. The regex dependency (`nickgammon/Regexp`, ~80&nbsp;kB flash when tracing was enabled) is removed and replaced by a compact custom matcher. `OPENKNX_TRACE1..5` are dropped in favor of a single `OPENKNX_TRACE` define holding one or more filters separated by `;` (e.g. `OPENKNX_TRACE=Test1<1-4>;Test2<8>`). New filter syntax `PREFIX<SUB>`: prefix exact or `*` suffix wildcard; optional `<sub>` with exact value, numeric range (`1-19`), comma list (`4,5,7`, combinable `1-5,9`), or `*` suffix wildcard. A filter without `<sub>` ignores the sub part. Existing regex filters must be migrated (e.g. `OPENKNX_TRACE1=Common.*` → `OPENKNX_TRACE=Common*`).
+* Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
+* Fix: USB MSC support in Common.cpp
+* Breaking: Remove ETS-ModuleDef of KommentarModule, not used anymore since introduction of ConfigTransfer (not compatible).
+* Change: Generate build timestamp in prepare hook and use ISO-DateTime format in console instead of __DATE__/__TIME__
+* Refactor: Optimize CPU temperature logging and remove unused ADC temperature sensor initialization
+* Update: RP2040 Environment
+  * platform: platform-raspberrypi cc24cfef37ed22ca9f2a6aead28c2deb76c39f24 to 79ce473e1a8010ed8096388690222fd2c94858a6
+  * platform_packages: framework-arduinopico 5.4.4 to 5.6.0
+
+## 1.8.1: 2026-05-18
+
+* Fix Vcc2 shut off with DCU initialization (POWER_SAVE_PIN vs. SAVE_POWER_PIN)
+
+## 1.8.0: 2026-05-15
+
+* Fix: DST switch for NTP client
+* Fix/Change: Save data to flash in case of restart from console
+* Fix: SunRise-Calculation was wrong for UTC-day-change (this was not an issue for Europe, but e.g. New Zealand)
+  * Fix/Change: Support negative hours in TimeDate constructor
+* Update: Increase minimum OpenKNXproducer version to 4.3.5
+  * Fix: Suppress warnings for intentionally overlapping parameters
+* Feature: Indicate unconfigured and PA not set via PROG-LED
+  * Extension (LED): Add count and repeat to effect "Flash"  
+* Fixes/Extension: FunctionPropertyWrapper
+* Fix: Small memory leak in case of calling readFlash for modules without saved data
+* Fix: Restore script showed success when git checkout failed
+* Refactor: Restore script
+* Doc: Application Description
+  * Add list of KOs with short description
+  * Cleanup TOC, Minor Fixes and Improvements
+  * Link from Readme
+* Doc: Improve build script parameter documentation, no coding change
+
+
+## 1.7.2: 2026-03-02
+
+- Fix: Default brightness of dimmable GPIO-LED 100/255 changed to 255/255
+
 ## 1.7.1: 2026-02-26
 
 - Fix: Parameter Memory Management for StatusLED Implementation
 - Fix: resultLength calculation in functionPropertyWrapper
-- Fix: removed non existing apdu object in Common.script.js
+- Fix: removed non-existing apdu object in Common.script.js
 - Revert: ESP32 Framework back to 3.2.1 (IDF 5.4)
 
 ## 1.7: 2026-02-16

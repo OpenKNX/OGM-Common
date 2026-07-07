@@ -16,7 +16,7 @@ namespace OpenKNX
         {
           protected:
             volatile uint32_t _lastMillis = 0;
-            volatile uint8_t _maxBrightness = 100;
+            volatile uint8_t _maxBrightness = 255;
             volatile uint8_t _currentLedBrightness = 0;
             volatile bool _state = false;
             volatile bool _effectMode = false;
@@ -113,7 +113,7 @@ namespace OpenKNX
              * Normal "On" with flash effect
              * -> Prio 5
              */
-            virtual void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION);
+            virtual void flash(uint8_t count = 1, uint16_t repeatCycleTime = 0);
 
             /*
              * Normal "On" with activity effect

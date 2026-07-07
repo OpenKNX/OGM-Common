@@ -9,7 +9,22 @@
 #                   different firmware names for different hardware builds within the same release.
 #                   There should always be an "Upload-Firmware-<firmwarename>.ps1" script delivered,
 #                   which installs this firmware.
-# <binary-format>   currently supports "uf2" for RP2040, "bin" for SAMD and "esp32" for ESP32
+# <binary-format>   is interpreted as an enum with some depricated values (for compatibility):
+#                       bin (deprecated)   - old SAMD processor (deprecated)
+#                       uf2 (deprecated)   - RP2040 without OTA
+#                       esp32 (deprecated) - ESP32 with OTA
+#                       esp32-ip (new)     - ESP32 with OTA
+#                       esp32-tp (new)     - ESP32 with KNX
+#                       esp32-tpip (new)   - ESP32 with KNX and OTA
+#                       esp32-iptp (new)   - ESP32 with KNX and OTA
+#                       rp2040-ip (new)    - RP2040 with OTA
+#                       rp2040-tp (new)    - RP2040 with KNX
+#                       rp2040-tpip (new)  - RP2040 with KNX and OTA
+#                       rp2040-iptp (new)  - RP2040 with KNX and OTA
+#                       rp2350-ip (new)    - RP2350 with OTA
+#                       rp2350-tp (new)    - RP2350 with KNX
+#                       rp2350-tpip (new)  - RP2350 with KNX and OTA
+#                       rp2350-iptp (new)  - RP2350 with KNX and OTA
 # <product-name>    (optional) is the name of the product. If not provided, the firmware name without
 #                   the "firmware-" prefix will be used.
 # <project-dir>     is the directory path of the project.

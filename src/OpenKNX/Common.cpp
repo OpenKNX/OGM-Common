@@ -3,8 +3,26 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
 #ifdef ARDUINO_ARCH_RP2040
     #include <USB.h>
-    #include <class/msc/msc.h>
     #include <device/usbd.h>
+    #include <class/msc/msc.h>
+    #include <tusb-msc.h>
+    #ifndef OPENKNX_USB_MSC
+// LDF pulls in tusb-msc regardless of #ifdef guards. Without OPENKNX_USB_MSC
+// these stubs satisfy the missing callbacks at link time.
+extern "C"
+{
+    uint8_t tud_msc_get_maxlun_cb(void) { return 0; }
+    void tud_msc_inquiry_cb(uint8_t, uint8_t[8], uint8_t[16], uint8_t[4]) {}
+    bool tud_msc_test_unit_ready_cb(uint8_t) { return false; }
+    void tud_msc_capacity_cb(uint8_t, uint32_t* block_count, uint16_t* block_size) { *block_count = 0; *block_size = 0; }
+    bool tud_msc_start_stop_cb(uint8_t, uint8_t, bool, bool) { return false; }
+    bool tud_msc_is_writable_cb(uint8_t) { return false; }
+    int32_t tud_msc_read10_cb(uint8_t, uint32_t, uint32_t, void*, uint32_t) { return -1; }
+    int32_t tud_msc_write10_cb(uint8_t, uint32_t, uint32_t, uint8_t*, uint32_t) { return -1; }
+    void tud_msc_write10_complete_cb(uint8_t) {}
+    int32_t tud_msc_scsi_cb(uint8_t, uint8_t const[16], void*, uint16_t) { return -1; }
+}
+    #endif
 #endif
 
 #ifndef ParamBASE_InternalTime
@@ -32,21 +50,21 @@ namespace OpenKNX
     void Common::init(uint8_t firmwareRevision)
     {
 #ifndef OPENKNX_DEBUGGER
-#ifdef ARDUINO_ARCH_RP2040
+    #ifdef ARDUINO_ARCH_RP2040
         USB.disconnect();
         USB.setManufacturer("OpenKNX");
-    #ifdef FIRMWARE_NAME
+        #ifdef FIRMWARE_NAME
         USB.setProduct(FIRMWARE_NAME);
-    #endif
+        #endif
 
-    #ifdef OPENKNX_USB_MSC
+        #ifdef OPENKNX_USB_MSC
         uint8_t epIn = USB.registerEndpointIn();
         uint8_t epOut = USB.registerEndpointOut();
-        static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, 64)};
+        static uint8_t msd_desc[] = {TUD_MSC_DESCRIPTOR(1 /* placeholder */, 0, epOut, epIn, CFG_TUD_MSC_EP_BUFSIZE)};
         USB.registerInterface(1, USBClass::simpleInterface, msd_desc, sizeof(msd_desc), 2, 0);
-    #endif
+        #endif
         USB.connect();
-#endif
+    #endif
 #endif
         openknx.logger.init();
 
@@ -59,9 +77,9 @@ namespace OpenKNX
         openknx.gpio.init();
         openknx.leds.init();
         openknx.ledFunctions.init();
-#if defined(POWER_SAVE_PIN) && POWER_SAVE_PIN >= 0
-        openknx.gpio.pinMode(POWER_SAVE_PIN, OUTPUT);
-        openknx.gpio.digitalWrite(POWER_SAVE_PIN, POWER_SAVE_PIN_POWER_ON); 
+#if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
+        openknx.gpio.pinMode(SAVE_POWER_PIN, OUTPUT);
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
 #endif
 
         _progLedFunc = openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG);
@@ -107,24 +125,10 @@ namespace OpenKNX
     void Common::showDebugInfo()
     {
         logDebugP("Debug logging is enabled!");
-    #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+    #if defined(OPENKNX_TRACE)
         logDebugP("Trace logging is enabled with:");
         logIndentUp();
-        #ifdef OPENKNX_TRACE1
-        logDebugP("Filter 1: %s", TRACE_STRINGIFY(OPENKNX_TRACE1));
-        #endif
-        #ifdef OPENKNX_TRACE2
-        logDebugP("Filter 2: %s", TRACE_STRINGIFY(OPENKNX_TRACE2));
-        #endif
-        #ifdef OPENKNX_TRACE3
-        logDebugP("Filter 3: %s", TRACE_STRINGIFY(OPENKNX_TRACE3));
-        #endif
-        #ifdef OPENKNX_TRACE4
-        logDebugP("Filter 4: %s", TRACE_STRINGIFY(OPENKNX_TRACE4));
-        #endif
-        #ifdef OPENKNX_TRACE5
-        logDebugP("Filter 5: %s", TRACE_STRINGIFY(OPENKNX_TRACE5));
-        #endif
+        logDebugP("Filter: %s", TRACE_STRINGIFY(OPENKNX_TRACE));
         logIndentDown();
     #endif
     }
@@ -294,19 +298,7 @@ namespace OpenKNX
 #endif // OPENKNX_DUALCORE
 
 #ifndef OPENKNX_DUALCORE
-        _progLedFunc->off();
-        _progLedFunc->color(Led::Color::Red);
-
-        if (knx.configured())
-        {
-            _stateLedFunc->color(Led::Color::Yellow);
-            _stateLedFunc->on(Led::Capability::COLOR);
-        }
-        else
-        {
-            _stateLedFunc->color(Led::Color::Orange);
-            _stateLedFunc->blinking(500);
-        }
+        afterSetupLedStatus();
 #endif
 
         if (!knx.configured()) // fallback if unconfigured
@@ -341,6 +333,12 @@ namespace OpenKNX
 
         _setup1Ready = true;
 
+        afterSetupLedStatus();
+    }
+#endif
+
+    void Common::afterSetupLedStatus()
+    {
         _progLedFunc->off();
         _progLedFunc->color(Led::Color::Red);
 
@@ -351,11 +349,17 @@ namespace OpenKNX
         }
         else
         {
+#if MASK_VERSION == 0x091A
+            uint8_t count = knx.individualAddress() == 0xFF00 ? 2 : 1;
+#else
+            uint8_t count = knx.individualAddress() == 0xFFFF ? 2 : 1;
+#endif
+            _progLedFunc->flash(count, 3000);
+
             _stateLedFunc->color(Led::Color::Orange);
-            _stateLedFunc->blinking(500);
+            _stateLedFunc->flash(count, 3000);
         }
     }
-#endif
 
     // main loop
     void Common::loop()
@@ -696,8 +700,8 @@ namespace OpenKNX
 #endif
 
 #if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
-            logInfoP("Shut off aux power with pin %i", SAVE_POWER_PIN);
-            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
+        logInfoP("Shut off aux power with pin %i", SAVE_POWER_PIN);
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_OFF);
 #endif
 
         logInfoP("Completed (%ims)", millis() - start);
@@ -731,8 +735,8 @@ namespace OpenKNX
 #endif
 
 #if defined(SAVE_POWER_PIN) && SAVE_POWER_PIN >= 0
-            logInfoP("Switch on aux power with pin %i", SAVE_POWER_PIN);
-            openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
+        logInfoP("Switch on aux power with pin %i", SAVE_POWER_PIN);
+        openknx.gpio.digitalWrite(SAVE_POWER_PIN, SAVE_POWER_PIN_POWER_ON);
 #endif
 
         bool reboot = false;
@@ -768,6 +772,8 @@ namespace OpenKNX
 
         openknx.flash.save();
         logIndentDown();
+        logInfoP("System will restart now");
+        delay(10);
     }
 
     void Common::processBeforeTablesUnload()
@@ -882,9 +888,9 @@ namespace OpenKNX
     #endif
 #endif
 
-    // this function allows to use a normal property function with lower APDU. 
-    // It allows receive data in small apdu packages, 
-    // then calls the target property function with the full dataset, 
+    // this function allows to use a normal property function with lower APDU.
+    // It allows receive data in small apdu packages,
+    // then calls the target property function with the full dataset,
     // and finally sends back resultData as packages
     bool Common::processFunctionPropertyWrapper(uint8_t objectIndex, uint8_t propertyId, uint8_t length, uint8_t* data, uint8_t* resultData, uint8_t& resultLength)
     {
@@ -892,36 +898,36 @@ namespace OpenKNX
 
         bool result = false;
         // first Byte is command (0, 1) or sequence number (<=-2 send data, >=2 receive data )
-        int8_t cmd = (int8_t)data[0]; 
-        if (cmd == 0) 
+        int8_t cmd = (int8_t)data[0];
+        if (cmd == 0)
         {
             // receive header information for data transmission
-            _apduLength = data[1];  // available APDU length
+            _apduLength = data[1];                    // available APDU length
             _packageCount = (data[2] << 8) + data[3]; // number of expected packages
-            _sequenceNumber = sequenceStart; // first expected sequence number
-            _receivedLength = 0; // init length counter
-            resultData[0] = 0; //ok
-            resultData[1] = _sequenceNumber; // tells the client the next sequence number
+            _sequenceNumber = sequenceStart;          // first expected sequence number
+            _receivedLength = 0;                      // init length counter
+            resultData[0] = 0;                        // ok
+            resultData[1] = _sequenceNumber;          // tells the client the next sequence number
             resultLength = 2;
             result = true;
         }
         else if (cmd == 1)
         {
             // execute target function property
-            uint8_t targetObjectIndex = data[1];  
+            uint8_t targetObjectIndex = data[1];
             uint8_t targetPropertyId = data[2];
             uint8_t tmpResultLength = 0;
             // call function property
             result = processFunctionProperty(targetObjectIndex, targetPropertyId, _receivedLength, _receivedData, _resultData, tmpResultLength);
             // send result to the client
             _resultLength = tmpResultLength;
-            resultData[0] = !result;    // success indicator
+            resultData[0] = !result;                     // success indicator
             resultData[1] = (_resultLength >> 8) & 0xFF; // reserved high byte for longer results;
-            resultData[2] = _resultLength & 0xFF; // result length
-            resultData[3] = -sequenceStart; // first sequence number to send
+            resultData[2] = _resultLength & 0xFF;        // result length
+            resultData[3] = -sequenceStart;              // first sequence number to send
             resultLength = 4;
             result = true;
-        } 
+        }
         else if (cmd >= sequenceStart)
         {
             // sequence number >=2, we receive data
@@ -930,7 +936,7 @@ namespace OpenKNX
             {
                 // we got correct sequence number, increase for next one
                 _sequenceNumber++;
-                if (_sequenceNumber >= 127) 
+                if (_sequenceNumber >= 127)
                 {
                     // max sequence number reached
                     resultData[0] = 2;
@@ -946,14 +952,14 @@ namespace OpenKNX
                 {
                     _sequenceNumber = -sequenceStart;
                 }
-                // create answer                
-                resultData[0] = (bool)!result; //ok
+                // create answer
+                resultData[0] = (bool)!result;   // ok
                 resultData[1] = _sequenceNumber; // tells the client the next sequence number
             }
             else
             {
                 // request correct sequence number again
-                resultData[0] = 1; //wrong sequence number
+                resultData[0] = 1;               // wrong sequence number
                 resultData[1] = _sequenceNumber; // tells the client the last correct to resend
                 result = true;
             }
@@ -962,7 +968,7 @@ namespace OpenKNX
         else if (cmd <= -sequenceStart)
         {
             // check if all data sent
-            if (_resultLength <= 1)
+            if (_resultLength < 1)
             {
                 // finish marker
                 resultData[0] = 0;
@@ -972,7 +978,7 @@ namespace OpenKNX
             // ETS wants to receive a package, data[0] contains sequence number
             resultData[0] = data[0]; // return the requested sequence number
             // calculate data offset based on apdu and sequenceNumber
-            uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1); 
+            uint16_t resultOffset = (~cmd + 1 - sequenceStart) * (_apduLength - 1);
             // send package
             resultLength = (_apduLength < (_resultLength + 1) ? _apduLength : (_resultLength + 1));
             memcpy(resultData + 1, _resultData + resultOffset, resultLength - 1);
@@ -994,7 +1000,7 @@ namespace OpenKNX
             resultData[4] = (_unsupportedEtsModules >> 24) & 0xFF;
             resultLength = 5;
             return true; // handled
-        } 
+        }
         else if (objectIndex == 0x9E && propertyId == 3)
         {
             return processFunctionPropertyWrapper(objectIndex, propertyId, length, data, resultData, resultLength);
@@ -1018,8 +1024,7 @@ namespace OpenKNX
 
     void Common::restart()
     {
-        logInfoP("System will restart now");
-        delay(10);
+        openknx.common.processBeforeRestart(); // this function also saves the flash
         knx.platform().restart();
     }
 

@@ -51,3 +51,66 @@ bool __no_inline_not_in_flash_func(__nukeFlash)(uint32_t offset, size_t count);
 void printFreeStackSize();
 #endif
 #endif
+
+/*
+ * PSRAM allocation helper macros
+ */
+
+// Normalisiere PSRAM-Verfügbarkeit zu OPENKNX_PSRAM
+#if (defined(BOARD_HAS_PSRAM) || defined(PICO_RP2350_PSRAM_CS)) && !defined(OPENKNX_DISABLE_PSRAM)
+    #define OPENKNX_PSRAM
+#endif
+
+// Dynamische Allocation
+#ifdef OPENKNX_PSRAM
+    #define PSRAM_MALLOC ps_malloc
+    #define PSRAM_CALLOC ps_calloc
+    #define PSRAM_REALLOC ps_realloc
+    #define psram_new(X) new (ps_malloc(sizeof(X))) X
+#else
+    #define PSRAM_MALLOC malloc
+    #define PSRAM_CALLOC calloc
+    #define PSRAM_REALLOC realloc
+    #define psram_new(X) new X
+#endif
+
+// Statische Daten/Funktionen in PSRAM
+#ifdef OPENKNX_PSRAM
+    #define PSRAM_DATA __attribute__((section(".psram_data")))
+    #define PSRAM_CODE __attribute__((section(".psram_code")))
+#else
+    #define PSRAM_DATA
+    #define PSRAM_CODE
+#endif
+
+#ifdef OPENKNX_PSRAM
+
+// psram_delete — ruft Destruktor, dann free() (Gegenstück zu psram_new)
+template <typename T>
+inline void psram_delete(T* p)
+{
+    if (p)
+    {
+        p->~T();
+        free(p);
+    }
+}
+
+// PsramAllocator — Standard-Allocator für STL-Container mit PSRAM
+template <typename T>
+struct PsramAllocator
+{
+    using value_type = T;
+    T* allocate(size_t n) { return static_cast<T*>(ps_malloc(n * sizeof(T))); }
+    void deallocate(T* p, size_t) { free(p); }
+};
+
+#else
+
+template <typename T>
+inline void psram_delete(T* p) { delete p; }
+
+template <typename T>
+using PsramAllocator = std::allocator<T>;
+
+#endif

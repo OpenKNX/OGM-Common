@@ -51,7 +51,7 @@ namespace OpenKNX
             void color(Color value);
             void pulsing(uint16_t duration = OPENKNX_LEDEFFECT_PULSE_FREQ, Capability capability = Capability::ALL);
             void blinking(uint16_t frequency = OPENKNX_LEDEFFECT_BLINK_FREQ, Capability capability = Capability::ALL);
-            void flash(uint16_t duration = OPENKNX_LEDEFFECT_FLASH_DURATION, Capability capability = Capability::ALL);
+            void flash(uint8_t count = 1, uint16_t repeatCycleTime = 0, Capability capability = Capability::ALL);
             void forceOn(bool active = true);
             bool getState();
 #ifdef OPENKNX_HEARTBEAT
