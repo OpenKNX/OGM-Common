@@ -27,17 +27,36 @@ FILEPATH: lib/OGM-Common/scripts/setup/reusable/data/Upload-Firmware-Generic.ps1
 .PARAMETER Multi
     Flash multiple devices in a row without restarting the script.
 
-.EXAMPLE
-    .\Upload-Firmware-Generic.ps1 firmware.uf2
+.PARAMETER SerialPort
+    Use this serial port directly instead of scanning and asking. Skips the device
+    search and treats the port as the single found device. Aliases: -Port, -ComPort.
+    Per platform:  COM7 (Windows)  ·  /dev/cu.usbmodemXXXX (macOS)  ·  /dev/ttyACM0 (Linux).
+    For RP2040/RP2350 this is the running device's serial port (it is then reset into
+    BOOTSEL); a BOOTSEL drive path is also accepted. For ESP32 it is the esptool port.
 
-.EXAMPLE
-    .\Upload-Firmware-Generic.ps1 firmware.bin -Chip ESP32 -Lang EN -Multi
+.PARAMETER Help
+    Show the logo/header and full help (parameters + examples), then exit. Alias: -h.
 
 .PARAMETER DebugSerial
     Print low-level serial debug output when reading device information.
 
 .EXAMPLE
+    .\Upload-Firmware-Generic.ps1 firmware.uf2
+
+.EXAMPLE
+    .\Upload-Firmware-Generic.ps1 firmware.bin -Port COM7
+
+.EXAMPLE
+    .\Upload-Firmware-Generic.ps1 firmware.uf2 -Port /dev/cu.usbmodem14201
+
+.EXAMPLE
+    .\Upload-Firmware-Generic.ps1 firmware.bin -Chip ESP32 -Lang EN -Multi
+
+.EXAMPLE
     .\Upload-Firmware-Generic.ps1 firmware.uf2 -DebugSerial
+
+.EXAMPLE
+    .\Upload-Firmware-Generic.ps1 -Help
 #>
 param(
     [Parameter(Position=0)]
@@ -45,6 +64,10 @@ param(
     [string]$Chip = "",     # RP2040 | ESP32  (auto-detected from extension if empty)
     [string]$Lang = "",
     [switch]$Multi,         # flash multiple devices in a row
+    [Alias('Port','ComPort')]
+    [string]$SerialPort = "",        # use this serial port directly, skip search: COM7 | /dev/cu.* | /dev/ttyACM0
+    [Alias('h')]
+    [switch]$Help,                   # show logo + full help and exit
     [switch]$DebugSerial = $false    # show serial debug output when reading device info
 )
 
@@ -416,6 +439,38 @@ function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
 }
 
+# ─── Help switch (-Help / -h) ────────────────────────────────────────────────────
+# Shows the logo header, the auto-generated syntax, and the script's own comment-based
+# help (synopsis, description, parameters, examples). Rendered directly from the file
+# rather than via `Get-Help -Full`, because on some platforms / PS versions Get-Help on a
+# script-by-path returns only the auto-syntax. Short-circuits before any device work.
+if ($Help) {
+    OpenKNX_ShowLogo('OpenKNX - Generic Firmware Upload  -  RP2040/RP2350  &  ESP32')
+    $helpTarget = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Path }
+
+    $syntaxLine = (Get-Command $helpTarget -Syntax | Out-String) -split "`r?`n" |
+                  Where-Object { $_ -match '\[' } | Select-Object -Last 1
+    if ($syntaxLine) {
+        Write-Host "SYNTAX" -ForegroundColor Yellow
+        Write-Host ("  " + ($syntaxLine -replace [regex]::Escape($helpTarget), [System.IO.Path]::GetFileName($helpTarget)).Trim())
+    }
+
+    $raw = Get-Content -LiteralPath $helpTarget -Raw
+    $m   = [regex]::Match($raw, '(?s)<#(.*?)#>')
+    if ($m.Success) {
+        $started = $false
+        foreach ($line in ($m.Groups[1].Value -split "`r?`n")) {
+            if ($line -match '^\s*\.[A-Za-z]') { $started = $true }   # skip the ASCII banner above the first keyword
+            if (-not $started) { continue }
+            if     ($line -match '^\s*\.PARAMETER\s+(\S+)')                                             { Write-Host ''; Write-Host ("  -" + $Matches[1]) -ForegroundColor Cyan }
+            elseif ($line -match '^\s*\.(SYNOPSIS|DESCRIPTION|EXAMPLE|NOTES|INPUTS|OUTPUTS|LINK)\b')     { Write-Host ''; Write-Host $Matches[1].ToUpper() -ForegroundColor Yellow }
+            else                                                                                        { Write-Host $line }
+        }
+    }
+    Write-Host
+    exit 0
+}
+
 # Shows a numbered list and lets the user pick one. Returns the chosen string, or $null if empty.
 function Select-FromList($prompt, [string[]]$items) {
     if ($items.Count -eq 0) { return $null }
@@ -607,18 +662,27 @@ function Invoke-EsptoolWriteFlash($esptool, $port, $firmwarePath) {
     try { [Console]::CursorVisible = $false } catch {}
     while ($job.State -eq 'Running') {
         $txt = try { Get-Content $tmp.FullName -Raw -ErrorAction SilentlyContinue } catch { '' }
-        $pct = $null
+        # esptool v5 prints percent as .1f ("  8.5%", "100.0%"); v4 printed integers ("(8 %)").
+        # Capture the whole number incl. optional decimals — matching only \d{1,3} before '%'
+        # grabs the fraction digit of "42.3%" (=> flickering 0-9). We drive the bar from the
+        # numeric value and show esptool's own .1f string. Parse invariant (decimal point, not
+        # the locale comma), so it stays correct on e.g. German systems.
+        $pctStr = $null; $pctNum = $null
         if ($txt) {
-            $ms = [regex]::Matches($txt, '(\d{1,3})\s*%')
-            if ($ms.Count -gt 0) { $pct = [int]$ms[$ms.Count - 1].Groups[1].Value; if ($pct -gt 100) { $pct = 100 } }
+            $ms = [regex]::Matches($txt, '(\d{1,3}(?:\.\d+)?)\s*%')
+            if ($ms.Count -gt 0) {
+                $pctStr = $ms[$ms.Count - 1].Groups[1].Value
+                $pctNum = [double]::Parse($pctStr, [System.Globalization.CultureInfo]::InvariantCulture)
+                if ($pctNum -gt 100) { $pctNum = 100; $pctStr = '100.0' }
+            }
         }
-        if ($null -ne $pct) {
-            if ($pct -ne $lastPct) {
-                $lastPct = $pct
-                $fill = [int]($cells * $pct / 100)
+        if ($null -ne $pctNum) {
+            if ($pctNum -ne $lastPct) {
+                $lastPct = $pctNum
+                $fill = [int]($cells * $pctNum / 100)
                 Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
                 Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
-                Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
+                Write-Host ("]  {0,5} %" -f $pctStr) -ForegroundColor DarkGray -NoNewline
             }
         } else {
             Write-Host ("`r  [" + ([string][char]0x25A1 * $cells) + ']  ' + ('.' * (($spin % 3) + 1)) + '  ') -ForegroundColor DarkGray -NoNewline
@@ -637,7 +701,7 @@ function Invoke-EsptoolWriteFlash($esptool, $port, $firmwarePath) {
     if ($exit -eq 0) {
         Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
         Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
-        Write-Host "]  100 %" -ForegroundColor DarkGray
+        Write-Host "]  100.0 %" -ForegroundColor DarkGray
     } else {
         Write-Host ("`r" + (' ' * ($cells + 16)) + "`r") -NoNewline
     }
@@ -1927,17 +1991,28 @@ if ($Chip -eq 'RP2040') {
     while ($continueFlashing) {
 
         # ── Scan all devices ─────────────────────────────────────────────────
-        Write-Host $s.SearchDevices
-        $bootselPaths = @(ScanBootselPaths)
-        $serialPorts  = @(ScanPicoPorts)
+        if ($SerialPort) {
+            # -SerialPort/-Port/-ComPort given: skip the search, use this port as if it were
+            # the single device found. Classify as a BOOTSEL drive or a running serial port.
+            $devices = @()
+            if (@(ScanBootselPaths) -contains $SerialPort) {
+                $devices += [PSCustomObject]@{ Type='bootsel'; Path=$SerialPort; Label="$SerialPort  $(Get-BootselFamily $SerialPort)  $($s.DeviceInBootsel)"; InfoReadFailed=$false }
+            } else {
+                $devices += [PSCustomObject]@{ Type='serial'; Path=$SerialPort; Label="$SerialPort  $($s.DeviceSerial)"; DeviceInfo=$null; InfoReadFailed=$false }
+            }
+        } else {
+            Write-Host $s.SearchDevices
+            $bootselPaths = @(ScanBootselPaths)
+            $serialPorts  = @(ScanPicoPorts)
 
-        $devices = @()
-        foreach ($p in $bootselPaths) {
-            $fam = Get-BootselFamily $p
-            $devices += [PSCustomObject]@{ Type='bootsel'; Path=$p; Label="$p  $fam  $($s.DeviceInBootsel)"; InfoReadFailed=$false }
-        }
-        foreach ($p in $serialPorts) {
-            $devices += [PSCustomObject]@{ Type='serial'; Path=$p; Label="$p  $($s.DeviceSerial)"; DeviceInfo=$null; InfoReadFailed=$false }
+            $devices = @()
+            foreach ($p in $bootselPaths) {
+                $fam = Get-BootselFamily $p
+                $devices += [PSCustomObject]@{ Type='bootsel'; Path=$p; Label="$p  $fam  $($s.DeviceInBootsel)"; InfoReadFailed=$false }
+            }
+            foreach ($p in $serialPorts) {
+                $devices += [PSCustomObject]@{ Type='serial'; Path=$p; Label="$p  $($s.DeviceSerial)"; DeviceInfo=$null; InfoReadFailed=$false }
+            }
         }
 
         # ── Enrich serial labels with device info (only when multiple devices) ──
@@ -2185,12 +2260,18 @@ elseif ($Chip -eq 'ESP32') {
     while ($continueFlashing) {
 
         # ── Scan serial ports ────────────────────────────────────────────────
-        Write-Host $s.SearchDevices
-        $ports = @(ScanEsp32Ports)
+        if ($SerialPort) {
+            # -SerialPort/-Port/-ComPort given: skip the search, use this port as if it were
+            # the single device found.
+            $devices = @([PSCustomObject]@{ Type='esp32'; Path=$SerialPort; Label="$SerialPort  $($s.DeviceEsp32Serial)"; DeviceInfo=$null; InfoReadFailed=$false })
+        } else {
+            Write-Host $s.SearchDevices
+            $ports = @(ScanEsp32Ports)
 
-        $devices = @()
-        foreach ($p in $ports) {
-            $devices += [PSCustomObject]@{ Type='esp32'; Path=$p; Label="$p  $($s.DeviceEsp32Serial)"; DeviceInfo=$null; InfoReadFailed=$false }
+            $devices = @()
+            foreach ($p in $ports) {
+                $devices += [PSCustomObject]@{ Type='esp32'; Path=$p; Label="$p  $($s.DeviceEsp32Serial)"; DeviceInfo=$null; InfoReadFailed=$false }
+            }
         }
 
         # ── Enrich serial labels with device info (only when multiple devices) ──
