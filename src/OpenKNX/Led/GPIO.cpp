@@ -20,8 +20,7 @@ namespace OpenKNX
             if (_pin < 0)
                 return;
 
-            _isI2C = (_pin > 0x00FF); // Check if this is an I2C expander pin (pins > 0xFF are I2C)
-            // I2C LEDs now support software PWM simulation (via pending pattern)
+            _isI2C = (_pin > 0x00FF); // pins > 0xFF are I2C expander pins
 
             _initialized = true;
             if (!_isI2C && _isDimmable)
@@ -45,32 +44,27 @@ namespace OpenKNX
 
             uint8_t calcBrightness = _isDimmable ? (uint32_t)brightness * _maxBrightness / 255 : brightness;
 
-            // For I2C expanders: Use Manager's global PWM cycle
+            // I2C expanders: software PWM driven by Manager's global cycle
             if (_isI2C)
             {
-                // Get current cycle from Manager (updated every timer interrupt)
                 uint8_t currentCycle = Manager::getPwmCycle();
                 uint8_t pwmSteps = Manager::getPwmSteps();
 
-                // Map brightness to duty cycle (0-pwmSteps)
                 uint8_t dutyCycle;
                 if (calcBrightness == 0) dutyCycle = 0;
                 else if (calcBrightness >= 255)
                     dutyCycle = pwmSteps;
                 else
-                    dutyCycle = (calcBrightness * pwmSteps + 127) / 255; // Scale to 0-pwmSteps
+                    dutyCycle = (calcBrightness * pwmSteps + 127) / 255;
 
-                // Determine desired state based on PWM cycle
                 const bool willBeOn = (currentCycle < dutyCycle);
 
-                // Skip write if no change (brightness same AND state same)
                 if (willBeOn == _lastPwmState && calcBrightness == _currentLedBrightness)
                     return;
 
-                _lastPwmState = willBeOn; // Update state tracker
+                _lastPwmState = willBeOn;
 
-                // PENDING_PATTERN: ISR sets flag, Main Loop writes to async queue
-                // ISR-safe: Never blocking, queue handles async DMA
+                // ISR sets flag only; main loop does the blocking I2C write
                 _pendingI2CState = willBeOn;
                 _pendingI2CBrightness = calcBrightness;
                 _hasPendingI2C = true;
@@ -79,7 +73,6 @@ namespace OpenKNX
             }
             else
             {
-                // Direct GPIO write (non-I2C pin)
                 if (!_isDimmable)
                 {
                     if (calcBrightness == 0)
@@ -88,34 +81,43 @@ namespace OpenKNX
                         openknx.gpio.digitalWrite(_pin, _activeOn);
                 }
                 else
-                    analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness)); // Invert for LOW active
+                    analogWrite(_pin, _activeOn ? calcBrightness : (255 - calcBrightness)); // invert for LOW active
                 _currentLedBrightness = calcBrightness;
             }
         }
 
-        // Flush pending I2C writes - called from main loop, NOT from ISR!
+        // Flush pending I2C write; main loop only, never from ISR
         void GPIO::flushPendingI2C()
         {
             if (!_isI2C || !_hasPendingI2C)
                 return;
 
-            // Main loop context - retry with small delays until success
-            // (safe to wait here, we're not in ISR)
             int result = -1;
             for (int retry = 0; retry < 10 && result != 0; retry++)
             {
                 result = openknx.gpio.digitalWrite(_pin, _pendingI2CState ? _activeOn : !_activeOn);
                 if (result != 0 && retry < 9)
-                    delayMicroseconds(100); // Wait 100µs before retry
+                    delayMicroseconds(100);
             }
 
             if (result == 0)
             {
-                // Success - update cached brightness to the originally requested value
                 _currentLedBrightness = _pendingI2CBrightness;
                 _hasPendingI2C = false;
             }
-            // If still fails after retries, keep pending flag for next loop cycle
+            // still failing after retries: keep pending flag for next loop
+        }
+
+        // Re-assert pin direction (OUTPUT) + level; recovers a PCA9557 CONFIG-register glitch
+        // on the display-shared Wire1 that flips the pin to INPUT (LED dark, unrevivable by writes).
+        // Called at a low rate from Manager::loop() so the glitch self-heals without a reboot.
+        void GPIO::reassertI2C()
+        {
+            if (!_isI2C || !_initialized)
+                return;
+
+            openknx.gpio.pinMode(_pin, OUTPUT); // direction first: the actual recovery
+            openknx.gpio.digitalWrite(_pin, _lastPwmState ? _activeOn : !_activeOn);
         }
     } // namespace Led
 } // namespace OpenKNX
