@@ -1,3 +1,12 @@
+/**
+ * @file        pio_i2c.cpp
+ * @brief       PIO I2C Driver for RP2040/RP2350 microcontrollers
+ * @version     0.0.1
+ * @date        2025-10-30
+ * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@colak.de)
+ *              Licensed under GNU GPL v3.0 using the BSD-3-Clause license for
+ *              the PIO I2C program code provided by Raspberry Pi.
+ */
 #if defined(ARDUINO_ARCH_RP2040)
 
     #include "pio_i2c.h"
@@ -244,35 +253,86 @@ bool pio_i2c::check_error(PIO pio, uint sm)
 }
 
 /*
+ * @brief Classic 9-clock SDA bus-recovery for a wedged/stuck bus.
+ *
+ * A slave interrupted mid-byte can hold SDA low; bit-bang up to 9 SCL pulses to walk it
+ * through the byte + ACK so it releases SDA, then issue a manual STOP. Temporarily hands
+ * the pins to SIO, then restores PIO control. Only call when the SM is idle.
+ *
+ * @return true if SDA is released afterwards, false if still stuck.
+ */
+bool pio_i2c::bus_recovery()
+{
+    if (!_inst) return false; // SAFE: constructor failed
+
+    const uint sda = _inst->sda;
+    const uint scl = _inst->scl;
+
+    // Half-period for the recovery clock (~100 kHz regardless of configured speed)
+    const uint32_t half_us = 5;
+
+    // Hand the pins to SIO so we can bit-bang open-drain.
+    gpio_set_function(sda, GPIO_FUNC_SIO);
+    gpio_set_function(scl, GPIO_FUNC_SIO);
+    gpio_pull_up(sda);
+    gpio_pull_up(scl);
+    // Open-drain: never drive high. High == input (let pull-up win), low == output-low.
+    gpio_put(sda, 0);
+    gpio_put(scl, 0);
+    gpio_set_dir(sda, GPIO_IN); // release SDA
+    gpio_set_dir(scl, GPIO_IN); // release SCL
+
+    // Up to 9 SCL pulses while SDA stays low.
+    for (int i = 0; i < 9 && gpio_get(sda) == 0; i++)
+    {
+        gpio_set_dir(scl, GPIO_OUT); // drive SCL low
+        busy_wait_us(half_us);
+        gpio_set_dir(scl, GPIO_IN); // release SCL high
+        busy_wait_us(half_us);
+    }
+
+    // Manual STOP: SDA low -> SCL high -> SDA high (rising SDA while SCL high).
+    gpio_set_dir(sda, GPIO_OUT); // SDA low
+    busy_wait_us(half_us);
+    gpio_set_dir(scl, GPIO_IN); // SCL high
+    busy_wait_us(half_us);
+    gpio_set_dir(sda, GPIO_IN); // SDA high -> STOP
+    busy_wait_us(half_us);
+
+    const bool released = (gpio_get(sda) != 0);
+
+    // Give the pins back to the PIO (open-drain via OEOVER=INVERT) and re-arm the SM.
+    pio_gpio_init(_inst->pio, sda);
+    gpio_set_oeover(sda, GPIO_OVERRIDE_INVERT);
+    pio_gpio_init(_inst->pio, scl);
+    gpio_set_oeover(scl, GPIO_OVERRIDE_INVERT);
+    reset();
+
+    return released;
+}
+
+/*
  * @brief Resume operation after an error in the PIO I2C instance
- * SAFETY: Interrupt-safe recovery using SDK atomics
  */
 void pio_i2c::resume_after_error(PIO pio, uint sm)
 {
-    // CRITICAL: Disable interrupts during recovery to prevent concurrent access
+    // Interrupts off during recovery to prevent concurrent access.
     uint32_t irq_state = save_and_disable_interrupts();
 
-    // Clear both FIFOs atomically (SDK function is safer than manual clear)
     pio_sm_clear_fifos(pio, sm);
-
-    // Clear the error interrupt IRQ
     pio_interrupt_clear(pio, sm);
+    pio_sm_exec(pio, sm, pio_encode_jmp(_inst->prog_offset + i2c_offset_entry_point)); // Jump back to entry point
 
-    // Jump back to entry point
-    pio_sm_exec(pio, sm, pio_encode_jmp(_inst->prog_offset + i2c_offset_entry_point));
-
-    // CRITICAL: Re-enable interrupts
     restore_interrupts(irq_state);
 }
 
 /*
  * @brief Enable/disable RX autopush for the PIO I2C state machine
- * CRITICAL: Must NOT disable SM during operation - causes crashes with concurrent transfers!
  */
 void pio_i2c::rx_enable(PIO pio, uint sm, bool en)
 {
-    // SAFE: Direct bit manipulation WITHOUT stopping the state machine
-    // The RP2040 hardware allows changing AUTOPUSH while SM is running
+    // Toggle AUTOPUSH without stopping the SM (allowed while running; stopping it crashes
+    // concurrent transfers).
     if (en)
         hw_set_bits(&pio->sm[sm].shiftctrl, PIO_SM0_SHIFTCTRL_AUTOPUSH_BITS);
     else
@@ -280,15 +340,21 @@ void pio_i2c::rx_enable(PIO pio, uint sm, bool en)
 }
 
 /*
- * @brief Put data into the PIO I2C TX FIFO or set error if full
+ * @brief Put data into the PIO I2C TX FIFO with a bounded wait.
+ * Bounded by _timeout_us and bails out on a bus error so a wedged FIFO can't hang the CPU.
+ * @return true if the word was queued, false on timeout (treat as bus error).
  */
-void pio_i2c::put16(PIO pio, uint sm, uint16_t data)
+bool pio_i2c::put16(PIO pio, uint sm, uint16_t data)
 {
+    uint32_t start = time_us_32();
     while (pio_sm_is_tx_fifo_full(pio, sm))
     {
+        if (check_error(pio, sm)) return false;                 // NACK/error: stop feeding
+        if ((time_us_32() - start) > _timeout_us) return false; // Wedged FIFO (honours setTimeout)
         tight_loop_contents();
     }
     *(volatile io_rw_16*)&pio->txf[sm] = data;
+    return true;
 }
 
 /*
@@ -339,11 +405,8 @@ void pio_i2c::stop(PIO pio, uint sm)
  */
 void pio_i2c::repstart(PIO pio, uint sm)
 {
-    // BURST MODE SAFETY: pio_i2c_put16_nocheck blocks when FIFO full
-    // This provides automatic synchronization:
-    // - If previous DMA still running → FIFO full → blocks here
-    // - Acts as natural flow control without explicit wait_idle()
-    // - No manual sync needed! Hardware handles it.
+    // put16_nocheck blocks on a full FIFO, giving automatic flow control vs a still-running
+    // DMA without an explicit wait_idle().
     pio_i2c_put16_nocheck(pio, sm, 3u << 10);
     pio_i2c_put16_nocheck(pio, sm, set_scl_sda_program_instructions[I2C_SC0_SD1]); // Release SDA
     pio_i2c_put16_nocheck(pio, sm, set_scl_sda_program_instructions[I2C_SC1_SD1]); // Release SCL
@@ -359,7 +422,7 @@ void pio_i2c::wait_idle(PIO pio, uint sm)
     pio->fdebug = 1u << (PIO_FDEBUG_TXSTALL_LSB + sm);
 
     uint32_t start = time_us_32();
-    uint32_t timeout = PIO_I2C_TIMEOUT_US;
+    uint32_t timeout = _timeout_us; // ROBUSTNESS: honour the configured setTimeout budget
 
     while (!(pio->fdebug & (1u << (PIO_FDEBUG_TXSTALL_LSB + sm))))
     {
@@ -401,6 +464,9 @@ int pio_i2c::_write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uin
     #endif
     rx_enable(pio, sm, false); // Disable RX
 
+    // Count data bytes clocked out to distinguish address NACK (none sent) from data NACK.
+    uint dataSent = 0;
+
     uint8_t addr_byte = (addr << 1) | 0;
     put16(pio, sm, (addr_byte << 1) | 1u); // Shift to bits 8:1, add NAK bit
 
@@ -411,6 +477,7 @@ int pio_i2c::_write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uin
             --len;
             // Data byte: Instr=0, Final=(last byte), Data, NAK=1
             put16(pio, sm, (*txbuf++ << 1) | ((len == 0) << 9) | 1u);
+            ++dataSent;
         }
     }
 
@@ -425,7 +492,8 @@ int pio_i2c::_write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uin
 
     if (check_error(pio, sm)) // Check for errors
     {
-        err = -1;
+        // No data byte accepted yet => address NACK, else data NACK.
+        err = (dataSent == 0) ? PIO_I2C_ERR_ADDR_NACK : PIO_I2C_ERR_DATA_NACK;
         resume_after_error(pio, sm); // Resume operation after error
 
         // Do we need a extra Cleanup after error. Using resume_after_error should be enough
@@ -511,9 +579,12 @@ int pio_i2c::_read_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint
         stop(pio, sm); // Send STOP condition
     }
 
+    // Address ACK never received (first still true) => address NACK.
+    const int readErr = first ? PIO_I2C_ERR_ADDR_NACK : PIO_I2C_ERR_OTHER;
+
     if (check_error(pio, sm))
     {
-        err = -1;
+        err = readErr;
         resume_after_error(pio, sm); // Resume operation after error
 
     #ifdef OPENKNX_PIO_I2C_DMA
@@ -527,7 +598,7 @@ int pio_i2c::_read_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint
 
         if (check_error(pio, sm)) // Check for errors again
         {
-            err = -1;
+            err = readErr;
             resume_after_error(pio, sm); // Resume operation after error
 
     #ifdef OPENKNX_PIO_I2C_DMA
@@ -560,108 +631,80 @@ int pio_i2c::_write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len
 
     if (dma_channel_is_busy(_dma_tx))
     {
-        return -2; // Busy
+        return PIO_I2C_BUSY; // Busy (distinct from a NACK)
     }
 
         #ifdef OPENKNX_DEBUG
     _dma_write_count++; // Count DMA transfers
         #endif
 
-    // SAFETY: Enforce buffer size limit (MAX_ENTRY_DATA=28, buffer=32)
+    // Clamp to the DMA buffer size (28); should not happen with correct queue sizing.
     if (len > 28)
     {
-        // CRITICAL: Buffer overflow prevention - truncate silently
-        // This should never happen with proper queue sizing, but prevents crashes
         len = 28;
     }
 
     int err = 0;
 
-    // PERFORMANCE: pio_interrupt_clear() removed - start/repstart do it internally!
-    // Repeated START: Wenn letzter Transfer kein STOP hatte, RESTART senden
+    // start/repstart clear the interrupt internally, so no pio_interrupt_clear() here.
+    // Repeated START if the last transfer had no STOP.
     if (!_last_send_stop)
     {
-        repstart(pio, sm); // RESTART condition (clears interrupt internally)
+        repstart(pio, sm); // RESTART condition
     }
     else
     {
-        start(pio, sm); // START condition (clears interrupt internally)
+        start(pio, sm); // START condition
     }
     rx_enable(pio, sm, false);
 
     uint8_t addr_byte = (addr << 1) | 0;
     put16(pio, sm, (addr_byte << 1) | 1u); // Shift to bits 8:1, add NAK bit
 
-    // === BURST MODE: Prepare all data for DMA ===
-    // CRITICAL: Use instance buffer to prevent static buffer corruption
-    for (size_t i = 0; i < len; i++) // SAFE: len already clamped to 28
+    // Prepare all data into the instance buffer (a static one would corrupt).
+    for (size_t i = 0; i < len; i++) // len already clamped to 28
     {
         _dma_buffer[i] = (txbuf[i] << 1) | ((i == len - 1) << 9) | 1u;
     }
 
-    // === OPTIMIZED DMA CONFIG: High-Priority + DREQ Pacing ===
+    // DMA config: 16-bit, high priority, DREQ-paced to PIO TX-FIFO space.
     dma_channel_config c = dma_channel_get_default_config(_dma_tx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_16);
     channel_config_set_read_increment(&c, true);
     channel_config_set_write_increment(&c, false);
-
-    // CRITICAL: DREQ pacing - DMA waits for PIO FIFO space
-    // Triggers when TX FIFO has space (threshold managed by PIO)
     channel_config_set_dreq(&c, pio_get_dreq(pio, sm, true));
-
-    // HIGH PRIORITY: Display data gets priority over other DMA
     channel_config_set_high_priority(&c, true);
 
-    // Configure channel WITHOUT starting (last param = false)
+    // Configure without starting (avoids a race), then start.
     dma_channel_configure(
         _dma_tx,
         &c,
         &pio->txf[sm],
         _dma_buffer,
         len,
-        false // CRITICAL: Don't start immediately - prevents race condition
-    );
+        false);
 
-    // === BURST LAUNCH: Start DMA, let it run! ===
     dma_channel_start(_dma_tx);
 
-    // === SMART WAIT STRATEGY ===
-    // Only wait when absolutely necessary:
-    // 1. send_stop=true: Must wait for STOP (protocol requirement)
-    // 2. send_stop=false: Return immediately! Next repstart() will sync if needed
-    //
-    // MAGIC: PIO FIFO (8 deep) + DREQ throttling = automatic flow control
-    // - DMA feeds PIO at exactly the right rate
-    // - No manual wait_idle() needed between chunks!
-    // - CPU can process next queue entry while DMA+PIO work in parallel
-
+    // Only wait when send_stop (protocol STOP); otherwise return immediately and let the next
+    // repstart() sync on the FIFO. PIO FIFO + DREQ throttling gives automatic flow control.
     if (send_stop)
     {
-        // === FINAL TRANSFER: Protocol-compliant STOP ===
         dma_channel_wait_for_finish_blocking(_dma_tx);
         wait_idle(pio, sm); // Ensure bus idle before STOP
         stop(pio, sm);
 
         if (pio->irq & (1u << sm))
         {
-            err = -1;
+            err = PIO_I2C_ERR_OTHER; // DMA burst can't attribute addr vs data NACK
             resume_after_error(pio, sm);
         }
         _last_send_stop = true;
     }
     else
     {
-        // === MID-BATCH: Fire & Forget! ===
-        // Don't wait! Let DMA+PIO run in parallel with CPU.
-        // SAFETY: Next repstart() will block on FIFO if PIO is still busy.
-        // This is the KEY to high throughput:
-        // - Transfer 1 starts → return immediately
-        // - CPU prepares Transfer 2 while Transfer 1 runs
-        // - Transfer 2 starts → FIFO automatically waits if full
-        // - Pipeline stays full, no gaps!
-
+        // Mid-batch: fire-and-forget; the next repstart() blocks on the FIFO if PIO is still busy.
         _last_send_stop = false;
-        // NO WAIT! Return now, processQueue() continues!
     }
 
     return err;
@@ -681,21 +724,17 @@ int pio_i2c::_read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len,
     // Check if previous DMA transfer still busy
     if (dma_channel_is_busy(_dma_tx))
     {
-        return -2; // Busy, caller should retry
+        return PIO_I2C_BUSY; // Busy, caller should retry
     }
 
-    // CRITICAL: Check if RX DMA is also busy (prevent simultaneous TX+RX DMA)
-    // Simultaneous DMA on both channels can cause hardware conflicts
+    // Simultaneous TX+RX DMA can conflict, so bail if either channel is busy.
     if (dma_channel_is_busy(_dma_rx))
     {
-        return -2; // RX busy, wait for it to complete
+        return PIO_I2C_BUSY; // RX busy, wait for it to complete
     }
-
-    // CRITICAL: Check if TX DMA is also busy (prevent simultaneous TX+RX DMA)
-    // Simultaneous DMA on both channels can cause hardware conflicts
     if (dma_channel_is_busy(_dma_tx))
     {
-        return -2; // TX busy, wait for it to complete
+        return PIO_I2C_BUSY; // TX busy, wait for it to complete
     }
 
         #ifdef OPENKNX_DEBUG
@@ -704,15 +743,14 @@ int pio_i2c::_read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len,
 
     int err = 0;
 
-    // PERFORMANCE: pio_interrupt_clear() removed - start/repstart do it internally!
-    // Repeated START: Wenn letzter Transfer kein STOP hatte, RESTART senden
+    // start/repstart clear the interrupt internally. Repeated START if the last had no STOP.
     if (!_last_send_stop)
     {
-        repstart(pio, sm); // RESTART condition (clears interrupt internally)
+        repstart(pio, sm); // RESTART condition
     }
     else
     {
-        start(pio, sm); // START condition (clears interrupt internally)
+        start(pio, sm); // START condition
     }
     rx_enable(pio, sm, true);
 
@@ -731,59 +769,48 @@ int pio_i2c::_read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len,
         put16(pio, sm, (0xffu << 1) | (i == len - 1 ? (1u << 9) | 1u : 0));
     }
 
-    // CRITICAL: Wait for PIO to process read commands before starting DMA
-    // PIO needs time to send address and read commands before RX FIFO gets data
-    // Without this, DMA starts reading from empty RX FIFO → hardware fault!
+    // Wait for PIO to start clocking before DMA, else DMA reads an empty RX FIFO (hardware fault).
     while (pio_sm_is_tx_fifo_empty(pio, sm))
     {
-        tight_loop_contents(); // Busy wait for PIO to start processing
+        tight_loop_contents();
     }
 
-    // CRITICAL: Configure DMA - DO NOT start immediately to prevent race conditions
-    // Starting immediately while DMA is busy causes hardware corruption
+    // Configure without starting (avoids a race).
     dma_channel_config c = dma_channel_get_default_config(_dma_rx);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
     channel_config_set_read_increment(&c, false);              // Fixed read (FIFO)
     channel_config_set_write_increment(&c, true);              // Increment write
     channel_config_set_dreq(&c, pio_get_dreq(pio, sm, false)); // RX DREQ
 
-    // Configure channel WITHOUT starting (last param = false)
     dma_channel_configure(
         _dma_rx,
         &c,
         rxbuf,         // Write to buffer
         &pio->rxf[sm], // Read from RX FIFO
         len + 1,       // +1 for address ACK
-        false          // Don't start immediately - prevents race condition
-    );
+        false);
 
-    // CRITICAL: Start DMA transfer AFTER configuration is complete
-    // This ensures atomic configuration before DMA engine starts reading
     dma_channel_start(_dma_rx);
 
-    // Wait for completion (read must complete before STOP)
+    // Read must complete before STOP.
     dma_channel_wait_for_finish_blocking(_dma_rx);
 
-    // Send STOP immediately after DMA completion (before processing data!)
     if (send_stop)
     {
         stop(pio, sm);
     }
 
-    // ALWAYS wait for bus idle (critical for Repeated START)
-    wait_idle(pio, sm);
+    wait_idle(pio, sm); // Wait for bus idle (needed for Repeated START)
 
-    // NOW safe to process data
-    // SAFETY: Only move if len > 0 (prevents reading rxbuf[1] when len=0)
+    // Discard first byte (address ACK); only when len > 0 to avoid reading rxbuf[1].
     if (len > 0)
     {
-        memmove(rxbuf, rxbuf + 1, len); // Discard first byte (address ACK)
+        memmove(rxbuf, rxbuf + 1, len);
     }
 
-    // PERFORMANCE: Inline error-check (50-100ns faster than function call)
     if (pio->irq & (1u << sm))
     {
-        err = -1;
+        err = PIO_I2C_ERR_OTHER; // DMA read: report generic bus error
         resume_after_error(pio, sm);
         // Bei Error: State zurücksetzen!
         _last_send_stop = true;

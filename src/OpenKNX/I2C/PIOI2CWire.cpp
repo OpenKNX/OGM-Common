@@ -38,13 +38,11 @@ namespace OpenKNX
     #endif
         {
     #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-            // Initialize Single Queue
-            _queue.head = 0; // Queue head index (next write position)
-            _queue.tail = 0; // Queue tail index (next read position)
-            _queue.count = 0; // Current number of entries in the queue
+            _queue.head = 0;                                 // Queue head index (next write position)
+            _queue.tail = 0;                                 // Queue tail index (next read position)
             memset(_queue.buffer, 0, sizeof(_queue.buffer)); // Clear queue entries
-            memset(_txBuffer, 0, sizeof(_txBuffer)); // Clear TX buffer
-            memset(_rxBuffer, 0, sizeof(_rxBuffer)); // Clear RX buffer
+            memset(_txBuffer, 0, sizeof(_txBuffer));         // Clear TX buffer
+            memset(_rxBuffer, 0, sizeof(_rxBuffer));         // Clear RX buffer
     #endif
         }
 
@@ -61,15 +59,6 @@ namespace OpenKNX
         void PIOI2CWire::begin()
         {
             logDebugP("begin called");
-
-    #if defined(OPENKNX_I2C_USE_SPINLOCK)
-            // Initialize spinlock once (shared across all instances)
-            if (_i2cLock == nullptr)
-            {
-                _i2cLock = spin_lock_init(spin_lock_claim_unused(true));
-                logInfoP("Hardware spinlock enabled for ISR-safe I2C (try-lock mode)");
-            }
-    #endif
 
             if (_pioi2c != nullptr && _pioi2c->_inst)
             {
@@ -108,6 +97,9 @@ namespace OpenKNX
 
             if (_pioi2c && _pioi2c->_inst)
             {
+                // Push the configured timeout down so wait_idle()/put16() use it.
+                _pioi2c->set_timeout_us(_timeout_ms * 1000UL);
+
                 logDebugP("[OK] PIO%d-SM%d @ %dkHz",
                           pio_get_index(_pioi2c->get_pio()),
                           _pioi2c->get_sm(),
@@ -183,6 +175,7 @@ namespace OpenKNX
         {
             _address = address;
             _txLen = 0;
+            _txOverflow = false; // Reset "data too long" flag for this transmission
         }
 
         /*
@@ -197,6 +190,7 @@ namespace OpenKNX
                 _txBuffer[_txLen++] = data;
                 return 1;
             }
+            _txOverflow = true; // overflow -> endTransmission returns 1 (data too long)
             return 0;
         }
 
@@ -208,68 +202,87 @@ namespace OpenKNX
          */
         size_t PIOI2CWire::write(const uint8_t* data, size_t quantity)
         {
-            size_t toCopy = (quantity < (sizeof(_txBuffer) - _txLen)) ? quantity : (sizeof(_txBuffer) - _txLen);
+            size_t space = sizeof(_txBuffer) - _txLen;
+            size_t toCopy = (quantity < space) ? quantity : space;
             memcpy(_txBuffer + _txLen, data, toCopy);
             _txLen += toCopy;
+            if (toCopy < quantity)
+                _txOverflow = true; // not all bytes fit -> report "data too long"
             return toCopy;
         }
 
         /*
-         * @brief End transmission to I2C slave device
-         * @param stop Whether to send a STOP condition after transmission
-         * @return 0 on success, 4 on error
+         * @brief Map a pio_i2c transfer result (0/-1/-2/-3) to an Arduino TwoWire
+         *        endTransmission() status code (0/4/2/3).
+         */
+        static inline uint8_t pioResultToTwoWire(int res)
+        {
+            switch (res)
+            {
+                case pio_i2c::PIO_I2C_OK: return 0;            // success
+                case pio_i2c::PIO_I2C_ERR_ADDR_NACK: return 2; // NACK on address
+                case pio_i2c::PIO_I2C_ERR_DATA_NACK: return 3; // NACK on data
+                default: return 4;                             // other error
+            }
+        }
+
+        /*
+         * @brief End transmission to I2C slave device (Arduino TwoWire semantics).
+         *
+         * Return codes: 0 success, 1 data too long, 2 addr NACK, 3 data NACK, 4 other.
+         *
+         * Sync/async rule (top-to-bottom): overflow -> 1; probe / repeated-START / small write
+         * (<= ASYNC_MIN_LEN) / oversized (> MAX_ENTRY_DATA) all run SYNC and return the real code;
+         * otherwise fire-and-forget async queue returning 0 = "queued". Sync on repeated-START
+         * guarantees the reg-pointer write is on the wire before the caller's requestFrom.
+         * With ASYNC_MIN_LEN >= MAX_ENTRY_DATA the async band is empty (dormant here), but
+         * processQueue() still serves LED/probe enqueues.
          */
         uint8_t PIOI2CWire::endTransmission(bool stop)
         {
             if (!_pioi2c) return 4;
 
-    #if defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
-            // === Single Queue Mode ===
-
-            // Validate length (fallback for edge cases >29 bytes - extremely rare)
-            if (_txLen > MAX_ENTRY_DATA)
+            // Data that never fit the TX buffer is reported as "data too long" (1), not sent short.
+            if (_txOverflow)
             {
-                // Blocking fallback for oversized transfers (should never happen in practice)
-                int res = _pioi2c->write_blocking(_address, _txBuffer, _txLen, !stop);
                 _txLen = 0;
-                return (res < 0) ? 4 : 0;
+                _txOverflow = false;
+                return 1;
             }
 
-            // Enqueue to single queue with stop flag
+    #if defined(OPENKNX_I2C_USE_ASYNC_QUEUE)
+            // Probe / repeated-START / small / oversized writes run SYNC under the SM ownership
+            // flag and return the real code; only larger stop-terminated writes go async below.
+            const bool runSync = (_txLen == 0) ||             // probe
+                                 (!stop) ||                   // repeated-START, read follows
+                                 (_txLen <= ASYNC_MIN_LEN) || // small register/command
+                                 (_txLen > MAX_ENTRY_DATA);   // oversized, unqueueable
+            if (runSync)
+            {
+                if (!tryLockSM()) return 4; // SM busy elsewhere: report other error, no spin
+                int res = _pioi2c->write_blocking(_address, _txBuffer, _txLen, !stop);
+                unlockSM();
+                _txLen = 0;
+                uint8_t code = pioResultToTwoWire(res);
+                _lastTxStatus = code;
+                return code;
+            }
+
+            // Fire-and-forget: enqueue and return 0 == "queued" (not wire-confirmed); full -> 4.
             bool queued = enqueue(_address, _txBuffer, _txLen, stop);
             _txLen = 0;
-
-            return queued ? 0 : 4; // 0 = success, 4 = queue full
-
-    #elif defined(OPENKNX_I2C_USE_SPINLOCK)
-            // Hardware spinlock with non-blocking try-lock for ISR safety
-            // If called from ISR and Display holds lock: skip update, retry in 10ms
-            // If called from main thread: this will succeed immediately (no contention from ISR)
-            if (!spin_try_lock_unsafe(_i2cLock))
-            {
-                // Lock busy (Display using I2C) - skip this update
-                _tryLockFailCount++;
-                if (_tryLockFailCount % 100 == 0)
-                {
-                    logDebugP("I2C try-lock failed %lu times (success: %lu)", _tryLockFailCount, _tryLockSuccessCount);
-                }
-                return 4; // I2C busy error
-            }
-
-            _tryLockSuccessCount++;
-            int res = _pioi2c->write_blocking(_address, _txBuffer, _txLen, !stop);
-            spin_unlock_unsafe(_i2cLock);
-            _txLen = 0;
-            return (res < 0) ? 4 : 0;
+            if (!queued) return 4;
+            return 0; // queued; see lastAsyncError()/asyncPending()
 
     #else
-            // Simple blocking mode (PENDING_PATTERN or no safety)
-            // Note: PENDING_PATTERN logic is handled in LED::GPIO layer,
-            // not here in I2C driver. LEDs set _hasPendingI2C flag,
-            // then flushPendingI2C() calls this method from main loop.
+            // Simple blocking mode, under the SM ownership flag for race-safety.
+            if (!tryLockSM()) return 4; // SM busy: report other error rather than corrupt
             int res = _pioi2c->write_blocking(_address, _txBuffer, _txLen, !stop);
+            unlockSM();
             _txLen = 0;
-            return (res < 0) ? 4 : 0;
+            uint8_t code = pioResultToTwoWire(res);
+            _lastTxStatus = code;
+            return code;
     #endif
         }
 
@@ -284,16 +297,14 @@ namespace OpenKNX
         {
             if (!_pioi2c) return -1;
 
-    #if defined(OPENKNX_I2C_USE_SPINLOCK)
-            // Hardware spinlock - blocking OK here (not called from ISR)
-            uint32_t saved_irq = spin_lock_blocking(_i2cLock);
+            // Take SM ownership so a concurrent processQueue() drain can't touch the FIFO mid-read.
+            if (!tryLockSM()) return -1;
             int res = _pioi2c->_read_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm, address, data, length);
-            spin_unlock(_i2cLock, saved_irq);
+            // Generic (non-NACK) error is the wedged-bus signature -> recover.
+            if (res == pio_i2c::PIO_I2C_ERR_OTHER) _pioi2c->bus_recovery();
+            unlockSM();
+            _lastTxStatus = pioResultToTwoWire(res);
             return res;
-    #else
-            // Direct blocking read (no busy flag needed with queue)
-            return _pioi2c->_read_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm, address, data, length);
-    #endif
         }
 
         /*
@@ -307,16 +318,27 @@ namespace OpenKNX
         {
             if (!_pioi2c) return -1;
 
-    #if defined(OPENKNX_I2C_USE_SPINLOCK)
-            // Hardware spinlock - blocking OK here (not called from ISR)
-            uint32_t saved_irq = spin_lock_blocking(_i2cLock);
+            // Same SM ownership flag as reads/queue drain.
+            if (!tryLockSM()) return -1; // SM busy: don't corrupt an in-flight transfer
             int res = _pioi2c->_write_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm, address, data, length);
-            spin_unlock(_i2cLock, saved_irq);
+            // Generic (non-NACK) error -> wedged bus -> 9-clock recovery.
+            if (res == pio_i2c::PIO_I2C_ERR_OTHER) _pioi2c->bus_recovery();
+            unlockSM();
+            _lastTxStatus = pioResultToTwoWire(res);
             return res;
-    #else
-            // Direct blocking write (no busy flag needed with queue)
-            return _pioi2c->_write_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm, address, data, length);
-    #endif
+        }
+
+        /*
+         * @brief Trigger a 9-clock SDA bus-recovery on a stuck bus.
+         * @return true if SDA was released, false otherwise (or not initialised / SM busy).
+         */
+        bool PIOI2CWire::busRecovery()
+        {
+            if (!_pioi2c) return false;
+            if (!tryLockSM()) return false; // SM busy: skip, retry later (no spin)
+            bool ok = _pioi2c->bus_recovery();
+            unlockSM();
+            return ok;
         }
 
         /*
@@ -330,90 +352,14 @@ namespace OpenKNX
         {
             if (!_pioi2c) return 0;
 
-    #if defined(OPENKNX_I2C_USE_SPINLOCK)
-            // Try non-blocking lock first (ISR-safe)
-            if (!spin_try_lock_unsafe(_i2cLock))
-            {
-                // I2C bus busy - skip this read if called from ISR
-                _tryLockFailCount++;
-
-                // Debug logging every 100 failures
-                if (_tryLockFailCount % 100 == 0)
-                {
-                    logDebugP("I2C requestFrom: spin_try_lock failed %lu times (success: %lu)",
-                              _tryLockFailCount, _tryLockSuccessCount);
-                }
-                return 0;
-            }
-            _tryLockSuccessCount++;
-
+            // Reads drive the same PIO SM as the queued writes, so serialize via the SM flag.
+            if (!tryLockSM()) return 0; // SM busy: no bytes read (non-blocking, no spin)
             int res = _pioi2c->read_blocking(address, _rxBuffer, quantity, !stop);
-            spin_unlock_unsafe(_i2cLock);
+            // Generic (non-NACK) error -> wedged bus -> 9-clock recovery.
+            if (res == pio_i2c::PIO_I2C_ERR_OTHER) _pioi2c->bus_recovery();
+            unlockSM();
 
-            if (res == 0)
-            {
-                _rxLen = quantity;
-                _rxPos = 0;
-                return quantity;
-            }
-            _rxLen = _rxPos = 0;
-            return 0;
-    #else
-            // Direct blocking read (no busy flag needed with queue)
-            int res = _pioi2c->read_blocking(address, _rxBuffer, quantity, !stop);
-
-            if (res == 0)
-            {
-                _rxLen = quantity;
-                _rxPos = 0;
-                return quantity;
-            }
-            _rxLen = _rxPos = 0;
-            return 0;
-    #endif
-        }
-
-    #if defined(OPENKNX_I2C_USE_SPINLOCK)
-        /*
-         * @brief Try to acquire I2C lock (non-blocking, ISR-safe)
-         * @return true if lock acquired, false if busy
-         */
-        bool PIOI2CWire::tryLockI2C()
-        {
-            if (!spin_try_lock_unsafe(_i2cLock))
-            {
-                _tryLockFailCount++;
-                if (_tryLockFailCount % 100 == 0)
-                {
-                    logDebugP("I2C tryLock failed %lu times (success: %lu)",
-                              _tryLockFailCount, _tryLockSuccessCount);
-                }
-                return false;
-            }
-            _tryLockSuccessCount++;
-            return true;
-        }
-
-        /*
-         * @brief Release I2C lock
-         */
-        void PIOI2CWire::unlockI2C()
-        {
-            spin_unlock_unsafe(_i2cLock);
-        }
-
-        /*
-         * @brief Internal requestFrom without lock (for use within locked sections)
-         * @param address I2C slave address
-         * @param quantity Number of bytes to request
-         * @param stop Whether to send STOP after read
-         * @return Number of bytes read
-         */
-        size_t PIOI2CWire::requestFrom_locked(uint8_t address, size_t quantity, bool stop)
-        {
-            if (!_pioi2c) return 0;
-
-            int res = _pioi2c->read_blocking(address, _rxBuffer, quantity, !stop);
+            _lastTxStatus = pioResultToTwoWire(res);
 
             if (res == 0)
             {
@@ -424,7 +370,6 @@ namespace OpenKNX
             _rxLen = _rxPos = 0;
             return 0;
         }
-    #endif
 
         /*
          * @brief Check available bytes to read
@@ -460,58 +405,58 @@ namespace OpenKNX
         // ========================================
 
         /*
-         * @brief Enqueue I2C transfer to single queue (ISR-safe)
-         * @param address I2C device address
-         * @param data Data buffer to send
-         * @param length Data length (1-29 bytes)
+         * @brief Enqueue an I2C transfer into the SPSC ring (producer side, single context).
+         * @param address   I2C device address
+         * @param data      Data buffer to send (may be nullptr when length==0)
+         * @param length    Data length 0..MAX_ENTRY_DATA. length==0 is a valid address-only probe.
          * @param send_stop Send STOP condition (false = Repeated START)
-         * @return true if enqueued, false if queue full
+         * @return true if enqueued; false (counted as overflow) if the queue is full or oversized.
          */
         bool PIOI2CWire::enqueue(uint8_t address, const uint8_t* data, uint16_t length, bool send_stop)
         {
-            // Validate length
-            if (length == 0 || length > MAX_ENTRY_DATA)
+            // Oversize is a caller error -> count as overflow, don't truncate.
+            if (length > MAX_ENTRY_DATA)
             {
-                return false; // Invalid length
+                _queueOverflows++;
+                return false;
             }
 
-            // Atomic queue-full check using count (leave 1 slot empty)
+            // Acquire tail; leave one slot empty to distinguish full from empty.
             DMB_ACQUIRE();
-            uint16_t currentCount = _queue.count;
-            if (currentCount >= (QUEUE_SIZE - 1))
+            uint16_t head = _queue.head;
+            uint16_t tail = _queue.tail;
+            uint16_t nextHead = (head + 1) & QUEUE_MASK;
+            if (nextHead == (tail & QUEUE_MASK))
             {
                 _queueOverflows++;
                 return false; // Queue full
             }
-
-            // Get current head
-            uint16_t head = _queue.head;
-            uint16_t nextHead = (head + 1) & QUEUE_MASK;
 
             // Write entry (direct assignment for optimal speed)
             _queue.buffer[head].address = address;
             _queue.buffer[head].length = length;
             _queue.buffer[head].send_stop = send_stop;
 
-            // Fast memcpy for data
-            if (data != nullptr)
+            // Fast memcpy for data (skip for zero-length probes)
+            if (length > 0 && data != nullptr)
             {
                 memcpy(_queue.buffer[head].data, data, length);
             }
 
-            // Release barrier before updating head and incrementing count
+            // Release: publish the entry before advancing head.
             DMB_RELEASE();
             _queue.head = nextHead;
-            _queue.count++; // Increment count atomically
 
             return true;
         }
 
         /*
-         * @brief Process queue with DMA-aware batching
-         * Call from Main Loop! Max 10 entries per call (~500µs blocking time)
-         * With DMA: non-blocking, returns immediately
-         * Without DMA: blocking per entry (~50µs each)
+         * @brief Drain the SPSC ring (consumer side). Call from the main loop.
+         *
+         * The whole drain holds the SM ownership flag (a software token, not interrupts-off, so
+         * the watchdog/USB keep running), so it never touches the SM/FIFO concurrently with a
+         * read. If a read owns the SM, the drain defers to the next call (no spin). Each drained
+         * write's result is stored in _lastTxStatus and surfaced via lastAsyncError().
          */
         void PIOI2CWire::processQueue()
         {
@@ -528,39 +473,36 @@ namespace OpenKNX
             }
         #endif
 
-            // Acquire barrier before reading count
+            // Derive occupancy from head/tail (acquire the producer's published head).
             DMB_ACQUIRE();
-            uint16_t currentCount = _queue.count;
+            uint16_t head = _queue.head;
+            uint16_t tail = _queue.tail;
+            uint16_t currentCount = (head >= tail) ? (uint16_t)(head - tail)
+                                                   : (uint16_t)(QUEUE_SIZE - tail + head);
 
             // Early exit if queue empty
             if (currentCount == 0)
                 return;
 
-            // Track peak queue usage
+            // Track peak queue usage (stat, consumer-owned)
             if (currentCount > _queuePeakCount)
             {
                 _queuePeakCount = currentCount;
             }
 
-            // Adaptive processing limit
-            uint16_t maxEntriesThisCall = MAX_ENTRIES_PER_CALL;
-            if (currentCount > (QUEUE_SIZE / 2))
-            {
-              //  maxEntriesThisCall = MAX_ENTRIES_PER_CALL/2;
-                //logDebugP("High I2C queue load (%d entries) - reducing processing batch size", currentCount);
-            } 
-            else if (currentCount > (QUEUE_SIZE / 4)) 
-            {
-                // maxEntriesThisCall = (MAX_ENTRIES_PER_CALL * 3)/4;
-                //logDebugP("Moderate I2C queue load (%d entries) - reducing processing batch size", currentCount);
-            }
+            const uint16_t maxEntriesThisCall = MAX_ENTRIES_PER_CALL;
 
             uint16_t processed = 0;
-            uint16_t tail = _queue.tail;
+
+            // Take SM ownership for the whole batch; if a read owns it, defer to the next call.
+            if (!tryLockSM())
+                return;
 
             while (currentCount > 0 && processed < maxEntriesThisCall)
             {
                 QueueEntry& entry = _queue.buffer[tail];
+
+                int res = 0;
 
         #ifdef OPENKNX_PIO_I2C_DMA
                 if (_pioi2c->_dma_available)
@@ -568,15 +510,15 @@ namespace OpenKNX
                     if (dma_channel_is_busy(_pioi2c->_dma_tx))
                     {
                         // DMA busy, fallback to blocking
-                        _pioi2c->_write_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm,
-                                                 entry.address, entry.data, entry.length, entry.send_stop);
+                        res = _pioi2c->_write_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm,
+                                                       entry.address, entry.data, entry.length, entry.send_stop);
                         _blockingTransfers++;
                     }
                     else
                     {
-                        // Use DMA
-                        _pioi2c->_write_dma(_pioi2c->_inst->pio, _pioi2c->_inst->sm,
-                                            entry.address, entry.data, entry.length, entry.send_stop);
+                        // Use DMA (fire-and-forget mid-batch; res==0 means no immediate error)
+                        res = _pioi2c->_write_dma(_pioi2c->_inst->pio, _pioi2c->_inst->sm,
+                                                  entry.address, entry.data, entry.length, entry.send_stop);
                         _dmaTransfers++;
                     }
                 }
@@ -584,28 +526,34 @@ namespace OpenKNX
         #endif
                 {
                     // Blocking mode
-                    _pioi2c->_write_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm,
-                                             entry.address, entry.data, entry.length, entry.send_stop);
+                    res = _pioi2c->_write_blocking(_pioi2c->_inst->pio, _pioi2c->_inst->sm,
+                                                   entry.address, entry.data, entry.length, entry.send_stop);
                     _blockingTransfers++;
                 }
+
+                // Publish this transfer's real result (see lastAsyncError()).
+                _lastTxStatus = pioResultToTwoWire(res);
 
                 _transfersCompleted++;
                 processed++;
 
                 // Watchdog feeding
-                if (processed > 0 && (processed % 3) == 0)
+                if ((processed % 3) == 0)
                     watchdog_update();
 
-                // Release barrier before updating tail and decrementing count
+                // Release: advance tail (entry consumed).
                 DMB_RELEASE();
-                _queue.tail = (tail + 1) & QUEUE_MASK;
-                _queue.count--; // Decrement count atomically
+                tail = (tail + 1) & QUEUE_MASK;
+                _queue.tail = tail;
 
-                // Acquire barrier before reading updated count for next iteration
+                // Re-derive occupancy (producer may have added more).
                 DMB_ACQUIRE();
-                currentCount = _queue.count;
-                tail = _queue.tail;
+                head = _queue.head;
+                currentCount = (head >= tail) ? (uint16_t)(head - tail)
+                                              : (uint16_t)(QUEUE_SIZE - tail + head);
             }
+
+            unlockSM(); // release SM ownership for reads / next drain
 
             _totalEntriesProcessed += processed;
         }

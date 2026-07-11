@@ -4,18 +4,16 @@
  * @brief       PIO-based I2C Wire implementation for OpenKNX
  * @version     0.0.1
  * @date        2025-10-30
- * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@çolak.de)
+ * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@colak.de)
  *              Licensed under GNU GPL v3.0
  */
 #if defined(ARDUINO_ARCH_RP2040) // PIO I2C is only available on RP2040/RP2350 platforms
 
-// === I2C Thread-Safety Strategy ===
-// PENDING_PATTERN: ISR sets flag, Main Loop writes to Queue
-// ASYNC_QUEUE: Queue processes transfers asynchronously with DMA
-// Combination: ISR-safe + High throughput + Correct I²C protocol
-//#define OPENKNX_I2C_USE_PENDING_PATTERN 1
- #define OPENKNX_I2C_USE_ASYNC_QUEUE 1
+// Thread-safety: ASYNC_QUEUE processes transfers via a lock-free ring (optionally DMA).
+// #define OPENKNX_I2C_USE_PENDING_PATTERN 1
+    #define OPENKNX_I2C_USE_ASYNC_QUEUE 1
 
+    #include "hardware/sync.h" // save_and_disable_interrupts / restore_interrupts (SM critical section)
     #include "pio/pio_i2c.h"
     #include <Wire.h>
     #include <stddef.h>
@@ -23,15 +21,20 @@
     #include <string>
 
     #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
-        // === Memory Barrier Macros (ARM Cortex-M Dual-Core Safety) ===
-        #define DMB_ACQUIRE() __asm__ __volatile__("dmb" ::: "memory") // Load barrier (acquire semantics)
-        #define DMB_RELEASE() __asm__ __volatile__("dmb" ::: "memory") // Store barrier (release semantics)
+        // DMB memory barriers for dual-core SPSC ring publish/consume ordering.
+        #define DMB_ACQUIRE() __asm__ __volatile__("dmb" ::: "memory")
+        #define DMB_RELEASE() __asm__ __volatile__("dmb" ::: "memory")
 
-        // === Single Queue Configuration (Power-of-2 for bitwise AND masking) ===
-        #define QUEUE_SIZE 2048         // 2048 entries (64KB RAM) - enough for 12x full display updates + LEDs
-        #define QUEUE_MASK 2047         // Bitwise AND mask (SIZE - 1)
-        #define MAX_ENTRY_DATA 28      // Safe 32-byte entries (28 data + 4 header)
-        #define MAX_ENTRIES_PER_CALL 256 // 128 entries/call = 
+        // Queue must be power-of-2 for the AND mask.
+        #define QUEUE_SIZE 2048   // ~12x full display updates + LEDs
+        #define QUEUE_MASK 2047   // SIZE - 1
+        #define MAX_ENTRY_DATA 28 // 28 data + 4 header = 32-byte entry
+        #define MAX_ENTRIES_PER_CALL 256
+
+        // Writes <= ASYNC_MIN_LEN run SYNC and return the real TwoWire code; larger stop-terminated
+        // writes may take the async queue. With ASYNC_MIN_LEN >= MAX_ENTRY_DATA the async band is
+        // empty (every write is sync or oversized-blocking); kept named so the boundary is explicit.
+        #define ASYNC_MIN_LEN 32
     #endif
 
     // rx and tx buffer sizes
@@ -58,17 +61,16 @@ namespace OpenKNX
             uint8_t data[MAX_ENTRY_DATA]; // Inline data storage (28 bytes: 29 - 1 for alignment)
         }; // Exactly 32 bytes: 2 + 1 + 1 + 28 = 32 bytes (no padding needed)
 
-        // === Single Queue Structure (Cache-Line Aligned for Dual-Core Safety) ===
+        // Lock-free SPSC ring: producer writes only head, consumer only tail; occupancy is
+        // derived from (head - tail), never a shared counter. Cache-line aligned to avoid
+        // false sharing between the two cores.
         struct alignas(CACHE_LINE_SIZE) Queue
         {
-            alignas(CACHE_LINE_SIZE) volatile uint16_t head;                // Producer writes (ISR or Main Loop)
+            alignas(CACHE_LINE_SIZE) volatile uint16_t head;                // Producer writes ONLY (enqueue)
             uint8_t _pad_head[CACHE_LINE_SIZE - sizeof(volatile uint16_t)]; // Padding to 64-byte cache-line
 
-            alignas(CACHE_LINE_SIZE) volatile uint16_t tail;                // Consumer writes (Main Loop only)
+            alignas(CACHE_LINE_SIZE) volatile uint16_t tail;                // Consumer writes ONLY (processQueue)
             uint8_t _pad_tail[CACHE_LINE_SIZE - sizeof(volatile uint16_t)]; // Padding to 64-byte cache-line
-
-            alignas(CACHE_LINE_SIZE) volatile uint16_t count;                // Atomic entry count (both cores read/write)
-            uint8_t _pad_count[CACHE_LINE_SIZE - sizeof(volatile uint16_t)]; // Padding to 64-byte cache-line
 
             alignas(QUEUE_ENTRY_SIZE) QueueEntry buffer[QUEUE_SIZE]; // 1024 × 32B = 32KB
         };
@@ -92,9 +94,13 @@ namespace OpenKNX
             volatile uint32_t _dmaTransfers;          // DMA transfers (if available)
             volatile uint32_t _blockingTransfers;     // Blocking transfers (fallback)
             uint32_t _lastStatsUpdate;                // Timestamp of last stats update
-    #else
-            static bool _i2cBusy; // Simple busy flag
     #endif
+
+            // Last completed transfer's TwoWire status (0 ok, 2 addr NACK, 3 data NACK, 4 other).
+            // Sync paths return their own code directly; this only surfaces async results via lastAsyncError().
+            volatile uint8_t _lastTxStatus = 0;
+            // Set by write() when data did not fit the TX buffer -> endTransmission returns 1 (data too long).
+            bool _txOverflow = false;
 
           public:
             PIOI2CWire(uint32_t sda_pin, uint32_t scl_pin, uint32_t baudrate = 100000); // Constructor
@@ -113,8 +119,13 @@ namespace OpenKNX
             } // Start as Master with specified pins and baudrate
             void end() override; // Shut down the I2C interface
 
-            void setClock(uint32_t baudrate) override;                         // Set I2C clock speed
-            void setTimeout(uint32_t timeout_ms) { _timeout_ms = timeout_ms; } // Set I2C timeout in ms
+            void setClock(uint32_t baudrate) override; // Set I2C clock speed
+            // Set I2C timeout in ms. Pushed down to pio_i2c so wait_idle()/put16() honour it.
+            void setTimeout(uint32_t timeout_ms)
+            {
+                _timeout_ms = timeout_ms;
+                if (_pioi2c) _pioi2c->set_timeout_us(timeout_ms * 1000UL);
+            }
             inline bool setSDA(pin_size_t sda)
             {
                 _sda = sda;
@@ -149,6 +160,9 @@ namespace OpenKNX
             int ReadBlocking(uint8_t address, uint8_t* data, size_t length);  // Blocking read method for direct access
             int WriteBlocking(uint8_t address, uint8_t* data, size_t length); // Blocking write method for direct access
 
+            // 9-clock SDA bus-recovery for a wedged bus. Returns true if SDA was released.
+            bool busRecovery();
+
             inline bool ping(uint8_t address)
             {
                 uint8_t dummy;
@@ -166,11 +180,26 @@ namespace OpenKNX
     #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
             // === Single Queue Methods (Dual-Core Safe) ===
 
-            // Enqueue transfer (ISR-safe, up to 29 bytes inline)
+            // Enqueue a transfer (single producer). length 0..MAX_ENTRY_DATA; length==0 is a valid
+            // address-only probe. Returns false (and counts an overflow) if full or oversized.
             bool enqueue(uint8_t address, const uint8_t* data, uint16_t length, bool send_stop);
 
-            // Process queue - call from Main Loop! (max 10 entries per call = ~500µs)
+            // Drain the queue - call from the main loop.
             void processQueue();
+
+            // SM-ownership flag serializing reads and the queued-write drain (both drive the same PIO
+            // SM/FIFO). Only the flag flip runs with interrupts off; the transfer itself does not, so
+            // the watchdog/USB keep running. tryLockSM() never spins: a contended caller backs off.
+            volatile bool _smBusy = false; // true while some path owns the PIO SM/FIFO
+            inline bool tryLockSM()
+            {
+                uint32_t s = save_and_disable_interrupts();
+                bool acquired = !_smBusy;
+                if (acquired) _smBusy = true;
+                restore_interrupts(s);
+                return acquired;
+            }
+            inline void unlockSM() { _smBusy = false; }
 
             // === Queue Status ===
             inline uint16_t queueCount() const
@@ -180,6 +209,12 @@ namespace OpenKNX
                 return (h >= t) ? (h - t) : (QUEUE_SIZE - t + h);
             }
             inline uint16_t queueFree() const { return QUEUE_SIZE - queueCount() - 1; }
+
+            // Fire-and-forget async status: an async endTransmission returns 0 = "queued", so these
+            // let a caller observe the deferred result. lastAsyncError() = last drained transfer's
+            // TwoWire code; asyncPending() = entries still queued.
+            inline uint8_t lastAsyncError() const { return _lastTxStatus; }
+            inline uint16_t asyncPending() const { return queueCount(); }
 
             // === Basic Statistics ===
             inline uint32_t getTransfersCompleted() const { return _transfersCompleted; }

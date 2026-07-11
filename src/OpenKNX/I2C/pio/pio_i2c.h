@@ -4,55 +4,72 @@
  * @brief       PIO I2C Driver for RP2040/RP2350 microcontrollers
  * @version     0.0.1
  * @date        2025-10-30
- * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@çolak.de)
+ * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@colak.de)
  *              Licensed under GNU GPL v3.0 using the BSD-3-Clause license for
  *              the PIO I2C program code provided by Raspberry Pi.
  */
 #if defined(ARDUINO_ARCH_RP2040)
 
-#include "hardware/clocks.h"
-#include "hardware/pio.h"
-#include "hardware/timer.h"
-#include "i2c.pio.h"
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+    #include "hardware/clocks.h"
+    #include "hardware/pio.h"
+    #include "hardware/timer.h"
+    #include "i2c.pio.h"
+    #include <stdbool.h>
+    #include <stddef.h>
+    #include <stdint.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
 
-#ifdef OPENKNX_PIO_I2C_DMA
-#include "hardware/dma.h"
-#endif
+    #ifdef OPENKNX_PIO_I2C_DMA
+        #include "hardware/dma.h"
+    #endif
 
-//#define PIO_I2C_USE_STATIC_PIO
-#ifdef PIO_I2C_USE_STATIC_PIO
-#define PIO_I2C_USE_PIO_INSTANCE pio0 // We will use PIO0 for I2C
-#endif
-#define PIO_I2C_TIMEOUT_US 5000       // In microseconds (5ms - 10x safety margin for 28 bytes @ 400kHz)
+    // #define PIO_I2C_USE_STATIC_PIO
+    #ifdef PIO_I2C_USE_STATIC_PIO
+        #define PIO_I2C_USE_PIO_INSTANCE pio0 // We will use PIO0 for I2C
+    #endif
+    #define PIO_I2C_TIMEOUT_US 5000 // In microseconds (5ms - 10x safety margin for 28 bytes @ 400kHz)
 
 /*
  * @brief PIO I2C instance structure
  */
 struct pio_i2c_inst
 {
-    uint32_t sda;       // SDA pin number
-    uint32_t scl;       // SCL pin number (must be SDA + 1)
-    uint32_t baudrate;  // I2C baudrate in Hz
-    PIO pio;            // PIO instance (automatically allocated)
-    uint sm;            // State machine index (Automatically allocated)
-    int prog_offset;    // Program offset in PIO instruction memory
+    uint32_t sda;      // SDA pin number
+    uint32_t scl;      // SCL pin number (must be SDA + 1)
+    uint32_t baudrate; // I2C baudrate in Hz
+    PIO pio;           // PIO instance (automatically allocated)
+    uint sm;           // State machine index (Automatically allocated)
+    int prog_offset;   // Program offset in PIO instruction memory
 };
 typedef struct pio_i2c_inst pio_i2c_inst_t;
 
 class pio_i2c
 {
   public:
-    pio_i2c(uint32_t sda, uint32_t scl, uint32_t baudrate);                         // Constructor
-    ~pio_i2c();                                                                     // Destructor
-    void set_baudrate(uint32_t baudrate);                                           // Set I2C baudrate
+    pio_i2c(uint32_t sda, uint32_t scl, uint32_t baudrate); // Constructor
+    ~pio_i2c();                                             // Destructor
+    void set_baudrate(uint32_t baudrate);                   // Set I2C baudrate
+
+    // Per-transfer wait budget (us), honoured by wait_idle()/put16(). Clamped to a floor.
+    void set_timeout_us(uint32_t us) { _timeout_us = (us < 100) ? 100 : us; }
+    uint32_t get_timeout_us() const { return _timeout_us; }
+
+    // Transfer result codes: 0 == success, negative == error (so res</>/== checks keep working).
+    // The negative value encodes the failure reason for mapping to TwoWire codes (addr/data NACK).
+    static constexpr int PIO_I2C_OK = 0;
+    static constexpr int PIO_I2C_ERR_OTHER = -1;
+    static constexpr int PIO_I2C_ERR_ADDR_NACK = -2;
+    static constexpr int PIO_I2C_ERR_DATA_NACK = -3;
+    static constexpr int PIO_I2C_BUSY = -4; // DMA channel busy, caller may retry (distinct from a NACK)
+
     int write_blocking(uint8_t addr, const uint8_t* data, size_t len, bool nostop); // Write blocking
     int read_blocking(uint8_t addr, uint8_t* data, size_t len, bool nostop);        // Read blocking
+
+    // 9-clock SDA bus-recovery (bit-banged) for a slave stuck mid-transfer, then a STOP.
+    // Returns true if SDA is released. Only call when the SM is idle (after a timeout/error).
+    bool bus_recovery();
 
     pio_sm_config i2c_program_get_default_config(unsigned int offset); // Get default PIO SM config
     void reset();                                                      // Reset the PIO I2C instance
@@ -62,12 +79,14 @@ class pio_i2c
     uint get_sm() const;
     uint get_offset() const;
 
-    bool check_error(PIO pio, uint sm);                                               // Check for errors
-    void put_or_err(PIO pio, uint sm, uint16_t data);                                 // Put data or set error
-    void put16(PIO pio, uint sm, uint16_t data);                                      // Put 16 bits
-    void rx_enable(PIO pio, uint sm, bool en);                                        // Enable RX
-    void resume_after_error(PIO pio, uint sm);                                        // Resume after error
-    uint8_t get(PIO pio, uint sm);                                                    // Get data
+    bool check_error(PIO pio, uint sm);               // Check for errors
+    void put_or_err(PIO pio, uint sm, uint16_t data); // Put data or set error
+    // Put 16 bits into the TX FIFO, bounded by the timeout so a wedged FIFO can't hang.
+    // Returns false on timeout (treat as a bus error).
+    bool put16(PIO pio, uint sm, uint16_t data);
+    void rx_enable(PIO pio, uint sm, bool en); // Enable RX
+    void resume_after_error(PIO pio, uint sm); // Resume after error
+    uint8_t get(PIO pio, uint sm);             // Get data
 
     void start(PIO pio, uint sm);                                                     // Start condition
     void stop(PIO pio, uint sm);                                                      // Stop condition
@@ -77,31 +96,32 @@ class pio_i2c
 
   public:
     pio_i2c_inst_t* _inst;                                                                                // PIO I2C instance
+    uint32_t _timeout_us = PIO_I2C_TIMEOUT_US;                                                            // Per-transfer wait budget (see set_timeout_us)
     int _write_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop = true); // Write blocking
     int _read_blocking(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len, bool send_stop = true);  // Read blocking
 
-#ifdef OPENKNX_PIO_I2C_DMA
+    #ifdef OPENKNX_PIO_I2C_DMA
     // DMA members - public so PIOI2CWire can check status
-    int _dma_tx = -1;          // DMA channel for TX (FIFO writes)
-    int _dma_rx = -1;          // DMA channel for RX (FIFO reads)
+    int _dma_tx = -1;            // DMA channel for TX (FIFO writes)
+    int _dma_rx = -1;            // DMA channel for RX (FIFO reads)
     bool _dma_available = false; // DMA successfully initialized
     bool _last_send_stop = true; // Track last transfer's stop flag for Repeated START
-    
-    // CRITICAL: Instance-based DMA buffer to prevent static buffer corruption
-    // Static buffer caused crashes when processQueue() prepared next transfer before DMA finished
-    uint16_t _dma_buffer[32];  // Instance buffer for DMA transfers (28 data + margin)
-    
+
+    // Per-instance DMA buffer: a static one corrupted when processQueue() prepared the next
+    // transfer before DMA finished.
+    uint16_t _dma_buffer[32]; // 28 data + margin
+
     // DMA transfer functions (non-blocking) - public for PIOI2CWire queue processing
     int _write_dma(PIO pio, uint sm, uint8_t addr, uint8_t* txbuf, uint len, bool send_stop = true);
     int _read_dma(PIO pio, uint sm, uint8_t addr, uint8_t* rxbuf, uint len, bool send_stop = true);
-    
-#ifdef OPENKNX_DEBUG
+
+        #ifdef OPENKNX_DEBUG
     // Statistics (only in debug builds)
     uint32_t _dma_write_count = 0;
     uint32_t _dma_read_count = 0;
     uint32_t _blocking_write_count = 0;
     uint32_t _blocking_read_count = 0;
-#endif
-#endif // OPENKNX_PIO_I2C_DMA
+        #endif
+    #endif // OPENKNX_PIO_I2C_DMA
 };
 #endif // !defined(ARDUINO_ARCH_RP2040)

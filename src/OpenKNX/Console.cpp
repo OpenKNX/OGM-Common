@@ -2,6 +2,7 @@
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Flash/Driver.h"
 #include "OpenKNX/I2C/Console.h"
+#include "OpenKNX/I2C/WireWrapper.h" // defines OPENKNX_I2C_USE_PIO when PIO I2C is configured
 #include "OpenKNX/Led/Console.h"
 
 #ifdef ARDUINO_ARCH_ESP32
@@ -158,10 +159,13 @@ namespace OpenKNX
         {
             processPinCommand("dw " + cmd.substr(((cmd.rfind("dwon ", 0) == 0) ? 5 : 6)) + (cmd.rfind("dwon ", 0) == 0 ? " 1" : " 0"));
         }
+    #ifdef OPENKNX_I2C_USE_PIO
+        // i2c scan/introspection backend exists only on the PIO-I2C bus
         else if (!diagnoseKo && (cmd.compare(0, 4, "i2c ") == 0 || cmd.compare(0, 3, "i2c") == 0))
         {
             OpenKNX::I2C::Console::processCommand(cmd);
         }
+    #endif
         else if (!diagnoseKo && (cmd.compare(0, 5, "leds ") == 0 || cmd.compare(0, 4, "leds") == 0 || cmd.compare(0, 4, "led ") == 0 || cmd.compare(0, 3, "led") == 0))
         {
             OpenKNX::Led::Console::processCommand(cmd);
@@ -269,13 +273,13 @@ namespace OpenKNX
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
                     statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
                     statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
-#ifdef TPUART_BCU_HEALTH
+    #ifdef TPUART_BCU_HEALTH
             logInfo("BCU<Health>", "Resets: %u | Disconnects: %u | CON-rescues: %u",
                     statistics.getBcuResets(), statistics.getBcuDisconnects(), statistics.getBcuConRescues());
             logInfo("BCU<NCN-Err>", "Slave-Collision: %u | Receive-Error: %u | Transmit-Error: %u | Protocol-Error: %u | Temp-Warning: %u",
                     statistics.getBcuSlaveCollisions(), statistics.getBcuReceiveErrors(), statistics.getBcuTransmitErrors(),
                     statistics.getBcuProtocolErrors(), statistics.getBcuTempWarnings());
-#endif
+    #endif
 
             return true;
         }
@@ -289,13 +293,13 @@ namespace OpenKNX
             dll->reset();
             return true;
         }
-#ifdef TPUART_BCU_DEBUG
+    #ifdef TPUART_BCU_DEBUG
         else if (cmd.compare("bcu dis") == 0)
         {
             dll->getTPUart().forceDisconnect();
             return true;
         }
-#endif
+    #endif
         else if (cmd.compare("bcu poff") == 0)
         {
             dll->powerControl(false);
@@ -607,15 +611,17 @@ namespace OpenKNX
         printHelpLine("aw <pin> 0-4095", "Write analog pin");
         printHelpLine("ar <pin>", "Read analog pin");
 #endif
+#ifdef OPENKNX_I2C_USE_PIO
         printHelpLine("i2c", "I2C bus commands. Use 'i2c' for help");
+#endif
         printHelpLine("leds", "LED control. Use 'leds' for help");
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         printHelpLine("bcu", "Show BCU status");
         printHelpLine("bcu mon", "Start BCU monitoring");
         printHelpLine("bcu rst", "Reset BCU");
-#ifdef TPUART_BCU_DEBUG
+    #ifdef TPUART_BCU_DEBUG
         printHelpLine("bcu dis", "Force BCU disconnect (test)");
-#endif
+    #endif
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         printHelpLine("tm ?", "Help for time related commands");
@@ -684,13 +690,13 @@ namespace OpenKNX
         size_t heapMin = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
         size_t heapLargest = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
         openknx.logger.logWithPrefixAndValues("Heap", "free %.3f / min %.3f / largest %.3f KiB",
-            ((float)heapFree / 1024), ((float)heapMin / 1024), ((float)heapLargest / 1024));
+                                              ((float)heapFree / 1024), ((float)heapMin / 1024), ((float)heapLargest / 1024));
         size_t dmaFree = heap_caps_get_free_size(MALLOC_CAP_DMA);
         size_t dmaMin = heap_caps_get_minimum_free_size(MALLOC_CAP_DMA);
         size_t dmaLargest = heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
         if (dmaFree != heapFree || dmaMin != heapMin || dmaLargest != heapLargest)
             openknx.logger.logWithPrefixAndValues("Heap DMA", "free %.3f / min %.3f / largest %.3f KiB",
-                ((float)dmaFree / 1024), ((float)dmaMin / 1024), ((float)dmaLargest / 1024));
+                                                  ((float)dmaFree / 1024), ((float)dmaMin / 1024), ((float)dmaLargest / 1024));
     #if BOARD_HAS_PSRAM
         openknx.logger.logWithPrefixAndValues("Free PSRAM", "%.3f KiB (min. %.3f KiB)", ((float)ESP.getFreePsram() / 1024), ((float)ESP.getMinFreePsram() / 1024));
     #endif
