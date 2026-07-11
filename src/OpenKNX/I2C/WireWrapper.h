@@ -4,7 +4,7 @@
  * @brief       I2C Wrapper for OpenKNX - Unified Hardware and PIO I2C Management
  * @version     0.0.1
  * @date        2025-10-30
- * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@çolak.de)
+ * @copyright   Copyright (c) 2025, Erkan Çolak (erkan@colak.de)
  *              Licensed under GNU GPL v3.0
  */
 
