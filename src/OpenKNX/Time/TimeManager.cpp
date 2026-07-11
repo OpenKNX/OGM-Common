@@ -535,36 +535,36 @@ namespace OpenKNX
                 _timeProvider->loop();
 
             DateTime localTime = DateTime(_lastTimeStamp);
-            TimeChangedEvents timeChangeEvents = (TimeChangedEvents) 0;
+            TimeChangedEvents timeChangeEvents = (TimeChangedEvents)0;
             if (_timeSetEventNeeded)
             {
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventTimeSet);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventTimeSet);
                 _timeSetEventNeeded = false;
             }
             if (_lastLocalTimeInLoop.second != localTime.second)
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventSecondChanged);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventSecondChanged);
             if (_lastLocalTimeInLoop.minute != localTime.minute)
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventMinuteChanged);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventMinuteChanged);
             if (_lastLocalTimeInLoop.hour != localTime.hour)
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventHourChanged);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventHourChanged);
             if (_lastLocalTimeInLoop.day != localTime.day)
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventDayChanged);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventDayChanged);
             if (_lastLocalTimeInLoop.month != localTime.month)
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventMonthChanged);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventMonthChanged);
             if (_lastLocalTimeInLoop.year != localTime.year)
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventYearChanged);
-            
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventYearChanged);
+
             _lastLocalTimeInLoop = localTime;
             bool isValidState = calculateValid(_lastTimeStamp);
             if (_lastValidInLoop != isValidState)
-            {    
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventValidChanged);
+            {
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventValidChanged);
                 _lastValidInLoop = isValidState;
             }
             bool isInaccurateState = calculateInaccurate(_lastTimeStamp);
             if (_lastInaccurateInLoop != isInaccurateState)
             {
-                timeChangeEvents = (TimeChangedEvents) (timeChangeEvents | TimeChangedEventInaccurateChanged);
+                timeChangeEvents = (TimeChangedEvents)(timeChangeEvents | TimeChangedEventInaccurateChanged);
                 _lastInaccurateInLoop = isInaccurateState;
             }
 
@@ -763,7 +763,7 @@ namespace OpenKNX
         {
             if (!calculateValid(time))
                 return true;
-            if (_lastUpdatedByProviderTimeStamp == 0)   
+            if (_lastUpdatedByProviderTimeStamp == 0)
                 return true;
             return time - _lastUpdatedByProviderTimeStamp > 24 * 60 * 60; // more than 24 hours
         }
@@ -866,7 +866,6 @@ namespace OpenKNX
             _lastTimeStamp = now;
             sendTime();
             _timeSetEventNeeded = true;
-       
         }
 
         int8_t TimeManager::isDaylightSavingTime(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute)
