@@ -6,10 +6,11 @@ namespace OpenKNX
 {
     namespace Led
     {
-        // Global PWM configuration (updated every timer interrupt)
         volatile uint8_t Manager::_pwmCycle = 0;
-        volatile uint8_t Manager::_pwmSteps = 10;                                      // Default: 10 steps
-        volatile uint16_t Manager::_timerUpdateHz = 1000 / OPENKNX_INTERRUPT_TIMER_MS; // Calculate from timer interval
+        // Soft-PWM resolution; keep 10 (fewer steps drops the low end, e.g. `dim 20` rounds to OFF).
+        // Runtime-tunable via `leds pwm steps <n>`.
+        volatile uint8_t Manager::_pwmSteps = 10;
+        volatile uint16_t Manager::_timerUpdateHz = 1000 / OPENKNX_INTERRUPT_TIMER_MS;
 
         Manager::Manager()
         {
@@ -126,33 +127,55 @@ namespace OpenKNX
             if (!_init)
                 return;
 
-            // Increment PWM cycle counter (configurable steps)
             _pwmCycle = (_pwmCycle + 1) % _pwmSteps;
 
-            // LED effects every 10ms (100Hz)
             for (const auto& pair : _leds)
                 pair.second->loop();
 
 #ifdef OPENKNX_SERIALLED_ENABLE
-            // Serial LEDs every 10ms (100Hz)
             if (_serialLedManager)
                 _serialLedManager->writeLeds();
 #endif
         }
 
-        // Main loop - flush pending I2C LED updates
-        void Manager::loop()
+        // Flush all pending I2C LED writes; the PCA95xx leaf takes the shared Wire1 mutex, so do
+        // not lock here. ESP32: driven at ~50 Hz from the esp_timer flush task for smooth dimming.
+        void Manager::flushI2C()
         {
             if (!_init)
                 return;
 
-            // Flush pending I2C writes: Transfer from ISR flags to async queue
-            // PENDING_PATTERN: ISR sets flag → Main loop writes to queue → DMA transfers
             for (const auto& pair : _leds)
             {
                 GPIO* gpio = pair.second->asGPIO();
                 if (gpio)
                     gpio->flushPendingI2C();
+            }
+        }
+
+        void Manager::loop()
+        {
+            if (!_init)
+                return;
+
+            // RP2040 only: flush here. On ESP32 the flush task owns it at tick rate.
+#ifndef ARDUINO_ARCH_ESP32
+            flushI2C();
+#endif
+
+            // Self-heal (500 ms): re-assert each I2C LED pin direction+level; recovers a PCA9557
+            // CONFIG-register glitch on the display-shared Wire1 without a reboot. Do not go below ~300 ms.
+            static uint32_t lastReassertMs = 0;
+            const uint32_t now = millis();
+            if (now - lastReassertMs >= 500)
+            {
+                lastReassertMs = now;
+                for (const auto& pair : _leds)
+                {
+                    GPIO* gpio = pair.second->asGPIO();
+                    if (gpio)
+                        gpio->reassertI2C();
+                }
             }
         }
 

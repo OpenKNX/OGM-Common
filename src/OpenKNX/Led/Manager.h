@@ -47,20 +47,16 @@ namespace OpenKNX
             uint8_t _serialLedCount = 0;
             Led::SerialLedManager* getSerialLedManager(long pin);
 #endif
-            static volatile uint8_t _pwmCycle; // Global PWM cycle counter
-            static volatile uint8_t _pwmSteps;  // Configurable PWM steps (default 10)
-            static volatile uint16_t _timerUpdateHz; // Timer interrupt frequency (e.g., 333Hz for 3ms)
+            static volatile uint8_t _pwmCycle;       // global PWM cycle counter
+            static volatile uint8_t _pwmSteps;       // PWM steps (default 10)
+            static volatile uint16_t _timerUpdateHz; // timer interrupt frequency
 
           public:
             Manager();
-            
-            // Get current PWM cycle for software PWM
+
             static inline uint8_t getPwmCycle() { return _pwmCycle; }
-            // Get PWM steps (configurable, default 10)
             static inline uint8_t getPwmSteps() { return _pwmSteps; }
-            // Set PWM steps (for testing different resolutions)
             static inline void setPwmSteps(uint8_t steps) { _pwmSteps = steps > 0 ? steps : 10; }
-            // Get timer update frequency
             static inline uint16_t getTimerUpdateHz() { return _timerUpdateHz; }
 
             void init();
@@ -74,6 +70,13 @@ namespace OpenKNX
              * use in normal loop or loop1
              */
             void loop();
+
+            /*
+             * Flush all pending I2C LED writes now.
+             * ESP32: called at ~50 Hz from the esp_timer flush task so the front LED dims smoothly.
+             * The PCA95xx leaf takes the shared Wire1 mutex; safe from task context, never a hard ISR.
+             */
+            void flushI2C();
 
             void addLed(Led::Base*, uint8_t);
 #ifdef OPENKNX_SERIALLED_ENABLE

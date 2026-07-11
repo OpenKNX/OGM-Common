@@ -2,6 +2,10 @@
 #include "OpenKNX/defines.h"
 #include <Arduino.h>
 
+#ifdef ARDUINO_ARCH_ESP32
+    #include "esp_timer.h"
+#endif
+
 // Interval of interrupt for leds and free memory collector
 #define OPENKNX_INTERRUPT_TIMER_MS 3
 
@@ -22,6 +26,12 @@ namespace OpenKNX
     #ifdef OPENKNX_DUALCORE
         struct repeating_timer _repeatingTimer1;
         alarm_pool_t *_alarmPool1;
+    #endif
+#endif
+#ifdef ARDUINO_ARCH_ESP32
+        esp_timer_handle_t _espTimer = nullptr; // PWM tick; LED flush is a separate task
+    #ifdef OPENKNX_DUALCORE
+        esp_timer_handle_t _espTimer1 = nullptr;
     #endif
 #endif
         inline void processStats();

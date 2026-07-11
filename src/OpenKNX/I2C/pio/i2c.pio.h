@@ -5,6 +5,8 @@
  *
  * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
  * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Modifications (c) 2026 Erkan Çolak (erkan@colak.de)
  */
 
 #if defined(ARDUINO_ARCH_RP2040)

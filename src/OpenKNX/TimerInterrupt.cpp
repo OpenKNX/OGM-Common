@@ -102,6 +102,19 @@ bool __isr __time_critical_func(timerInterruptCallback1)(repeating_timer *t)
     #endif
 #endif
 
+#ifdef ARDUINO_ARCH_ESP32
+// Anti-flicker: the blocking LED-I2C flush runs in its own task so it never delays the PWM tick.
+static TaskHandle_t s_ledFlushTask = nullptr;
+static void openKnxLedFlushTask(void *)
+{
+    for (;;)
+    {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // wait for the PWM tick to signal fresh pending states
+        openknx.leds.flushI2C();
+    }
+}
+#endif
+
 namespace OpenKNX
 {
     void TimerInterrupt::init()
@@ -116,13 +129,26 @@ namespace OpenKNX
         });
 #elif SELECTED_TIMER == FREERTOS
     #ifdef ARDUINO_ARCH_ESP32
-        xTaskCreatePinnedToCore([](void* parms) {
-                for (;;)
-                {
-                    const TickType_t xTimerPeriod = pdMS_TO_TICKS(OPENKNX_INTERRUPT_TIMER_MS);
-                    openknx.timerInterrupt.interrupt();
-                    vTaskDelay(xTimerPeriod);
-                } }, "PseudoTimer0", 4096, NULL, 1, NULL, xPortGetCoreID());
+        // esp_timer periodic timer (precise fixed period, mirror of the RP2040 alarm pool);
+        // the callback runs in the esp_timer task and must stay short/non-blocking.
+        // Create the flush task first so its handle is valid before the tick can notify it.
+        // Priority below the esp_timer service task (so the tick always preempts) but above the
+        // Arduino loop + lwIP + display render, so the flush wins the Wire1 mutex between page chunks.
+        xTaskCreatePinnedToCore(openKnxLedFlushTask, "OpenKnxLedFlush", 4096, nullptr,
+                                configMAX_PRIORITIES - 4, &s_ledFlushTask, tskNO_AFFINITY);
+
+        const esp_timer_create_args_t timerArgs = {
+            .callback = [](void *arg) {
+                openknx.timerInterrupt.interrupt(); // PWM tick: compute pending states, no I2C
+                if (s_ledFlushTask)
+                    xTaskNotifyGive(s_ledFlushTask);
+            },
+            .arg = nullptr,
+            .dispatch_method = ESP_TIMER_TASK,
+            .name = "OpenKnxTimer0",
+            .skip_unhandled_events = true};
+        esp_timer_create(&timerArgs, &_espTimer);
+        esp_timer_start_periodic(_espTimer, (uint64_t)OPENKNX_INTERRUPT_TIMER_MS * 1000ULL);
     #endif
 #endif
     }
@@ -183,13 +209,17 @@ namespace OpenKNX
         alarm_pool_add_repeating_timer_ms(_alarmPool1, -OPENKNX_INTERRUPT_TIMER_MS, timerInterruptCallback1, NULL, &_repeatingTimer1);
     #elif SELECTED_TIMER == FREERTOS
         #ifdef ARDUINO_ARCH_ESP32
-        xTaskCreatePinnedToCore([](void *parms) {
-            for (;;)
-            {
-                const TickType_t xTimerPeriod = pdMS_TO_TICKS(OPENKNX_INTERRUPT_TIMER_MS);
+        // esp_timer periodic timer for the second core (parity with init())
+        const esp_timer_create_args_t timerArgs1 = {
+            .callback = [](void *arg) {
                 openknx.timerInterrupt.interrupt1();
-                vTaskDelay(xTimerPeriod);
-            } }, "PseudoTimer1", 4096, NULL, 1, NULL, xPortGetCoreID());
+            },
+            .arg = nullptr,
+            .dispatch_method = ESP_TIMER_TASK,
+            .name = "OpenKnxTimer1",
+            .skip_unhandled_events = true};
+        esp_timer_create(&timerArgs1, &_espTimer1);
+        esp_timer_start_periodic(_espTimer1, (uint64_t)OPENKNX_INTERRUPT_TIMER_MS * 1000ULL);
         #endif
     #endif
     }

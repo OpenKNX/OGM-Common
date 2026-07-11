@@ -11,12 +11,27 @@ namespace OpenKNX
 
         uint32_t g_tpLedActivity = 0;
         uint32_t g_ipLedActivity = 0;
+
+        // Only ONE activity-callback slot exists on the BAU and it is claimed here for
+        // the KNX/NET LEDs; WidgetKnxBcu can't register its own without breaking them,
+        // so it pulls these frame counters that we bump from the one callback instead.
+        volatile uint32_t g_knxRxFrames = 0;
+        volatile uint32_t g_knxTxFrames = 0;
+        volatile bool g_knxActivityInstalled = false;
+
         void knxActivityCallback(uint8_t info)
         {
             if ((info >> KNX_ACTIVITYCALLBACK_NET))
                 g_ipLedActivity = millis();
             else
                 g_tpLedActivity = millis();
+
+            // KNX_ACTIVITYCALLBACK_DIR bit: 0 = RECV, 1 = SEND.
+            // Plain read-modify-write, not ++/+=: operator++ on a volatile is deprecated (-Wvolatile).
+            if ((info >> KNX_ACTIVITYCALLBACK_DIR) & 0x01)
+                g_knxTxFrames = g_knxTxFrames + 1;
+            else
+                g_knxRxFrames = g_knxRxFrames + 1;
         }
 
         void Functions::init()
@@ -25,11 +40,19 @@ namespace OpenKNX
 
         void Functions::setup()
         {
+#ifdef DEVICE_DISPLAY_MODULE
+            // WidgetKnxBcu pulls the RX/TX frame counters, so install the callback
+            // unconditionally when a display is present.
+            knx.bau().setActivityCallback(knxActivityCallback);
+            g_knxActivityInstalled = true;
+#else
             if (openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_KNX)->active() ||
                 openknx.ledFunctions.get(OPENKNX_LEDFUNC_NET_STATE)->active())
             {
                 knx.bau().setActivityCallback(knxActivityCallback);
+                g_knxActivityInstalled = true;
             }
+#endif
         }
 
         void Functions::loop()
