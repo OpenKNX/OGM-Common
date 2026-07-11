@@ -267,7 +267,11 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
+            const int bcuBaud = dll->getTPUart().getBaudrate();
+            if (bcuBaud > 0)
+                logInfo("BCU<Status>", "%s (Baudrate: %d)", dll->getTPUart().getBcuStateInfo(), bcuBaud);
+            else
+                logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
             logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u",
                     statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
