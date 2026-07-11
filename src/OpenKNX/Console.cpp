@@ -17,6 +17,12 @@
     #include "LittleFS.h"
 #endif
 
+#if defined(OPENKNX_IDF_INFO) && defined(ARDUINO_ARCH_ESP32)
+    #include <esp_chip_info.h>
+    #include <esp_pm.h>
+    #include <esp_wifi.h>
+#endif
+
 namespace OpenKNX
 {
     void Console::loop()
@@ -446,6 +452,68 @@ namespace OpenKNX
         float cpuTemp = openknx.hardware.cpuTemperature();
         if (cpuTemp > 0)
             openknx.logger.logWithPrefixAndValues("CPU-Temp", "%.1f °C", cpuTemp);
+
+#if defined(OPENKNX_IDF_INFO) && defined(ARDUINO_ARCH_ESP32)
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.log("IDF Platform");
+        openknx.logger.color(0);
+
+        // --- IDF version (runtime via --wrap or stock) ---
+        // The --wrap proves this is our custom-built IDF, not the pre-built one.
+        const char* idfVer = esp_get_idf_version();
+        bool isCustomIdf = (strncmp(idfVer, "OpenKNX-IDF-", 12) == 0);
+        openknx.logger.logWithPrefixAndValues("IDF", "%s (%s)", idfVer, isCustomIdf ? "Custom Build" : "Pre-built");
+
+        // --- Chip info (runtime API) ---
+        esp_chip_info_t chip;
+        esp_chip_info(&chip);
+        openknx.logger.logWithPrefixAndValues("Chip", "%d cores, rev %d.%d",
+                                              chip.cores, chip.revision / 100, chip.revision % 100);
+
+        // --- Flash size (runtime API via Arduino) ---
+        openknx.logger.logWithPrefixAndValues("Flash", "%u MB", ESP.getFlashChipSize() / (1024 * 1024));
+
+        // --- CPU frequency (runtime API) ---
+        openknx.logger.logWithPrefixAndValues("CPU-Freq", "%u MHz", getCpuFrequencyMhz());
+
+        // --- Power Management (runtime API) ---
+        esp_pm_config_t pmCfg;
+        if (esp_pm_get_configuration(&pmCfg) == ESP_OK)
+            openknx.logger.logWithPrefixAndValues("PM", "Enabled (max %d / min %d MHz)",
+                                                  pmCfg.max_freq_mhz, pmCfg.min_freq_mhz);
+        else
+            openknx.logger.logWithPrefix("PM", "Not configured");
+
+        // --- WiFi TX power (runtime API, needs WiFi started) ---
+        int8_t txPow = 0;
+        if (esp_wifi_get_max_tx_power(&txPow) == ESP_OK)
+            openknx.logger.logWithPrefixAndValues("WiFi-TX-Power", "%.2f dBm (0.25x%d)", txPow * 0.25f, txPow);
+        else
+            openknx.logger.logWithPrefix("WiFi-TX-Power", "N/A (WiFi not started)");
+
+        // --- WiFi power-save mode (runtime API, needs WiFi started) ---
+        wifi_ps_type_t psType;
+        if (esp_wifi_get_ps(&psType) == ESP_OK)
+        {
+            const char* psName = "Unknown";
+            switch (psType)
+            {
+                case WIFI_PS_NONE: psName = "None"; break;
+                case WIFI_PS_MIN_MODEM: psName = "Min-Modem"; break;
+                case WIFI_PS_MAX_MODEM: psName = "Max-Modem"; break;
+                default: break;
+            }
+            openknx.logger.logWithPrefixAndValues("WiFi-PS", "%s", psName);
+        }
+        else
+        {
+            openknx.logger.logWithPrefix("WiFi-PS", "N/A (WiFi not started)");
+        }
+        // NOTE: CONFIG_* defines (RF-Cal, Brownout, BLE, Coex etc.) are NOT shown here
+        // because they come from pre-built sdkconfig.h headers and do NOT reflect the
+        // actual custom IDF build settings. The --wrap on esp_get_idf_version() is the
+        // authoritative proof that this is a custom-built IDF.
+#endif // OPENKNX_IDF_INFO
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Programming");
