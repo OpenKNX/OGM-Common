@@ -28,7 +28,7 @@ namespace OpenKNX
         volatile bool _setup0Ready = false;
 #ifdef OPENKNX_DUALCORE
         volatile bool _setup1Ready = false;
-        volatile bool _knxConfiguredCache = false;  // Thread-safe cache for Core1
+        volatile bool _knxConfiguredCache = false; // Thread-safe cache for Core1
 #endif
 
         uint32_t _savedPinProcessed = 0;
@@ -62,6 +62,12 @@ namespace OpenKNX
         void processModulesLoop();
         void registerCallbacks();
         void processRestoreSavePin();
+
+#ifdef DEVICE_DISPLAY_MODULE
+        bool _commonWidgetsRegistered = false;
+        void registerCommonWidgets();
+#endif
+
         void initMemoryTimerInterrupt();
         void debugWait();
         void afterSetupLedStatus();

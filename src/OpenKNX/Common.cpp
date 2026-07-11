@@ -1,10 +1,16 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Stat/RuntimeStat.h"
+#ifdef DEVICE_DISPLAY_MODULE
+    // Bare includes resolve via the OFM-DeviceDisplay src/ include path.
+    #include "DeviceDisplay.h"
+    #include "OpenKNX/Widgets/WidgetKnxBcu.h"
+    #include "OpenKNX/Widgets/WidgetSysInfo.h"
+#endif
 #ifdef ARDUINO_ARCH_RP2040
     #include <USB.h>
-    #include <device/usbd.h>
     #include <class/msc/msc.h>
+    #include <device/usbd.h>
     #include <tusb-msc.h>
     #ifndef OPENKNX_USB_MSC
 // LDF pulls in tusb-msc regardless of #ifdef guards. Without OPENKNX_USB_MSC
@@ -14,7 +20,11 @@ extern "C"
     uint8_t tud_msc_get_maxlun_cb(void) { return 0; }
     void tud_msc_inquiry_cb(uint8_t, uint8_t[8], uint8_t[16], uint8_t[4]) {}
     bool tud_msc_test_unit_ready_cb(uint8_t) { return false; }
-    void tud_msc_capacity_cb(uint8_t, uint32_t* block_count, uint16_t* block_size) { *block_count = 0; *block_size = 0; }
+    void tud_msc_capacity_cb(uint8_t, uint32_t* block_count, uint16_t* block_size)
+    {
+        *block_count = 0;
+        *block_size = 0;
+    }
     bool tud_msc_start_stop_cb(uint8_t, uint8_t, bool, bool) { return false; }
     bool tud_msc_is_writable_cb(uint8_t) { return false; }
     int32_t tud_msc_read10_cb(uint8_t, uint32_t, uint32_t, void*, uint32_t) { return -1; }
@@ -437,7 +447,7 @@ namespace OpenKNX
 
         // LED Manager loop - must ALWAYS run for LED effects (PULSING, BLINK, etc.)
         // Also handles pending I2C writes depending on pattern
-       openknx.leds.loop();
+        openknx.leds.loop();
 
 #if defined(OPENKNX_WIRE_PIO) || defined(OPENKNX_WIRE1_PIO)
     #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
@@ -605,6 +615,31 @@ namespace OpenKNX
     }
 #endif
 
+#ifdef DEVICE_DISPLAY_MODULE
+    void Common::registerCommonWidgets()
+    {
+        // Guard against double-add on a second call or boot phase.
+        if (_commonWidgetsRegistered) return;
+        _commonWidgetsRegistered = true;
+
+        // tryAddWidget() null-checks the WidgetsManager and, when the display is absent
+        // at runtime, deletes the widget (no leak) instead of dereferencing null.
+        auto* sysInfo = new WidgetSysInfo(8000, WidgetFlags::DefaultWidget);
+        sysInfo->setName("System-Info");
+        if (!openknxDisplayModule.tryAddWidget(sysInfo))
+            logDebugP("WidgetSysInfo not registered (no display/manager)");
+
+        // KNX / BCU widget only makes sense on a device that HAS a TP-UART BCU:
+        // the TP device (0x07B0) or the IP-Router coupler (0x091A). Skip on IP-only.
+    #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+        auto* knxBcu = new WidgetKnxBcu(8000, WidgetFlags::DefaultWidget);
+        knxBcu->setName("KNX / BCU");
+        if (!openknxDisplayModule.tryAddWidget(knxBcu))
+            logDebugP("WidgetKnxBcu not registered (no display/manager)");
+    #endif
+    }
+#endif
+
     bool Common::afterStartupDelay()
     {
         return _afterStartupDelay;
@@ -632,6 +667,12 @@ namespace OpenKNX
         {
             openknx.modules.list[i]->processAfterStartupDelay();
         }
+
+#ifdef DEVICE_DISPLAY_MODULE
+        // Registered here because DeviceDisplay::init()/setup() has already run, so the
+        // widget manager is valid. Runs once (guarded) and no-ops if the display is absent.
+        registerCommonWidgets();
+#endif
 
         logIndentDown();
 
