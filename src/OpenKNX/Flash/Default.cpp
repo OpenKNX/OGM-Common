@@ -143,6 +143,15 @@ namespace OpenKNX
             const uint16_t dataSize = readWord();
             logDebugP("Data size: %i", dataSize);
 
+            // Reject an oversized dataSize before the address math below: slotOffset - META - dataSize would
+            // underflow _currentReadAddress -> OOB flash read inside the checksum (crash) on stale/corrupt flash.
+            if (dataSize > slotSize() - FLASH_DATA_META_LEN)
+            {
+                logErrorP("Data size %i exceeds slot capacity %i -> slot invalid", dataSize, (int)(slotSize() - FLASH_DATA_META_LEN));
+                logIndentDown();
+                return false;
+            }
+
             const uint8_t version = readByte();
             // (version >= 0); // do nothing prevents warning for line above
             (void)version;
@@ -221,6 +230,14 @@ namespace OpenKNX
             // reread data size for calc
             _currentReadAddress = readOffset() - FLASH_DATA_INIT_LEN - FLASH_DATA_CHK_LEN - FLASH_DATA_VERSION - FLASH_DATA_SIZE_LEN;
             const uint16_t dataSize = readWord();
+
+            // Defense-in-depth: same capacity guard as validateSlot() (dataSize is re-read here).
+            if (dataSize > slotSize() - FLASH_DATA_META_LEN)
+            {
+                logErrorP("Data size %i exceeds slot capacity -> skip restore", dataSize);
+                logIndentDown();
+                return;
+            }
 
             // process data
             _currentReadAddress = readOffset() - FLASH_DATA_META_LEN - dataSize;
