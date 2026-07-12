@@ -1,5 +1,8 @@
 #include "OpenKNX/Flash/Default.h"
 #include "OpenKNX/Facade.h"
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32) // ESP-only: heap_caps_* is ESP-IDF
+    #include "OpenKNX/Heap/HeapCheck.h"
+#endif
 
 namespace OpenKNX
 {
@@ -22,7 +25,6 @@ namespace OpenKNX
         void Default::load()
         {
             const uint32_t start = millis();
-            loadedModules = new bool[openknx.modules.count];
             logInfoP("Load data from flash");
             logIndentUp();
             bool found = false;
@@ -58,8 +60,21 @@ namespace OpenKNX
                 return;
             }
 
+            // Indexed by sparse MODULE ID (e.g. SDCard=30 > count) -> size to the max ID, not count.
+            uint8_t maxModuleId = 0;
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+                if (openknx.modules.ids[i] > maxModuleId) maxModuleId = openknx.modules.ids[i];
+            delete[] loadedModules; // in case load() ever runs twice
+            loadedModulesSize = (uint16_t)maxModuleId + 1;
+            loadedModules = new bool[loadedModulesSize]();
+
             loadModuleData();
             initUnloadedModules();
+
+            // Boot-time scratch only; release it so it does not linger for the whole uptime.
+            delete[] loadedModules;
+            loadedModules = nullptr;
+            loadedModulesSize = 0;
 
             // erase next slot
             eraseSlot(nextSlot());
@@ -198,7 +213,7 @@ namespace OpenKNX
                 const uint8_t moduleId = openknx.modules.ids[i];
                 const uint16_t moduleSize = module->flashSize();
 
-                if (moduleSize > 0 && !loadedModules[moduleId])
+                if (moduleSize > 0 && moduleId < loadedModulesSize && !loadedModules[moduleId])
                 {
                     logDebugP("Init unloaded module %s (%i)", module->name().c_str(), moduleId);
                     module->readFlash(nullptr, 0);
@@ -259,7 +274,10 @@ namespace OpenKNX
                     logIndentUp();
                     logHexTraceP(currentFlash(), moduleSize);
                     module->readFlash(currentFlash(), moduleSize);
-                    loadedModules[moduleId] = true;
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32)
+                    OPENKNX_HEAPCHK((std::string("readFlash ") + module->name()).c_str());
+#endif
+                    if (moduleId < loadedModulesSize) loadedModules[moduleId] = true; // moduleId is flash-sourced
                     logIndentDown();
                 }
                 _currentReadAddress = readOffset() - FLASH_DATA_META_LEN - dataSize + dataProcessed;

@@ -1,5 +1,8 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32) // ESP-only: heap_caps_* is ESP-IDF
+    #include "OpenKNX/Heap/HeapCheck.h"
+#endif
 #include "OpenKNX/Stat/RuntimeStat.h"
 #ifdef DEVICE_DISPLAY_MODULE
     // Bare includes resolve via the OFM-DeviceDisplay src/ include path.
@@ -197,6 +200,9 @@ namespace OpenKNX
         knx.bau().deviceObject().hardwareType(hardwareType);
         // read flash data
         knx.readMemory();
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32)
+        OPENKNX_HEAPCHK("post knx.readMemory"); // tripwire: did the KNX-lib table restore corrupt the heap?
+#endif
         // set hardware type again, in case an other hardware type was deserialized from flash
         knx.bau().deviceObject().hardwareType(hardwareType);
         // set firmware version as user info (PID_VERSION)
@@ -257,6 +263,10 @@ namespace OpenKNX
     {
         openknx.ledFunctions.setup();
 
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32)
+        OPENKNX_HEAPCHK("setup baseline"); // heap state entering setup (after knx.readMemory)
+#endif
+
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->init();
@@ -276,11 +286,19 @@ namespace OpenKNX
 
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
             openknx.modules.list[i]->setup(configured);
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32)
+            OPENKNX_HEAPCHK((std::string("setup ") + openknx.modules.list[i]->name()).c_str());
+#endif
+        }
 
         _ledFunctions.setup(); // run after setup of all modules, because some modules might add leds to functions
 
         if (configured) openknx.flash.load();
+#if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32)
+        OPENKNX_HEAPCHK("post flash.load"); // tripwire: did a module's readFlash() overrun on a stale blob?
+#endif
 
         // start the framework + isr if needed
         knx.start();

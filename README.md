@@ -94,6 +94,9 @@ ParamBASE_HeartbeatDelayTimeMS
 | `OPENKNX_DEBUGGER` | - | Enable SWD debugger support (disables watchdog) |
 | `OPENKNX_RTT` | - | Enable RTT mode (disable USB serial) |
 | `BUFFER_SIZE_UP` | 1024 | RTT buffer size in bytes |
+| `OPENKNX_HEAP_INTEGRITY_TRACE` | - | ESP32 only: heap-integrity tripwires along the boot restore path — dev only, off in release |
+
+> **`OPENKNX_HEAP_INTEGRITY_TRACE`** walks the whole heap (`heap_caps_check_integrity_all`) at each boot restore step and logs an `OPENKNX_HEAPCHK` marker; the first `*** HEAP CORRUPT ***` bounds the step that corrupted the heap (heap-overrun crashes otherwise surface far away, in `showMemory`'s heap-walk). Zero cost when off.
 
 #### Runtime Statistics
 

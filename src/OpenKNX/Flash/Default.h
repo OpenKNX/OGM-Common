@@ -208,6 +208,7 @@ namespace OpenKNX
 
           private:
             bool *loadedModules = nullptr;
+            uint16_t loadedModulesSize = 0; // allocated length of loadedModules (indexed by MODULE ID, not list index)
             bool _activeSlot = false; // false = A & true = B
             uint32_t _lastWrite = 0;
             uint16_t _lastFirmwareNumber = 0;
