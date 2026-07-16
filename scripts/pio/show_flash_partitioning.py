@@ -243,7 +243,54 @@ def show_flash_partitioning(source, target, env):
         sys.stderr.flush()
         # Note: Q&D Fix: flushing does not work within PIO
         time.sleep(1)
-        sys.exit(1)        
+        sys.exit(1)
+
+    # ------------------------------------------------------------------
+    # FW-update-over-KNX fit check (RP2040/RP2350 only)
+    # KnxFileTransferClient gzips the firmware and stores it in LittleFS;
+    # PicoOTA decompresses it at boot. So the *compressed* image must fit
+    # into the filesystem. This guards against firmware growth OR a silently
+    # shrunk board_build.filesystem_size breaking FW-update-over-KNX.
+    # Default: loud warning (so other OAMs are not surprised by a build break).
+    # Opt-in hard fail via -D OPENKNX_OTA_FS_ASSERT.
+    # ------------------------------------------------------------------
+    if projenv['PIOPLATFORM'] == 'raspberrypi' and env["FS_START"] > 0 and env["FS_START"] != env["FS_END"]:
+        fs_size = env["FS_END"] - env["FS_START"]
+        OTA_COMPRESS_RATIO = 0.65   # gzip of ARM code+rodata ~0.55-0.65; conservative estimate
+        FS_USABLE_FRACTION = 0.90   # LittleFS block overhead + PicoOTA command file + headroom
+        est_compressed = int(firmware_end * OTA_COMPRESS_RATIO)
+        fs_usable = int(fs_size * FS_USABLE_FRACTION)
+        opt_in_assert = any(
+            (d == 'OPENKNX_OTA_FS_ASSERT') or
+            (isinstance(d, (tuple, list)) and len(d) > 0 and d[0] == 'OPENKNX_OTA_FS_ASSERT')
+            for d in projenv["CPPDEFINES"])
+
+        print("")
+        print("{}FW-update-over-KNX fit (compressed OTA image must fit in filesystem):{}".format(console_color.YELLOW, console_color.END))
+        print("  firmware:              {} bytes".format(firmware_end))
+        print("  est. gzip (x{:.2f}):      {} bytes".format(OTA_COMPRESS_RATIO, est_compressed))
+        print("  filesystem:            {} bytes".format(fs_size))
+        print("  usable  (x{:.2f}):        {} bytes".format(FS_USABLE_FRACTION, fs_usable))
+
+        if est_compressed > fs_usable:
+            msg = ("OTA WON'T FIT: est. compressed firmware ({} B) exceeds usable filesystem "
+                   "({} B). FW-update-over-KNX will fail. Increase board_build.filesystem_size "
+                   "or reduce firmware size.").format(est_compressed, fs_usable)
+            if opt_in_assert:
+                print("{}=> {} <={}".format(console_color.RED, msg, console_color.END))
+                import sys
+                import time
+                sys.stdout.flush()
+                sys.stderr.flush()
+                time.sleep(1)
+                sys.exit(1)
+            print("{}=> WARNING: {}{}".format(console_color.RED, msg, console_color.END))
+        elif est_compressed > int(fs_size * 0.82):
+            print("{}=> WARNING: OTA headroom getting tight (est. compressed ~{} B vs filesystem {} B).{}".format(
+                console_color.YELLOW, est_compressed, fs_size, console_color.END))
+        else:
+            print("{}=> OK - fits with headroom.{}".format(console_color.GREEN, console_color.END))
+
     print("")
 
 

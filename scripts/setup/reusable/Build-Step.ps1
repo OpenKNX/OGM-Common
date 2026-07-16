@@ -89,11 +89,86 @@ else {
   }
 }
 
+# --------------------------------------------------------------------------- #
+# Layer 1: Static IDF build detection -- quick check for "custom_idf_build = true" in pio project config.
+# Runs BEFORE 'pio run' and gives an early warning for long builds.
+# --------------------------------------------------------------------------- #
+$isIdfBuild = $false
+try {
+    $pioConfigOutput = & $pioExe project config -e $pioEnv 2>$null | Out-String
+    if ($pioConfigOutput -match "custom_idf_build\s*=\s*(true|yes|1)") {
+        Write-Host ""
+        $isIdfBuild = $true
+        Write-Host "[$pioEnv] IDF build detected (custom_idf_build = true)"
+        Write-Host "[$pioEnv]   Phase 2 (Arduino app compile): fast after successful Phase 1, otherwise also takes while"
+        Write-Host "[$pioEnv]   Phase 1 (IDF libs from source): takes while on first build or after clean"
+        Write-Host ""
+} catch {
+    }
+    Write-Host "[$pioEnv] WARNING: pio project config query failed -- proceeding without early IDF detection"
+}
+
 & $pioPath $buildMode -e $pioEnv
 if (!$?) {
   Write-Host "$pioEnv build failed, Firmware was not built!"
   exit 1
 }
+
+# --------------------------------------------------------------------------- #
+# Layer 3: Marker file check for IDF build and sdkconfig cache hit -- 
+#         gives detailed info about IDF version and whether Phase 1 was a cache hit or rebuild.
+# idf_generate_crt_asm.py (pre-script).  Exists only if the IDF build was actually executed, so it is a more reliable indicator than Layer 1's static config check.
+#         Also gives a warning if Layer 1 detected an IDF build but the marker file is missing, which may indicate that the pre-script did not run and the IDF build was not
+# IDF-Build war UND das pre-script erfolgreich durchlief.
+# --------------------------------------------------------------------------- #
+$markerRelPath = ".pio/build/$pioEnv/idf_build.marker"
+$markerPath = if (![string]::IsNullOrEmpty($ProjectDir)) {
+    Join-Path $ProjectDir $markerRelPath
+} else {
+    $markerRelPath
+}
+if (Test-Path $markerPath) {
+    # key=value Paare parsen (Kommentarzeilen ueberspringen)
+    $markerData = @{}
+    Get-Content $markerPath | Where-Object { $_ -match "^[^#]+=.+" } | ForEach-Object {
+        $kv = $_ -split "=", 2
+        $markerData[$kv[0].Trim()] = $kv[1].Trim()
+    }
+    $isIdfBuild = $true
+    $cacheHit   = $markerData["idf_cache_hit"] -eq "true"
+    $idfVer     = $markerData["idf_version"]
+    Write-Host ""
+    Write-Host "[$pioEnv] IDF build summary:"
+    Write-Host "[$pioEnv]   ESP-IDF version : $idfVer"
+    if ($cacheHit) {
+        Write-Host "[$pioEnv]   Phase 1 status  : SKIPPED  (sdkconfig.defaults cache hit)"
+    } else {
+        Write-Host "[$pioEnv]   Phase 1 status  : REBUILT from source"
+    }
+    Write-Host ""
+} elseif ($isIdfBuild) {
+    # Layer 1 erkannte IDF, aber Marker fehlt -> pre-script lief moeglicherweise nicht
+    Write-Host "[$pioEnv] WARNING: IDF build detected but marker file not found."
+    Write-Host "[$pioEnv]   Expected: $markerPath"
+    Write-Host "[$pioEnv]   Possible cause: idf_generate_crt_asm.py fehlt in extra_scripts"
+}
+
+# featureSet replaces the old binaryFormat setting in a compatible way
+# it is interpreted as an enum with some depricated values (for compatibility)
+# bin (deprecated) - old SAMD processor
+# uf2 (deprecated) - RP2040 without OTA
+# esp32 - (deprecated) ESP32 with OTA
+# esp32-ip (new) esp32 with OTA
+# esp32-tp (new) esp32 with KNX
+# rp2040-ip (new) rp2040 with OTA
+# rp2040-tp (new) rp2040 with KNX
+# rp2350-ip (new) rp2350 with OTA
+# rp2350-tp (new) rp2350 with KNX
+# inherent logic: 
+# - a device with OTA does not need a KNX-Upload
+# - esp is always IP and OTA is always possible
+# - RP2040/2350 needs to distinguish 
+
 
 # binaryFormat uf2 means rp2040 without OTA
 $binaryFormat = "uf2"

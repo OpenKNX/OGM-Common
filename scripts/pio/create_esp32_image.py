@@ -125,6 +125,13 @@ def esp32_create_combined_bin(source, target, env):
         "--flash-size",
         flash_size,
     ]
+    
+    print("")
+    print("    Offset | File")
+    for [offset, image] in env["FLASH_EXTRA_IMAGES"]:
+        image = env.subst(image)  # expand $BUILD_DIR and other SCons variables
+        print(f" -  {offset} | {image}")
+        cmd += [offset, image]
 
     print(f"{C.BOLD}Firmware Info{C.END}: {C.BLUE}{chip}{C.END} | Mode:{C.GREEN} {flash_mode}{C.END} | Size:{C.BLUE} {flash_size}{C.END} | Freq:{C.GREEN} {flash_freq}{C.END}")
     print(LINE)
