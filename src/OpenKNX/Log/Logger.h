@@ -9,6 +9,12 @@
     #include "freertos/semphr.h"
 #endif
 
+// The FTC console tunnel drains the same log ring the web console uses (ring-only, verified). Imply it
+// so the ring is compiled in without pulling the full web-console feature.
+#if defined(OPENKNX_FTC_CONSOLE) && !defined(OPENKNX_WEBCONSOLE)
+    #define OPENKNX_WEBCONSOLE
+#endif
+
 #ifdef OPENKNX_RTT
     #include <RTTStream.h>
     #define OPENKNX_LOGGER_DEVICE openknx.logger.rtt

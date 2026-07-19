@@ -378,6 +378,17 @@ namespace OpenKNX
             openknx.logger.log(prompt);
             if (strlen(prompt) > 0)
             {
+#ifdef OPENKNX_FTC_CONSOLE
+                // Session active: divert the line to the remote device (echo already printed above) and skip
+                // the local prompt redraw -- the tunnel owns the prompt while connected.
+                if (_lineSink)
+                {
+                    _lineSink(prompt);
+                    memset(prompt, 0, CONSOLE_INPUT_SIZE);
+                    _consoleCharLast = current;
+                    return;
+                }
+#endif
                 if (!processCommand(prompt))
                 {
                     // Command not found

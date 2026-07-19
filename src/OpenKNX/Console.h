@@ -37,6 +37,9 @@ namespace OpenKNX
         uint8_t _consoleCharLast = 0x0;
         bool _diagnoseKoOutput = false;
         bool _disableConsole = false;
+#ifdef OPENKNX_FTC_CONSOLE
+        void (*_lineSink)(const char *) = nullptr; // FTC console tunnel: divert a finished line instead of running it locally
+#endif
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         bool _bcuDebug = false;
 #endif
@@ -61,6 +64,11 @@ namespace OpenKNX
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};
         void loop();
         void disableConsole(bool disable);
+#ifdef OPENKNX_FTC_CONSOLE
+        // FTC console tunnel: while set, processSerialInput diverts each finished line to the sink (sent to
+        // the remote device) instead of running it locally. nullptr = back to the local console.
+        void setLineSink(void (*s)(const char *)) { _lineSink = s; }
+#endif
 
         void printHelpLine(const char* command, const char* message);
         bool processCommand(std::string cmd, bool diagnoseKo = false);
