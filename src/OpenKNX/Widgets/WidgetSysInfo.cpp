@@ -121,7 +121,7 @@ namespace OpenKNX
     // ---- Lifecycle --------------------------------------------------------------
     void WidgetSysInfo::setup()
     {
-        logInfoP("Setup...");
+        logDebugP("Setup...");
         if (_display == nullptr)
         {
             logErrorP("Display is NULL.");
@@ -132,7 +132,7 @@ namespace OpenKNX
     void WidgetSysInfo::start()
     {
         if (_state == WidgetState::RUNNING) return;
-        logInfoP("Start...");
+        logDebugP("Start...");
         _state = WidgetState::RUNNING;
         _currentPage = 0;
         _startTime = millis();
@@ -142,7 +142,7 @@ namespace OpenKNX
 
     void WidgetSysInfo::stop()
     {
-        logInfoP("Stop...");
+        logDebugP("Stop...");
         _state = WidgetState::STOPPED;
         if (_display && _display->display)
         {
@@ -155,7 +155,7 @@ namespace OpenKNX
     {
         if (_state == WidgetState::RUNNING)
         {
-            logInfoP("Pause...");
+            logDebugP("Pause...");
             _state = WidgetState::PAUSED;
         }
     }
@@ -164,7 +164,7 @@ namespace OpenKNX
     {
         if (_state == WidgetState::PAUSED)
         {
-            logInfoP("Resume...");
+            logDebugP("Resume...");
             _state = WidgetState::RUNNING;
         }
     }
