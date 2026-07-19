@@ -103,8 +103,8 @@ try {
         Write-Host "[$pioEnv]   Phase 2 (Arduino app compile): fast after successful Phase 1, otherwise also takes while"
         Write-Host "[$pioEnv]   Phase 1 (IDF libs from source): takes while on first build or after clean"
         Write-Host ""
-} catch {
     }
+} catch {
     Write-Host "[$pioEnv] WARNING: pio project config query failed -- proceeding without early IDF detection"
 }
 
