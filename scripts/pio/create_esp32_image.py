@@ -128,21 +128,20 @@ def esp32_create_combined_bin(source, target, env):
     
     print("")
     print("    Offset | File")
-    for [offset, image] in env["FLASH_EXTRA_IMAGES"]:
-        image = env.subst(image)  # expand $BUILD_DIR and other SCons variables
-        print(f" -  {offset} | {image}")
-        cmd += [offset, image]
-
-    print(f"{C.BOLD}Firmware Info{C.END}: {C.BLUE}{chip}{C.END} | Mode:{C.GREEN} {flash_mode}{C.END} | Size:{C.BLUE} {flash_size}{C.END} | Freq:{C.GREEN} {flash_freq}{C.END}")
-    print(LINE)
-
+    # Add each extra image (bootloader / partitions / boot_app0) EXACTLY once. A second pass here used
+    # to append them again -> the same file landed at the same offset twice, which esptool >= 5.x
+    # rejects as an overlap ("Detected overlap at address: 0x0"). One loop: print, collect, append.
     resolved_extra_images = []
     for offset, image in env["FLASH_EXTRA_IMAGES"]:
         resolved_offset = env.subst(str(offset))
-        resolved_image = env.subst(str(image))
+        resolved_image = env.subst(str(image))  # expand $BUILD_DIR and other SCons variables
+        print(f" -  {resolved_offset} | {resolved_image}")
         resolved_extra_images.append((resolved_offset, resolved_image))
         cmd += [resolved_offset, resolved_image]
     cmd += [hex(0x10000), fw]
+
+    print(f"{C.BOLD}Firmware Info{C.END}: {C.BLUE}{chip}{C.END} | Mode:{C.GREEN} {flash_mode}{C.END} | Size:{C.BLUE} {flash_size}{C.END} | Freq:{C.GREEN} {flash_freq}{C.END}")
+    print(LINE)
 
     # Visualisierung mit beiden Balken
     print_flash_layout(resolved_extra_images, fw, 8 * 1024 * 1024)
