@@ -273,29 +273,186 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            const int bcuBaud = dll->getTPUart().getBaudrate();
-            if (bcuBaud > 0)
-                logInfo("BCU<Status>", "%s (Baudrate: %d)", dll->getTPUart().getBcuStateInfo(), bcuBaud);
-            else
-                logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
-            TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
-            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u",
-                    statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
-                    statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
-                    statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
-    #ifdef TPUART_BCU_HEALTH
-            logInfo("BCU<Health>", "Resets: %u | Disconnects: %u | CON-rescues: %u",
-                    statistics.getBcuResets(), statistics.getBcuDisconnects(), statistics.getBcuConRescues());
-            logInfo("BCU<NCN-Err>", "Slave-Collision: %u | Receive-Error: %u | Transmit-Error: %u | Protocol-Error: %u | Temp-Warning: %u",
-                    statistics.getBcuSlaveCollisions(), statistics.getBcuReceiveErrors(), statistics.getBcuTransmitErrors(),
-                    statistics.getBcuProtocolErrors(), statistics.getBcuTempWarnings());
-    #endif
+            // Compact overview: two fixed lines (state+traffic, buffer+health counters) plus a
+            // conditional third line (yellow) that only appears on genuine faults (NCN errors or
+            // temperature warnings). Full framed report stays available via "bcu stat".
+            auto& tp = dll->getTPUart();
+            auto& st = tp.getStatistics();
 
+            char line[128];
+
+            // Line 1: BCU state in the log prefix, traffic in the body.
+            char pfx[40];
+            snprintf(pfx, sizeof(pfx), "BCU<Status: %s>", tp.getBcuStateInfo());
+            snprintf(line, sizeof(line), "TX %u | RX %u (%u B) | Discarded %u B | Received %u B | Load %u B/s",
+                     st.getTxFrames(), st.getRxFrames(), st.getRxFrameBytes(),
+                     st.getRxDiscardedBytes(), st.getRxReceivedBytes(), st.getBusLoad());
+            openknx.logger.logWithPrefix(pfx, line);
+
+            // Line 2: buffer / health counters (always shown; health getters return 0 without TPUART_BCU_HEALTH).
+            snprintf(line, sizeof(line),
+                     "Buffer %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u | Resets %u | CON-rescues %u | Disconnects %u",
+                     tp.getReceiver().getSearchBufferPosition(), tp.getReceiver().getAwaitBytes(), st.getRxRepetitions(),
+                     st.getRxUartOverflow(), st.getRxSearchBufferOverflow(), st.getRxFrameBufferOverflow(), st.getTxOverflowFrameBuffer(),
+                     st.getBcuResets(), st.getBcuConRescues(), st.getBcuDisconnects());
+            openknx.logger.logWithPrefix("BCU<Stat>", line);
+
+            // Line 3: only on faults, in yellow (CONSOLE_HEADLINE_COLOR == ANSI yellow).
+            const unsigned ncn = st.getBcuSlaveCollisions() + st.getBcuReceiveErrors() +
+                                 st.getBcuTransmitErrors() + st.getBcuProtocolErrors();
+            if (ncn > 0 || st.getBcuTempWarnings() > 0)
+            {
+                snprintf(line, sizeof(line), "NCN  SC %u | RE %u | TE %u | PE %u  |  Temp-Warn %u",
+                         st.getBcuSlaveCollisions(), st.getBcuReceiveErrors(), st.getBcuTransmitErrors(),
+                         st.getBcuProtocolErrors(), st.getBcuTempWarnings());
+                openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+                openknx.logger.logWithPrefix("BCU<ERROR>", line);
+                openknx.logger.color(0);
+            }
+            return true;
+        }
+        else if (cmd.compare("bcu ?") == 0)
+        {
+            printHelpLine("bcu", "Compact BCU status (+ERROR line on faults)");
+            printHelpLine("bcu stat", "Full BCU / TPUart statistics table");
+            printHelpLine("bcu mon", "Start BCU monitoring");
+            printHelpLine("bcu rst", "Reset BCU");
+    #ifdef TPUART_BCU_DEBUG
+            printHelpLine("bcu dis", "Force BCU disconnect (test)");
+    #endif
+            printHelpLine("bcu poff", "Bus power off");
+            printHelpLine("bcu pon", "Bus power on");
+            printHelpLine("bcu debug", "Toggle BCU debug logging");
+            return true;
+        }
+        else if (cmd.compare("bcu stat") == 0)
+        {
+            auto& tp = dll->getTPUart();
+            auto& st = tp.getStatistics();
+            const int bcuBaud = tp.getBaudrate();
+
+            // Framed, colored report. Inner width bounded so total stays <= 72 and never wraps.
+            constexpr uint8_t IW = 66;
+
+            /// @brief Colored/plain full-width divider "+<ch*IW>+".
+            auto boxRule = [&](char ch) {
+                char r[IW + 3];
+                r[0] = '+';
+                memset(r + 1, ch, IW);
+                r[IW + 1] = '+';
+                r[IW + 2] = 0;
+                openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+                openknx.logger.log(r);
+                openknx.logger.color(0);
+            };
+            /// @brief Framed row; pads AND truncates to IW so the frame never breaks. col!=0 colors it.
+            auto boxRow = [&](const char* s, uint8_t col) {
+                char r[IW + 3];
+                snprintf(r, sizeof(r), "|%-*.*s|", (int)IW, (int)IW, s);
+                if (col) openknx.logger.color(col);
+                openknx.logger.log(r);
+                if (col) openknx.logger.color(0);
+            };
+            /// @brief Aligned key/value row, one or two pairs (l2 == nullptr -> single).
+            auto kv = [&](const char* l1, const char* v1, const char* l2, const char* v2) {
+                char line[IW + 1];
+                if (l2)
+                    snprintf(line, sizeof(line), "  %-12s: %-16s%-12s: %s", l1, v1, l2, v2);
+                else
+                    snprintf(line, sizeof(line), "  %-12s: %s", l1, v1);
+                boxRow(line, 0);
+            };
+
+            char vBaud[12];
+            char vRx[24], vDisc[16], vRecv[16], vLoad[16], vBuf[12], vAwait[12], vRep[12], vOv[28];
+            snprintf(vRx, sizeof(vRx), "%u (%u B)", st.getRxFrames(), st.getRxFrameBytes());
+            snprintf(vDisc, sizeof(vDisc), "%u B", st.getRxDiscardedBytes());
+            snprintf(vRecv, sizeof(vRecv), "%u B", st.getRxReceivedBytes());
+            snprintf(vLoad, sizeof(vLoad), "%u B/s", st.getBusLoad());
+            snprintf(vBuf, sizeof(vBuf), "%u", tp.getReceiver().getSearchBufferPosition());
+            snprintf(vAwait, sizeof(vAwait), "%u", tp.getReceiver().getAwaitBytes());
+            snprintf(vRep, sizeof(vRep), "%u", st.getRxRepetitions());
+            snprintf(vOv, sizeof(vOv), "%u/%u/%u/%u", st.getRxUartOverflow(), st.getRxSearchBufferOverflow(),
+                     st.getRxFrameBufferOverflow(), st.getTxOverflowFrameBuffer());
+            char vTx[12];
+            snprintf(vTx, sizeof(vTx), "%u", st.getTxFrames());
+
+            boxRule('=');
+            boxRow(" BCU / TPUart Statistics", CONSOLE_HEADLINE_COLOR);
+            boxRule('-');
+            boxRow(" Status", CONSOLE_HEADLINE_COLOR);
+            if (bcuBaud > 0)
+            {
+                snprintf(vBaud, sizeof(vBaud), "%d", bcuBaud);
+                kv("State", tp.getBcuStateInfo(), "Baud", vBaud);
+            }
+            else
+                kv("State", tp.getBcuStateInfo(), nullptr, nullptr);
+            boxRow(" Traffic", CONSOLE_HEADLINE_COLOR);
+            kv("TX Frames", vTx, "RX Frames", vRx);
+            kv("Discarded", vDisc, "Received", vRecv);
+            kv("Load", vLoad, "Buffer", vBuf);
+            kv("Await", vAwait, "Repetitions", vRep);
+            kv("Overflow", vOv, nullptr, nullptr);
+    #ifdef TPUART_BCU_HEALTH
+            char vRes[12], vDisc2[12], vCon[12];
+            snprintf(vRes, sizeof(vRes), "%u", st.getBcuResets());
+            snprintf(vDisc2, sizeof(vDisc2), "%u", st.getBcuDisconnects());
+            snprintf(vCon, sizeof(vCon), "%u", st.getBcuConRescues());
+            boxRow(" Health", CONSOLE_HEADLINE_COLOR);
+            kv("Resets", vRes, "Disconnects", vDisc2);
+            kv("CON-rescues", vCon, nullptr, nullptr);
+
+            char vSc[12], vRe[12], vTe[12], vPe[12], vTw[12];
+            snprintf(vSc, sizeof(vSc), "%u", st.getBcuSlaveCollisions());
+            snprintf(vRe, sizeof(vRe), "%u", st.getBcuReceiveErrors());
+            snprintf(vTe, sizeof(vTe), "%u", st.getBcuTransmitErrors());
+            snprintf(vPe, sizeof(vPe), "%u", st.getBcuProtocolErrors());
+            snprintf(vTw, sizeof(vTw), "%u", st.getBcuTempWarnings());
+            boxRow(" NCN Errors", CONSOLE_HEADLINE_COLOR);
+            kv("Slave-Coll", vSc, "Recv-Err", vRe);
+            kv("Xmit-Err", vTe, "Proto-Err", vPe);
+            kv("Temp-Warn", vTw, nullptr, nullptr);
+    #endif
+            // NCN rails + register snapshot use the extended TPUart API (getBcuType/getSystemState rails/
+            // ncnRegValid/getNcnRevId/getNcnAsr0/ASR0_TSD), which is absent upstream. Gate on the product flag
+            // so OGM-Common still compiles against a stock TPUart (section simply omitted there).
+#ifdef TPUART_BCU_REGISTER_INFO
+            // NCN5130/5121 supervisor rails (already polled via U_SystemStat, 1 Hz) + boot register snapshot.
+            if (tp.getBcuType() == TPUart::BCU_NCN5120)
+            {
+                auto& ss = tp.getSystemState();
+                boxRow(" NCN Rails", CONSOLE_HEADLINE_COLOR);
+                kv("VBUS", ss.vbus() ? "ok" : "LOW", "VFILT", ss.vfilt() ? "ok" : "LOW");
+                kv("V20V", ss.v20v() ? "ok" : "LOW", "VDD2", ss.vdd2() ? "ok" : "LOW");
+                kv("XTAL", ss.xtal() ? "ok" : "FAIL", "Mode", ss.modeString());
+
+                if (tp.ncnRegValid())
+                {
+                    const uint8_t pn = tp.getNcnRevId() & 0x1F; // silicon-rev [7:5] masked off
+                    const char* chip = pn == 0x0C ? "NCN5130" : pn == 0x0D ? "NCN5121" : "NCN5120";
+                    char vRev[12], vTsd[20];
+                    if (pn == 0x0C || pn == 0x0D)
+                        snprintf(vRev, sizeof(vRev), "%u", (tp.getNcnRevId() >> 5) & 0x07);
+                    else
+                        snprintf(vRev, sizeof(vRev), "-"); // NCN5120 has no RevID register
+                    snprintf(vTsd, sizeof(vTsd), (tp.getNcnAsr0() & ASR0_TSD) ? "YES (history)" : "no");
+                    boxRow(" NCN Chip", CONSOLE_HEADLINE_COLOR);
+                    kv("Chip", chip, "Silicon Rev", vRev);
+                    kv("Thermal-SD", vTsd, nullptr, nullptr);
+                }
+            }
+#endif // TPUART_BCU_REGISTER_INFO
+            boxRule('=');
             return true;
         }
         else if (cmd.compare("bcu mon") == 0)
         {
-            dll->monitor();
+#ifdef TPUART_BCU_REGISTER_INFO
+            dll->monitorWithConsoleLog(); // console busmon: echo raw frames to the console (extended TPUart/knx)
+#else
+            dll->monitor();               // upstream fallback: monitor without console echo
+#endif
             return true;
         }
         else if (cmd.compare("bcu rst") == 0)
@@ -699,12 +856,8 @@ namespace OpenKNX
 #endif
         printHelpLine("leds", "LED control. Use 'leds' for help");
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
-        printHelpLine("bcu", "Show BCU status");
-        printHelpLine("bcu mon", "Start BCU monitoring");
-        printHelpLine("bcu rst", "Reset BCU");
-    #ifdef TPUART_BCU_DEBUG
-        printHelpLine("bcu dis", "Force BCU disconnect (test)");
-    #endif
+        printHelpLine("bcu", "Compact BCU status");
+        printHelpLine("bcu ?", "All BCU commands");
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         printHelpLine("tm ?", "Help for time related commands");
