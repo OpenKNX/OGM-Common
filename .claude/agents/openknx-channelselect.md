@@ -92,7 +92,7 @@ Jede Zeile in der Kanalauswahl ist eine **eigene** `Inline="true" Layout="Grid"`
 | 2 | **Kanaltyp** (Typ-Variante) / **Kanalaktivität** (Aktiv/Inaktiv-Variante) | Typ-Variante: TypeSelect ohne "Deaktiviert". Aktiv/Inaktiv-Variante: Deaktiviert/Aktiviert als Radio-Select |
 | 3 | **Beschreibung** | Freitext-Eingabefeld, **bleibt auch bei Deaktiviert sichtbar und eingebbar** |
 
-> **Kanal-Spalte:** Der angezeigte Text muss identisch zum Tab-Label des Kanals sein. Nicht generisch "Kanal %C%", sondern das modul-spezifische Label (z.B. `Text="Zähler %Z%"` wenn der Tab "Zähler 1" heißt, oder `Text="SML %Z%"` für SML-Module).
+> **Kanal-Spalte — maßgeblich ist der Channel-Tab, nicht raten:** Der angezeigte Text in Spalte 1 muss **exakt** dem `Text=`/`Name=` des Channel-Tab-`ParameterBlock` entsprechen (Block 2, `Name="Channel"` → `Name="Channel%C%Page"` bzw. `b%C%Page` mit `Text="..."`). Nicht aus der Beschreibung raten, sondern den Channel-Tab-Code direkt nachschlagen und **denselben Platzhalter** (`%C%` oder `%Z%`) 1:1 übernehmen. Beispiel-Fehler: VirtualButton hatte im Settings-Block `Text="Taster %Z%"`, während der Channel-Tab tatsächlich `Text="Taster %C%: ..."` verwendet — das ergibt "Taster A" (Settings) vs. "Taster 1" (Tab), ein Mismatch. Richtig: beide Stellen `%C%` verwenden, weil der Channel-Tab `%C%` verwendet.
 
 > **Spaltentitel:** In der Kopfzeile (share.xml) heißt Spalte 3 immer **"Beschreibung"** — nicht "Bezeichnung", nicht "Name".
 
@@ -427,7 +427,7 @@ Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalaus
 **Settings-Block (Kanalauswahl-Tabellenzeilen)**
 - [ ] Hat der äußere `ParameterBlock` `Name="Settings"`?
 - [ ] Ist jede Kanalzeile eine **eigene** `Inline="true" Layout="Grid"`-Tabelle (nicht eine gemeinsame)?
-- [ ] Ist der Text in Spalte 1 (Kanal-Label) identisch zum Tab-Label des Kanals (modul-spezifisch)?
+- [ ] Ist der Text in Spalte 1 (Kanal-Label) **zeichengleich** zum `Text=` des Channel-Tab-`ParameterBlock` (gleicher Platzhalter `%C%`/`%Z%`, im Code nachgeschlagen, nicht geraten)?
 - [ ] Ist das Beschreibungsfeld in Spalte 3 **ohne** `<choose>`-Wrapper (bleibt immer sichtbar, auch bei Deaktiviert)?
 - [ ] Hat das Beschreibungsfeld `HelpContext="BASE-ChannelName"`?
 
