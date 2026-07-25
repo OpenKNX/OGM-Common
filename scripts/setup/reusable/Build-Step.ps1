@@ -269,12 +269,16 @@ else {
 if ($withIP) {
   # create OTA-Upload-Firmware-<firmwarename>.ps1 script
   $fileName = "$CopyItem_Target_Dir/OTA-Upload-Firmware.ps1"
-  if ($processor -eq "RP2040") {
-    $espotaArgs = "'-p 2040'"
-  }
+  # Chip-specific OTA args: explicit espota port + chip flag, derived from the featureSet so RP2040 and
+  # RP2350 are distinguished. ESP32 uploads the raw .bin; RP gzips it -- the OTA-Upload script decides via
+  # the -ESP32 / -RP2040 / -RP2350 flag. Ports: ESP32 = 3232, RP2040/RP2350 = 2040 (PicoOTA).
+  $espotaArgs = ""; $chipArg = ""
+  if     ($featureSet -match "esp32")  { $espotaArgs = "'-p 3232'"; $chipArg = "-ESP32" }
+  elseif ($featureSet -match "rp2350") { $espotaArgs = "'-p 2040'"; $chipArg = "-RP2350" }
+  elseif ($featureSet -match "rp2040") { $espotaArgs = "'-p 2040'"; $chipArg = "-RP2040" }
 
-  # Write the script file content to the file 
-  $scriptContent = "& `"`$PSScriptRoot/../../data/OTA-Upload-Firmware-Generic.ps1`" $firmwareName.$OTAbinaryFormat $espotaArgs"
+  # Write the script file content to the file
+  $scriptContent = "& `"`$PSScriptRoot/../../data/OTA-Upload-Firmware-Generic.ps1`" $firmwareName.$OTAbinaryFormat $espotaArgs $chipArg"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
