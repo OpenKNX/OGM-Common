@@ -39,9 +39,9 @@ if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
   Copy-Item scripts/Readme-Hardware.html release/
 }
 
-# cleanup
-if (Test-Path -Path "release/$($settings.targetName).knxprod" -PathType Leaf) {
-  Remove-Item "release/$($settings.targetName).knxprod"
+# cleanup -- the transient knxprod is named after the source (releaseName), e.g. IP-Interface-Dev.knxprod
+if (Test-Path -Path "release/$($settings.releaseName).knxprod" -PathType Leaf) {
+  Remove-Item "release/$($settings.releaseName).knxprod"
 }
 
 # calculate version string
@@ -80,24 +80,28 @@ if (Test-Path -Path scripts/Build-knxprod.ps1 -PathType Leaf) {
 }
 else {
   $wrapperXml = "$($settings.targetName).xml"
+  # Output knxprod basename: <targetName>[-<appRelease>]-v<version>. The variant tag is dropped for a plain
+  # Release (-> IP-Interface-v0.1.0), kept otherwise (-> IP-Interface-Dev-v1.0.0 / -Beta-v...).
+  $variantTag = if ($settings.appRelease -eq 'Release') { '' } else { "-$($settings.appRelease)" }
+  $wrapperOut = "$($settings.targetName)$variantTag-v$appVersion"
   $author     = 'Erkan ' + [char]0x00C7 + 'olak'   # 0x00C7 = C-cedilla; built here so the source stays ASCII
   $wrapper = @"
 #!/usr/bin/env pwsh
 <#
   Build-knxprod (wrapper) - OpenKNX - $author
   Auto-generated at release build time. Do NOT edit by hand.
-  Calls the real engine ../data/Build-knxprod-Generic.ps1 with the XML name
-  and application version baked in.
+  Calls the real engine ../data/Build-knxprod-Generic.ps1 with the XML name, application version and the
+  versioned output name baked in.
 #>
 param([string]`$Lang = "", [switch]`$Detailed, [Alias("h")][switch]`$Help)
-& "`$PSScriptRoot/../data/Build-knxprod-Generic.ps1" -Xml '$wrapperXml' -AppVersion '$appVersion' -OutDir `$PSScriptRoot -Lang `$Lang -Detailed:`$Detailed -Help:`$Help
+& "`$PSScriptRoot/../data/Build-knxprod-Generic.ps1" -Xml '$wrapperXml' -AppVersion '$appVersion' -OutName '$wrapperOut' -OutDir `$PSScriptRoot -Lang `$Lang -Detailed:`$Detailed -Help:`$Help
 exit `$LASTEXITCODE
 "@
   $etsDir      = (Resolve-Path 'release/ETS-Applikation').Path
   $wrapperPath = Join-Path $etsDir 'Build-knxprod.ps1'
   $encBom      = New-Object System.Text.UTF8Encoding $true      # Windows PS 5.1 needs the BOM
   [System.IO.File]::WriteAllText($wrapperPath, $wrapper, $encBom)
-  Write-Host "Generated release/ETS-Applikation/Build-knxprod.ps1 (-> data/Build-knxprod-Generic.ps1, XML $wrapperXml, app $appVersion)" -ForegroundColor Blue
+  Write-Host "Generated release/ETS-Applikation/Build-knxprod.ps1 (-> data/Build-knxprod-Generic.ps1, XML $wrapperXml, out $wrapperOut.knxprod, app $appVersion)" -ForegroundColor Blue
 }
 
 

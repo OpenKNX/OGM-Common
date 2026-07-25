@@ -68,13 +68,13 @@ if($settings.compileWith -eq "openknxproducer")
   }
 
   if (-not ([string]::IsNullOrEmpty($OpenKNXproducer))) {
-    $expr = "$OpenKNXproducer create --Debug --Output=""release/$($settings.targetName).knxprod"" --HeaderFileName=""include/knxprod.h"" ""src/$($settings.releaseName).xml"""
+    $expr = "$OpenKNXproducer create --Debug --Output=""release/$($settings.releaseName).knxprod"" --HeaderFileName=""include/knxprod.h"" ""src/$($settings.releaseName).xml"""
     $expr += '; $success=$?'
     Invoke-Expression $expr
     if (!$success) {
         exit 1
     }
-    Write-Host "Created release/$($settings.targetName).knxprod" -ForegroundColor Blue
+    Write-Host "Created release/$($settings.releaseName).knxprod" -ForegroundColor Blue
   }
   else {
     Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow

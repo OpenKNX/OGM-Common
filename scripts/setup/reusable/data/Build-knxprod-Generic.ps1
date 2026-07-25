@@ -49,6 +49,7 @@ param(
     [string]$Xml = "",               # application XML name in this folder (else auto-discover)
     [string]$OutDir = "",            # where to write <app>.knxprod (else next to this script)
     [string]$AppVersion = "",        # application version, display only (wrapper injects it)
+    [string]$OutName = "",           # explicit output basename (wrapper injects e.g. IP-Interface-Dev-v1.0.0); else the XML basename
     [switch]$Detailed,               # show the full OpenKNXproducer output + the exact command
     [Alias("h")]
     [switch]$Help
@@ -351,8 +352,11 @@ if ($xmls.Count -eq 1) {
 }
 
 $filename = [System.IO.Path]::GetFileNameWithoutExtension($xmlFile)
+# The wrapper may inject an explicit output name (versioned / variant-tagged, e.g. IP-Interface-Dev-v1.0.0);
+# fall back to the XML basename when the engine is called directly.
+$baseName = if ($OutName) { $OutName } else { $filename }
 $outDir   = if ($OutDir) { $OutDir } else { $PSScriptRoot }
-$outFile  = Join-Path $outDir "$filename.knxprod"
+$outFile  = Join-Path $outDir "$baseName.knxprod"
 
 # ── Build (OpenKNXproducer as background job) + bouncing ■ spinner on one line ───-
 # Start-Process -PassThru + redirect is unreliable on PS 5.1 (.HasExited never flips
@@ -371,7 +375,7 @@ while ($job.State -eq 'Running') {
     Write-Host ("`r  [") -ForegroundColor DarkGray -NoNewline
     Write-Host (-join $bar) -ForegroundColor Green   -NoNewline
     Write-Host ']  '        -ForegroundColor DarkGray -NoNewline
-    Write-Host ($s.Building -f $filename) -ForegroundColor White -NoNewline
+    Write-Host ($s.Building -f $baseName) -ForegroundColor White -NoNewline
     if ($pos -ge $cells - 1) { $dir = -1 } elseif ($pos -le 0) { $dir = 1 }
     $pos += $dir
     Start-Sleep -Milliseconds 120
@@ -390,11 +394,11 @@ if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
     Write-Host ('  [') -ForegroundColor DarkGray -NoNewline
     Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
     Write-Host ']  ' -ForegroundColor DarkGray -NoNewline
-    Write-Host ($s.BuildDone -f $filename) -ForegroundColor Green
+    Write-Host ($s.BuildDone -f $baseName) -ForegroundColor Green
     Write-Host ""
     Show-Rule
     Write-Host ""
-    Write-Host ('  ' + ($s.DoneText -f $filename)) -ForegroundColor Green
+    Write-Host ('  ' + ($s.DoneText -f $baseName)) -ForegroundColor Green
     Write-Host ""
     $sizeKb = [Math]::Round((Get-Item $outFile).Length / 1KB, 1)
     Show-Field $s.DoneFile $outFile
