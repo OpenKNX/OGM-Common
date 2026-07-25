@@ -144,7 +144,7 @@ Identische Werte wie Haupttyp, aber **Wert 0 / "Deaktiviert" fehlt**:
 
 ```xml
 <ParameterBlock Id="%AID%_PB-nnn" Name="XxxKanalauswahl" Text="Kanalauswahl"
-    Icon="format-list-bulleted-type" HelpContext="Xxx-Dokumentation">
+    Icon="format-list-bulleted-type" HelpContext="BASE-ChannelSelect">
 
     <!-- Grid-Kopfzeile — Spaltenbreiten müssen mit Settings-Zeilen in templ.xml übereinstimmen -->
     <ParameterBlock Id="%AID%_PB-nnn" Inline="true" Layout="Grid">
@@ -261,7 +261,7 @@ Dazugehöriger ParameterRef unter `<ParameterRefs>`:
                         <!-- <ParameterRefRef RefId="...Haupttyp..." IndentLevel="1" HelpContext="%DOC%" /> -->
                         <!-- 3. Startverzögerung optional -->
                         <!-- 4. Suspendiert optional — PT_Suspended, Aus/Ein -->
-                        <!-- <ParameterRefRef RefId="...Suspendiert..." IndentLevel="1" HelpContext="Empty" /> -->
+                        <!-- <ParameterRefRef RefId="...Suspendiert..." IndentLevel="1" HelpContext="BASE-ChannelSuspended" /> -->
 
                         <!-- Kein HorizontalRuler, kein "Konfiguration"-Header nach Kanaldefinition -->
                         <!-- typspezifische Parameter folgen direkt: -->
@@ -346,7 +346,7 @@ Manche Module haben keine Typ-Auswahl. Unterschiede zur Typ-Variante:
                 <ParameterRefRef RefId="...Beschreibung..."
                     IndentLevel="1" HelpContext="BASE-ChannelName" />
                 <!-- Suspendiert optional -->
-                <!-- <ParameterRefRef RefId="...Suspendiert..." IndentLevel="1" HelpContext="Empty" /> -->
+                <!-- <ParameterRefRef RefId="...Suspendiert..." IndentLevel="1" HelpContext="BASE-ChannelSuspended" /> -->
 
                 <!-- Kein HorizontalRuler, kein "Konfiguration"-Header nach Kanaldefinition -->
                 <!-- kanalspezifische Parameter folgen direkt: -->
@@ -363,7 +363,8 @@ Manche Module haben keine Typ-Auswahl. Unterschiede zur Typ-Variante:
 | Verwendung | HelpContext |
 |---|---|
 | Beschreibung / Channel Name | `BASE-ChannelName` |
-| Suspendiert (PT_Suspended) | `Empty` |
+| Kanalauswahl-Tab (ParameterBlock) | `BASE-ChannelSelect` |
+| Suspendiert (PT_Suspended) | `BASE-ChannelSuspended` |
 | Parameter ohne eigene Hilfeseite | `Empty` |
 
 ---
@@ -409,6 +410,7 @@ Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalaus
 - [ ] Gibt es eine Grid-Kopfzeile (`Inline="true" Layout="Grid"`) mit den Spalten Kanal / Kanaltyp / Beschreibung?
 - [ ] Heißt Spalte 3 in der Kopfzeile **"Beschreibung"** (nicht "Bezeichnung", nicht "Name")?
 - [ ] Gibt es zwei `op:include` — eines für `[@Name='Settings']/*` und eines für `[@Name='Channel']/*`?
+- [ ] Hat der Kanalauswahl-Tab (`ParameterBlock`) `HelpContext="BASE-ChannelSelect"`?
 
 ---
 
@@ -443,7 +445,7 @@ Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalaus
 **Terminologie**
 - [ ] Wird durchgehend **"Beschreibung"** verwendet (nicht "Bezeichnung")?
 - [ ] Hat das Beschreibungsfeld überall `HelpContext="BASE-ChannelName"`?
-- [ ] Hat das Suspendiert-Feld überall `HelpContext="Empty"`?
+- [ ] Hat das Suspendiert-Feld überall `HelpContext="BASE-ChannelSuspended"`?
 - [ ] Ist Suspendiert als `PT_Suspended` (Aus/Ein Radio-Button) implementiert?
 - [ ] Gibt es keinen Typ-Enum-Wert "Suspendiert" (weder "Suspendiert" noch "Zu Testzwecken deaktiviert" o.ä.) mehr im TypeRestriction?
 - [ ] Sind alle Schreibweisen "Inaktiv"/"Aktiv" durch "Deaktiviert"/"Aktiviert" ersetzt?
