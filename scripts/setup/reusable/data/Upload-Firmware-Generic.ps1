@@ -34,6 +34,17 @@ FILEPATH: lib/OGM-Common/scripts/setup/reusable/data/Upload-Firmware-Generic.ps1
     For RP2040/RP2350 this is the running device's serial port (it is then reset into
     BOOTSEL); a BOOTSEL drive path is also accepted. For ESP32 it is the esptool port.
 
+.PARAMETER Verify
+    RP2040/RP2350 only: write the firmware with picotool and read it back for a byte-exact
+    verify (picotool load -v -x), driven straight from BOOTSEL. Requires picotool (in PATH or
+    ~/bin/). Without this switch the RP path uses the normal BOOTSEL drag-and-drop copy.
+    ESP32 is always verified by esptool's own flash-hash check (shown after the flash).
+
+.PARAMETER Ask
+    Always show the confirm menu before flashing, even when exactly one device is found.
+    By default (fast path) a single detected device is flashed directly without asking; pass
+    -Ask to force the [J/A/X] prompt. Ignored in -Multi mode (which always confirms per device).
+
 .PARAMETER Help
     Show the logo/header and full help (parameters + examples), then exit. Alias: -h.
 
@@ -66,6 +77,8 @@ param(
     [switch]$Multi,         # flash multiple devices in a row
     [Alias('Port','ComPort')]
     [string]$SerialPort = "",        # use this serial port directly, skip search: COM7 | /dev/cu.* | /dev/ttyACM0
+    [switch]$Verify,                 # RP2040/RP2350: write + read-back verify via picotool (needs picotool)
+    [switch]$Ask,                    # force the confirm menu even when a single device is found (disables fast path)
     [Alias('h')]
     [switch]$Help,                   # show logo + full help and exit
     [switch]$DebugSerial = $false    # show serial debug output when reading device info
@@ -99,6 +112,7 @@ if ($IsWindows) {
 $VerifyEspChip       = $true   # vor dem ESP-Flash den Chip via esptool prüfen (true/false)
 $VerifyRpFamily      = $true   # vor dem uf2-Flash prüfen, ob RP2040/RP2350 zum Laufwerk passt
 $AbortOnChipMismatch = $true   # bei Chip/Firmware-Mismatch abbrechen (sonst nur warnen)
+$FastSingleDevice    = $true   # genau EIN Gerät gefunden -> direkt flashen, Confirm-Menü überspringen (-Ask erzwingt Rückfrage)
 
 # ─── Chip auto-detection ───────────────────────────────────────────────────────
 $chipWasAutoDetected = (-not $Chip)
@@ -132,6 +146,7 @@ $_strings = @{
         SearchDevices      = "Searching for devices..."
         NoDeviceFound      = "No device found."
         DeviceAutoSelected = "Device found: {0}"
+        FastFlashNote      = "Only one device found - flashing directly (pass -Ask to confirm first)."
         MultipleDevices    = "Multiple devices found – please select:"
         SelectManual       = "Selection (1-{0})"
         InvalidInput       = "Invalid input. Selection (1-{0})"
@@ -204,6 +219,12 @@ $_strings = @{
         FlashingEsp32      = "Flashing firmware via esptool..."
         FlashDoneEsp32     = "Done!"
         FlashErrorEsp32    = "esptool returned an error. Flash may have failed."
+        FlashVerifiedEsp   = "Verified (flash hash matches the firmware)"
+        FlashNotVerifiedEsp= "Flash written (esptool reported no integrity hash - not verified)"
+        VerifyRpTitle      = "Writing + verifying flash via picotool..."
+        VerifyRpOk         = "Verified (flash matches the firmware)"
+        VerifyRpFail       = "VERIFY FAILED - flash does NOT match the firmware!"
+        PicotoolNotFound   = "picotool not found - falling back to plain copy WITHOUT verify (install it or place it in ~/bin/)."
         VerifyChip         = "Checking chip type via esptool..."
         ChipOk             = "Detected: {0}"
         ChipMatch          = "Detected: {0}  (matches firmware)"
@@ -280,6 +301,7 @@ $_strings = @{
         SearchDevices      = "Suche Gerät..."
         NoDeviceFound      = "Kein Gerät gefunden."
         DeviceAutoSelected = "Gerät gefunden: {0}"
+        FastFlashNote      = "Nur ein Gerät gefunden - wird direkt geflasht (mit -Ask erst bestätigen)."
         MultipleDevices    = "Mehrere Geräte gefunden – bitte auswählen:"
         SelectManual       = "Auswahl (1-{0})"
         InvalidInput       = "Ungültige Eingabe. Auswahl (1-{0})"
@@ -352,6 +374,12 @@ $_strings = @{
         FlashingEsp32      = "Flashe Firmware über esptool..."
         FlashDoneEsp32     = "Fertig!"
         FlashErrorEsp32    = "esptool meldet einen Fehler. Flash möglicherweise fehlgeschlagen."
+        FlashVerifiedEsp   = "Verifiziert (Flash-Hash stimmt mit der Firmware überein)"
+        FlashNotVerifiedEsp= "Flash geschrieben (esptool meldete keinen Integritäts-Hash - nicht verifiziert)"
+        VerifyRpTitle      = "Schreibe + verifiziere Flash über picotool..."
+        VerifyRpOk         = "Verifiziert (Flash stimmt mit der Firmware überein)"
+        VerifyRpFail       = "VERIFY FEHLGESCHLAGEN - Flash stimmt NICHT mit der Firmware überein!"
+        PicotoolNotFound   = "picotool nicht gefunden - normale Kopie OHNE Verify (installieren oder in ~/bin/ ablegen)."
         VerifyChip         = "Prüfe Chip-Typ via esptool..."
         ChipOk             = "Erkannt: {0}"
         ChipMatch          = "Erkannt: {0}  (passt zur Firmware)"
@@ -705,7 +733,10 @@ function Invoke-EsptoolWriteFlash($esptool, $port, $firmwarePath) {
     } else {
         Write-Host ("`r" + (' ' * ($cells + 16)) + "`r") -NoNewline
     }
-    return [PSCustomObject]@{ Code = $exit; Output = "$output" }
+    # esptool's stub reads the flash back and prints "Hash of data verified." on a match –
+    # that is the built-in integrity check; surface it so the user sees the flash was verified.
+    $verified = [bool]([regex]::IsMatch($output, '(?im)hash of data verified'))
+    return [PSCustomObject]@{ Code = $exit; Output = "$output"; Verified = $verified }
 }
 
 # Probes a serial port with esptool. Returns @{ Chip='ESP32-S3'; Mac='..' } or $null.
@@ -807,6 +838,53 @@ function FindEsptool() {
         }
     }
     return $null
+}
+
+# Returns the path to the picotool binary, or $null if not found. Same lookup order as
+# FindEsptool: the OpenKNX tools bundle in ~/bin first, then PATH.
+function FindPicotool() {
+    if ($IsWindows) {
+        $candidate = Join-Path $HOME "bin/picotool.exe"
+        if (Test-Path -PathType Leaf $candidate) { return $candidate }
+        foreach ($cmd in @("picotool.exe", "picotool")) {
+            if (Get-Command $cmd -ErrorAction SilentlyContinue) { return $cmd }
+        }
+    } else {
+        $candidate = Join-Path $HOME "bin/picotool"
+        if (Test-Path -PathType Leaf $candidate) { return $candidate }
+        if (Get-Command "picotool" -ErrorAction SilentlyContinue) { return "picotool" }
+    }
+    return $null
+}
+
+# Writes + verifies the firmware straight from BOOTSEL: "picotool load -v -x" loads the
+# UF2/BIN, reads it back byte-for-byte (-v) and then executes/reboots into the app (-x).
+# The device is already in BOOTSEL here, so no reset/re-entry dance is needed. Runs in a
+# background job (indeterminate spinner) and returns @{ Code = <exit>; Output = '<log>' }.
+function Invoke-PicotoolLoadVerify($picotool, $firmwarePath) {
+    $tmp = New-TemporaryFile
+    $job = Start-Job -ScriptBlock {
+        param($pt, $fw, $out)
+        & $pt load "$fw" -v -x *>&1 | Tee-Object -FilePath $out | Out-Null
+        return $LASTEXITCODE
+    } -ArgumentList $picotool, $firmwarePath, $tmp.FullName
+
+    $spin = 0
+    try { [Console]::CursorVisible = $false } catch {}
+    while ($job.State -eq 'Running') {
+        Write-Host ("`r  [" + ('.' * (($spin % 3) + 1)).PadRight(3) + ']  ') -ForegroundColor DarkGray -NoNewline
+        $spin++
+        Start-Sleep -Milliseconds 150
+    }
+    try { [Console]::CursorVisible = $true } catch {}
+
+    $raw = Receive-Job $job
+    Remove-Job $job
+    $output = try { Get-Content $tmp.FullName -Raw -ErrorAction SilentlyContinue } catch { '' }
+    Remove-Item $tmp.FullName -ErrorAction SilentlyContinue
+    $exit = if ($raw -is [array]) { [int]($raw[-1]) } elseif ($null -ne $raw) { [int]$raw } else { 0 }
+    Write-Host ("`r" + (' ' * 12) + "`r") -NoNewline
+    return [PSCustomObject]@{ Code = $exit; Output = "$output" }
 }
 
 # Returns all current ESP32-like serial ports.
@@ -1978,6 +2056,9 @@ if (-not (Test-Path $firmwarePath)) {
 # Runtime-toggles (können über ?? Menü zur Laufzeit geändert werden)
 $script:MultiMode = [bool]$Multi
 $script:NoTimeout = $false   # disables the idle auto-close countdown in Read-Choice
+# Fast path: flash a single detected device without the confirm menu. On by default
+# ($FastSingleDevice); -Ask forces the prompt. Never active in Multi mode (deliberate per-device flow).
+$script:FastFlash = ($FastSingleDevice -and -not $Ask)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RP2040 main loop
@@ -2119,12 +2200,17 @@ if ($Chip -eq 'RP2040') {
                 Write-Host
             }
 
-            # ── J/A/N Confirm-Menü ────────────────────────────────────────────
-            Write-Host "  [J]  $($s.OptFlashBootsel)" -ForegroundColor Green
-            Write-Host "  [A]  $($s.OptAgain)"
-            Write-Host "  [X]  $($s.OptCancel)"
-            Write-Host
-            $confirm = Read-Choice "$($s.ChoicePrompt) [J/A/X]" @('J','Y','A','X')
+            # ── J/A/N Confirm-Menü (Fast-Path: genau EIN Gerät -> ohne Rückfrage) ─
+            $confirm = 'J'
+            if ($script:FastFlash -and -not $script:MultiMode -and $devices.Count -eq 1) {
+                Write-Host "  $($s.FastFlashNote)" -ForegroundColor DarkGray
+            } else {
+                Write-Host "  [J]  $($s.OptFlashBootsel)" -ForegroundColor Green
+                Write-Host "  [A]  $($s.OptAgain)"
+                Write-Host "  [X]  $($s.OptCancel)"
+                Write-Host
+                $confirm = Read-Choice "$($s.ChoicePrompt) [J/A/X]" @('J','Y','A','X')
+            }
             if ($confirm -eq 'X') {
                 Write-Host
                 if (-not $script:MultiMode) { $continueFlashing = $false }
@@ -2199,16 +2285,38 @@ if ($Chip -eq 'RP2040') {
         $serialBefore = @(ScanPicoPorts)   # snapshot before copy; device will reboot as serial
         Write-Host
         $fwBaseName = [System.IO.Path]::GetFileName($firmwarePath)
-        $flashOk    = Copy-FirmwareWithSpinner ($s.Installing -f $fwBaseName) $firmwarePath $devicePath
-        if (-not $flashOk) {
-            Write-Host $s.FlashError -ForegroundColor Red
-            $continueFlashing = $false
-            WaitOrPause 10
-            continue
+
+        # -Verify (opt-in): write + read-back verify via picotool straight from BOOTSEL.
+        # Falls back to the normal drag-and-drop copy if picotool is not installed.
+        $picotool = if ($Verify) { FindPicotool } else { $null }
+        if ($Verify -and -not $picotool) {
+            Write-Host ("  " + $s.PicotoolNotFound) -ForegroundColor DarkYellow
         }
 
-        $flashCount++
-        Write-Host $s.Done -ForegroundColor Green
+        if ($picotool) {
+            Write-Host ("  " + ($s.Installing -f $fwBaseName)) -ForegroundColor Yellow
+            Write-Host ("  " + $s.VerifyRpTitle) -ForegroundColor DarkGray
+            $pres = Invoke-PicotoolLoadVerify $picotool $firmwarePath
+            if ($pres.Code -ne 0) {
+                Write-Host ("  " + $s.VerifyRpFail) -ForegroundColor Red
+                foreach ($line in ($pres.Output -split "`r?`n")) { if ($line.Trim()) { Write-Host "     $line" -ForegroundColor Red } }
+                $continueFlashing = $false
+                WaitOrPause 10
+                continue
+            }
+            $flashCount++
+            Write-Host ("  " + $s.VerifyRpOk) -ForegroundColor Green
+        } else {
+            $flashOk = Copy-FirmwareWithSpinner ($s.Installing -f $fwBaseName) $firmwarePath $devicePath
+            if (-not $flashOk) {
+                Write-Host $s.FlashError -ForegroundColor Red
+                $continueFlashing = $false
+                WaitOrPause 10
+                continue
+            }
+            $flashCount++
+            Write-Host $s.Done -ForegroundColor Green
+        }
 
         # ── Info option ──────────────────────────────────────────────────────
         $lastPort  = Wait-ForSerialPort { ScanPicoPorts } 15 $serialBefore
@@ -2335,11 +2443,17 @@ elseif ($Chip -eq 'ESP32') {
             Write-Host "  $($selected.Path)  $($s.DeviceEsp32Serial)" -ForegroundColor Cyan
         }
         Write-Host
-        Write-Host "  [J]  $($s.OptFlashEsp32)" -ForegroundColor Green
-        Write-Host "  [A]  $($s.OptAgain)"
-        Write-Host "  [X]  $($s.OptCancel)"
-        Write-Host
-        $confirmEsp = Read-Choice "$($s.ChoicePrompt) [J/A/X]" @('J','Y','A','X')
+        # Fast path: exactly one device found -> flash directly (default on; -Ask / Multi force the menu).
+        $confirmEsp = 'J'
+        if ($script:FastFlash -and -not $script:MultiMode -and $devices.Count -eq 1) {
+            Write-Host "  $($s.FastFlashNote)" -ForegroundColor DarkGray
+        } else {
+            Write-Host "  [J]  $($s.OptFlashEsp32)" -ForegroundColor Green
+            Write-Host "  [A]  $($s.OptAgain)"
+            Write-Host "  [X]  $($s.OptCancel)"
+            Write-Host
+            $confirmEsp = Read-Choice "$($s.ChoicePrompt) [J/A/X]" @('J','Y','A','X')
+        }
         if ($confirmEsp -eq 'X') {
             Write-Host
             if (-not $script:MultiMode) { $continueFlashing = $false }
@@ -2398,6 +2512,12 @@ elseif ($Chip -eq 'ESP32') {
 
         $flashCount++
         Write-Host "  $($s.FlashDoneEsp32)" -ForegroundColor Green
+        # esptool already read the flash back and hashed it – show that it was verified.
+        if ($flashRes.Verified) {
+            Write-Host "  $($s.FlashVerifiedEsp)" -ForegroundColor Green
+        } else {
+            Write-Host "  $($s.FlashNotVerifiedEsp)" -ForegroundColor DarkGray
+        }
 
         # ── Info option ──────────────────────────────────────────────────────
         $showInfo = $true
