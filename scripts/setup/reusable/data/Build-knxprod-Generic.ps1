@@ -386,7 +386,11 @@ $res         = Receive-Job $job
 Remove-Job $job
 $code        = $res.Code
 $producerOut = "$($res.Output)"
-Write-Host ("`r" + (' ' * ($W + 8)) + "`r") -NoNewline   # clear the spinner+message line
+# Clear the whole spinner+message line: the "… bitte warten …" text is often longer
+# than a fixed width (long versioned base names), so wipe the full console line width
+# (fallback for a redirected console with no window) or leftover tail chars remain.
+$clearW = try { [Console]::WindowWidth - 1 } catch { 100 }
+Write-Host ("`r" + (' ' * $clearW) + "`r") -NoNewline   # clear the spinner+message line
 
 # ── Result ───────────────────────────────────────────────────────────────────────
 if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
