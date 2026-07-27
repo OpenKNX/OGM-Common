@@ -128,9 +128,9 @@ if (Test-Path -Path $releaseTemp -PathType Leaf ) {
   # remove all files and directories in release directory
   # Remove-Item -Recurse -Force release/*
   # move Release.zip to release directory
-  Move-Item $releaseTemp "release/$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
-  Write-Host "Release $($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!" -ForegroundColor Green
+  Move-Item $releaseTemp "release/OpenKNX-$($settings.targetName)-$($settings.appRelease)-$appVersion.zip"
+  Write-Host "Release OpenKNX-$($settings.targetName)-$($settings.appRelease)-$appVersion successfully created!" -ForegroundColor Green
 }
 else {
-  Write-Host "ERROR: $($settings.targetName)-$($settings.appRelease)-$appVersion.zip could not be created!"
+  Write-Host "ERROR: OpenKNX-$($settings.targetName)-$($settings.appRelease)-$appVersion.zip could not be created!"
 }
