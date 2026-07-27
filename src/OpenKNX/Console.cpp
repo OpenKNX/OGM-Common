@@ -315,7 +315,8 @@ namespace OpenKNX
         {
             printHelpLine("bcu", "Compact BCU status (+ERROR line on faults)");
             printHelpLine("bcu stat", "Full BCU / TPUart statistics table");
-            printHelpLine("bcu mon", "Start BCU monitoring");
+            printHelpLine("bcu mon", "Start/Stop BCU monitoring ('bus mon')");
+            printHelpLine("bus mon", "Alias for 'bcu mon'");
             printHelpLine("bcu rst", "Reset BCU");
     #ifdef TPUART_BCU_DEBUG
             printHelpLine("bcu dis", "Force BCU disconnect (test)");
@@ -446,12 +447,12 @@ namespace OpenKNX
             boxRule('=');
             return true;
         }
-        else if (cmd.compare("bcu mon") == 0)
+        else if (cmd.compare("bcu mon") == 0 || cmd.compare("bus mon") == 0)
         {
 #ifdef TPUART_BCU_REGISTER_INFO
-            dll->monitorWithConsoleLog(); // console busmon: echo raw frames to the console (extended TPUart/knx)
+            dll->toggleConsoleMonitor();  // start/stop the local console busmon (raw echo); coexists with an ETS busmon
 #else
-            dll->monitor();               // upstream fallback: monitor without console echo
+            dll->monitor();               // upstream fallback: monitor without console echo (start-only)
 #endif
             return true;
         }
@@ -856,8 +857,7 @@ namespace OpenKNX
 #endif
         printHelpLine("leds", "LED control. Use 'leds' for help");
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
-        printHelpLine("bcu", "Compact BCU status");
-        printHelpLine("bcu ?", "All BCU commands");
+        printHelpLine("bcu", "Compact BCU status. Use 'bcu ?' for help");
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC
         printHelpLine("tm ?", "Help for time related commands");
