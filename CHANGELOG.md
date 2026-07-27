@@ -2,6 +2,9 @@
 
 ## upcomming releases
 
+* Feature: Add shared HelpContext topics `BASE-ChannelSelect` and `BASE-ChannelSuspended` for modules using the tab-based Kanalauswahl pattern, replacing per-module placeholder help texts
+* Change: `PT-Suspended` now renders as a Ja/Nein selection instead of a checkbox, consistent with `PT-OnOffYesNo`
+* Doc: `openknx-channelselect` skill updated to reference the new shared HelpContext values instead of `Empty`/`%DOC%` placeholders; note added to `BASE-Verfuegbare-Kanaele` that it is the legacy pattern superseded by the Kanalauswahl-Tabelle
 * Breaking: Trace filter reworked. The regex dependency (`nickgammon/Regexp`, ~80&nbsp;kB flash when tracing was enabled) is removed and replaced by a compact custom matcher. `OPENKNX_TRACE1..5` are dropped in favor of a single `OPENKNX_TRACE` define holding one or more filters separated by `;` (e.g. `OPENKNX_TRACE=Test1<1-4>;Test2<8>`). New filter syntax `PREFIX<SUB>`: prefix exact or `*` suffix wildcard; optional `<sub>` with exact value, numeric range (`1-19`), comma list (`4,5,7`, combinable `1-5,9`), or `*` suffix wildcard. A filter without `<sub>` ignores the sub part. Existing regex filters must be migrated (e.g. `OPENKNX_TRACE1=Common.*` → `OPENKNX_TRACE=Common*`).
 * Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
 * Fix: USB MSC support in Common.cpp
