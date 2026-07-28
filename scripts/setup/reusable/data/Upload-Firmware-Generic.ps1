@@ -2035,7 +2035,20 @@ if ($Chip -notin @('RP2040', 'ESP32')) {
 }
 
 $currentDir   = (Get-Item .).FullName
-$firmwarePath = if ([System.IO.Path]::IsPathRooted($FirmwareName)) { $FirmwareName } else { Join-Path $currentDir $FirmwareName }
+if ([System.IO.Path]::IsPathRooted($FirmwareName)) {
+    $firmwarePath = $FirmwareName
+} else {
+    # Resolve a relative firmware name against the CWD first, then against the CALLING wrapper's directory:
+    # release/Firmware/<target>/ holds the .bin next to its USB-Upload-Firmware.ps1, which is usually NOT the CWD.
+    $firmwarePath = Join-Path $currentDir $FirmwareName
+    if (-not (Test-Path $firmwarePath)) {
+        $callerScript = (Get-PSCallStack | Select-Object -Skip 1 | Where-Object ScriptName | Select-Object -First 1).ScriptName
+        if ($callerScript) {
+            $alt = Join-Path (Split-Path -Parent $callerScript) $FirmwareName
+            if (Test-Path $alt) { $firmwarePath = $alt }
+        }
+    }
+}
 
 $fwFileName = [System.IO.Path]::GetFileName($firmwarePath)
 $fwDir      = [System.IO.Path]::GetDirectoryName($firmwarePath)

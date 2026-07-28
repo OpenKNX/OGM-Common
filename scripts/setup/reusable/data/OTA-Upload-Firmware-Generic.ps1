@@ -301,6 +301,15 @@ function Get-OpenKnxDevices([int]$timeoutMs = 2500) {
 OpenKNX_ShowLogo $s.Title
 
 # resolve firmware
+# Resolve a relative firmware name against the CWD first, then against the CALLING wrapper's directory
+# (release/Firmware/<target>/ holds the .bin next to its OTA-Upload-Firmware.ps1, usually NOT the CWD).
+if ($FirmwareName -and -not [System.IO.Path]::IsPathRooted($FirmwareName) -and -not (Test-Path $FirmwareName)) {
+    $callerScript = (Get-PSCallStack | Select-Object -Skip 1 | Where-Object ScriptName | Select-Object -First 1).ScriptName
+    if ($callerScript) {
+        $alt = Join-Path (Split-Path -Parent $callerScript) $FirmwareName
+        if (Test-Path $alt) { $FirmwareName = $alt }
+    }
+}
 if ([string]::IsNullOrWhiteSpace($FirmwareName) -or -not (Test-Path $FirmwareName)) {
     Write-Host ($s.NotFound -f $FirmwareName) -ForegroundColor Red
     Read-Host $s.PressEnter
