@@ -28,14 +28,33 @@ namespace OpenKNX
     void Console::loop()
     {
         if (_disableConsole)
+        {
+            // Console is occupied (a remote FTC console session owns it). Discard local input so it does not
+            // pile up in the UART FIFO, and tell the user once why the console is unresponsive -- rate-limited
+            // so a held key / paste cannot spam. Without this the local console just looks dead for no reason.
+            if (OPENKNX_LOGGER_DEVICE.available())
+            {
+                while (OPENKNX_LOGGER_DEVICE.available())
+                    OPENKNX_LOGGER_DEVICE.read();
+                if (millis() - _disableNoticeMs > 3000)
+                {
+                    _disableNoticeMs = millis();
+                    if (_disableReason != nullptr)
+                        openknx.logger.logWithPrefixAndValues("Console", "occupied (%s) -- try again later", _disableReason);
+                    else
+                        openknx.logger.logWithPrefix("Console", "occupied -- try again later");
+                }
+            }
             return;
+        }
         if (OPENKNX_LOGGER_DEVICE.available())
             processSerialInput();
     }
 
-    void Console::disableConsole(bool disable)
+    void Console::disableConsole(bool disable, const char* reason)
     {
         _disableConsole = disable;
+        _disableReason = disable ? reason : nullptr; // reason lives in the caller (persistent buffer); cleared on re-enable
     }
 
 #ifdef BASE_KoDiagnose

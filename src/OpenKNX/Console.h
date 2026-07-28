@@ -37,6 +37,8 @@ namespace OpenKNX
         uint8_t _consoleCharLast = 0x0;
         bool _diagnoseKoOutput = false;
         bool _disableConsole = false;
+        const char* _disableReason = nullptr; // why the console is silenced (e.g. "remote 1.0.241") -> shown once on local input
+        uint32_t _disableNoticeMs = 0;        // rate-limit the "occupied" notice so a held key / paste cannot spam
 #ifdef OPENKNX_FTC_CONSOLE
         void (*_lineSink)(const char *) = nullptr; // FTC console tunnel: divert a finished line instead of running it locally
 #endif
@@ -63,7 +65,7 @@ namespace OpenKNX
       public:
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};
         void loop();
-        void disableConsole(bool disable);
+        void disableConsole(bool disable, const char* reason = nullptr);
 #ifdef OPENKNX_FTC_CONSOLE
         // FTC console tunnel: while set, processSerialInput diverts each finished line to the sink (sent to
         // the remote device) instead of running it locally. nullptr = back to the local console.
