@@ -73,9 +73,22 @@ void SMLModule::setup(bool configured)
 - Für TypeSelect: `P-` **ohne** Memory-Referenz → nur ETS-seitig
 
 **Zwei Typ-Parameter pro Kanal (Typ-Variante):**
-- **R-Parameter** (`UP-`, memory-backed): hat "Deaktiviert" (Wert 0), auf Kanal-Tab
-- **L-Parameter** (`P-`, kein Memory): ohne "Deaktiviert", in der Kanalauswahl-Tabelle
-- `BASE_SyncChannelType` hält beide synchron
+- **Haupttyp** (`UP-`, memory-backed): hat "Deaktiviert" (Wert 0), steht in der
+  **Kanalauswahl-Tabelle** — nur dort wird ein Kanal aktiviert und deaktiviert.
+  Auf ihn zeigt auch das `choose` des Kanal-Tabs.
+- **TypeSelect** (`P-`, kein Memory): **ohne** "Deaktiviert", steht auf dem
+  **Kanal-Tab** — dort wird nur der Typ gewechselt, nie deaktiviert.
+- `BASE_SyncChannelType` hält beide synchron. Das `input.TypeValue > 0`-Guard
+  darin sorgt dafür, dass "Deaktiviert" aus der Tabelle den gemerkten Typ auf
+  dem Kanal-Tab nicht überschreibt.
+- Die Sync-Funktion ist symmetrisch (dieselbe Funktion in `LRTransformationFunc`
+  und `RLTransformationFunc`, sie kennt nur `input`/`output`) — welcher der
+  beiden Parameter in `LParameters` und welcher in `RParameters` steht, ist
+  funktional egal.
+
+> Warum "Deaktiviert" zwingend in die Tabelle gehört: inaktive Kanäle
+> erscheinen nicht im Baum links. Stünde der deaktivierbare Parameter nur auf
+> dem Kanal-Tab, gäbe es keinen Weg, einen Kanal überhaupt zu aktivieren.
 
 **Rendering — eine Tabelle pro Kanal:**
 Jede Zeile in der Kanalauswahl ist eine **eigene** `Inline="true" Layout="Grid"`-Tabelle im Settings-Block. Nicht eine große Tabelle für alle Kanäle. Das ist aus Performance-Gründen zwingend (ETS rendert 100 einzeilige Tabellen wesentlich schneller als eine hundertzeilige).
@@ -199,13 +212,14 @@ Dazugehöriger ParameterRef unter `<ParameterRefs>`:
         Name="SyncType%CC%"
         RLTransformationFunc="BASE_SyncChannelType"
         LRTransformationFunc="BASE_SyncChannelType">
+        <!-- Seiten sind vertauschbar, BASE_SyncChannelType ist symmetrisch -->
         <LParameters>
-            <!-- L = TypeSelect, kein Memory, Kanalauswahl-Tabelle, ohne Deaktiviert -->
+            <!-- TypeSelect: kein Memory, Kanal-Tab, ohne Deaktiviert -->
             <ParameterRefRef RefId="%AID%_P-%TT%%CC%011_R-%TT%%CC%01101"
                 AliasName="TypeValue" />
         </LParameters>
         <RParameters>
-            <!-- R = Haupttyp, memory-backed, Kanal-Tab, mit Deaktiviert -->
+            <!-- Haupttyp: memory-backed, Kanalauswahl-Tabelle, mit Deaktiviert -->
             <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001"
                 AliasName="TypeValue" />
         </RParameters>
@@ -234,7 +248,8 @@ Dazugehöriger ParameterRef unter `<ParameterRefs>`:
                 </Columns>
                 <!-- Gleicher Text wie der Kanal-Tab — modul-spezifisch anpassen! -->
                 <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,1" Text="Kanal %Z%" />
-                <ParameterRefRef RefId="%AID%_P-%TT%%CC%011_R-%TT%%CC%01101"
+                <!-- Haupttyp (memory-backed, mit Deaktiviert) — hier wird aktiviert/deaktiviert -->
+                <ParameterRefRef RefId="%AID%_UP-%TT%%CC%010_R-%TT%%CC%01001"
                     Cell="1,2" HelpContext="%DOC%" />
                 <!-- Beschreibung bleibt auch bei Deaktiviert sichtbar -->
                 <ParameterRefRef RefId="%AID%_P-%TT%%CC%000_R-%TT%%CC%00001"
@@ -257,8 +272,8 @@ Dazugehöriger ParameterRef unter `<ParameterRefs>`:
                         <!-- 1. Beschreibung immer zuerst -->
                         <ParameterRefRef RefId="...Beschreibung..."
                             IndentLevel="1" HelpContext="BASE-ChannelName" />
-                        <!-- 2. Kanaltyp optional, OHNE Deaktiviert -->
-                        <!-- <ParameterRefRef RefId="...Haupttyp..." IndentLevel="1" HelpContext="%DOC%" /> -->
+                        <!-- 2. Kanaltyp optional — TypeSelect, OHNE Deaktiviert -->
+                        <!-- <ParameterRefRef RefId="...TypeSelect..." IndentLevel="1" HelpContext="%DOC%" /> -->
                         <!-- 3. Startverzögerung optional -->
                         <!-- 4. Suspendiert optional — PT_Suspended, Aus/Ein -->
                         <!-- <ParameterRefRef RefId="...Suspendiert..." IndentLevel="1" HelpContext="BASE-ChannelSuspended" /> -->
@@ -422,20 +437,22 @@ Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalaus
 - [ ] Gibt es einen zugehörigen `ParameterRef` im Refs-Block?
 
 **ParameterCalculations (nur Typ-Variante)**
-- [ ] Gibt es einen `ParameterCalculation`-Block mit `BASE_SyncChannelType` als Transformationsfunktion?
-- [ ] Hat das L-seitige `ParameterRefRef` (TypeSelect) `AliasName="TypeValue"`?
-- [ ] Hat das R-seitige `ParameterRefRef` (Haupttyp) `AliasName="TypeValue"`?
+- [ ] Gibt es einen `ParameterCalculation`-Block mit `BASE_SyncChannelType` als Transformationsfunktion — in **beiden** Richtungen (`LRTransformationFunc` und `RLTransformationFunc`)?
+- [ ] Haben **beide** `ParameterRefRef` (TypeSelect und Haupttyp) `AliasName="TypeValue"`?
+- [ ] Welcher der beiden in `LParameters` bzw. `RParameters` steht, ist egal — die Funktion ist symmetrisch, hier ist nichts zu prüfen.
 
 **Settings-Block (Kanalauswahl-Tabellenzeilen)**
 - [ ] Hat der äußere `ParameterBlock` `Name="Settings"`?
 - [ ] Ist jede Kanalzeile eine **eigene** `Inline="true" Layout="Grid"`-Tabelle (nicht eine gemeinsame)?
 - [ ] Ist der Text in Spalte 1 (Kanal-Label) **zeichengleich** zum `Text=` des Channel-Tab-`ParameterBlock` (gleicher Platzhalter `%C%`/`%Z%`, im Code nachgeschlagen, nicht geraten)?
+- [ ] Steht in Spalte 2 der **Haupttyp** (`UP-`, memory-backed, **mit** "Deaktiviert") — nicht der TypeSelect?
 - [ ] Ist das Beschreibungsfeld in Spalte 3 **ohne** `<choose>`-Wrapper (bleibt immer sichtbar, auch bei Deaktiviert)?
 - [ ] Hat das Beschreibungsfeld `HelpContext="BASE-ChannelName"`?
 
 **Channel-Block (Kanal-Tabs)**
 - [ ] Hat der äußere `ParameterBlock` `Name="Channel"`?
-- [ ] Verwendet `<choose>` den **Haupttyp** (R, memory-backed) — nicht den TypeSelect (L)?
+- [ ] Verwendet `<choose>` den **Haupttyp** (memory-backed, mit "Deaktiviert") — nicht den TypeSelect?
+- [ ] Erscheint auf dem Kanal-Tab der **TypeSelect** (ohne "Deaktiviert") — nicht der Haupttyp (nur Typ-Variante)?
 - [ ] Lautet die Bedingung `>0` (Typ-Variante) bzw. `=1` (Aktiv/Inaktiv-Variante)?
 - [ ] Beginnt der Kanal-Tab mit `ParameterSeparator UIHint="Headline" Text="Kanaldefinition"`?
 - [ ] Ist die Reihenfolge im Kanaldefinitions-Bereich: **Beschreibung → Kanaltyp → Startverzögerung → Suspendiert**?
