@@ -6,7 +6,7 @@
     #include <device/usbd.h>
     #include <class/msc/msc.h>
     #include <tusb-msc.h>
-    #ifndef OPENKNX_USB_MSC
+    #if !defined(OPENKNX_USB_MSC) || defined(OPENKNX_DEBUGGER)
 // LDF pulls in tusb-msc regardless of #ifdef guards. Without OPENKNX_USB_MSC
 // these stubs satisfy the missing callbacks at link time.
 extern "C"
