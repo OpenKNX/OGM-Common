@@ -52,7 +52,7 @@ def esp32_create_combined_bin(source, target, env):
     cmd = [
         "--chip",
         chip,
-        "merge_bin",
+        "merge-bin",
         "-o",
         new_file_name,
         "--flash-mode",
@@ -66,6 +66,7 @@ def esp32_create_combined_bin(source, target, env):
     print("")
     print("    Offset | File")
     for [offset, image] in env["FLASH_EXTRA_IMAGES"]:
+        image = env.subst(image)  # expand $BUILD_DIR and other SCons variables
         print(f" -  {offset} | {image}")
         cmd += [offset, image]
 

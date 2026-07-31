@@ -1,0 +1,4 @@
+rmaker_claim_service_server.crt:TEXT
+rmaker_mqtt_server.crt:TEXT
+rmaker_ota_server.crt:TEXT
+testfs.bin:BINARY
