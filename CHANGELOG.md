@@ -2,6 +2,7 @@
 
 ## upcomming releases
 
+* Feature: `prepare.py` now generates `include/webassets.h` from every included module's (and the project's own) `web/assets/` folder — plain, readable `.css`/`.js`/`.svg`/`.jpg`/`.png` source files are minified and gzip-compressed into flash-resident byte arrays at build time, so modules no longer need to hand-minify web assets into C++ string literals
 * Feature: Add shared HelpContext topics `BASE-ChannelSelect` and `BASE-ChannelSuspended` for modules using the tab-based Kanalauswahl pattern, replacing per-module placeholder help texts
 * Change: `PT-Suspended` now renders as a Ja/Nein selection instead of a checkbox, consistent with `PT-OnOffYesNo`
 * Doc: `openknx-channelselect` skill updated to reference the new shared HelpContext values instead of `Empty`/`%DOC%` placeholders; note added to `BASE-Verfuegbare-Kanaele` that it is the legacy pattern superseded by the Kanalauswahl-Tabelle

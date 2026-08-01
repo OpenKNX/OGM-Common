@@ -212,6 +212,25 @@ jedes Byte und jeden Takt als kostbar behandeln:
   vermeiden, wo Integer-Arithmetik reicht (RP2350/Cortex-M33 hat einen
   FPU).
 
+## Build-Skript (`scripts/pio/prepare.py`)
+
+Läuft als PlatformIO-Pre-Script bei **jedem** OAM-Build (Geräteprojekt), nicht
+pro Modul — muss im `platformio.ini` des Geräteprojekts als `extra_scripts`
+eingebunden sein. Generiert u. a. `include/versions.h` (Modul-/Build-Versionen)
+und räumt veraltete `lib/OGM-Common/include/{knxprod,versions,hardware}.h`
+auf (Reste einer früheren Konvention).
+
+### Web Assets (`include/webassets.h`)
+
+Collects a `web/assets/` folder from every included module **and the project
+itself**, minifies + gzip-compresses each `.css`/`.js`/`.svg`/`.jpg`/`.jpeg`/
+`.png` file, and generates `include/webassets.h` from it — so modules can keep
+their web assets as plain, readable source files instead of hand-minified
+C++ string literals. No file is generated if nothing is found. For the full
+mechanics (identifier scheme, duplicate handling, generated symbols, how a
+module consumes them) see `../OFM-Network/AGENTS.md`, which documents this in
+depth as the first module using it.
+
 ## Code-Konventionen
 
 - **Kein `delay()`** — alles nicht-blockierend, Zustandsautomaten mit
