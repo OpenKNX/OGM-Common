@@ -66,6 +66,7 @@ namespace OpenKNX
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};
         void loop();
         void disableConsole(bool disable, const char* reason = nullptr);
+        bool submitLine(const char* line);
 #ifdef OPENKNX_FTC_CONSOLE
         // FTC console tunnel: while set, processSerialInput diverts each finished line to the sink (sent to
         // the remote device) instead of running it locally. nullptr = back to the local console.
