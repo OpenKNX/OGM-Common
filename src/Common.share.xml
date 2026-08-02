@@ -314,8 +314,8 @@
               <!-- Location -->
               <Union SizeInBit="64">
                 <Memory CodeSegment="%MID%" Offset="69" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" />
-                <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764"  />
+                <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" SuffixText="°N" />
+                <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764" SuffixText="°O" />
               </Union>
 
               <!-- Extended -->
