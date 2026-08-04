@@ -8,6 +8,10 @@ import subprocess
 import re
 import datetime
 import json
+import hashlib
+import gzip
+import shutil
+from SCons.Script import Action
 
 class console_color:
     BLUE = '\033[94m'
@@ -259,183 +263,152 @@ if os.path.isfile("lib/OGM-Common/include/hardware.h"):
     os.remove("lib/OGM-Common/include/hardware.h")
 
 
-# ── Web assets ────────────────────────────────────────────────────────────
-#
-# Jedes eingebundene Modul (und das Projekt selbst) darf einen web/assets/
-# Ordner mit sauber formatierten .css/.js/.svg/.jpg/.png-Dateien anlegen.
-# Hier werden sie minifiziert + gzip-komprimiert in include/webassets.h
-# geschrieben. Es wird ausschliesslich gzip ausgeliefert (keine Content-
-# Negotiation) -- die Firmware-Seite muss "Content-Encoding: gzip" setzen.
-#
-# Bezeichner sind flach (kein Modul-Praefix) und werden aus dem relativen
-# Pfad unter web/assets/ abgeleitet. Jede Kollision -- auch zwischen dem
-# Projekt selbst und einem Modul -- ist ein Fehler, kein Override.
-
-import gzip as _gzip
-
-WEBASSET_MIME = {
-    ".css": "text/css",
-    ".js": "text/javascript",
-    ".svg": "image/svg+xml",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-}
+# ── Web assets ────────────────────────────────────────────────────────────────
+# web/assets/ (CSS/JS/SVG/images) from every built module + the project -> minified,
+# gzip-compressed and embedded into include/webassets.h. Only built when a webserver is
+# present (OPENKNX_WEBSERVER). A post-link nm report shows what actually shipped.
+# See OFM-Network/README.md.
+WEBASSET_MIME = {".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml",
+                 ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
+WEBASSET_FORMAT = "4"
+WEBASSET_HEADER = pathlib.Path("include/webassets.h")
 
 
-def _webasset_identifier(rel_posix_path):
-    ident = re.sub(r"[^0-9a-zA-Z_]", "_", rel_posix_path)
-    if ident and ident[0].isdigit():
-        ident = "_" + ident
-    return ident
+def _webasset_ident(rel):
+    i = re.sub(r"[^0-9a-zA-Z_]", "_", rel)
+    return "_" + i if i[:1].isdigit() else i
 
 
-def _minify_css(text):
-    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
-    text = re.sub(r"\s+", " ", text)
-    text = re.sub(r"\s*([{}:;,])\s*", r"\1", text)
-    text = re.sub(r";}", "}", text)
-    return text.strip()
+def _webasset_min_css(t):
+    t = re.sub(r"/\*.*?\*/", "", t, flags=re.DOTALL)
+    t = re.sub(r"\s+", " ", t)
+    t = re.sub(r"\s*([{}:;,])\s*", r"\1", t)
+    return re.sub(r";}", "}", t).strip()
 
 
-def _minify_js(text):
-    # Nur Whitespace am Zeilenanfang/-ende und Leerzeilen entfernen. Keine
-    # Kommentar-Entfernung: ein Regex kann '//' in einem String- oder
-    # Regex-Literal nicht sicher von einem echten Kommentar unterscheiden.
-    lines = [line.strip() for line in text.splitlines()]
-    return "\n".join(line for line in lines if line)
+def _webasset_min_js(t):
+    return "\n".join(s for s in (ln.strip() for ln in t.splitlines()) if s)
 
 
-def _minify_svg(text):
-    text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
-    text = re.sub(r">\s+<", "><", text)
-    return text.strip()
+def _webasset_min_svg(t):
+    t = re.sub(r"<!--.*?-->", "", t, flags=re.DOTALL)
+    return re.sub(r">\s+<", "><", t).strip()
 
 
-def _format_byte_array(data, width=20):
-    hexed = ["0x{:02x}".format(b) for b in data]
-    return "\n".join(
-        "    " + ",".join(hexed[i:i + width]) + ","
-        for i in range(0, len(hexed), width)
-    )
+WEBASSET_MINIFY = {".css": _webasset_min_css, ".js": _webasset_min_js, ".svg": _webasset_min_svg}
 
 
-def _get_library_roots(root):
+def _webasset_collect():
+    # Precise: walk the actual dependency tree (only modules really in the build) + the project.
     roots = []
-
     def walk(node):
         for lb in node.depbuilders:
-            roots.append((lb.name, pathlib.Path(lb.path)))
+            roots.append(pathlib.Path(lb.path))
             if lb.depbuilders:
                 walk(lb)
+    walk(project)
+    roots.append(pathlib.Path(env.subst("$PROJECT_DIR")))
 
-    walk(root)
-    return roots
-
-
-def _collect_webassets(root):
-    seen_dirs = set()
-    seen_ident = {}  # identifier -> (owner label, source file)
-    entries = []     # (identifier, extension, absolute file path)
-
-    sources = _get_library_roots(root) + [("<project>", pathlib.Path(env.subst("$PROJECT_DIR")))]
-    for owner, lib_path in sources:
-        assets_dir = lib_path / "web" / "assets"
-        if not assets_dir.is_dir():
+    seen, entries = set(), {}
+    for base in roots:
+        d = (base / "web" / "assets").resolve()
+        if not d.is_dir() or d in seen:
             continue
-        real = assets_dir.resolve()
-        if real in seen_dirs:
-            continue
-        seen_dirs.add(real)
-
-        for file_path in sorted(assets_dir.rglob("*")):
-            if not file_path.is_file():
+        seen.add(d)
+        for f in sorted(d.rglob("*")):
+            ext = f.suffix.lower()
+            if not f.is_file() or ext not in WEBASSET_MIME:
                 continue
-            ext = file_path.suffix.lower()
-            if ext not in WEBASSET_MIME:
-                continue
-
-            rel = file_path.relative_to(assets_dir).as_posix()
-            ident = _webasset_identifier(rel)
-
-            if ident in seen_ident:
-                other_owner, other_file = seen_ident[ident]
-                print("{}Duplicate web asset identifier '{}':{}".format(
-                    console_color.RED, ident, console_color.END))
-                print("  {} ({})".format(file_path, owner))
-                print("  {} ({})".format(other_file, other_owner))
-                raise SystemExit(1)
-            seen_ident[ident] = (owner, file_path)
-            entries.append((ident, ext, file_path))
-
+            ident = _webasset_ident(f.relative_to(d).as_posix())
+            if ident in entries:
+                raise SystemExit("{}webassets: duplicate identifier '{}': {} vs {}{}".format(
+                    console_color.RED, ident, entries[ident], f, console_color.END))
+            entries[ident] = (ext, f)
     return entries
 
 
-def _generate_webassets_header():
-    entries = _collect_webassets(project)
-    target = pathlib.Path("include/webassets.h")
-
+def _webasset_generate():
+    entries = _webasset_collect()
     if not entries:
-        if target.is_file():
-            target.unlink()
+        if WEBASSET_HEADER.is_file():
+            WEBASSET_HEADER.unlink()
         return
 
-    parts = [
-        "#pragma once",
-        "// Auto-generated by OGM-Common/scripts/pio/prepare.py from web/assets/",
-        "// directories across all included modules -- do not edit by hand.",
-        "#include <cstddef>",
-        "#include <cstdint>",
-        "",
-        "namespace WebAssets",
-        "{",
-    ]
+    sig = hashlib.sha256(WEBASSET_FORMAT.encode())
+    for ident, (ext, f) in entries.items():
+        sig.update("{}\0{}\0".format(ident, ext).encode())
+        sig.update(hashlib.sha256(f.read_bytes()).digest())
+    marker = "// webassets-sig: " + sig.hexdigest()
 
-    total_raw = 0
-    total_gz = 0
-    minifiers = {".css": _minify_css, ".js": _minify_js, ".svg": _minify_svg}
+    if WEBASSET_HEADER.is_file():
+        try:
+            if marker in WEBASSET_HEADER.read_text().splitlines()[:2]:
+                return
+        except OSError:
+            pass
 
-    print("{}Web assets:{}".format(console_color.YELLOW, console_color.END))
+    head = ["#pragma once", marker, "// webassets-list:"]
+    body = []
+    for ident, (ext, f) in entries.items():
+        raw = f.read_bytes()
+        data = WEBASSET_MINIFY[ext](raw.decode()).encode() if ext in WEBASSET_MINIFY else raw
+        gz = gzip.compress(data, compresslevel=9, mtime=0)
+        head.append("//   E {} {}".format(ident, len(gz)))
+        rows = ["0x{:02x}".format(b) for b in gz]
+        arr = "\n".join("    " + ",".join(rows[i:i + 20]) + "," for i in range(0, len(rows), 20))
+        body += ["    inline const uint8_t {}_gz[] = {{".format(ident), arr, "    };",
+                 '    inline const char* const {}_mime = "{}";'.format(ident, WEBASSET_MIME[ext]), ""]
 
-    for ident, ext, file_path in entries:
-        raw = file_path.read_bytes()
-        if ext in minifiers:
-            minified = minifiers[ext](raw.decode("utf-8")).encode("utf-8")
+    head += ["// Auto-generated by OGM-Common/scripts/pio/prepare.py from web/assets/ -- do not edit.",
+             "#include <cstddef>", "#include <cstdint>", "", "namespace WebAssets", "{"]
+    WEBASSET_HEADER.parent.mkdir(parents=True, exist_ok=True)
+    WEBASSET_HEADER.write_text("\n".join(head + body + ["} // namespace WebAssets", ""]))
+
+
+def _webasset_nm():
+    cc = env.subst("$CC")
+    for c in (cc + "-nm", re.sub(r"(gcc|g\+\+|cc)$", "nm", cc), "nm"):
+        hit = c if (os.path.isabs(c) and os.path.exists(c)) else shutil.which(c)
+        if hit:
+            return hit
+    return None
+
+
+def _webasset_report(target, source, env):  # SCons calls with keyword args -> names are fixed
+    elf = next((str(n) for n in (*target, *source) if str(n).endswith(".elf")), None)
+    manifest = {}
+    try:
+        for line in WEBASSET_HEADER.read_text().splitlines():
+            if line.startswith("//   E "):
+                ident, gz = line[7:].split()
+                manifest[ident] = int(gz)
+    except OSError:
+        pass
+    nm = _webasset_nm()
+    if not elf or not manifest or not nm:
+        return
+    try:
+        out = subprocess.run([nm, "-C", elf], capture_output=True, text=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return
+    present = set(re.findall(r"WebAssets::(\w+)_gz\b", out))
+    in_bin = 0
+    for ident in sorted(manifest):
+        gz = manifest[ident]
+        if ident in present:
+            in_bin += gz
+            print("{}  {}: {} B gz -> in firmware{}".format(console_color.CYAN, ident, gz, console_color.END))
         else:
-            minified = raw  # .jpg/.png -- binaer, kein Minifier sinnvoll
-
-        compressed = _gzip.compress(minified, compresslevel=9, mtime=0)
-        total_raw += len(raw)
-        total_gz += len(compressed)
-
-        pct = round(len(compressed) * 100 / len(raw)) if raw else 0
-        print("{}  {}: {} -> {} bytes ({}%){}".format(
-            console_color.CYAN, ident, len(raw), len(compressed), pct, console_color.END))
-
-        # Keine separate _gz_len-Konstante: die Groesse ist ueber sizeof(x_gz) am
-        # Aufruf bereits bekannt (Array mit fester Bound) -- ein Laengenfeld waere
-        # nur eine redundante, von Hand nachzufuehrende Zahl. Wichtig: das ist NICHT
-        # NUL-terminiert -- gzip-Bytes sind Binaerdaten und enthalten praktisch immer
-        # ein 0x00 irgendwo im Stream; strlen() wuerde den Inhalt zufaellig abschneiden.
-        parts.append("    inline const uint8_t {}_gz[] = {{".format(ident))
-        parts.append(_format_byte_array(compressed))
-        parts.append("    };")
-        parts.append("    inline const char* const {}_mime = \"{}\";".format(ident, WEBASSET_MIME[ext]))
-        parts.append("")
-
-    parts.append("} // namespace WebAssets")
-    parts.append("")
-
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text("\n".join(parts), encoding="utf-8")
-
-    total_pct = round(total_gz * 100 / total_raw) if total_raw else 0
-    print("{}  Total: {} files, {} -> {} bytes ({}%){}".format(
-        console_color.DARKBLUE, len(entries), total_raw, total_gz, total_pct, console_color.END))
-    print()
+            print("{}  {}: dropped (unused, linker-removed){}".format(console_color.DARKBLUE, ident, console_color.END))
+    print("{}  total in firmware: {}/{} assets, {} B gz{}".format(
+        console_color.DARKBLUE, len(present & manifest.keys()), len(manifest), in_bin, console_color.END))
 
 
-_generate_webassets_header()
+# Gate: only for products that actually run a webserver.
+_webasset_defines = set(str(d[0] if isinstance(d, (list, tuple)) else d) for d in env.get("CPPDEFINES", []))
+if "OPENKNX_WEBSERVER" in _webasset_defines:
+    _webasset_generate()
+    env.AddPostAction("checkprogsize", Action(_webasset_report, "Web assets: firmware report"))
 
 
 # def make_macro_name(lib_name):
