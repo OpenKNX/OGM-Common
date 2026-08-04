@@ -188,34 +188,63 @@ for name, lib_version in openknx_modules.items():
   except NotADirectoryError:
     pass
 
-# build defines
-version_file = open("include/versions.h", "w")
-version_file.write("#pragma once\n\n")
-version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
-version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
+version_lines = []
+version_lines.append("#pragma once\n\n")
+version_lines.append("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
+version_lines.append("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
 # additional_defines = dict()
 for name, version in openknx_modules.items():
   define_name = "MODULE_" + name.split("-")[1]
-  version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
+  version_lines.append("#define {} \"{}\"\n".format(define_name + "_Version", version))
   result = re.match(r"^(\d+)\.(\d+)\.(\d+)(\D.*)?$", version)
   if result:
-    version_file.write("#define {}_Version_Major {}\n".format(define_name, int(result.group(1))))
-    version_file.write("#define {}_Version_Minor {}\n".format(define_name, int(result.group(2))))
-    version_file.write("#define {}_Version_Revision {}\n".format(define_name, int(result.group(3))))
+    version_lines.append("#define {}_Version_Major {}\n".format(define_name, int(result.group(1))))
+    version_lines.append("#define {}_Version_Minor {}\n".format(define_name, int(result.group(2))))
+    version_lines.append("#define {}_Version_Revision {}\n".format(define_name, int(result.group(3))))
 
   ets = get_ets_version(version)
   if ets != None:
-    version_file.write("#define {} {}\n".format(define_name + "_ETS", ets))
-  
+    version_lines.append("#define {} {}\n".format(define_name + "_ETS", ets))
+
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
-now = datetime.datetime.now()
-build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
-build_timestamp = int(now.timestamp())
-version_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
-version_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
+stable_content = "".join(version_lines)
 
-version_file.close()
+try:
+  with open("include/versions.h", "r") as f:
+    old_content = f.read()
+except (OSError, IOError):
+  old_content = ""
+
+old_stable = ""
+old_datetime = None
+old_timestamp = None
+for line in old_content.splitlines(keepends=True):
+  m_dt = re.match(r"^#define BUILD_DATETIME \"(.*)\"\s*$", line)
+  m_ts = re.match(r"^#define BUILD_TIMESTAMP (\d+)\s*$", line)
+  if m_dt:
+    old_datetime = m_dt.group(1)
+  elif m_ts:
+    old_timestamp = m_ts.group(1)
+  else:
+    old_stable += line
+
+if old_datetime is not None and old_timestamp is not None and old_stable == stable_content:
+  build_datetime = old_datetime
+  build_timestamp = old_timestamp
+else:
+  now = datetime.datetime.now()
+  build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+  build_timestamp = int(now.timestamp())
+
+new_content = stable_content \
+  + "#define BUILD_DATETIME \"{}\"\n".format(build_datetime) \
+  + "#define BUILD_TIMESTAMP {}\n".format(build_timestamp)
+
+if new_content != old_content:
+  with open("include/versions.h", "w") as version_file:
+    version_file.write(new_content)
+
 print("{}  Build: {}{}".format(console_color.CYAN, build_datetime, console_color.END))
 print()
 
