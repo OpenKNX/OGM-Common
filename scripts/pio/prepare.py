@@ -152,13 +152,20 @@ for name, version in openknx_modules.items():
   
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
+version_file.close()
+
+# buildtime.h is kept separate from versions.h: BUILD_DATETIME/BUILD_TIMESTAMP
+# change on every single build, so bundling them into versions.h would force a
+# full rebuild (versions.h is pulled in via defines.h, i.e. by virtually every
+# source file) even when no module version actually changed.
 now = datetime.datetime.now()
 build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
 build_timestamp = int(now.timestamp())
-version_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
-version_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
-
-version_file.close()
+build_file = open("include/buildtime.h", "w")
+build_file.write("#pragma once\n\n")
+build_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
+build_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
+build_file.close()
 print("{}  Build: {}{}".format(console_color.CYAN, build_datetime, console_color.END))
 print()
 
