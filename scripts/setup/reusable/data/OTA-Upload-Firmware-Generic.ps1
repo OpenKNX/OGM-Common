@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 Open ■
 ┬────┴  OTA-Upload-Firmware-Generic
@@ -61,7 +61,8 @@ param(
     [string]$Ip = "",
     [string]$Lang = "",
     [Alias('h')]
-    [switch]$Help
+    [switch]$Help,
+    [switch]$AutoExit                # never pause on error; default pauses so the window stays readable
 )
 
 # PowerShell 5.1 has no $IsWindows/$IsMacOS/$IsLinux -- define them.
@@ -312,7 +313,7 @@ if ($FirmwareName -and -not [System.IO.Path]::IsPathRooted($FirmwareName) -and -
 }
 if ([string]::IsNullOrWhiteSpace($FirmwareName) -or -not (Test-Path $FirmwareName)) {
     Write-Host ($s.NotFound -f $FirmwareName) -ForegroundColor Red
-    Read-Host $s.PressEnter
+    if (-not $AutoExit) { Read-Host $s.PressEnter }
     exit 1
 }
 $firmwarePath = (Resolve-Path $FirmwareName).Path
@@ -331,7 +332,7 @@ if (-not $espota) {
     Write-Host $s.EspotaOpt1b -ForegroundColor DarkGray
     Write-Host $s.EspotaOpt2 -ForegroundColor Yellow
     Write-Host ""
-    Read-Host $s.PressEnter
+    if (-not $AutoExit) { Read-Host $s.PressEnter }
     exit 1
 }
 # espota.py needs a python interpreter; a bare espota/espota.exe is run directly
@@ -356,7 +357,7 @@ if ($isEsp) {
     Write-Host ($s.TypeRp -f $chip) -ForegroundColor DarkGray
     Write-Host $s.Compressing -ForegroundColor DarkGray
     $upload = Compress-Gzip $firmwarePath
-    if (-not $upload) { Write-Host $s.CompressFail -ForegroundColor Red; Read-Host $s.PressEnter; exit 1 }
+    if (-not $upload) { Write-Host $s.CompressFail -ForegroundColor Red; if (-not $AutoExit) { Read-Host $s.PressEnter }; exit 1 }
 }
 
 Write-Host ($s.Firmware -f $upload) -ForegroundColor Cyan
@@ -422,5 +423,5 @@ $code = $LASTEXITCODE
 Write-Host ""
 if ($code -eq 0) { Write-Host $s.Done -ForegroundColor Green } else { Write-Host $s.Failed -ForegroundColor Red }
 Write-Host ""
-Read-Host $s.PressEnter
+if ($code -ne 0 -and -not $AutoExit) { Read-Host $s.PressEnter }
 exit $code

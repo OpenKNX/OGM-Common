@@ -81,7 +81,8 @@ param(
     [switch]$Ask,                    # force the confirm menu even when a single device is found (disables fast path)
     [Alias('h')]
     [switch]$Help,                   # show logo + full help and exit
-    [switch]$DebugSerial = $false    # show serial debug output when reading device info
+    [switch]$DebugSerial = $false,   # show serial debug output when reading device info
+    [switch]$AutoExit                # never pause on error; default pauses so the window stays readable
 )
 
 # Platform detection – ensures compatibility with PowerShell 5.1 on Windows
@@ -916,6 +917,7 @@ function ScanEsp32Ports() {
 # ── Shared ─────────────────────────────────────────────────────────────────────
 
 function WaitOrPause($seconds = -1) {
+    if ($script:AutoExit) { return }
     if ($seconds -lt 0) {
         Read-Host $script:s.PressEnter
     } else {
@@ -2488,7 +2490,7 @@ elseif ($Chip -eq 'ESP32') {
             if (-not $detectedChip) {
                 Write-Host "  $($s.ChipNotEsp)" -ForegroundColor Red
                 Show-Esp32Instr
-                if (-not $script:MultiMode) { $continueFlashing = $false }
+                if (-not $script:MultiMode) { $continueFlashing = $false; WaitOrPause }
                 continue
             }
             $fwVariant = Get-EspFwVariant $fwFileName
