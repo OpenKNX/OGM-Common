@@ -55,6 +55,8 @@ namespace OpenKNX
 #if OPENKNX_LITTLE_FS
         void showFilesystem();
         void showFilesystemDirectory(std::string path);
+        void showFilesystemUsage();
+        void showFilesystemHelp();
 #endif
         void erase(EraseMode mode = EraseMode::All);
 #ifndef ARDUINO_ARCH_SAMD

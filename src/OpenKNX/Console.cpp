@@ -230,9 +230,17 @@ namespace OpenKNX
         }
 #endif
 #if OPENKNX_LITTLE_FS
-        else if (!diagnoseKo && (cmd == "fs" || cmd == "files"))
+        else if (!diagnoseKo && (cmd == "fs" || cmd == "files" || cmd == "file"))
         {
             showFilesystem();
+        }
+        else if (!diagnoseKo && (cmd == "fs ?" || cmd == "files ?"))
+        {
+            showFilesystemHelp();
+        }
+        else if (!diagnoseKo && (cmd == "fs df"))
+        {
+            showFilesystemUsage();
         }
         else if (!diagnoseKo && (cmd == "file dummy"))
         {
@@ -243,7 +251,7 @@ namespace OpenKNX
             file.close();
             showFilesystem();
         }
-        else if (!diagnoseKo && cmd.rfind("fs dmp ", 0) == 0 && cmd.length() > 7)
+        else if (!diagnoseKo && (cmd.rfind("fs dmp ", 0) == 0 || cmd.rfind("fs cat ", 0) == 0) && cmd.length() > 7)
         {
             auto fileName = cmd.substr(7, cmd.length() - 7);
             if (fileName[0] != '/')
@@ -266,15 +274,19 @@ namespace OpenKNX
             }
             file.close();
         }
-        else if (!diagnoseKo && cmd.rfind("fs del ", 0) == 0 && cmd.length() > 7)
+        else if (!diagnoseKo && (cmd.rfind("fs del ", 0) == 0 || cmd.rfind("fs rm ", 0) == 0))
         {
-            auto fileName = cmd.substr(7, cmd.length() - 7);
-            if (fileName[0] != '/')
-                fileName = "/" + fileName;
-            if (LittleFS.remove(fileName.c_str()))
-                logInfo("Filesystem", "File %s deleted", fileName.c_str());
-            else
-                logError("Filesystem", "File %s not found", fileName.c_str());
+            size_t off = (cmd.rfind("fs del ", 0) == 0) ? 7 : 6; // "fs del " vs "fs rm "
+            if (cmd.length() > off)
+            {
+                auto fileName = cmd.substr(off);
+                if (fileName[0] != '/')
+                    fileName = "/" + fileName;
+                if (LittleFS.remove(fileName.c_str()))
+                    logInfo("Filesystem", "File %s deleted", fileName.c_str());
+                else
+                    logError("Filesystem", "File %s not found", fileName.c_str());
+            }
         }
 #endif
 #ifdef ARDUINO_ARCH_RP2040
@@ -794,6 +806,50 @@ namespace OpenKNX
         }
         logEnd();
     }
+
+    void Console::showFilesystemUsage()
+    {
+        uint64_t total = 0, used = 0;
+#if defined(ARDUINO_ARCH_ESP32)
+        total = LittleFS.totalBytes();
+        used = LittleFS.usedBytes();
+#elif defined(ARDUINO_ARCH_RP2040)
+        FSInfo info;
+        if (LittleFS.info(info))
+        {
+            total = info.totalBytes;
+            used = info.usedBytes;
+        }
+#endif
+        uint64_t freeBytes = (total >= used) ? (total - used) : 0;
+        uint8_t usedPct = total ? (uint8_t)((used * 100) / total) : 0;
+
+        logBegin();
+        openknx.logger.log("");
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.logHeader("Filesystem df");
+        openknx.logger.color(0);
+        openknx.logger.logWithPrefixAndValues("Filesystem", "Total: %u bytes", (uint32_t)total);
+        openknx.logger.logWithPrefixAndValues("Filesystem", "Used:  %u bytes (%u%%)", (uint32_t)used, usedPct);
+        openknx.logger.logWithPrefixAndValues("Filesystem", "Free:  %u bytes", (uint32_t)freeBytes);
+        openknx.logger.logDividingLine();
+        logEnd();
+    }
+
+    void Console::showFilesystemHelp()
+    {
+        logBegin();
+        openknx.logger.log("");
+        openknx.logger.color(CONSOLE_HEADLINE_COLOR);
+        openknx.logger.logHeader("Filesystem");
+        openknx.logger.color(0);
+        printHelpLine("files, fs, file", "Show files on filesystem");
+        printHelpLine("fs df", "Show usage (total / used / free)");
+        printHelpLine("fs del, rm <file>", "Delete a file");
+        printHelpLine("fs dmp, cat <file>", "Dump a file (hex)");
+        openknx.logger.logDividingLine();
+        logEnd();
+    }
 #endif
 
     void Console::showVersions()
@@ -836,9 +892,7 @@ namespace OpenKNX
         printHelpLine("flash knx", "Show knx flash content");
         printHelpLine("flash openknx", "Show openknx flash content");
 #if OPENKNX_LITTLE_FS
-        printHelpLine("files, fs", "Show files on filesystem");
-        printHelpLine("fs del <file>", "Delete a file");
-        printHelpLine("fs dmp <file>", "Dump a file");
+        printHelpLine("files, fs [?]", "Show files ('fs ?' for filesystem tools)");
 #endif
 #ifdef OPENKNX_RUNTIME_STAT
         printHelpLine("runtime", "Show runtime statistics (Short statistic)");
