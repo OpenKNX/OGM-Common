@@ -491,6 +491,7 @@
                   </when>
                 </choose>
 
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Uhrzeit &amp; Datum" UIHint="Headline" />
                 <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601">
                   <when test="0">
@@ -589,6 +590,7 @@
                   </when>
                 </choose>
 
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Gerätestandort" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00142_R-%TT%0014201" HelpContext="BASE-Geraetestandort" IndentLevel="1" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00143_R-%TT%0014301" HelpContext="BASE-Geraetestandort" IndentLevel="1" />
@@ -630,6 +632,7 @@
                     <ParameterRefRef RefId="%AID%_P-%TT%00011_R-%TT%0001101" HelpContext="%DOC%" IndentLevel="1" />
                     <choose ParamRefId="%AID%_P-%TT%00011_R-%TT%0001101">
                       <when test="1">
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitertes Speichern" UIHint="Headline" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="BASE-Erweitertes-Speichern" IndentLevel="1" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%00091_R-%TT%0009101" HelpContext="BASE-Erweitertes-Speichern" IndentLevel="1" />
@@ -674,6 +677,7 @@
                 <ParameterRefRef RefId="%AID%_P-0099900_R-009990001" />
                 <choose ParamRefId="%AID%_P-0099900_R-009990001">
                   <when test="%BASE_ShowSyncModulesButton%">
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Abgleich mit dem Gerät" UIHint="Headline" />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation unterstützt die Verwendung mit verschiedenen Geräten. Einzelne Module können von der angeschlossenen Hardware abhängig sein." />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Nachdem das Gerät programmiert wurde (PA + Applikation) ist ein Abgleich mit den Fähigkeiten der Hardware möglich:" />
