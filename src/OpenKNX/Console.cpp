@@ -4,10 +4,7 @@
 #include "OpenKNX/I2C/Console.h"
 #include "OpenKNX/I2C/WireWrapper.h" // defines OPENKNX_I2C_USE_PIO when PIO I2C is configured
 #include "OpenKNX/Led/Console.h"
-
-#ifdef ARDUINO_ARCH_ESP32
-    #include "esp_heap_caps.h"
-#endif
+#include "buildtime.h"
 
 #ifdef ARDUINO_ARCH_ESP32
     #include "esp_heap_caps.h"

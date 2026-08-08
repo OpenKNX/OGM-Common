@@ -212,43 +212,22 @@ for name, version in openknx_modules.items():
 
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
-stable_content = "".join(version_lines)
+# versions.h carries only the module version defines, so it changes only when a
+# version actually changes -- no build timestamp here (see buildtime.h below).
+with open("include/versions.h", "w") as version_file:
+  version_file.write("".join(version_lines))
 
-try:
-  with open("include/versions.h", "r") as f:
-    old_content = f.read()
-except (OSError, IOError):
-  old_content = ""
-
-old_stable = ""
-old_datetime = None
-old_timestamp = None
-for line in old_content.splitlines(keepends=True):
-  m_dt = re.match(r"^#define BUILD_DATETIME \"(.*)\"\s*$", line)
-  m_ts = re.match(r"^#define BUILD_TIMESTAMP (\d+)\s*$", line)
-  if m_dt:
-    old_datetime = m_dt.group(1)
-  elif m_ts:
-    old_timestamp = m_ts.group(1)
-  else:
-    old_stable += line
-
-if old_datetime is not None and old_timestamp is not None and old_stable == stable_content:
-  build_datetime = old_datetime
-  build_timestamp = old_timestamp
-else:
-  now = datetime.datetime.now()
-  build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
-  build_timestamp = int(now.timestamp())
-
-new_content = stable_content \
-  + "#define BUILD_DATETIME \"{}\"\n".format(build_datetime) \
-  + "#define BUILD_TIMESTAMP {}\n".format(build_timestamp)
-
-if new_content != old_content:
-  with open("include/versions.h", "w") as version_file:
-    version_file.write(new_content)
-
+# buildtime.h is kept separate from versions.h: BUILD_DATETIME/BUILD_TIMESTAMP
+# change on every single build, so bundling them into versions.h would force a
+# full rebuild (versions.h is pulled in via defines.h, i.e. by virtually every
+# source file) even when no module version actually changed.
+now = datetime.datetime.now()
+build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+build_timestamp = int(now.timestamp())
+with open("include/buildtime.h", "w") as build_file:
+  build_file.write("#pragma once\n\n")
+  build_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
+  build_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
 print("{}  Build: {}{}".format(console_color.CYAN, build_datetime, console_color.END))
 print()
 

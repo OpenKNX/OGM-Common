@@ -9,3 +9,6 @@ Restart.txt
 **/knxprod.h
 **/hardware.h
 **/versions.h
+**/buildtime.h
+__pycache__/
+*.pyc

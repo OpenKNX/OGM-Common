@@ -2,6 +2,9 @@
 
 ## upcoming releases
 
+* Fix: `platformio.base.ini` now sets a dummy `lib_deps` entry, since PlatformIO re-resolves/re-downloads all included modules on every build whenever `lib_deps` is empty
+* Fix: `BUILD_DATETIME`/`BUILD_TIMESTAMP` moved out of `include/versions.h` into their own generated `include/buildtime.h`, since they change on every build and previously forced a full rebuild of everything including `versions.h` (via `defines.h`) even when no module version changed
+* Feature: Add `OpenKNX::Charset` (`src/OpenKNX/Charset.hpp`) — header-only `encodeUtf8()`/`decodeUtf8()` conversion between the firmware/KNX-bus encoding (ISO-8859-15) and UTF-8, for modules that expose bus/filesystem strings over a browser-facing boundary (WebSocket, HTTP) that forces UTF-8. Gated behind `#ifdef OPENKNX_CHARSET`; not enabled by OGM-Common itself
 * Feature: `prepare.py` now generates `include/webassets.h` from every included module's (and the project's own) `web/assets/` folder — plain, readable `.css`/`.js`/`.svg`/`.jpg`/`.png` source files are minified and gzip-compressed into flash-resident byte arrays at build time, so modules no longer need to hand-minify web assets into C++ string literals
 * Feature: Add shared HelpContext topics `BASE-ChannelSelect` and `BASE-ChannelSuspended` for modules using the tab-based Kanalauswahl pattern, replacing per-module placeholder help texts
 * Change: `PT-Suspended` now renders as a Ja/Nein selection instead of a checkbox, consistent with `PT-OnOffYesNo`
