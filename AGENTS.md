@@ -122,6 +122,26 @@ oben genannten hängen hier u. a. `console`, `hardware`, `leds`
 (`GPIO::Manager`), `sun`, `calendar`, `progButton`/`func1..3Button` und
 `modules` (die Registry selbst).
 
+### `OpenKNX::Charset` (`src/OpenKNX/Charset.hpp`)
+Header-only, verlustarme Umkodierung zwischen dem Firmware-/KNX-Bus-Encoding
+(ISO-8859-15 — DPT16-Strings, FAT32/LittleFS-Dateinamen) und UTF-8, das an
+den Browser-Grenzen (WebSocket-Textframes, `fetch()`, HTML) faktisch ohne
+Alternative erzwungen ist. Zwei Funktionen: `encodeUtf8()` (ISO→UTF-8, kann
+nie fehlschlagen — jedes Byte ist ein gültiger Unicode-Codepoint) und
+`decodeUtf8()` (UTF-8→ISO, liefert `bool` — `false` sobald mindestens ein
+Zeichen keine Latin-15-Entsprechung hat und durch `?` ersetzt wurde). Beide
+sind exakte Inversen zueinander für beliebige Bytefolgen, nicht nur für
+"echten" ISO-8859-15-Text.
+
+Der gesamte Dateiinhalt steht hinter `#ifdef OPENKNX_CHARSET` — ohne gesetzte
+Define ist das Include ein No-Op, keine `.cpp` nötig. OGM-Common selbst
+setzt diese Define nicht; aktuell leitet sie `OFM-Network` automatisch aus
+`OPENKNX_WEBSERVER` ab (`Network/Module.h`). Hintergrund, warum das nötig
+ist (Browser erzwingen UTF-8 an mehreren Stellen ohne Override), und die
+konkreten Einsatzstellen: `../OFM-Network/AGENTS.md` (Abschnitt "Character
+Encoding: why everything is UTF-8") und `../OFM-Network/README.Webserver.md`
+(Abschnitt "Character Encoding").
+
 ### Weitere Subsysteme (nicht im Detail dokumentiert, aber vorhanden)
 `src/OpenKNX/Console.h/.cpp` (Kommandokonsole), `src/OpenKNX/Led/*`
 (siehe `README_LED.md`), `src/OpenKNX/GPIO/*` (u. a. PCA9554/PCA9557/
