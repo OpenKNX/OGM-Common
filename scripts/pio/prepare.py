@@ -113,7 +113,7 @@ def get_ets_version(version_string):
 get_all_library_dependencies(project)
 
 print()
-print("{}Read OpenKNX Module version and build defines:{}".format(console_color.YELLOW, console_color.END))
+print("{}Generate include/versions.h{}".format(console_color.YELLOW, console_color.END))
 
 openknx_modules = {k: v for k, v in library_versions.items() if k.startswith("OGM") or k.startswith("OFM")}
 # openknx_modules["nodir"] = None # to test missing directory
@@ -153,11 +153,13 @@ for name, version in openknx_modules.items():
   print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
 
 version_file.close()
+print()
 
 # buildtime.h is kept separate from versions.h: BUILD_DATETIME/BUILD_TIMESTAMP
 # change on every single build, so bundling them into versions.h would force a
 # full rebuild (versions.h is pulled in via defines.h, i.e. by virtually every
 # source file) even when no module version actually changed.
+print("{}Generate include/buildtime.h{}".format(console_color.YELLOW, console_color.END))
 now = datetime.datetime.now()
 build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
 build_timestamp = int(now.timestamp())
@@ -316,7 +318,7 @@ def _generate_webassets_header():
     total_gz = 0
     minifiers = {".css": _minify_css, ".js": _minify_js, ".svg": _minify_svg}
 
-    print("{}Web assets:{}".format(console_color.YELLOW, console_color.END))
+    print("{}Generate include/webassets.h{}".format(console_color.YELLOW, console_color.END))
 
     for ident, ext, file_path in entries:
         raw = file_path.read_bytes()
