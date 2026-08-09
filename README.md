@@ -86,17 +86,23 @@ On ESP32 and RP2350, you can utilize PSRAM for both static data and dynamic memo
 
 | Macro | Function | With OPENKNX_PSRAM | Without OPENKNX_PSRAM |
 |-------|----------|-------------------|----------------------|
-| `PSRAM_MALLOC(size)` | Allocate dynamic memory | `ps_malloc(size)` | `malloc(size)` |
-| `PSRAM_CALLOC(count, size)` | Allocate and zero memory | `ps_calloc(count, size)` | `calloc(count, size)` |
-| `PSRAM_REALLOC(ptr, size)` | Reallocate memory | `ps_realloc(ptr, size)` | `realloc(ptr, size)` |
+| `PSRAM_MALLOC(size)` | Allocate dynamic memory | ESP32 `ps_malloc`, RP2350 `pmalloc` | `malloc(size)` |
+| `PSRAM_CALLOC(count, size)` | Allocate and zero memory | ESP32 `ps_calloc`, RP2350 `pcalloc` | `calloc(count, size)` |
+| `PSRAM_REALLOC(ptr, size)` | Reallocate memory | ESP32 `ps_realloc`, RP2350 `realloc` | `realloc(ptr, size)` |
 | `psram_new(Type)` | Placement-new in PSRAM | PSRAM allocation | Normal allocation |
 | `psram_delete(p)` | Destruct + free PSRAM object | `~T()` + `free()` | `delete p` |
-| `PsramAllocator<T>` | STL allocator using PSRAM | `ps_malloc`-backed | `std::allocator<T>` |
-| `PSRAM_DATA` | Place variable/array in PSRAM | section `.psram_data` | No-op |
-| `PSRAM_CODE` | Place function in PSRAM | section `.psram_code` | No-op |
+| `PsramAllocator<T>` | STL allocator using PSRAM | `PSRAM_MALLOC`-backed | `std::allocator<T>` |
+| `PSRAM_DATA` | Place variable/array in PSRAM | RP2350 section `.psram`, ESP32 `EXT_RAM_BSS_ATTR` | No-op |
+| `PSRAM_CODE` | Place function in PSRAM | RP2350 section `.psram_code` | No-op (ESP32 cannot execute from PSRAM) |
+
+The section names are not free-form: arduino-pico's linker script collects `*(.psram*)` into the PSRAM region (`lib/rp2350/memmap_default.ld`), ESP-IDF uses `.ext_ram.bss`. A section name outside those patterns links without error and silently ends up in normal RAM — verify placement in the `.map` file (RP2350 PSRAM window starts at `0x11000000`).
+
+**ESP32 caveat verified by build:** `PSRAM_DATA` only places data in PSRAM if the underlying `sdkconfig` has `CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y` — `EXT_RAM_BSS_ATTR` degrades itself to a no-op otherwise (checked in `esp_attr.h`), and the sdkconfig shipped with this project's pinned pioarduino release does **not** set it. `PSRAM_MALLOC`/`PsramAllocator` are unaffected — confirmed via `nm` that `PsramAllocator<T>::allocate()` calls the real `ps_malloc`, not a stub. RP2350 has no equivalent gate: `PSRAM_DATA` there is proven placed at `0x11000000` with just `RP2350_PSRAM_CS` set.
+
+`PSRAM_DATA` variables live in a `NOLOAD` section: they **cannot be statically initialized** and are not zeroed at startup. Initialize them explicitly at runtime.
 
 **Control defines:**
-- `OPENKNX_PSRAM` — automatically defined when ESP32 `BOARD_HAS_PSRAM` or RP2350 `PICO_RP2350_PSRAM_CS` is detected
+- `OPENKNX_PSRAM` — automatically defined when ESP32 `BOARD_HAS_PSRAM` or RP2350 `RP2350_PSRAM_CS` is detected. Only these two are checked, because they are what the cores themselves use to bring the PSRAM heap up — defining any other name would enable the macros without an initialized heap. On PlatformIO the board must also declare `upload.psram_length`, otherwise the PSRAM region has zero length
 - `OPENKNX_DISABLE_PSRAM` — define in `hardware.h` to disable PSRAM and force fallback to normal RAM/Flash (useful for debugging with Segger, etc.)
 
 **Example usage:**
