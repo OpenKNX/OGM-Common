@@ -241,7 +241,20 @@ function Get-OpenKnxDevices([int]$timeoutMs = 2500) {
         $udp.Client.Bind((New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)))
         $udp.Client.ReceiveTimeout = 350
         $mcast = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Parse("224.0.0.251"), 5353)
-        [void]$udp.Send($query, $query.Length, $mcast)
+        $sent = $false
+        try {
+            foreach ($ni in [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces()) {
+                if ($ni.OperationalStatus -ne 'Up' -or $ni.NetworkInterfaceType -eq [System.Net.NetworkInformation.NetworkInterfaceType]::Loopback) { continue }
+                foreach ($ua in $ni.GetIPProperties().UnicastAddresses) {
+                    if ($ua.Address.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { continue }
+                    try {
+                        $udp.Client.SetSocketOption([System.Net.Sockets.SocketOptionLevel]::IP, [System.Net.Sockets.SocketOptionName]::MulticastInterface, $ua.Address.GetAddressBytes())
+                        [void]$udp.Send($query, $query.Length, $mcast); $sent = $true
+                    } catch {}
+                }
+            }
+        } catch {}
+        if (-not $sent) { [void]$udp.Send($query, $query.Length, $mcast) }  # fallback: default interface
 
         $ptr = @{}; $srv = @{}; $addr = @{}; $txt = @{}
         $deadline = (Get-Date).AddMilliseconds($timeoutMs)
@@ -414,10 +427,16 @@ if ($pickedPort) { $extra = @('-p', "$pickedPort") }
 elseif (-not [string]::IsNullOrWhiteSpace($EspotaArgs)) { $extra = $EspotaArgs.Trim().Trim("'`"").Split(' ') }
 
 Write-Host ""
-Write-Host ("  " + ($runner -join ' ') + " -i $ipAddress $($extra -join ' ') -f $upload") -ForegroundColor DarkGray
+Write-Host ("  " + ($runner -join ' ') + " -r -i $ipAddress $($extra -join ' ') -f $upload") -ForegroundColor DarkGray
 Write-Host ""
 
-& $runner[0] ($runner[1..($runner.Count - 1)]) -i $ipAddress $extra -f $upload
+$espArgs = @()
+if ($runner.Count -gt 1) { $espArgs += $runner[1..($runner.Count - 1)] }
+$espArgs += '-r'                 # --progress: a "[==== ] NN%" bar instead of espota's bare dots
+$espArgs += '-i', $ipAddress
+$espArgs += $extra
+$espArgs += '-f', $upload
+& $runner[0] @espArgs
 $code = $LASTEXITCODE
 
 Write-Host ""
