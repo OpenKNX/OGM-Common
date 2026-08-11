@@ -26,9 +26,9 @@ namespace OpenKNX
     {
         if (_disableConsole)
         {
-            // Console is occupied (a remote FTC console session owns it). Discard local input so it does not
-            // pile up in the UART FIFO, and tell the user once why the console is unresponsive -- rate-limited
-            // so a held key / paste cannot spam. Without this the local console just looks dead for no reason.
+            // Console is in use by an external (remote FTC) console session. Discard local input so it does not
+            // pile up in the UART FIFO, and tell the user once -- in RED -- why the local console is unresponsive,
+            // rate-limited so a held key / paste cannot spam. Without this the local console just looks dead.
             if (OPENKNX_LOGGER_DEVICE.available())
             {
                 while (OPENKNX_LOGGER_DEVICE.available())
@@ -37,9 +37,9 @@ namespace OpenKNX
                 {
                     _disableNoticeMs = millis();
                     if (_disableReason != nullptr)
-                        openknx.logger.logWithPrefixAndValues("Console", "occupied (%s) -- try again later", _disableReason);
+                        logError("Console", "external console session active (%s) -- local input ignored, try again later", _disableReason);
                     else
-                        openknx.logger.logWithPrefix("Console", "occupied -- try again later");
+                        logError("Console", "external console session active -- local input ignored, try again later");
                 }
             }
             return;
