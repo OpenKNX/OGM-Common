@@ -126,8 +126,8 @@ namespace OpenKNX
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->color(Led::Color::Red);
         openknx.ledFunctions.get(OPENKNX_LEDFUNC_BASE_PROG)->errorCode(code);
 
-#if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+#if defined(KNX_HAS_TP) && !defined(KNX_IS_ROUTER)
+        TpUartDataLinkLayer* dll = KNX_TP_DLL;
         dll->stop(true);
         dll->powerControl(false);
 #endif
@@ -161,7 +161,7 @@ namespace OpenKNX
 #endif
     }
 
-#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
     void Hardware::initKnxInterface()
     {
     #if defined(ARDUINO_ARCH_ESP32) && defined(KNX_UART_RX_PIN) && defined(KNX_UART_TX_PIN) && defined(KNX_UART_NUM)
@@ -191,11 +191,7 @@ namespace OpenKNX
     #else
         #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
     #endif
-    #if MASK_VERSION == 0x091A
-        knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerReceivedFrame(
-    #else
-        knx.bau().getDataLinkLayer()->getTPUart().registerReceivedFrame(
-    #endif
+        KNX_TP_DLL->getTPUart().registerReceivedFrame(
             [](TPUart::Frame& tpFrame) {
                 // Process received frame
                 if (openknx.console.bcuDebug())

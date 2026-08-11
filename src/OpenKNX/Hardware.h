@@ -1,4 +1,5 @@
 #pragma once
+#include "knx/config.h" // KNX_HAS_TP / KNX_IS_* — device-type & capability derivation for the guards below
 #include "OpenKNX/Button.h"
 #include "OpenKNX/defines.h"
 // #ifdef OPENKNX_SERIALLED_ENABLE
@@ -51,7 +52,7 @@ namespace OpenKNX
 #endif
         void initFlash();
         void initButtons();
-#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
         void initKnxInterface();
 #endif
     };

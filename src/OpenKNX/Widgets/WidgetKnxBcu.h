@@ -6,7 +6,8 @@
  * @copyright   Copyright (c) 2026, Erkan Çolak (erkan@colak.de)
  *              Licensed under GNU GPL v3.0
  */
-#ifdef DEVICE_DISPLAY_MODULE
+#include "knx/config.h"
+#if defined(DEVICE_DISPLAY_MODULE) && defined(KNX_HAS_TP)
     #pragma once
 
     // WidgetKnxBcu — multi-page KNX / BCU status widget provided by OGM-Common.
@@ -106,4 +107,4 @@ namespace OpenKNX
 
 } // namespace OpenKNX
 
-#endif // DEVICE_DISPLAY_MODULE
+#endif // DEVICE_DISPLAY_MODULE && KNX_HAS_TP

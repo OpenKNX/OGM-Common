@@ -6,7 +6,8 @@
  * @copyright   Copyright (c) 2026, Erkan Çolak (erkan@colak.de)
  *              Licensed under GNU GPL v3.0
  */
-#ifdef DEVICE_DISPLAY_MODULE
+#include "knx/config.h"
+#if defined(DEVICE_DISPLAY_MODULE) && defined(KNX_HAS_TP)
     #include "WidgetKnxBcu.h"
     #include "OpenKNX.h"
     #include "knx.h" // knx.bau(), TpUartDataLinkLayer::getTPUart(), TPUart::Statistics
@@ -56,10 +57,8 @@ namespace OpenKNX
     // anything else:              no TP-UART BCU -> nullptr (widget shows "-").
     TpUartDataLinkLayer *WidgetKnxBcu::bcuDll() const
     {
-    #if MASK_VERSION == 0x07B0
-        return knx.bau().getDataLinkLayer();
-    #elif MASK_VERSION == 0x091A
-        return knx.bau().getSecondaryDataLinkLayer();
+    #ifdef KNX_HAS_TP
+        return KNX_TP_DLL;
     #else
         return nullptr;
     #endif
@@ -352,4 +351,4 @@ namespace OpenKNX
 
 } // namespace OpenKNX
 
-#endif // DEVICE_DISPLAY_MODULE
+#endif // DEVICE_DISPLAY_MODULE && KNX_HAS_TP

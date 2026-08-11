@@ -59,11 +59,9 @@ namespace OpenKNX
         {
             if (delayCheck(_leds, 100))
             {
-#if MASK_VERSION == 0x091A
-                if (knx.bau().getSecondaryDataLinkLayer()->isConnected())
-#elif MASK_VERSION == 0x07B0
-                if (knx.bau().getDataLinkLayer()->isConnected())
-#else // e.g. 57B0, KNX-IP-Only, no Busstatus availible
+#ifdef KNX_HAS_TP
+                if (KNX_TP_DLL->isConnected())
+#else // e.g. 0x57B0, KNX-IP-only: no bus status available
                 if (false)
 #endif
                 {

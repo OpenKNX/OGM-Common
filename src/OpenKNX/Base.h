@@ -68,7 +68,7 @@ namespace OpenKNX
         virtual void loop1();
 #endif
 
-#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
+#if KNX_HAS_GROUPOBJECTS
         /*
          * Called on incoming/changing GroupObject
          * @param GroupObject

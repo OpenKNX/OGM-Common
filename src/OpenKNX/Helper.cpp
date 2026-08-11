@@ -58,7 +58,7 @@ uint32_t uptime(bool result)
     return ((uint64_t)uptimeRolloverCount << 32 | uptimeCurrentMillis) / 1000UL;
 }
 
-#if MASK_VERSION != 0x091A
+#ifndef KNX_IS_ROUTER
 void writeDpt16Ko(GroupObject &ko, const char *message, va_list &values)
 {
     char buffer[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x06,0x9F,0xFD,0xCC}; // Last byte must be zero!

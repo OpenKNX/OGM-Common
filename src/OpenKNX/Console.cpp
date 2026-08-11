@@ -121,10 +121,8 @@ namespace OpenKNX
     bool Console::processCommand(std::string cmd, bool diagnoseKo /* = false */)
     {
         openknx.common.skipLooptimeWarning();
-#if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
-#elif MASK_VERSION == 0x091A
-        TpUartDataLinkLayer* dll = knx.bau().getSecondaryDataLinkLayer();
+#ifdef KNX_HAS_TP
+        TpUartDataLinkLayer* dll = KNX_TP_DLL;
 #endif
 
         if (!diagnoseKo && (cmd == "i" || cmd == "info"))
@@ -313,7 +311,7 @@ namespace OpenKNX
         {
             erase(EraseMode::All);
         }
-#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
         else if (cmd.compare("bcu") == 0)
         {
             // Compact overview: two fixed lines (state+traffic, buffer+health counters) plus a
@@ -645,15 +643,7 @@ namespace OpenKNX
         openknx.logger.logWithPrefix("Name", openknx.info.firmwareName().c_str());
         openknx.logger.logWithPrefix("Version", openknx.info.humanFirmwareVersion().c_str());
         openknx.logger.logWithPrefix("Number", openknx.info.humanFirmwareNumber().c_str());
-#if MASK_VERSION == 0x07B0
-        openknx.logger.logWithPrefixAndValues("KNX-Type", "TP (%04X)", MASK_VERSION);
-#elif MASK_VERSION == 0x57B0
-        openknx.logger.logWithPrefixAndValues("KNX-Type", "IP (%04X)", MASK_VERSION);
-#elif MASK_VERSION == 0x091A
-        openknx.logger.logWithPrefixAndValues("KNX-Type", "Router (%04X)", MASK_VERSION);
-#else
-        openknx.logger.logWithPrefixAndValues("KNX-Type", "%04X", MASK_VERSION);
-#endif
+        openknx.logger.logWithPrefixAndValues("KNX-Type", "%s (%04X)", KNX_DEVICE_TYPE, MASK_VERSION);
         openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
         float cpuTemp = openknx.hardware.cpuTemperature();
         if (cpuTemp > 0)
@@ -931,7 +921,7 @@ namespace OpenKNX
         printHelpLine("i2c", "I2C bus commands. Use 'i2c' for help");
 #endif
         printHelpLine("leds", "LED control. Use 'leds' for help");
-#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
         printHelpLine("bcu", "Compact BCU status. Use 'bcu ?' for help");
 #endif
 #ifdef OPENKNX_TIME_DIGAGNOSTIC

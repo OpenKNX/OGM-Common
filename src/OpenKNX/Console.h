@@ -42,7 +42,7 @@ namespace OpenKNX
 #ifdef OPENKNX_FTC_CONSOLE
         void (*_lineSink)(const char *) = nullptr; // FTC console tunnel: divert a finished line instead of running it locally
 #endif
-#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
         bool _bcuDebug = false;
 #endif
 
@@ -87,7 +87,7 @@ namespace OpenKNX
 
         void showHelp();
 
-#if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
         bool bcuDebug()
         {
             return _bcuDebug;

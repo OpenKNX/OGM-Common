@@ -29,7 +29,7 @@ int freeMemory();
 /*
  * Write DPT 16 KO Helper
  */
-#if MASK_VERSION != 0x091A
+#ifndef KNX_IS_ROUTER
 void writeDpt16Ko(GroupObject &ko, const char* message, va_list& values);
 void writeDpt16Ko(GroupObject &ko, const char* message, ...);
 #endif

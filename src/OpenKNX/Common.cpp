@@ -179,7 +179,7 @@ namespace OpenKNX
     {
         logInfoP("Init knx stack");
         logIndentUp();
-#if MASK_VERSION == 0x07B0 or MASK_VERSION == 0x091A
+#ifdef KNX_HAS_TP
         openknx.hardware.initKnxInterface();
 #endif
         openknx.progButton.onShortClick([] { knx.toggleProgMode(); });
@@ -382,11 +382,8 @@ namespace OpenKNX
         }
         else
         {
-#if MASK_VERSION == 0x091A
-            uint8_t count = knx.individualAddress() == 0xFF00 ? 2 : 1;
-#else
-            uint8_t count = knx.individualAddress() == 0xFFFF ? 2 : 1;
-#endif
+            // 2x flash = still at the factory-default (unprogrammed) address, else 1x
+            uint8_t count = (knx.individualAddress() == KNX_UNCONFIGURED_ADDRESS) ? 2 : 1;
             _progLedFunc->flash(count, 3000);
 
             _stateLedFunc->color(Led::Color::Orange);
@@ -643,9 +640,7 @@ namespace OpenKNX
         if (!openknxDisplayModule.tryAddWidget(sysInfo))
             logDebugP("WidgetSysInfo not registered (no display/manager)");
 
-        // KNX / BCU widget only makes sense on a device that HAS a TP-UART BCU:
-        // the TP device (0x07B0) or the IP-Router coupler (0x091A). Skip on IP-only.
-    #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
+    #ifdef KNX_HAS_TP
         auto* knxBcu = new WidgetKnxBcu(8000, WidgetFlags::DefaultWidget);
         knxBcu->setName("KNX / BCU");
         if (!openknxDisplayModule.tryAddWidget(knxBcu))
@@ -698,8 +693,8 @@ namespace OpenKNX
     void Common::processHeartbeat()
     {
     // check thermal warning
-    #if MASK_VERSION == 0x07B0
-        TPUart::SystemState& systemState = knx.bau().getDataLinkLayer()->getTPUart().getSystemState();
+    #if defined(KNX_HAS_TP) && !defined(KNX_IS_ROUTER)
+        TPUart::SystemState& systemState = KNX_TP_DLL->getTPUart().getSystemState();
         if (systemState.thermalWarning())
             extendedHeartbeatValue |= (1 << 3);
         else
@@ -769,8 +764,8 @@ namespace OpenKNX
 
         openknx.leds.powerSave();
 
-#if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+#if defined(KNX_HAS_TP) && !defined(KNX_IS_ROUTER)
+        TpUartDataLinkLayer* dll = KNX_TP_DLL;
         dll->stop(true);
 #endif
 
@@ -778,7 +773,7 @@ namespace OpenKNX
         for (uint8_t i = 0; i < openknx.modules.count; i++)
             openknx.modules.list[i]->savePower();
 
-#if MASK_VERSION == 0x07B0
+#if defined(KNX_HAS_TP) && !defined(KNX_IS_ROUTER)
         dll->powerControl(false);
 #endif
 
@@ -811,8 +806,8 @@ namespace OpenKNX
 
         openknx.leds.powerSave(false);
 
-#if MASK_VERSION == 0x07B0
-        TpUartDataLinkLayer* dll = knx.bau().getDataLinkLayer();
+#if defined(KNX_HAS_TP) && !defined(KNX_IS_ROUTER)
+        TpUartDataLinkLayer* dll = KNX_TP_DLL;
         dll->powerControl(true);
         dll->stop(false);
 #endif
@@ -872,7 +867,7 @@ namespace OpenKNX
         logIndentDown();
     }
 
-#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
+#if KNX_HAS_GROUPOBJECTS
     void Common::processInputKo(GroupObject& ko)
     {
     #ifdef BASE_KoDiagnose
@@ -936,7 +931,7 @@ namespace OpenKNX
         knx.beforeRestartCallback([]() -> void {
             openknx.common.processBeforeRestart();
         });
-#if (MASK_VERSION & 0x0900) != 0x0900 // Coupler do not have GroupObjects
+#if KNX_HAS_GROUPOBJECTS
         GroupObject::classCallback([](GroupObject& iKo) -> void {
             openknx.common.processInputKo(iKo);
         });
