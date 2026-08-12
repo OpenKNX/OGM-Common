@@ -33,6 +33,7 @@ namespace OpenKNX
 
         uint32_t _savedPinProcessed = 0;
         bool _savePinTriggered = false;
+        bool _periodicSavePaused = false;
         volatile int32_t _freeMemoryMin = 0x7FFFFFFF;
 #ifdef ARDUINO_ARCH_ESP32
         volatile int32_t _freeStackMin = 0;
@@ -122,6 +123,7 @@ namespace OpenKNX
         static VersionCheckResult versionCheck(uint16_t manufacturerId, uint8_t* hardwareType, uint16_t firmwareVersion);
 
         void init(uint8_t firmwareRevision);
+        void pausePeriodicSave(bool paused) { _periodicSavePaused = paused; }
         void triggerSavePin();
         void setup();
         void loop();

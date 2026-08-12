@@ -513,6 +513,7 @@ namespace OpenKNX
 #ifdef BASE_PeriodicSave
     void Common::processPeriodicSave()
     {
+        if (_periodicSavePaused) return;
         const uint32_t delay = ParamBASE_PeriodicSave * 3600000;
         if (delay > 0 && delayCheck(openknx.flash.lastWrite(), delay))
         {
