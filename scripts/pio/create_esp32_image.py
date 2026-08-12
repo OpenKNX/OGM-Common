@@ -1,105 +1,246 @@
 # ---------------------------------------------------------------------------
-# OpenKNX ESP32 Combined Binary Generator (Console Edition)
+#  OpenKNX ESP32 combined-image builder
+#
+#  Merges bootloader, partition table, boot_app0 and the application into the
+#  single firmware.factory.bin that a USB flash writes to offset 0.
+#
+#  The report shows what actually ends up on the chip: one row per image with
+#  its REAL size and the region it occupies. Earlier versions printed the gap
+#  to the next image as if it were the file size (a 2 MB application appeared
+#  as "7 MB") and drew the usage bar against a hard-coded 8 MB regardless of
+#  the board, so both numbers disagreed with the flash size printed above them.
 # ---------------------------------------------------------------------------
 
 Import("env")
-env = DefaultEnvironment()
 platform = env.PioPlatform()
 
-import sys, subprocess, shutil
-from os.path import join
+import gzip
+import os
+import subprocess
+import sys
+from os.path import basename, join
 
-# ANSI Colors
+
 class C:
     END = "\033[0m"
     BOLD = "\033[1m"
     GRAY = "\033[90m"
     BLUE = "\033[94m"
     GREEN = "\033[92m"
+    AMBER = "\033[93m"
 
-LINE = f"{C.GRAY}{'─'*70}{C.END}"
 
-# ---------------------------------------------------------------------------
-# Flash Layout Visualization
-# ---------------------------------------------------------------------------
-def print_flash_layout(sections, firmware_path, total_size=8 * 1024 * 1024):
-    width = max(shutil.get_terminal_size((100, 20)).columns - 20, 100)
+RULE = f"{C.GRAY}{'─' * 78}{C.END}"
 
-    parsed = []
-    for off_str, path in sections:
-        try:
-            parsed.append((int(off_str, 16), path))
-        except ValueError:
-            pass
 
-    if not any(off == 0x10000 for off, _ in parsed):
-        parsed.append((0x10000, firmware_path))
+def _human(n):
+    if n >= 1024 * 1024:
+        return f"{n / (1024 * 1024):.2f} MB"
+    if n >= 1024:
+        return f"{n / 1024:.0f} KB"
+    return f"{n} B"
 
-    parsed.sort(key=lambda x: x[0])
 
-    # Tabelle
-    print(f"{C.GREEN}Flash Layout ({total_size//1024//1024} MB total){C.END}")
-    print(f"{'#':<4}{'Offset':<12}{'Size':<10}{'Name':<20}{'Path'}")
-    for idx, (off, path) in enumerate(parsed, start=1):
-        next_off = parsed[idx][0] if idx < len(parsed) else total_size
-        size = next_off - off
-        size_str = f"{size//1024} KB" if size < 1024*1024 else f"{size//1024//1024} MB"
-        color = C.BLUE if idx % 2 else C.GREEN
-        name = path.split("/")[-1]
-        print(f"{color}{idx:<4}{hex(off):<12}{size_str:<10}{name:<20}{C.END}{path}")
+def _flash_bytes(spec):
+    """'16MB' / '4MB' -> bytes. Falls back to 4 MB, the smallest OpenKNX ESP32 layout."""
+    try:
+        return int(str(spec).upper().replace("MB", "")) * 1024 * 1024
+    except ValueError:
+        return 4 * 1024 * 1024
 
-    print(C.GRAY + "─" * width + C.END)
 
-    # Proportionaler Balken
-    bar = []
-    for idx, (off, _) in enumerate(parsed, start=1):
-        next_off = parsed[idx][0] if idx < len(parsed) else total_size
-        start = int(off / total_size * width)
-        end = int(next_off / total_size * width)
-        seg_width = max(end - start, 1)
-        color = C.BLUE if idx % 2 else C.GREEN
-        bar.append(color + "█" * seg_width + C.END)
-    print(f"{C.GRAY}0x000000{C.END} |{''.join(bar)}| {C.GRAY}{hex(total_size)}{C.END}")
-    print(C.GRAY + "─" * width + C.END)
+# Partition types worth naming; anything else is shown by its raw type/subtype.
+_P_TYPE = {0x00: "app", 0x01: "data"}
+_P_SUB = {
+    (0x00, 0x00): "factory", (0x00, 0x10): "ota_0", (0x00, 0x11): "ota_1",
+    (0x00, 0x20): "test",
+    (0x01, 0x00): "ota data", (0x01, 0x01): "phy", (0x01, 0x02): "nvs",
+    (0x01, 0x03): "coredump", (0x01, 0x04): "nvs keys", (0x01, 0x05): "efuse",
+    (0x01, 0x82): "spiffs", (0x01, 0x83): "littlefs",
+}
 
-    # Schematischer Balken
-    #print(f"{C.BOLD}Schematic (equal segments):{C.END}")
-    #seg_width = width // len(parsed)
-    #schematic_bar = []
-    #label_line = []
-    #offset_line = []
-    #for idx, (off, _) in enumerate(parsed, start=1):
-    #    color = C.BLUE if idx % 2 else C.GREEN
-    #    schematic_bar.append(color + "█" * seg_width + C.END)
-    #    label_line.append(f"[{idx}]".center(seg_width))
-    #    offset_line.append(hex(off).center(seg_width))
-    #print(f"0x000000 |" + "|".join(schematic_bar) + f"| {hex(total_size)}")
-    #print("          " + "".join(label_line))
-    #print("          " + "".join(offset_line))
-    #print(C.GRAY + "─" * width + C.END)
 
-# ---------------------------------------------------------------------------
-# Ensure esptool
-# ---------------------------------------------------------------------------
+def _partitions(part_path):
+    """Every entry of the partition table: (offset, size, label, kind)."""
+    try:
+        with open(part_path, "rb") as f:
+            tbl = f.read()
+    except OSError:
+        return []
+    out = []
+    for off in range(0, len(tbl) - 32 + 1, 32):
+        e = tbl[off:off + 32]
+        if e[0] != 0xAA or e[1] != 0x50:
+            continue
+        p_type, p_sub = e[2], e[3]
+        start = int.from_bytes(e[4:8], "little")
+        size = int.from_bytes(e[8:12], "little")
+        label = e[12:28].split(b"\x00")[0].decode("ascii", "replace")
+        kind = _P_SUB.get((p_type, p_sub), f"{_P_TYPE.get(p_type, hex(p_type))}/{hex(p_sub)}")
+        out.append((start, size, label, kind))
+    out.sort()
+    return out
+
+
+def _show_partitions(part_path, total, app_size):
+    """The flash map as the chip really has it — read from the table, not inferred.
+
+    Gaps between partitions are shown too: unpartitioned flash is invisible to the firmware and is the
+    first place to look when a filesystem turns out smaller than expected.
+    """
+    parts = _partitions(part_path)
+    if not parts:
+        return
+    print(f"{C.BOLD}Partitions{C.END}  {C.GRAY}(from the partition table){C.END}")
+    prev_end = parts[0][0]
+    for start, size, label, kind in parts:
+        if start > prev_end:
+            print(f"{C.GRAY}  {hex(prev_end):<10} {_human(start - prev_end):>10}   (unpartitioned){C.END}")
+        used = ""
+        if kind in ("factory", "ota_0") and app_size and size > 0:
+            pct = app_size * 100 // size
+            col = C.AMBER if pct > 90 else C.GREEN
+            used = f"   {col}{_human(app_size)} used · {pct} %{C.END}"
+        print(f"  {C.BLUE}{hex(start):<10}{C.END} {_human(size):>10}   {label:<10} {C.GRAY}{kind}{C.END}{used}")
+        prev_end = start + size
+    if total > prev_end:
+        print(f"{C.GRAY}  {hex(prev_end):<10} {_human(total - prev_end):>10}   (unpartitioned){C.END}")
+
+
+def _fs_partition(part_path):
+    """Size of the LittleFS/SPIFFS partition, read from the partition table (type 0x01, subtype 0x82/0x83).
+
+    Entries are 32 bytes: magic 0xAA50, type, subtype, offset, size, 16-byte label, flags.
+    """
+    try:
+        with open(part_path, "rb") as f:
+            tbl = f.read()
+    except OSError:
+        return 0
+    for off in range(0, len(tbl) - 32 + 1, 32):
+        e = tbl[off:off + 32]
+        if e[0] != 0xAA or e[1] != 0x50:
+            continue
+        p_type, p_sub = e[2], e[3]
+        size = int.from_bytes(e[8:12], "little")
+        if p_type == 0x01 and p_sub in (0x82, 0x83):  # DATA/SPIFFS, DATA/LITTLEFS
+            return size
+    return 0
+
+
+def _packed_size(app_path, app_size):
+    """Size of the staged image: gzip the real binary instead of guessing.
+
+    The estimate this replaced used a flat 0.65 ratio. That is far off for an ESP application (measured
+    0.55-0.58 on RP2350/C3/C6 builds) and turned layouts that fit in practice into a false "does not fit".
+    Compressing the actual file costs a fraction of a second and reports what the device will really
+    receive. The ratio stays as a fallback for the case where the binary is not readable yet.
+    """
+    try:
+        with open(app_path, "rb") as fh:
+            return len(gzip.compress(fh.read(), 9)), True
+    except (OSError, ValueError):
+        return int(app_size * 0.65), False
+
+
+def _ota_slots(part_path):
+    """Number of switchable app slots (ota_0/ota_1) in the table.
+
+    Staging space is only half the story: applying the image needs a slot to write into. With a single
+    app partition esp_ota_get_next_update_partition() does not fail, it returns the RUNNING partition —
+    so a report that only compares sizes would promise an update that cannot be applied.
+    """
+    return sum(1 for _, _, _, kind in _partitions(part_path) if kind in ("ota_0", "ota_1"))
+
+
+def _ota_fit(app_size, fs_size, app_path=None, part_path=None):
+    """Report whether a firmware update over the KNX bus can be staged on this device.
+
+    The staged image lands in the filesystem before it is written to the OTA slot, so the filesystem — not
+    the OTA partition — is the limit. A device that unpacks the stream receives it compressed; one that does
+    not receives the whole image, so both numbers matter and both are shown.
+    """
+    if fs_size <= 0 or app_size <= 0:
+        return
+    USABLE = 0.90     # filesystem overhead plus room to breathe
+    usable = int(fs_size * USABLE)
+    packed, measured = _packed_size(app_path, app_size) if app_path else (int(app_size * 0.65), False)
+    how = "gzip -9" if measured else "estimated"
+
+    print(f"{C.BOLD}Update over the KNX bus{C.END}  {C.GRAY}(the image is staged in the filesystem first){C.END}")
+    print(f"{C.GRAY}filesystem {_human(fs_size)} · usable {_human(usable)} · compressed {_human(packed)} ({how}, {packed * 100 // app_size} %){C.END}")
+    if part_path is not None and _ota_slots(part_path) < 2:
+        print(f"{C.AMBER}no OTA slot{C.END}  {C.GRAY}the table has a single app partition — an update cannot be applied here{C.END}")
+        print(f"{C.GRAY}  update this device over USB; a second app slot does not fit on this flash size{C.END}")
+        return
+    if packed <= usable and app_size <= usable:
+        print(f"{C.GREEN}fits{C.END}  {C.GRAY}compressed ~{_human(packed)} · uncompressed {_human(app_size)}{C.END}")
+    elif packed <= usable:
+        print(f"{C.AMBER}fits only compressed{C.END}  {C.GRAY}~{_human(packed)} · uncompressed {_human(app_size)} would not fit{C.END}")
+        print(f"{C.GRAY}  a device without OPENKNX_FTC_GZIP_UPDATE cannot be updated over the bus{C.END}")
+    else:
+        print(f"{C.AMBER}does not fit{C.END}  {C.GRAY}even compressed ~{_human(packed)} exceeds {_human(usable)}{C.END}")
+        print(f"{C.GRAY}  update this device over USB, or enlarge board_build.filesystem_size{C.END}")
+
+
+def _identity(app_path):
+    """Read the OpenKNX identity back out of the finished app image (esp_app_desc_t.reserv1).
+
+    Reading it here rather than trusting the stamper means the line printed is what a client will actually
+    find in the file — the stamp is reported only once it demonstrably survived into the binary.
+    """
+    try:
+        with open(app_path, "rb") as f:
+            d = f.read(48)
+    except OSError:
+        return None
+    if len(d) < 44 or d[0] != 0xE9 or d[40:44] == b"\x00\x00\x00\x00":
+        return None
+    return d[40], d[41], d[42], d[43]
+
+
+def _report(images, total, app_max=0):
+    """One table: where each image goes, how big it really is, how much room it has.
+
+    The application's room is its PARTITION, not the rest of the chip — that is the number the size check
+    reports and the only one that can actually overflow.
+    """
+    print(f"{C.BOLD}Flash image{C.END}  {C.GRAY}(chip flash {_human(total)}){C.END}")
+    print(f"{C.GRAY}{'OFFSET':<10}{'SIZE':>10}  {'ROOM':>10}  NAME{C.END}")
+
+    used = 0
+    for idx, (off, path) in enumerate(images):
+        size = os.path.getsize(path) if os.path.exists(path) else 0
+        used += size
+        if idx + 1 < len(images):
+            room = images[idx + 1][0] - off
+        elif app_max:
+            room = app_max
+        else:
+            room = total - off
+        tight = size > room * 0.9
+        color = C.AMBER if tight else (C.BLUE if idx % 2 else C.GREEN)
+        print(f"{color}{hex(off):<10}{_human(size):>10}  {C.GRAY}{_human(room):>10}{color}  {basename(path)}{C.END}")
+
+    # Usage bar over the real flash size: filled = written, dim = free.
+    width = 66
+    fill = min(width, max(1, int(used / total * width)))
+    print(f"{C.GRAY}0x000000{C.END} [{C.GREEN}{'█' * fill}{C.GRAY}{'·' * (width - fill)}{C.END}] {C.GRAY}{_human(total)}{C.END}")
+    print(f"{C.GRAY}written {_human(used)} · {used * 100 // total} % of the chip{C.END}")
+
+
 try:
     sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
-    import esptool
+    import esptool  # noqa: F401  (presence check only; the merge runs as a subprocess)
 except Exception:
     print("Installing esptool...")
     subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "esptool"])
-    import esptool
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+
 def esp32_create_combined_bin(source, target, env):
-    print(f"\n{LINE}")
-    print(f"{C.BOLD}Creating OpenKNX ESP32 Combined Firmware{C.END}")
-    print(LINE)
-
     build_dir = env.subst("$BUILD_DIR")
     prog_name = env.subst("${PROGNAME}")
-    new_file = f"{build_dir}/{prog_name}.factory.bin"
+    out = f"{build_dir}/{prog_name}.factory.bin"
     fw = f"{build_dir}/{prog_name}.bin"
 
     chip = env.get("BOARD_MCU")
@@ -108,48 +249,64 @@ def esp32_create_combined_bin(source, target, env):
     flash_mode = env.BoardConfig().get("build.flash_mode", "dio")
     memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
 
-    if flash_mode in ["qio", "qout"]: flash_mode = "dio"
-    if memory_type in ["opi_opi", "opi_qspi"]: flash_mode = "dout"
+    if flash_mode in ["qio", "qout"]:
+        flash_mode = "dio"
+    if memory_type in ["opi_opi", "opi_qspi"]:
+        flash_mode = "dout"
 
-    cmd = [
-        "esptool",
-        "--chip",
-        chip,
-        "merge-bin",
-        "-o",
-        new_file,
-        "--flash-mode",
-        flash_mode,
-        "--flash-freq",
-        flash_freq,
-        "--flash-size",
-        flash_size,
-    ]
-    
-    print("")
-    print("    Offset | File")
-    # Add each extra image (bootloader / partitions / boot_app0) EXACTLY once. A second pass here used
-    # to append them again -> the same file landed at the same offset twice, which esptool >= 5.x
-    # rejects as an overlap ("Detected overlap at address: 0x0"). One loop: print, collect, append.
-    resolved_extra_images = []
+    # Each extra image EXACTLY once: appending them twice puts the same file at the same offset, which
+    # esptool >= 5.x rejects as an overlap ("Detected overlap at address: 0x0").
+    images = []
+    cmd = ["esptool", "--chip", chip, "merge-bin", "-o", out,
+           "--flash-mode", flash_mode, "--flash-freq", flash_freq, "--flash-size", flash_size]
     for offset, image in env["FLASH_EXTRA_IMAGES"]:
-        resolved_offset = env.subst(str(offset))
-        resolved_image = env.subst(str(image))  # expand $BUILD_DIR and other SCons variables
-        print(f" -  {resolved_offset} | {resolved_image}")
-        resolved_extra_images.append((resolved_offset, resolved_image))
-        cmd += [resolved_offset, resolved_image]
+        off = int(env.subst(str(offset)), 16)
+        img = env.subst(str(image))
+        images.append((off, img))
+        cmd += [hex(off), img]
+    images.append((0x10000, fw))
     cmd += [hex(0x10000), fw]
+    images.sort(key=lambda x: x[0])
 
-    print(f"{C.BOLD}Firmware Info{C.END}: {C.BLUE}{chip}{C.END} | Mode:{C.GREEN} {flash_mode}{C.END} | Size:{C.BLUE} {flash_size}{C.END} | Freq:{C.GREEN} {flash_freq}{C.END}")
-    print(LINE)
+    print()
+    print(RULE)
+    print(f"{C.BOLD}OpenKNX ESP32 firmware image{C.END}   {C.GRAY}{chip} · {flash_mode} · {flash_freq} · {flash_size}{C.END}")
+    ident = _identity(fw)
+    if ident:
+        oid, app, ver, rev = ident
+        print(f"{C.GRAY}identity{C.END}  OpenKNX 0x{oid:02X} · app {app} · "
+              f"{C.BOLD}v{ver >> 4}.{ver & 0x0F}.{rev}{C.END}   {C.GRAY}stamped, checksum + SHA-256 intact{C.END}")
+    else:
+        print(f"{C.AMBER}identity{C.END}  {C.GRAY}not stamped — a client cannot tell which device this file is for{C.END}")
+    print(RULE)
+    try:
+        app_max = int(env.BoardConfig().get("upload.maximum_size", 0))
+    except (TypeError, ValueError):
+        app_max = 0
+    _report(images, _flash_bytes(flash_size), app_max)
+    part = next((p for o, p in images if basename(p).startswith("partitions")), None)
+    app_size = os.path.getsize(fw) if os.path.exists(fw) else 0
+    if part:
+        print(RULE)
+        _show_partitions(part, _flash_bytes(flash_size), app_size)
+        fs = _fs_partition(part)
+        if fs:
+            print(RULE)
+            _ota_fit(app_size, fs, fw, part)
+    print(RULE)
 
-    # Visualisierung mit beiden Balken
-    print_flash_layout(resolved_extra_images, fw, 8 * 1024 * 1024)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as err:
+        # Only now is the exact command worth printing — it is what you need to reproduce the failure.
+        print(f"{C.AMBER}esptool failed:{C.END}\n{err.stderr or err.stdout}")
+        print(f"{C.GRAY}{' '.join(cmd)}{C.END}")
+        raise
 
-    print(f"{C.BOLD}Esptool-Args:{C.END}\n'{C.GRAY}{' '.join(cmd)}'{C.END}")
-    print(LINE)
-    subprocess.run(cmd, check=True)
+    print(f"{C.GREEN}✔{C.END} {basename(out)}   {C.GRAY}{_human(os.path.getsize(out))} · flash to offset 0x0{C.END}")
+    print(f"{C.GRAY}  {build_dir}{C.END}")
+    print(RULE)
+    print()
 
-    print(f"\n{C.GREEN}✔ Combined binary created:{C.END} {new_file}\n{LINE}\n")
 
 env.AddPostAction("buildprog", esp32_create_combined_bin)
