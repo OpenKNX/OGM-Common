@@ -1,7 +1,13 @@
-$checkVersion = "4.3.11.0"
+$checkVersion = "4.3.11"
 $toolsExist = Test-Path -PathType Leaf ~/bin/OpenKNXproducer.exe
 if ($toolsExist) {
-    $toolsExist = [System.Version]((~/bin/OpenKNXproducer version) -split ' ')[1] -ge [System.Version]$checkVersion
+    # Auf vier Komponenten auffuellen: der Producer meldet die Version dreiteilig,
+    # [System.Version] setzt Revision dann auf -1 und "4.3.11" gilt gegen "4.3.11.0" als kleiner.
+    function Get-PaddedVersion($version) {
+        $parts = @($version -split '\.') + @('0', '0', '0', '0')
+        return [System.Version]($parts[0..3] -join '.')
+    }
+    $toolsExist = (Get-PaddedVersion ((~/bin/OpenKNXproducer version) -split ' ')[1]) -ge (Get-PaddedVersion $checkVersion)
 }
 if ($toolsExist) {
     $toolsExist = Test-Path -PathType Leaf ~/bin/bossac.exe
