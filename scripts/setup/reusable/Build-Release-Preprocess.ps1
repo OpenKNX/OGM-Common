@@ -46,6 +46,15 @@ Copy-Item -Recurse lib/OGM-Common/scripts/setup/reusable/data release
 
 if($settings.compileWith -eq "openknxproducer")
 {
+  # DEVELOPER side: this runs on the developer's machine during the release build and turns the
+  # module XML templates (src/*.share.xml etc.) into the full XML, the .knxprod and include/knxprod.h
+  # (producer command "create"). Requirements of new template features (new ETS elements, op:
+  # directives, ...) belong HERE - deliberately only an existence check, no version check.
+  #
+  # Do not confuse with the END-USER side in Build-knxprod.ps1, which ships inside the release
+  # package and builds a .knxprod from the already preprocessed XML (command "knxprod"). Its
+  # $checkVersion forces every user to update their tools, so bump it only when the shipped XML
+  # or the "knxprod" command itself actually needs a newer producer.
   # check for existance of OpenKNXProducer
   $OpenKNXproducer = "~/bin/OpenKNXproducer.exe"
 

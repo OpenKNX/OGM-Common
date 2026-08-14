@@ -1,3 +1,13 @@
+# ANWENDER-Seite: Dieses Script landet im Release-Paket (release/data) und wird vom
+# Anwender ausgefuehrt, um aus der mitgelieferten, bereits fertig praeprozessierten
+# ../data/*.xml seine eigene .knxprod zu bauen (Producer-Kommando "knxprod").
+#
+# $checkVersion ist damit die Mindestversion, die JEDER ANWENDER installiert haben muss.
+# Nicht automatisch mit anheben, wenn nur der Producer fuer den Applikations-Build (Entwickler-
+# Seite, siehe Build-Release-Preprocess.ps1 -> Kommando "create") neue Features braucht:
+# Ein Bump hier zwingt alle Anwender zum Tool-Update, ohne dass sich fuer sie etwas aendert.
+# Nur anheben, wenn das Kommando "knxprod" selbst oder das ausgelieferte XML-Format
+# eine neuere Producer-Version voraussetzt.
 $checkVersion = "4.3.11"
 $toolsExist = Test-Path -PathType Leaf ~/bin/OpenKNXproducer.exe
 if ($toolsExist) {
