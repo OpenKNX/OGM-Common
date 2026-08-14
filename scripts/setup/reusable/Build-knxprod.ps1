@@ -1,4 +1,4 @@
-$checkVersion = "3.4.0"
+$checkVersion = "4.3.11.0"
 $toolsExist = Test-Path -PathType Leaf ~/bin/OpenKNXproducer.exe
 if ($toolsExist) {
     $toolsExist = [System.Version]((~/bin/OpenKNXproducer version) -split ' ')[1] -ge [System.Version]$checkVersion
