@@ -2,6 +2,10 @@
 
 ## upcoming releases
 
+## 1.9.1: 2026-08-14
+
+* Hotfix: The setup script rejected an installed OpenKNXproducer 4.3.11 as outdated. The required version was written with four components while the producer reports three, so `[System.Version]` treated `4.3.11` (Revision -1) as lower than `4.3.11.0`. Both sides are padded to four components before comparing now
+
 ## 1.9.0: 2026-08-14
 
 * Update: Increase minimum OpenKNXproducer version to 4.3.11.0
