@@ -151,6 +151,16 @@ Identische Werte wie Haupttyp, aber **Wert 0 / "Deaktiviert" fehlt**:
 </ParameterType>
 ```
 
+### Einheitlicher Typbezeichner (Typ-Variante)
+
+Der `Text=`-Wert des Haupttyp-Parameters wird an **drei Stellen identisch** übernommen:
+
+1. **TypeSelect-Parameter** (`P-`, templ.xml): gleicher `Text=` wie Haupttyp
+2. **Spalte 2 der Grid-Kopfzeile** (share.xml): gleicher `Text=` wie Haupttyp
+3. Ggf. Beschriftung des Feldes auf dem Kanal-Tab — sofern kein eigener HelpContext die Bezeichnung vorgibt
+
+**Vorgehen:** Den `Text=` des Haupttyp-Parameters (`UP-`, memory-backed) nachschlagen und diesen Wert 1:1 an alle drei Stellen übertragen. Beispiel: Haupttyp hat `Text="Logik-Operation"` → TypeSelect und Kopfzeile erhalten ebenfalls `Text="Logik-Operation"`. `Text="Kanaltyp"` ist nur ein Fallback, wenn der Haupttyp keinen sprechenden Text hat.
+
 ### 3. Kanalauswahl-Tab in der Dynamic
 
 > **Kein Kanaldefinition-Header, keine HorizontalRuler:** Der Tab startet direkt mit der Grid-Kopfzeile. Weder `UIHint="Headline" Text="Kanaldefinition"` noch `UIHint="HorizontalRuler"` vor der Tabelle einfügen.
@@ -168,7 +178,8 @@ Identische Werte wie Haupttyp, aber **Wert 0 / "Deaktiviert" fehlt**:
             <Column Id="%AID%_PB-nnn_C-3" Width="50%" />
         </Columns>
         <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,1" UIHint="Headline" Text="Kanal" />
-        <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,2" UIHint="Headline" Text="Kanaltyp" />
+        <!-- Text= vom Haupttyp-Parameter übernehmen (hier z.B. "Logik-Operation") — Fallback: "Kanaltyp" -->
+        <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,2" UIHint="Headline" Text="Logik-Operation" />
         <ParameterSeparator Id="%AID%_PS-nnn" Cell="1,3" UIHint="Headline" Text="Beschreibung" />
     </ParameterBlock>
 
@@ -194,10 +205,13 @@ Identische Werte wie Haupttyp, aber **Wert 0 / "Deaktiviert" fehlt**:
 Im Static-Bereich unter `<Parameters>`, nach dem Haupttyp-Union:
 ```xml
 <!-- Kein Union, keine <Memory>-Referenz → nur in ETS gespeichert, nicht auf Gerät -->
+<!-- Text= vom Haupttyp-Parameter übernehmen (hier z.B. "Logik-Operation") — Fallback: "Kanaltyp" -->
 <Parameter Id="%AID%_P-%TT%%CC%011" Name="Ch%C%TypeSelect"
     ParameterType="%AID%_PT-XxxTypeSelect"
-    Text="Kanaltyp" Value="1" />
+    Text="Logik-Operation" Value="1" />
 ```
+
+> **`Text=` vom Haupttyp-Parameter ableiten:** Den `Text=`-Wert immer aus dem `Text=` des zugehörigen Haupttyp-Parameters (`UP-`, memory-backed) übernehmen. Beispiel: Haupttyp hat `Text="Logik-Operation"` → TypeSelect erhält ebenfalls `Text="Logik-Operation"`. `Text="Kanaltyp"` ist nur ein Fallback, wenn der Haupttyp keinen sprechenden Text hat.
 
 Dazugehöriger ParameterRef unter `<ParameterRefs>`:
 ```xml
@@ -423,6 +437,7 @@ Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalaus
 **Kanalauswahl-Tab**
 - [ ] Beginnt der Tab **direkt** mit dem Grid-Block — kein `UIHint="Headline"`, kein `UIHint="HorizontalRuler"` davor?
 - [ ] Gibt es eine Grid-Kopfzeile (`Inline="true" Layout="Grid"`) mit den Spalten Kanal / Kanaltyp / Beschreibung?
+- [ ] Ist der Text von Spalte 2 der Kopfzeile vom `Text=` des Haupttyp-Parameters übernommen — **nicht** pauschal "Kanaltyp"?
 - [ ] Heißt Spalte 3 in der Kopfzeile **"Beschreibung"** (nicht "Bezeichnung", nicht "Name")?
 - [ ] Gibt es zwei `op:include` — eines für `[@Name='Settings']/*` und eines für `[@Name='Channel']/*`?
 - [ ] Hat der Kanalauswahl-Tab (`ParameterBlock`) `HelpContext="BASE-ChannelSelect"`?
@@ -435,6 +450,7 @@ Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalaus
 - [ ] Gibt es einen `P-`-Parameter für den TypeSelect (kein `UP-`)?
 - [ ] Hat dieser Parameter **keine** `<Memory>`-Referenz (nur ETS-seitig gespeichert)?
 - [ ] Gibt es einen zugehörigen `ParameterRef` im Refs-Block?
+- [ ] Ist `Text=` vom Haupttyp-Parameter übernommen — **nicht** pauschal "Kanaltyp"?
 
 **ParameterCalculations (nur Typ-Variante)**
 - [ ] Gibt es einen `ParameterCalculation`-Block mit `BASE_SyncChannelType` als Transformationsfunktion — in **beiden** Richtungen (`LRTransformationFunc` und `RLTransformationFunc`)?
