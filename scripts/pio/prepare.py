@@ -174,7 +174,7 @@ add_local_lib_folder_versions(lib_builders)
 add_all_local_lib_dirs()
 
 print()
-print("{}Read OpenKNX Module version and build defines:{}".format(console_color.YELLOW, console_color.END))
+print("{}Generate include/versions.h{}".format(console_color.YELLOW, console_color.END))
 
 openknx_modules = {k: v for k, v in library_versions.items() if k.startswith("OGM") or k.startswith("OFM")}
 # openknx_modules["nodir"] = None # to test missing directory
@@ -216,11 +216,13 @@ for name, version in openknx_modules.items():
 # version actually changes -- no build timestamp here (see buildtime.h below).
 with open("include/versions.h", "w") as version_file:
   version_file.write("".join(version_lines))
+print()
 
 # buildtime.h is kept separate from versions.h: BUILD_DATETIME/BUILD_TIMESTAMP
 # change on every single build, so bundling them into versions.h would force a
 # full rebuild (versions.h is pulled in via defines.h, i.e. by virtually every
 # source file) even when no module version actually changed.
+print("{}Generate include/buildtime.h{}".format(console_color.YELLOW, console_color.END))
 now = datetime.datetime.now()
 build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
 build_timestamp = int(now.timestamp())
@@ -325,6 +327,8 @@ def _webasset_generate():
                 return
         except OSError:
             pass
+
+    print("{}Generate include/webassets.h{}".format(console_color.YELLOW, console_color.END))
 
     head = ["#pragma once", marker, "// webassets-list:"]
     body = []
