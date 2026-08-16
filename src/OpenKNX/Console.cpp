@@ -246,10 +246,12 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
-
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
-            TPUart::Receiver& receiver = dll->getTPUart().getReceiver();
+
+            // Die Buslast gehört hierher und nicht zu RX: sie speist sich zwar aus den empfangenen
+            // Telegrammbytes, aber der Chip spiegelt jedes selbst gesendete Oktett zurück - der eigene
+            // Versand steckt also mit drin. Es ist die Last auf dem BUS, nicht die einer Richtung.
+            logInfo("BCU<Status>", "%s | Load %u B/s", dll->getTPUart().getBcuStateInfo(), statistics.getBusLoad());
 
             // DER TAKT, und er gehört nach oben, weil alles Folgende an ihm hängt. Die Schicht bewegt ein
             // Byte je Richtung und Aufruf; kommt tick() zu selten dran, zeigt sich das nicht als Fehler,
@@ -275,12 +277,19 @@ namespace OpenKNX
             // können, dass er sie nur kurz aufhält. "ack" ist der Anteil des Quittungs-Callbacks daran -
             // der einzige unbegrenzte Teil des Ticks, denn er ist unser Code, nicht der der Library.
             // Liegen beide dicht beieinander, ist die Laufzeit unsere.
-            logInfo("BCU<Tick>", "Driver %s @ %uus | %u ticks, %uus avg | Max gap %uus (%u slow) | Max run %uus (ack %uus) | RX peak %u B",
+            // "Deferred" statt "slow": der Antrieb war nicht langsam, er wurde AUFGEHALTEN - und die Zahl
+            // in Klammern ist die ZULETZT gemessene Verzögerung, nicht die schlimmste je gemessene. Der
+            // Höchstwert sättigt: nach einem einzigen Flash-Schreibvorgang stünde dort für immer eine
+            // fünfstellige Zahl, und er sagte danach nichts mehr über den aktuellen Zustand.
+            // Hier standen nacheinander schon der rohe Tickzähler und der gemessene Abstand - beide sind
+            // wieder raus. Der Zähler sagt für sich nichts, und der gemessene Abstand ist durch "Deferred"
+            // vollständig gedeckt: ein Mittelwert über der Busgrenze setzt zwingend einzelne Abstände über
+            // der Busgrenze voraus, der Zähler meldet also alles, was der Mittelwert melden würde - und
+            // zusätzlich die einzelnen Aussetzer, die im Mittel untergehen.
+            logInfo("BCU<Tick>", "Driver %s @ %uus | Deferred %u (last %uus) | Max run %uus (ack %uus)",
                     dll->getTPUart().hasTickDriver() ? "yes" : "no", dll->getTPUart().tickInterval(),
-                    statistics.getTicks(), statistics.getTickAverageUs(),
-                    statistics.getTickGapMaxUs(), statistics.getTickSlowGaps(),
-                    statistics.getTickDurationMaxUs(), statistics.getCheckAcknowledgeMaxUs(),
-                    statistics.getRxInterfacePeakBytes());
+                    statistics.getTickDeferrals(), statistics.getTickLastDeferredUs(),
+                    statistics.getTickDurationMaxUs(), statistics.getCheckAcknowledgeMaxUs());
 
             // Drei Zeilen statt einer, nach Fragen sortiert: was kam rein, was ging raus, wo klemmt es.
             // Die Zähler überschneiden sich absichtlich - ein mangels Platz verworfenes Telegramm steht
@@ -292,12 +301,10 @@ namespace OpenKNX
             // gehört aber absichtlich zu keiner Sequenz - es geht als Flag ans Telegramm. Umgekehrt steht
             // ein mangels Ringplatz verworfenes Telegramm mit seinen Bytes sowohl in "frame" als auch in
             // "Dropped". Die Zähler beantworten verschiedene Fragen; sie summieren sich nicht.
-            logInfo("BCU<RX>", "Frames %u valid / %u invalid / %u repeated | Bytes %u (frame %u, ctrl %u) | Dropped %u B in %u resync | Pos %u await %u | Load %u B/s",
+            logInfo("BCU<RX>", "Frames %u valid / %u invalid / %u repeated | Bytes %u (frame %u, ctrl %u) | Dropped %u B in %u resync",
                     statistics.getRxFrames(), statistics.getRxInvalidFrames(), statistics.getRxRepeatedFrames(),
                     statistics.getRxBytes(), statistics.getRxFrameBytes(), statistics.getRxControlBytes(),
-                    statistics.getRxDroppedBytes(), statistics.getRxResyncs(),
-                    receiver.getSearchBufferPosition(), receiver.getAwaitBytes(),
-                    statistics.getBusLoad());
+                    statistics.getRxDroppedBytes(), statistics.getRxResyncs());
 
             // "No con" ist der Wachhund: gar keine Bestätigung, die BCU musste zurückgesetzt werden. Ein
             // NEGATIVES L_Data.con steht hier bewusst nicht - das sagt nur, dass auf dem Bus niemand
@@ -307,15 +314,32 @@ namespace OpenKNX
                     statistics.getTxAcknowledges(), statistics.getTxAcknowledgesSuppressed(),
                     statistics.getTxConfirmTimeouts());
 
-            // Die Höchststände gegen die Puffergrößen: ein Überlaufzähler meldet erst, dass es zu spät
-            // war, der Peak zeigt, wie viel Luft noch ist. SC/RE/TE/PE/TW sind die Fehlerbits, die der
-            // Chip selbst meldet - dieselben Kürzel wie in der TP-Error-Zeile.
-            logInfo("BCU<Err>", "Overflow if %u / rx %u / ctrl %u / tx %u | Peak rx %u/%u, ctrl %u/%u, tx %u/%u | Chip SC %u RE %u TE %u PE %u TW %u | Disconnects %u\n",
+            // HÖCHSTSTÄNDE, und bewusst in derselben Reihenfolge und mit denselben Namen wie die
+            // Überläufe in der Err-Zeile: dort steht, wie oft es zu spät war, hier, wie viel Luft noch ist.
+            // Beim Interface gibt es keine Kapazität zu zeigen - wie groß dessen Empfangspuffer ist, weiß
+            // nur die Plattform (RP2040 256 Byte per Vorgabe, ESP32 512), nicht diese Schicht.
+            const unsigned rxSize = (unsigned)TPUart::TPUART_RX_QUEUE_SIZE;
+            const unsigned txSize = (unsigned)TPUART_TX_BUFFER_SIZE;
+            const unsigned ctrlSize = (unsigned)TPUart::TPUART_CTRL_QUEUE_SIZE;
+
+            // Prozent voran, Bytes dahinter: der Anteil beantwortet "wie viel Luft ist noch" auf einen
+            // Blick, die absoluten Zahlen bleiben für die Auslegung daneben stehen. Beim Interface gibt es
+            // keinen Anteil - wie groß dessen Puffer ist, weiß nur die Plattform, nicht diese Schicht.
+            logInfo("BCU<Peak>", "if %u B | rx %u%% (%u/%u B) | tx %u%% (%u/%u B) | ctrl %u%% (%u/%u B)",
+                    statistics.getRxInterfacePeakBytes(),
+                    statistics.getRxQueuePeakBytes() * 100 / rxSize, statistics.getRxQueuePeakBytes(), rxSize,
+                    statistics.getTxQueuePeakBytes() * 100 / txSize, statistics.getTxQueuePeakBytes(), txSize,
+                    statistics.getTxControlQueuePeakBytes() * 100 / ctrlSize, statistics.getTxControlQueuePeakBytes(), ctrlSize);
+
+            // NUR FEHLER. Die Höchststände standen hier einmal mit drin - sie sind aber Füllstände und
+            // beantworten die Auslegungsfrage ("wie viel Luft ist noch"), nicht "was ist schiefgegangen".
+            // Sie stehen deshalb jetzt in der Zeile der Richtung, die sie messen.
+            //
+            // SC/RE/TE/PE/TW sind die Fehlerbits, die der Chip selbst meldet - dieselben Kürzel wie in der
+            // TP-Error-Zeile.
+            logInfo("BCU<Error>", "Overflow if %u / rx %u / tx %u / ctrl %u | Chip SC %u RE %u TE %u PE %u TW %u | Disconnects %u\n",
                     statistics.getRxInterfaceOverflows(), statistics.getRxQueueOverflows(),
-                    statistics.getTxControlQueueOverflows(), statistics.getTxQueueOverflows(),
-                    statistics.getRxQueuePeakBytes(), (unsigned)TPUart::TPUART_RX_QUEUE_SIZE,
-                    statistics.getTxControlQueuePeakBytes(), (unsigned)TPUart::TPUART_CTRL_QUEUE_SIZE,
-                    statistics.getTxQueuePeakFrames(), (unsigned)TPUART_TX_QUEUE_COUNT,
+                    statistics.getTxQueueOverflows(), statistics.getTxControlQueueOverflows(),
                     statistics.getChipSlaveCollisions(), statistics.getChipReceiveErrors(),
                     statistics.getChipTransmitErrors(), statistics.getChipProtocolErrors(),
                     statistics.getChipTemperatureWarnings(),
