@@ -247,11 +247,79 @@ namespace OpenKNX
         else if (cmd.compare("bcu") == 0)
         {
             logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
+
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
-            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
-                    statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
-                    statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
-                    statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
+            TPUart::Receiver& receiver = dll->getTPUart().getReceiver();
+
+            // DER TAKT, und er gehört nach oben, weil alles Folgende an ihm hängt. Die Schicht bewegt ein
+            // Byte je Richtung und Aufruf; kommt tick() zu selten dran, zeigt sich das nicht als Fehler,
+            // sondern als unterdrückte Quittung, als Rückstand im Interface und irgendwann als Überlauf.
+            //
+            // Drei Befunde stecken darin: "Driver no" heißt, der Hauptloop tickt und die Rate hängt an der
+            // Anwendung. Eine Ist-Rate deutlich unter dem Soll heißt dasselbe, auch wenn der Treiber läuft.
+            // Und ein Maximum weit über dem Soll heißt, dass der Antrieb zwar stimmt, aber zwischendurch
+            // blockiert wird - ab etwa 2700µs ist ein Acknowledge-Fenster verloren.
+            //
+            // "Slow" ist die Zahl, die den Höchstwert überhaupt erst deutbar macht: einmal 15ms ist ein
+            // Ereignis, hundertmal 2ms ist ein Defekt - im blossen Maximum sehen beide gleich aus. Und die
+            // DIFFERENZ zwischen zwei Aufrufen sagt, wann es passiert: einmal "bcu" im Leerlauf, einmal
+            // direkt nach der verdächtigen Aktion, und der Verursacher ist eingekreist.
+            //
+            // Der Durchschnitt kommt aus der Library und ist ab dem ERSTEN Tick gerechnet. Hier stand
+            // einmal eine Rechnung gegen die Uptime - die zeigte dauerhaft zu niedrige Werte, die mit
+            // wachsender Laufzeit scheinbar besser wurden, weil der Zähler erst bei begin() anfängt.
+            // "Max run" ist die Zahl, die eine hohe IRQ-Priorität rechtfertigt: wer andere Interrupts
+            // verdrängt, muss belegen können, dass er sie nur kurz aufhält. Sie schliesst den
+            // Quittungs-Callback ein, denn der läuft mit im Tick.
+            // "Max run" rechtfertigt die IRQ-Priorität: wer andere Interrupts verdrängt, muss belegen
+            // können, dass er sie nur kurz aufhält. "ack" ist der Anteil des Quittungs-Callbacks daran -
+            // der einzige unbegrenzte Teil des Ticks, denn er ist unser Code, nicht der der Library.
+            // Liegen beide dicht beieinander, ist die Laufzeit unsere.
+            logInfo("BCU<Tick>", "Driver %s @ %uus | %u ticks, %uus avg | Max gap %uus (%u slow) | Max run %uus (ack %uus) | RX peak %u B",
+                    dll->getTPUart().hasTickDriver() ? "yes" : "no", dll->getTPUart().tickInterval(),
+                    statistics.getTicks(), statistics.getTickAverageUs(),
+                    statistics.getTickGapMaxUs(), statistics.getTickSlowGaps(),
+                    statistics.getTickDurationMaxUs(), statistics.getCheckAcknowledgeMaxUs(),
+                    statistics.getRxInterfacePeakBytes());
+
+            // Drei Zeilen statt einer, nach Fragen sortiert: was kam rein, was ging raus, wo klemmt es.
+            // Die Zähler überschneiden sich absichtlich - ein mangels Platz verworfenes Telegramm steht
+            // mit seinen Bytes auch in "frame", denn über den Bus kam es. Nicht aufsummieren.
+            // KEIN Gleichheitszeichen zwischen "Bytes" und den beiden Kategorien - sie sind KEINE Zerlegung,
+            // und hier stand einmal eines. In beide Richtungen falsch: "Bytes" zählt jedes gelesene Byte,
+            // die Kategorien nur die einer ABGESCHLOSSENEN Sequenz. Was in RxState::FrameAck verbraucht
+            // wird (das L_Data.con zum eigenen Telegramm, ein geschlucktes U_FrameState.ind), wird gelesen,
+            // gehört aber absichtlich zu keiner Sequenz - es geht als Flag ans Telegramm. Umgekehrt steht
+            // ein mangels Ringplatz verworfenes Telegramm mit seinen Bytes sowohl in "frame" als auch in
+            // "Dropped". Die Zähler beantworten verschiedene Fragen; sie summieren sich nicht.
+            logInfo("BCU<RX>", "Frames %u valid / %u invalid / %u repeated | Bytes %u (frame %u, ctrl %u) | Dropped %u B in %u resync | Pos %u await %u | Load %u B/s",
+                    statistics.getRxFrames(), statistics.getRxInvalidFrames(), statistics.getRxRepeatedFrames(),
+                    statistics.getRxBytes(), statistics.getRxFrameBytes(), statistics.getRxControlBytes(),
+                    statistics.getRxDroppedBytes(), statistics.getRxResyncs(),
+                    receiver.getSearchBufferPosition(), receiver.getAwaitBytes(),
+                    statistics.getBusLoad());
+
+            // "No con" ist der Wachhund: gar keine Bestätigung, die BCU musste zurückgesetzt werden. Ein
+            // NEGATIVES L_Data.con steht hier bewusst nicht - das sagt nur, dass auf dem Bus niemand
+            // quittiert hat, und ist eine Aussage über den Bus, kein Fehler der Strecke.
+            logInfo("BCU<TX>", "Frames %u | Bytes %u (%u ctrl) | Ack %u sent / %u suppressed | No con %u",
+                    statistics.getTxFrames(), statistics.getTxBytes(), statistics.getTxControlBytes(),
+                    statistics.getTxAcknowledges(), statistics.getTxAcknowledgesSuppressed(),
+                    statistics.getTxConfirmTimeouts());
+
+            // Die Höchststände gegen die Puffergrößen: ein Überlaufzähler meldet erst, dass es zu spät
+            // war, der Peak zeigt, wie viel Luft noch ist. SC/RE/TE/PE/TW sind die Fehlerbits, die der
+            // Chip selbst meldet - dieselben Kürzel wie in der TP-Error-Zeile.
+            logInfo("BCU<Err>", "Overflow if %u / rx %u / ctrl %u / tx %u | Peak rx %u/%u, ctrl %u/%u, tx %u/%u | Chip SC %u RE %u TE %u PE %u TW %u | Disconnects %u\n",
+                    statistics.getRxInterfaceOverflows(), statistics.getRxQueueOverflows(),
+                    statistics.getTxControlQueueOverflows(), statistics.getTxQueueOverflows(),
+                    statistics.getRxQueuePeakBytes(), (unsigned)TPUart::TPUART_RX_QUEUE_SIZE,
+                    statistics.getTxControlQueuePeakBytes(), (unsigned)TPUart::TPUART_CTRL_QUEUE_SIZE,
+                    statistics.getTxQueuePeakFrames(), (unsigned)TPUART_TX_QUEUE_COUNT,
+                    statistics.getChipSlaveCollisions(), statistics.getChipReceiveErrors(),
+                    statistics.getChipTransmitErrors(), statistics.getChipProtocolErrors(),
+                    statistics.getChipTemperatureWarnings(),
+                    statistics.getConnectionLosses());
 
             return true;
         }
