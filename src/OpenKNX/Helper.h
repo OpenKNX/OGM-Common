@@ -22,6 +22,18 @@
 uint32_t uptime(bool result = true);
 
 /*
+ * Human readable formatting for narrow sinks (OLED rows, console, web).
+ * humanDuration    seconds -> "2d 03:11:07"
+ * humanCount       exact below 10000, then 12.3k / 1.23M / 4.29G (max 5 chars)
+ * humanCountShort  no decimals, for rows packing several values (max 4 chars)
+ * humanBytes       SI units B / kB / MB / GB with three significant digits
+ */
+std::string humanDuration(uint32_t seconds);
+std::string humanCount(uint64_t value);
+std::string humanCountShort(uint64_t value);
+std::string humanBytes(uint64_t value);
+
+/*
  * Free Memory
  */
 int freeMemory();

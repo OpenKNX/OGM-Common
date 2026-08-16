@@ -167,6 +167,18 @@ namespace OpenKNX
         if (needed > _loadScale) _loadScale = needed; // ratchet up only (no decay)
     }
 
+    // ---- Wrap-carrying counter sampling ----------------------------------------
+    void WidgetKnxBcu::sampleCounters(TpUartDataLinkLayer *dll)
+    {
+        if (dll == nullptr) return;
+
+        auto &st = dll->getTPUart().getStatistics();
+        _txFrames = _wrapTxFrames.update(st.getTxFrames());
+        _rxFrames = _wrapRxFrames.update(st.getRxFrames());
+        _discardedBytes = _wrapDiscarded.update(st.getRxDiscardedBytes());
+        _receivedBytes = _wrapReceived.update(st.getRxReceivedBytes());
+    }
+
     // ---- Drawing ---------------------------------------------------------------
     void WidgetKnxBcu::draw()
     {
@@ -174,6 +186,7 @@ namespace OpenKNX
 
         updateLoadRatchet();
         TpUartDataLinkLayer *dll = bcuDll();
+        sampleCounters(dll);
 
         _display->display->clearDisplay();
         _display->display->setTextColor(WHITE);
@@ -260,10 +273,9 @@ namespace OpenKNX
             {
                 if (ok)
                 {
-                    auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "TX/RX", uStr(st.getTxFrames()) + "/" + uStr(st.getRxFrames()));
-                    drawKeyValueRow(1, "Load", uStr(_lastLoad) + " B/s");
-                    drawKeyValueRow(2, "Peak", uStr(_loadPeak) + " B/s");
+                    drawKeyValueRow(0, "TX/RX", humanCount(_txFrames) + "/" + humanCount(_rxFrames));
+                    drawKeyValueRow(1, "Load", humanBytes(_lastLoad) + "/s");
+                    drawKeyValueRow(2, "Peak", humanBytes(_loadPeak) + "/s");
                 }
                 else
                 {
@@ -279,20 +291,25 @@ namespace OpenKNX
                 if (ok)
                 {
                     auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "Discard", uStr(st.getRxDiscardedBytes()) + " B");
-                    drawKeyValueRow(1, "Receiv", uStr(st.getRxReceivedBytes()) + " B");
+                    drawKeyValueRow(0, "Discard", humanBytes(_discardedBytes));
+                    drawKeyValueRow(1, "Receiv", humanBytes(_receivedBytes));
                     drawKeyValueRow(2, "Await/Rep",
-                                    uStr(dll->getTPUart().getReceiver().getAwaitBytes()) + "/" + uStr(st.getRxRepetitions()));
-                    drawKeyValueRow(3, "Overflow",
-                                    uStr(st.getRxUartOverflow()) + "/" + uStr(st.getRxSearchBufferOverflow()) + "/" +
-                                        uStr(st.getRxFrameBufferOverflow()) + "/" + uStr(st.getTxOverflowFrameBuffer()));
+                                    humanCount(dll->getTPUart().getReceiver().getAwaitBytes()) + "/" +
+                                        humanCount(st.getRxRepetitions()));
+                    // Four values in one row: the short form is the only one that fits, and the
+                    // label is shortened with it. All four are 0 on a healthy device.
+                    drawKeyValueRow(3, "Ovf",
+                                    humanCountShort(st.getRxUartOverflow()) + "/" +
+                                        humanCountShort(st.getRxSearchBufferOverflow()) + "/" +
+                                        humanCountShort(st.getRxFrameBufferOverflow()) + "/" +
+                                        humanCountShort(st.getTxOverflowFrameBuffer()));
                 }
                 else
                 {
                     drawKeyValueRow(0, "Discard", "-");
                     drawKeyValueRow(1, "Receiv", "-");
                     drawKeyValueRow(2, "Await/Rep", "-");
-                    drawKeyValueRow(3, "Overflow", "-");
+                    drawKeyValueRow(3, "Ovf", "-");
                 }
                 break;
             }
@@ -313,9 +330,9 @@ namespace OpenKNX
                 if (ok)
                 {
                     auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "Resets", uStr(st.getBcuResets()));
-                    drawKeyValueRow(1, "Disconn", uStr(st.getBcuDisconnects()));
-                    drawKeyValueRow(2, "CON-resc", uStr(st.getBcuConRescues()));
+                    drawKeyValueRow(0, "Resets", humanCount(st.getBcuResets()));
+                    drawKeyValueRow(1, "Disconn", humanCount(st.getBcuDisconnects()));
+                    drawKeyValueRow(2, "CON-resc", humanCount(st.getBcuConRescues()));
                 }
                 else
                 {
@@ -330,10 +347,11 @@ namespace OpenKNX
                 if (ok)
                 {
                     auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "SlaveColl", uStr(st.getBcuSlaveCollisions()));
-                    drawKeyValueRow(1, "Recv-Err", uStr(st.getBcuReceiveErrors()));
-                    drawKeyValueRow(2, "Tx/Proto", uStr(st.getBcuTransmitErrors()) + "/" + uStr(st.getBcuProtocolErrors()));
-                    drawKeyValueRow(3, "TempWarn", uStr(st.getBcuTempWarnings()));
+                    drawKeyValueRow(0, "SlaveColl", humanCount(st.getBcuSlaveCollisions()));
+                    drawKeyValueRow(1, "Recv-Err", humanCount(st.getBcuReceiveErrors()));
+                    drawKeyValueRow(2, "Tx/Proto",
+                                    humanCount(st.getBcuTransmitErrors()) + "/" + humanCount(st.getBcuProtocolErrors()));
+                    drawKeyValueRow(3, "TempWarn", humanCount(st.getBcuTempWarnings()));
                 }
                 else
                 {

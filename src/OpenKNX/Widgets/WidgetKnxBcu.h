@@ -31,6 +31,28 @@ class TpUartDataLinkLayer; // knx global type; full def pulled in the .cpp only
 
 namespace OpenKNX
 {
+    /**
+     * @brief Carries a 32-bit statistics counter past its wrap point for display.
+     *
+     * The TP-UART counters are `unsigned int` and wrap at 4294967295 - the byte counters reach that
+     * after ~29 days of full TP1 load. Widening them in TPUart would put non-atomic 64-bit
+     * increments into the RX hot path, so the wrap is carried here instead: each sample that comes
+     * out lower than the previous one counts one wrap. Sampling only happens while the widget
+     * itself is running (1x/s), so a wrap that occurs while it is disabled is not seen.
+     */
+    struct WidgetCounterWrap
+    {
+        uint32_t last = 0;
+        uint16_t wraps = 0;
+
+        uint64_t update(uint32_t value)
+        {
+            if (value < last) ++wraps;
+            last = value;
+            return ((uint64_t)wraps << 32) | value;
+        }
+    };
+
     class WidgetKnxBcu : public Widget
     {
       public:
@@ -91,13 +113,20 @@ namespace OpenKNX
         uint32_t _loadPeak = 0;   // running peak load (B/s)
         uint32_t _lastLoad = 0;   // last sampled bus load (B/s)
 
+        // Wrap-carrying samples of the four counters that can realistically reach 2^32, plus their
+        // last sampled value. Sampled once per redraw for ALL pages, not only the visible one -
+        // otherwise the page rotation would leave each counter unsampled most of the time.
+        WidgetCounterWrap _wrapTxFrames, _wrapRxFrames, _wrapDiscarded, _wrapReceived;
+        uint64_t _txFrames = 0, _rxFrames = 0, _discardedBytes = 0, _receivedBytes = 0;
+
         uint32_t pageDwellMs() const;
 
         // TP-UART DLL for this device (secondary on 0x091A, primary on 0x07B0), or
         // nullptr on non-coupler builds / before it exists.
         TpUartDataLinkLayer *bcuDll() const;
 
-        void updateLoadRatchet(); // sample bus load, grow peak + scale
+        void updateLoadRatchet();                          // sample bus load, grow peak + scale
+        void sampleCounters(TpUartDataLinkLayer *dll);     // carry the wrapping 32-bit counters
         void draw();
         void drawHeader();
         void drawPageBody(TpUartDataLinkLayer *dll);

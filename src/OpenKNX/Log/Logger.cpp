@@ -605,18 +605,7 @@ namespace OpenKNX
 
         std::string Logger::buildUptime()
         {
-            uint32_t secs = uptime();
-            uint16_t days = secs / 86400;
-            secs -= days * 86400;
-            uint8_t hours = secs / 3600;
-            secs -= hours * 3600;
-            uint8_t mins = secs / 60;
-            secs -= mins * 60;
-
-            char result[26] = {};
-            sprintf(result, "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)secs);
-
-            return result;
+            return humanDuration(uptime());
         }
     } // namespace Log
 } // namespace OpenKNX

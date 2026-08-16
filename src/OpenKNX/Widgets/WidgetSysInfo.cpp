@@ -321,12 +321,24 @@ namespace OpenKNX
                     drawKeyValueRow(1, "IP", std::string(openknxNetwork.localIP().toString().c_str()));
                 else
                     drawKeyValueRow(1, "IP", dash);
+
+                // Age of the current link, or of the ongoing outage. Built on uptime() seconds
+                // inside OFM-Network, so it survives the 49.7-day millis() rollover.
+                const uint32_t netUp = openknxNetwork.netUptimeSec();
+                const uint32_t netDown = openknxNetwork.netDowntimeSec();
+                if (netUp > 0)
+                    drawKeyValueRow(3, "Net-Up", humanDuration(netUp));
+                else if (netDown > 0)
+                    drawKeyValueRow(3, "Net-Dn", humanDuration(netDown));
+                else
+                    drawKeyValueRow(3, "Net-Up", dash);
     #else
                 // No OFM-Network in this build: show "—" everywhere instead of breaking
                 // the build ("ohne '—' statt Bruch").
                 drawKeyValueRow(0, "Host", dash);
                 drawKeyValueRow(1, "IP", dash);
                 drawKeyValueRow(2, "Link", dash);
+                drawKeyValueRow(3, "Net-Up", dash);
     #endif
                 break;
             }

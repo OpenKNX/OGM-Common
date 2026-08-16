@@ -58,6 +58,105 @@ uint32_t uptime(bool result)
     return ((uint64_t)uptimeRolloverCount << 32 | uptimeCurrentMillis) / 1000UL;
 }
 
+/*
+ * Human readable duration, same layout as the log timestamp ("2d 03:11:07").
+ */
+std::string humanDuration(uint32_t seconds)
+{
+    const uint16_t days = (uint16_t)(seconds / 86400);
+    seconds -= (uint32_t)days * 86400;
+    const uint8_t hours = (uint8_t)(seconds / 3600);
+    seconds -= (uint32_t)hours * 3600;
+    const uint8_t mins = (uint8_t)(seconds / 60);
+    seconds -= (uint32_t)mins * 60;
+
+    char result[26] = {};
+    snprintf(result, sizeof(result), "%dd %2.2d:%2.2d:%2.2d", (days % 10000), hours, mins, (uint8_t)seconds);
+    return result;
+}
+
+/*
+ * Compact count. Values below 10000 stay exact - on a quiet bus the real number is what
+ * you want to read; above that the magnitude matters more than the last digits. Divisions
+ * truncate, so the shown value never rounds up past a decade boundary.
+ */
+std::string humanCount(uint64_t value)
+{
+    char b[12] = {};
+    if (value < 10000ULL)
+        snprintf(b, sizeof(b), "%u", (unsigned)value);
+    else if (value < 100000ULL)
+        snprintf(b, sizeof(b), "%u.%uk", (unsigned)(value / 1000ULL), (unsigned)((value % 1000ULL) / 100ULL));
+    else if (value < 1000000ULL)
+        snprintf(b, sizeof(b), "%uk", (unsigned)(value / 1000ULL));
+    else if (value < 10000000ULL)
+        snprintf(b, sizeof(b), "%u.%02uM", (unsigned)(value / 1000000ULL), (unsigned)((value % 1000000ULL) / 10000ULL));
+    else if (value < 100000000ULL)
+        snprintf(b, sizeof(b), "%u.%uM", (unsigned)(value / 1000000ULL), (unsigned)((value % 1000000ULL) / 100000ULL));
+    else if (value < 1000000000ULL)
+        snprintf(b, sizeof(b), "%uM", (unsigned)(value / 1000000ULL));
+    else if (value < 10000000000ULL)
+        snprintf(b, sizeof(b), "%u.%02uG", (unsigned)(value / 1000000000ULL), (unsigned)((value % 1000000000ULL) / 10000000ULL));
+    else
+    {
+        uint64_t g = value / 1000000000ULL;
+        if (g > 0xFFFFFFFFULL) g = 0xFFFFFFFFULL; // keep the 32-bit cast honest
+        snprintf(b, sizeof(b), "%luG", (unsigned long)g);
+    }
+    return b;
+}
+
+/*
+ * Compact count without decimals, for rows that pack several values into one line.
+ */
+std::string humanCountShort(uint64_t value)
+{
+    char b[12] = {};
+    if (value < 1000ULL)
+        snprintf(b, sizeof(b), "%u", (unsigned)value);
+    else if (value < 1000000ULL)
+        snprintf(b, sizeof(b), "%uk", (unsigned)(value / 1000ULL));
+    else if (value < 1000000000ULL)
+        snprintf(b, sizeof(b), "%uM", (unsigned)(value / 1000000ULL));
+    else
+    {
+        uint64_t g = value / 1000000000ULL;
+        if (g > 0xFFFFFFFFULL) g = 0xFFFFFFFFULL;
+        snprintf(b, sizeof(b), "%luG", (unsigned long)g);
+    }
+    return b;
+}
+
+/*
+ * Byte amount in SI units. Traffic volume is counted in decades; the IEC units (KiB/MiB)
+ * stay reserved for memory, where the powers of two are the real quantity.
+ */
+std::string humanBytes(uint64_t value)
+{
+    char b[16] = {};
+    if (value < 10000ULL)
+        snprintf(b, sizeof(b), "%u B", (unsigned)value);
+    else if (value < 100000ULL)
+        snprintf(b, sizeof(b), "%u.%u kB", (unsigned)(value / 1000ULL), (unsigned)((value % 1000ULL) / 100ULL));
+    else if (value < 1000000ULL)
+        snprintf(b, sizeof(b), "%u kB", (unsigned)(value / 1000ULL));
+    else if (value < 10000000ULL)
+        snprintf(b, sizeof(b), "%u.%02u MB", (unsigned)(value / 1000000ULL), (unsigned)((value % 1000000ULL) / 10000ULL));
+    else if (value < 100000000ULL)
+        snprintf(b, sizeof(b), "%u.%u MB", (unsigned)(value / 1000000ULL), (unsigned)((value % 1000000ULL) / 100000ULL));
+    else if (value < 1000000000ULL)
+        snprintf(b, sizeof(b), "%u MB", (unsigned)(value / 1000000ULL));
+    else if (value < 10000000000ULL)
+        snprintf(b, sizeof(b), "%u.%02u GB", (unsigned)(value / 1000000000ULL), (unsigned)((value % 1000000000ULL) / 10000000ULL));
+    else
+    {
+        uint64_t g = value / 1000000000ULL;
+        if (g > 0xFFFFFFFFULL) g = 0xFFFFFFFFULL;
+        snprintf(b, sizeof(b), "%lu GB", (unsigned long)g);
+    }
+    return b;
+}
+
 #ifndef KNX_IS_ROUTER
 void writeDpt16Ko(GroupObject &ko, const char *message, va_list &values)
 {
