@@ -20,25 +20,10 @@ import subprocess
 import sys
 from os.path import basename, join
 
-
-class C:
-    END = "\033[0m"
-    BOLD = "\033[1m"
-    GRAY = "\033[90m"
-    BLUE = "\033[94m"
-    GREEN = "\033[92m"
-    AMBER = "\033[93m"
-
-
-RULE = f"{C.GRAY}{'─' * 78}{C.END}"
-
-
-def _human(n):
-    if n >= 1024 * 1024:
-        return f"{n / (1024 * 1024):.2f} MB"
-    if n >= 1024:
-        return f"{n / 1024:.0f} KB"
-    return f"{n} B"
+sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
+                         if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
+from _pio_common import C, RULE, warn, identity_line
+from _pio_common import human_bytes as _human
 
 
 def _flash_bytes(spec):
@@ -167,7 +152,7 @@ def _ota_fit(app_size, fs_size, app_path=None, part_path=None):
     packed, measured = _packed_size(app_path, app_size) if app_path else (int(app_size * 0.65), False)
     how = "gzip -9" if measured else "estimated"
 
-    print(f"{C.BOLD}Update over the KNX bus{C.END}  {C.GRAY}(the image is staged in the filesystem first){C.END}")
+    print(f"{C.BOLD}Update over the KNX bus (knxOTA){C.END}  {C.GRAY}(the image is staged in the filesystem first){C.END}")
     print(f"{C.GRAY}filesystem {_human(fs_size)} · usable {_human(usable)} · compressed {_human(packed)} ({how}, {packed * 100 // app_size} %){C.END}")
     if part_path is not None and _ota_slots(part_path) < 2:
         print(f"{C.AMBER}no OTA slot{C.END}  {C.GRAY}the table has a single app partition — an update cannot be applied here{C.END}")
@@ -179,7 +164,7 @@ def _ota_fit(app_size, fs_size, app_path=None, part_path=None):
         print(f"{C.AMBER}fits only compressed{C.END}  {C.GRAY}~{_human(packed)} · uncompressed {_human(app_size)} would not fit{C.END}")
         print(f"{C.GRAY}  a device without OPENKNX_FTC_GZIP_UPDATE cannot be updated over the bus{C.END}")
     else:
-        print(f"{C.AMBER}does not fit{C.END}  {C.GRAY}even compressed ~{_human(packed)} exceeds {_human(usable)}{C.END}")
+        print(f"{C.RED}does not fit{C.END}  {C.GRAY}even compressed ~{_human(packed)} exceeds {_human(usable)}{C.END}")
         print(f"{C.GRAY}  update this device over USB, or enlarge board_build.filesystem_size{C.END}")
 
 
@@ -273,11 +258,9 @@ def esp32_create_combined_bin(source, target, env):
     print(f"{C.BOLD}OpenKNX ESP32 firmware image{C.END}   {C.GRAY}{chip} · {flash_mode} · {flash_freq} · {flash_size}{C.END}")
     ident = _identity(fw)
     if ident:
-        oid, app, ver, rev = ident
-        print(f"{C.GRAY}identity{C.END}  OpenKNX 0x{oid:02X} · app {app} · "
-              f"{C.BOLD}v{ver >> 4}.{ver & 0x0F}.{rev}{C.END}   {C.GRAY}stamped, checksum + SHA-256 intact{C.END}")
+        print(identity_line(*ident, note="stamped, checksum + SHA-256 intact"))
     else:
-        print(f"{C.AMBER}identity{C.END}  {C.GRAY}not stamped — a client cannot tell which device this file is for{C.END}")
+        warn("identity", "not stamped — a client cannot tell which device this file is for")
     print(RULE)
     try:
         app_max = int(env.BoardConfig().get("upload.maximum_size", 0))

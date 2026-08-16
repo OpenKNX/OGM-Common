@@ -1,7 +1,13 @@
 Import("env")
+import os
 import re
+import sys
 import hashlib
 import struct
+
+sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
+                         if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
+from _pio_common import C
 
 # ---------------------------------------------------------------------------
 #  OpenKNX ESP32 identity stamp
@@ -23,14 +29,6 @@ import struct
 #  accepted exactly like an unstamped one -- and rejected outright if this
 #  script ever got them wrong, which is the failure mode we want.
 # ---------------------------------------------------------------------------
-
-
-class C:
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    END = "\033[0m"
 
 
 ESP_IMAGE_MAGIC = 0xE9

@@ -1,85 +1,64 @@
 Import("env")
 Import("projenv")
-import re
 import os
+import re
+import sys
 from platformio.proc import exec_command
 
-class console_color:
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
+sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
+                         if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
+from _pio_common import C, section, ok, warn, identity_line
+
+
+def _define(content, name, width):
+    m = re.search(r"#define %s (0x)?([0-9A-Fa-f]{1,%d})" % (name, width), content)
+    if m is None:
+        return None
+    return int(m.group(2), 16 if m.group(1) == "0x" else 10)
+
 
 def post_program_action(source, target, env):
+    base = source[0].get_path()[0:-4]
+    uf2source = base + ".uf2"
+    elfsource = base + ".elf"
 
-    print()
-    print("{}Patching {}.u2f for KnxFileTransferClient:{}".format(console_color.YELLOW, source[0].get_path()[0:-4], console_color.END))
-    uf2source = source[0].get_path()[0:-4] + ".uf2"
-    elfsource = source[0].get_path()[0:-4] + ".elf"
+    section("OpenKNX RP2040 identity stamp", "firmware.uf2")
+
     if not os.path.exists(uf2source):
-        commandstring = 'picotool uf2 convert -t elf "' + elfsource + '" "' + uf2source +'"'
-        print("  Rebuilding firmware.uf2 from firmware.elf")
-        print("  " + commandstring)
-        exec_command(commandstring, shell=True)
-    content = open("include/knxprod.h", 'r').read()
+        print("{}  rebuilding firmware.uf2 from firmware.elf{}".format(C.GRAY, C.END))
+        exec_command('picotool uf2 convert -t elf "%s" "%s"' % (elfsource, uf2source), shell=True)
 
-    m = re.search("#define MAIN_OpenKnxId (0x)?([0-9A-Fa-f]{1,2})", content)
-    if m is None:
-        print("{}  {}{}".format(console_color.RED, "Error: OpenKnxId not readable", console_color.END))
-        return
-    elif m.group(1) == "0x":
-        openknxid = int(m.group(2), 16)
-    else:
-        openknxid = int(m.group(2))
+    content = open("include/knxprod.h", "r").read()
+    openknxid = _define(content, "MAIN_OpenKnxId", 2)
+    appnumber = _define(content, "MAIN_ApplicationNumber", 3)
+    appversion = _define(content, "MAIN_ApplicationVersion", 3)
 
-    m = re.search("#define MAIN_ApplicationNumber (0x)?([0-9A-Fa-f]{1,3})", content)
-    if m is None:
-        print("{}  {}{}".format(console_color.RED, "Error: ApplicationNumber not readable", console_color.END))
-        return
-    elif m.group(1) == "0x":
-        application_number = int(m.group(2), 16)
-    else:
-        application_number = int(m.group(2))
-
-    m = re.search("#define MAIN_ApplicationVersion (0x)?([0-9A-Fa-f]{1,3})", content)
-    if m is None:
-        print("{}  {}{}".format(console_color.RED, "Error: ApplicationVersion not readable", console_color.END))
-        return
-    elif m.group(1) == "0x":
-        application_version = int(m.group(2), 16)
-    else:
-        application_version = int(m.group(2))
-
+    # Firmware revision from knxprod.h; old style keeps the literal in main.cpp.
     m = re.search(r"#define MAIN_FirmwareRevision (\d{1,2})", content)
     if m is None:
-        # Old style, read from main.cpp
-        content = open(env["PROJECT_SRC_DIR"] + "/main.cpp", 'r').read()
-        m = re.search("const uint8_t firmwareRevision = ([0-9]+);", content)
-        if m is None:
-            print("{}  {}{}".format(console_color.RED, "Error: FirmwareRevision not readable", console_color.END))
-            return
-    firmware_revision = int(m.group(1))
+        m = re.search(r"const uint8_t firmwareRevision = ([0-9]+);",
+                      open(env["PROJECT_SRC_DIR"] + "/main.cpp", "r").read())
+    revision = int(m.group(1)) if m else None
 
-    print("{}  OpenKnxId:          0x{} ({}){}".format(console_color.CYAN, format(openknxid, '02X'), openknxid, console_color.END))
-    print("{}  ApplicationNumber:  0x{} ({}){}".format(console_color.CYAN, format(application_number, '02X'), application_number, console_color.END))
-    print("{}  ApplicationVersion: 0x{} ({}){}".format(console_color.CYAN, format(application_version, '02X'), application_version, console_color.END))
-    print("{}  FirmwareRevision:   0x{} ({}){}".format(console_color.CYAN, format(firmware_revision, '02X'), firmware_revision, console_color.END))
-    
+    if None in (openknxid, appnumber, appversion, revision):
+        warn("identity not readable from knxprod.h", "UF2 left unstamped")
+        return
+
+    print(identity_line(openknxid, appnumber, appversion, revision, "tagged into the UF2 extension"))
+
     barray = bytearray(open(uf2source, "rb").read())
     barray[9] = barray[9] | 0x80
-    barray[288] = 8 #Tag Size
-    barray[289] = 0x4B #Type
-    barray[290] = 0x4E #Type
-    barray[291] = 0x58 #Type
-    barray[292] = openknxid #Data
-    barray[293] = application_number #Data
-    barray[294] = application_version #Data
-    barray[295] = firmware_revision #Data
+    barray[288] = 8       # tag size
+    barray[289] = 0x4B    # 'K'
+    barray[290] = 0x4E    # 'N'
+    barray[291] = 0x58    # 'X'
+    barray[292] = openknxid
+    barray[293] = appnumber
+    barray[294] = appversion
+    barray[295] = revision
+    open(uf2source, "wb").write(barray)
 
-    open(uf2source,"wb").write(barray)
-    print("{}  Patching completed{}".format(console_color.GREEN, console_color.END))
-    print()
+    ok("firmware.uf2", "KNX identity tag written")
+
 
 env.AddPostAction("buildprog", post_program_action)
