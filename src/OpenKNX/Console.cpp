@@ -251,7 +251,14 @@ namespace OpenKNX
             // Die Buslast gehört hierher und nicht zu RX: sie speist sich zwar aus den empfangenen
             // Telegrammbytes, aber der Chip spiegelt jedes selbst gesendete Oktett zurück - der eigene
             // Versand steckt also mit drin. Es ist die Last auf dem BUS, nicht die einer Richtung.
-            logInfo("BCU<Status>", "%s | Load %u B/s", dll->getTPUart().getBcuStateInfo(), statistics.getBusLoad());
+            // Der Prozentwert ist der Anteil der Zeit, in der der Bus belegt war - aus Oktetts UND
+            // Telegrammzahl gerechnet, weil vor jedem Telegramm 50 Bitzeiten frei sein müssen. 100% heißt
+            // damit wirklich "hier passt nichts mehr hinein". Nicht enthalten sind die Quittungen (~2,7ms
+            // je quittiertem Telegramm), die der Host außerhalb des Busmonitors gar nicht sieht - der Wert
+            // liegt also eher etwas zu niedrig. Die Bytezahl bleibt daneben stehen, weil sie die Größe
+            // nennt, aus der sich das ergibt.
+            logInfo("BCU<Status>", "%s | Load %u%% (%u B/s)", dll->getTPUart().getBcuStateInfo(),
+                    statistics.getBusLoadPercent(), statistics.getBusLoad());
 
             // DER TAKT, und er gehört nach oben, weil alles Folgende an ihm hängt. Die Schicht bewegt ein
             // Byte je Richtung und Aufruf; kommt tick() zu selten dran, zeigt sich das nicht als Fehler,
