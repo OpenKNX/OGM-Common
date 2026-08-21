@@ -248,102 +248,60 @@ namespace OpenKNX
         {
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
 
-            // Die Buslast gehört hierher und nicht zu RX: sie speist sich zwar aus den empfangenen
-            // Telegrammbytes, aber der Chip spiegelt jedes selbst gesendete Oktett zurück - der eigene
-            // Versand steckt also mit drin. Es ist die Last auf dem BUS, nicht die einer Richtung.
-            // Der Prozentwert ist der Anteil der Zeit, in der der Bus belegt war - aus Oktetts UND
-            // Telegrammzahl gerechnet, weil vor jedem Telegramm 50 Bitzeiten frei sein müssen. 100% heißt
-            // damit wirklich "hier passt nichts mehr hinein". Nicht enthalten sind die Quittungen (~2,7ms
-            // je quittiertem Telegramm), die der Host außerhalb des Busmonitors gar nicht sieht - der Wert
-            // liegt also eher etwas zu niedrig. Die Bytezahl bleibt daneben stehen, weil sie die Größe
-            // nennt, aus der sich das ergibt.
+            // Bus load belongs here, not to RX: the chip echoes every octet we send, so our own traffic is
+            // part of it. Percent is busy TIME (octets plus the fixed gap and ack slot per frame), so 100%
+            // really means "no room left".
             logInfo("BCU<Status>", "%s | Load %u%% (%u B/s)", dll->getTPUart().getBcuStateInfo(),
                     statistics.getBusLoadPercent(), statistics.getBusLoad());
 
-            // DER TAKT, und er gehört nach oben, weil alles Folgende an ihm hängt. Die Schicht bewegt ein
-            // Byte je Richtung und Aufruf; kommt tick() zu selten dran, zeigt sich das nicht als Fehler,
-            // sondern als unterdrückte Quittung, als Rückstand im Interface und irgendwann als Überlauf.
+            // The tick drives everything below it. A tick that comes too rarely shows up as suppressed
+            // acknowledges and interface backlog, not as an error.
             //
-            // Drei Befunde stecken darin: "Driver no" heißt, der Hauptloop tickt und die Rate hängt an der
-            // Anwendung. Eine Ist-Rate deutlich unter dem Soll heißt dasselbe, auch wenn der Treiber läuft.
-            // Und ein Maximum weit über dem Soll heißt, dass der Antrieb zwar stimmt, aber zwischendurch
-            // blockiert wird - ab etwa 2700µs ist ein Acknowledge-Fenster verloren.
+            // "Deferred" counts how often the tick was held up, the value in brackets is the LAST delay -
+            // a maximum would saturate on the first flash write and say nothing afterwards. Read the
+            // counter before and after a suspect action to find the culprit.
             //
-            // "Slow" ist die Zahl, die den Höchstwert überhaupt erst deutbar macht: einmal 15ms ist ein
-            // Ereignis, hundertmal 2ms ist ein Defekt - im blossen Maximum sehen beide gleich aus. Und die
-            // DIFFERENZ zwischen zwei Aufrufen sagt, wann es passiert: einmal "bcu" im Leerlauf, einmal
-            // direkt nach der verdächtigen Aktion, und der Verursacher ist eingekreist.
+            // "Max run" justifies the raised IRQ priority: whoever preempts other interrupts must show it
+            // is brief. "ack" is our own acknowledge callback inside it - if both are close, the runtime is
+            // ours, not the library's.
             //
-            // Der Durchschnitt kommt aus der Library und ist ab dem ERSTEN Tick gerechnet. Hier stand
-            // einmal eine Rechnung gegen die Uptime - die zeigte dauerhaft zu niedrige Werte, die mit
-            // wachsender Laufzeit scheinbar besser wurden, weil der Zähler erst bei begin() anfängt.
-            // "Max run" ist die Zahl, die eine hohe IRQ-Priorität rechtfertigt: wer andere Interrupts
-            // verdrängt, muss belegen können, dass er sie nur kurz aufhält. Sie schliesst den
-            // Quittungs-Callback ein, denn der läuft mit im Tick.
-            // "Max run" rechtfertigt die IRQ-Priorität: wer andere Interrupts verdrängt, muss belegen
-            // können, dass er sie nur kurz aufhält. "ack" ist der Anteil des Quittungs-Callbacks daran -
-            // der einzige unbegrenzte Teil des Ticks, denn er ist unser Code, nicht der der Library.
-            // Liegen beide dicht beieinander, ist die Laufzeit unsere.
-            // "Deferred" statt "slow": der Antrieb war nicht langsam, er wurde AUFGEHALTEN - und die Zahl
-            // in Klammern ist die ZULETZT gemessene Verzögerung, nicht die schlimmste je gemessene. Der
-            // Höchstwert sättigt: nach einem einzigen Flash-Schreibvorgang stünde dort für immer eine
-            // fünfstellige Zahl, und er sagte danach nichts mehr über den aktuellen Zustand.
-            // Hier standen nacheinander schon der rohe Tickzähler und der gemessene Abstand - beide sind
-            // wieder raus. Der Zähler sagt für sich nichts, und der gemessene Abstand ist durch "Deferred"
-            // vollständig gedeckt: ein Mittelwert über der Busgrenze setzt zwingend einzelne Abstände über
-            // der Busgrenze voraus, der Zähler meldet also alles, was der Mittelwert melden würde - und
-            // zusätzlich die einzelnen Aussetzer, die im Mittel untergehen.
-            logInfo("BCU<Tick>", "Driver %s @ %uus | Deferred %u (last %uus) | Max run %uus (ack %uus)",
-                    dll->getTPUart().hasTickDriver() ? "yes" : "no", dll->getTPUart().tickInterval(),
+            // A missing tick is NOT diagnosed here: the library reports that itself ("Tick stopped").
+            logInfo("BCU<Tick>", "Timer @ %uus | Deferred %u (last %uus) | Max run %uus (ack %uus)",
+                    (unsigned)TPUart::Timer::instance().interval(),
                     statistics.getTickDeferrals(), statistics.getTickLastDeferredUs(),
                     statistics.getTickDurationMaxUs(), statistics.getCheckAcknowledgeMaxUs());
 
-            // Drei Zeilen statt einer, nach Fragen sortiert: was kam rein, was ging raus, wo klemmt es.
-            // Die Zähler überschneiden sich absichtlich - ein mangels Platz verworfenes Telegramm steht
-            // mit seinen Bytes auch in "frame", denn über den Bus kam es. Nicht aufsummieren.
-            // KEIN Gleichheitszeichen zwischen "Bytes" und den beiden Kategorien - sie sind KEINE Zerlegung,
-            // und hier stand einmal eines. In beide Richtungen falsch: "Bytes" zählt jedes gelesene Byte,
-            // die Kategorien nur die einer ABGESCHLOSSENEN Sequenz. Was in RxState::FrameAck verbraucht
-            // wird (das L_Data.con zum eigenen Telegramm, ein geschlucktes U_FrameState.ind), wird gelesen,
-            // gehört aber absichtlich zu keiner Sequenz - es geht als Flag ans Telegramm. Umgekehrt steht
-            // ein mangels Ringplatz verworfenes Telegramm mit seinen Bytes sowohl in "frame" als auch in
-            // "Dropped". Die Zähler beantworten verschiedene Fragen; sie summieren sich nicht.
+            // DO NOT SUM THESE. "Bytes" counts every byte read, the categories only those of a COMPLETED
+            // sequence - and a frame dropped for lack of ring space is counted both in "frame" and in
+            // "Dropped". Different questions, not a partition.
             logInfo("BCU<RX>", "Frames %u valid / %u invalid / %u repeated | Bytes %u (frame %u, ctrl %u) | Dropped %u B in %u resync",
                     statistics.getRxFrames(), statistics.getRxInvalidFrames(), statistics.getRxRepeatedFrames(),
                     statistics.getRxBytes(), statistics.getRxFrameBytes(), statistics.getRxControlBytes(),
                     statistics.getRxDroppedBytes(), statistics.getRxResyncs());
 
-            // "No con" ist der Wachhund: gar keine Bestätigung, die BCU musste zurückgesetzt werden. Ein
-            // NEGATIVES L_Data.con steht hier bewusst nicht - das sagt nur, dass auf dem Bus niemand
-            // quittiert hat, und ist eine Aussage über den Bus, kein Fehler der Strecke.
+            // "No con" is the watchdog: no confirmation at all, the BCU had to be reset. A NEGATIVE
+            // L_Data.con is deliberately not shown - that says nobody on the bus acknowledged, which is a
+            // statement about the bus, not a fault of the link.
             logInfo("BCU<TX>", "Frames %u | Bytes %u (%u ctrl) | Ack %u sent / %u suppressed | No con %u",
                     statistics.getTxFrames(), statistics.getTxBytes(), statistics.getTxControlBytes(),
                     statistics.getTxAcknowledges(), statistics.getTxAcknowledgesSuppressed(),
                     statistics.getTxConfirmTimeouts());
 
-            // HÖCHSTSTÄNDE, und bewusst in derselben Reihenfolge und mit denselben Namen wie die
-            // Überläufe in der Err-Zeile: dort steht, wie oft es zu spät war, hier, wie viel Luft noch ist.
-            // Beim Interface gibt es keine Kapazität zu zeigen - wie groß dessen Empfangspuffer ist, weiß
-            // nur die Plattform (RP2040 256 Byte per Vorgabe, ESP32 512), nicht diese Schicht.
+            // Fill levels, same names and order as the overflow counters below: there "how often it was too
+            // late", here "how much room is left". The interface has no percentage - only the platform
+            // knows its buffer size (RP2040 256 bytes by default, ESP32 512).
             const unsigned rxSize = (unsigned)TPUart::TPUART_RX_QUEUE_SIZE;
             const unsigned txSize = (unsigned)TPUART_TX_BUFFER_SIZE;
             const unsigned ctrlSize = (unsigned)TPUart::TPUART_CTRL_QUEUE_SIZE;
 
-            // Prozent voran, Bytes dahinter: der Anteil beantwortet "wie viel Luft ist noch" auf einen
-            // Blick, die absoluten Zahlen bleiben für die Auslegung daneben stehen. Beim Interface gibt es
-            // keinen Anteil - wie groß dessen Puffer ist, weiß nur die Plattform, nicht diese Schicht.
             logInfo("BCU<Peak>", "if %u B | rx %u%% (%u/%u B) | tx %u%% (%u/%u B) | ctrl %u%% (%u/%u B)",
                     statistics.getRxInterfacePeakBytes(),
                     statistics.getRxQueuePeakBytes() * 100 / rxSize, statistics.getRxQueuePeakBytes(), rxSize,
                     statistics.getTxQueuePeakBytes() * 100 / txSize, statistics.getTxQueuePeakBytes(), txSize,
                     statistics.getTxControlQueuePeakBytes() * 100 / ctrlSize, statistics.getTxControlQueuePeakBytes(), ctrlSize);
 
-            // NUR FEHLER. Die Höchststände standen hier einmal mit drin - sie sind aber Füllstände und
-            // beantworten die Auslegungsfrage ("wie viel Luft ist noch"), nicht "was ist schiefgegangen".
-            // Sie stehen deshalb jetzt in der Zeile der Richtung, die sie messen.
-            //
-            // SC/RE/TE/PE/TW sind die Fehlerbits, die der Chip selbst meldet - dieselben Kürzel wie in der
-            // TP-Error-Zeile.
+            // Errors only. SC/RE/TE/PE/TW are the chip's own error bits, same abbreviations as in the
+            // TP error line.
             logInfo("BCU<Error>", "Overflow if %u / rx %u / tx %u / ctrl %u | Chip SC %u RE %u TE %u PE %u TW %u | Disconnects %u\n",
                     statistics.getRxInterfaceOverflows(), statistics.getRxQueueOverflows(),
                     statistics.getTxQueueOverflows(), statistics.getTxControlQueueOverflows(),
