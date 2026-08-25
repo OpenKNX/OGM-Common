@@ -1116,7 +1116,10 @@ namespace OpenKNX
 #ifdef OPENKNX_RUNTIME_STAT
     void Common::showRuntimeStat(const bool stat /*= true*/, const bool hist /*= false*/)
     {
-        logInfoP("Runtime Statistics: (Uptime=%dms)", millis());
+        // uptime() not millis(): "%d" read the unsigned millis as int, so the value went NEGATIVE after
+        // 24.8 days and wrapped at 49.7. uptime() carries its rollovers and humanDuration() reads like
+        // the rest of the console.
+        logInfoP("Runtime Statistics: (Uptime=%s)", humanDuration(uptime()).c_str());
         logIndentUp();
         {
             Stat::RuntimeStat::showStatHeader();

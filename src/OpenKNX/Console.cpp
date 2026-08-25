@@ -325,17 +325,24 @@ namespace OpenKNX
             // Line 1: BCU state in the log prefix, traffic in the body.
             char pfx[40];
             snprintf(pfx, sizeof(pfx), "BCU<Status: %s>", tp.getBcuStateInfo());
-            snprintf(line, sizeof(line), "TX %u | RX %u (%u B) | Discarded %u B | Received %u B | Load %u B/s",
-                     st.getTxFrames(), st.getRxFrames(), st.getRxFrameBytes(),
-                     st.getRxDiscardedBytes(), st.getRxReceivedBytes(), st.getBusLoad());
+            // Compact units (OGM-Common Helper): the raw 32-bit counters run into 8-10 digits on a busy
+            // bus and pushed this line past the console width. humanBytes() already carries its unit.
+            snprintf(line, sizeof(line), "TX %s | RX %s (%s) | Discarded %s | Received %s | Load %s/s",
+                     humanCount(st.getTxFrames()).c_str(), humanCount(st.getRxFrames()).c_str(),
+                     humanBytes(st.getRxFrameBytes()).c_str(), humanBytes(st.getRxDiscardedBytes()).c_str(),
+                     humanBytes(st.getRxReceivedBytes()).c_str(), humanBytes(st.getBusLoad()).c_str());
             openknx.logger.logWithPrefix(pfx, line);
 
             // Line 2: buffer / health counters (always shown; health getters return 0 without TPUART_BCU_HEALTH).
+            // Buffer/Await stay raw: they are momentary positions bounded by the buffer size, not counters.
             snprintf(line, sizeof(line),
-                     "Buffer %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u | Resets %u | CON-rescues %u | Disconnects %u",
-                     tp.getReceiver().getSearchBufferPosition(), tp.getReceiver().getAwaitBytes(), st.getRxRepetitions(),
-                     st.getRxUartOverflow(), st.getRxSearchBufferOverflow(), st.getRxFrameBufferOverflow(), st.getTxOverflowFrameBuffer(),
-                     st.getBcuResets(), st.getBcuConRescues(), st.getBcuDisconnects());
+                     "Buffer %u | Await %u | Repetitions %s | Overflow %s/%s/%s/%s | Resets %s | CON-rescues %s | Disconnects %s",
+                     tp.getReceiver().getSearchBufferPosition(), tp.getReceiver().getAwaitBytes(),
+                     humanCount(st.getRxRepetitions()).c_str(),
+                     humanCountShort(st.getRxUartOverflow()).c_str(), humanCountShort(st.getRxSearchBufferOverflow()).c_str(),
+                     humanCountShort(st.getRxFrameBufferOverflow()).c_str(), humanCountShort(st.getTxOverflowFrameBuffer()).c_str(),
+                     humanCount(st.getBcuResets()).c_str(), humanCount(st.getBcuConRescues()).c_str(),
+                     humanCount(st.getBcuDisconnects()).c_str());
             openknx.logger.logWithPrefix("BCU<Stat>", line);
 
             // Line 3: only on faults, in yellow (CONSOLE_HEADLINE_COLOR == ANSI yellow).
@@ -361,6 +368,9 @@ namespace OpenKNX
             printHelpLine("bcu rst", "Reset BCU");
     #ifdef TPUART_BCU_DEBUG
             printHelpLine("bcu dis", "Force BCU disconnect (test)");
+    #endif
+    #ifdef TPUART_BCU_MARKER
+            printHelpLine("bcu marker on|off", "NCN frame-end MARKER (bench measurement)");
     #endif
             printHelpLine("bcu poff", "Bus power off");
             printHelpLine("bcu pon", "Bus power on");
@@ -407,17 +417,20 @@ namespace OpenKNX
 
             char vBaud[12];
             char vRx[24], vDisc[16], vRecv[16], vLoad[16], vBuf[12], vAwait[12], vRep[12], vOv[28];
-            snprintf(vRx, sizeof(vRx), "%u (%u B)", st.getRxFrames(), st.getRxFrameBytes());
-            snprintf(vDisc, sizeof(vDisc), "%u B", st.getRxDiscardedBytes());
-            snprintf(vRecv, sizeof(vRecv), "%u B", st.getRxReceivedBytes());
-            snprintf(vLoad, sizeof(vLoad), "%u B/s", st.getBusLoad());
+            snprintf(vRx, sizeof(vRx), "%s (%s)", humanCount(st.getRxFrames()).c_str(),
+                     humanBytes(st.getRxFrameBytes()).c_str());
+            snprintf(vDisc, sizeof(vDisc), "%s", humanBytes(st.getRxDiscardedBytes()).c_str());
+            snprintf(vRecv, sizeof(vRecv), "%s", humanBytes(st.getRxReceivedBytes()).c_str());
+            snprintf(vLoad, sizeof(vLoad), "%s/s", humanBytes(st.getBusLoad()).c_str());
             snprintf(vBuf, sizeof(vBuf), "%u", tp.getReceiver().getSearchBufferPosition());
             snprintf(vAwait, sizeof(vAwait), "%u", tp.getReceiver().getAwaitBytes());
-            snprintf(vRep, sizeof(vRep), "%u", st.getRxRepetitions());
-            snprintf(vOv, sizeof(vOv), "%u/%u/%u/%u", st.getRxUartOverflow(), st.getRxSearchBufferOverflow(),
-                     st.getRxFrameBufferOverflow(), st.getTxOverflowFrameBuffer());
+            snprintf(vRep, sizeof(vRep), "%s", humanCount(st.getRxRepetitions()).c_str());
+            snprintf(vOv, sizeof(vOv), "%s/%s/%s/%s", humanCountShort(st.getRxUartOverflow()).c_str(),
+                     humanCountShort(st.getRxSearchBufferOverflow()).c_str(),
+                     humanCountShort(st.getRxFrameBufferOverflow()).c_str(),
+                     humanCountShort(st.getTxOverflowFrameBuffer()).c_str());
             char vTx[12];
-            snprintf(vTx, sizeof(vTx), "%u", st.getTxFrames());
+            snprintf(vTx, sizeof(vTx), "%s", humanCount(st.getTxFrames()).c_str());
 
             boxRule('=');
             boxRow(" BCU / TPUart Statistics", CONSOLE_HEADLINE_COLOR);
@@ -438,19 +451,19 @@ namespace OpenKNX
             kv("Overflow", vOv, nullptr, nullptr);
     #ifdef TPUART_BCU_HEALTH
             char vRes[12], vDisc2[12], vCon[12];
-            snprintf(vRes, sizeof(vRes), "%u", st.getBcuResets());
-            snprintf(vDisc2, sizeof(vDisc2), "%u", st.getBcuDisconnects());
-            snprintf(vCon, sizeof(vCon), "%u", st.getBcuConRescues());
+            snprintf(vRes, sizeof(vRes), "%s", humanCount(st.getBcuResets()).c_str());
+            snprintf(vDisc2, sizeof(vDisc2), "%s", humanCount(st.getBcuDisconnects()).c_str());
+            snprintf(vCon, sizeof(vCon), "%s", humanCount(st.getBcuConRescues()).c_str());
             boxRow(" Health", CONSOLE_HEADLINE_COLOR);
             kv("Resets", vRes, "Disconnects", vDisc2);
             kv("CON-rescues", vCon, nullptr, nullptr);
 
             char vSc[12], vRe[12], vTe[12], vPe[12], vTw[12];
-            snprintf(vSc, sizeof(vSc), "%u", st.getBcuSlaveCollisions());
-            snprintf(vRe, sizeof(vRe), "%u", st.getBcuReceiveErrors());
-            snprintf(vTe, sizeof(vTe), "%u", st.getBcuTransmitErrors());
-            snprintf(vPe, sizeof(vPe), "%u", st.getBcuProtocolErrors());
-            snprintf(vTw, sizeof(vTw), "%u", st.getBcuTempWarnings());
+            snprintf(vSc, sizeof(vSc), "%s", humanCount(st.getBcuSlaveCollisions()).c_str());
+            snprintf(vRe, sizeof(vRe), "%s", humanCount(st.getBcuReceiveErrors()).c_str());
+            snprintf(vTe, sizeof(vTe), "%s", humanCount(st.getBcuTransmitErrors()).c_str());
+            snprintf(vPe, sizeof(vPe), "%s", humanCount(st.getBcuProtocolErrors()).c_str());
+            snprintf(vTw, sizeof(vTw), "%s", humanCount(st.getBcuTempWarnings()).c_str());
             boxRow(" NCN Errors", CONSOLE_HEADLINE_COLOR);
             kv("Slave-Coll", vSc, "Recv-Err", vRe);
             kv("Xmit-Err", vTe, "Proto-Err", vPe);
@@ -506,6 +519,20 @@ namespace OpenKNX
         else if (cmd.compare("bcu dis") == 0)
         {
             dll->getTPUart().forceDisconnect();
+            return true;
+        }
+    #endif
+    #ifdef TPUART_BCU_MARKER
+        // Bench measurement: NCN frame-end MARKER. The device stops delivering frames while it is on
+        // (the parser does not know U_FrameEnd.ind/U_FrameState.ind yet); "off" resets the BCU.
+        else if (cmd.compare("bcu marker on") == 0)
+        {
+            dll->getTPUart().markerMode(true);
+            return true;
+        }
+        else if (cmd.compare("bcu marker off") == 0)
+        {
+            dll->getTPUart().markerMode(false);
             return true;
         }
     #endif

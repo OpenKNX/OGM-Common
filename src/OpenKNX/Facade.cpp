@@ -70,6 +70,14 @@ namespace OpenKNX
 
     void Facade::addModule(uint8_t id, Module &module)
     {
+        // A module past the array end would be written silently: the list is fixed at
+        // OPENKNX_MAX_MODULES and the count is not checked anywhere else.
+        if (modules.count >= OPENKNX_MAX_MODULES)
+        {
+            logError("OpenKNX", "module %s not registered: OPENKNX_MAX_MODULES (%d) reached",
+                     module.name().c_str(), OPENKNX_MAX_MODULES);
+            return;
+        }
         modules.count++;
         modules.list[modules.count - 1] = &module;
         modules.ids[modules.count - 1] = id;
