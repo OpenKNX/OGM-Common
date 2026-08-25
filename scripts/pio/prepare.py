@@ -132,27 +132,26 @@ for name, lib_version in openknx_modules.items():
     pass
 
 # build defines
-version_file = open("include/versions.h", "w")
-version_file.write("#pragma once\n\n")
-version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
-version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
-# additional_defines = dict()
-for name, version in openknx_modules.items():
-  define_name = "MODULE_" + name.split("-")[1]
-  version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
-  result = re.match(r"^(\d+)\.(\d+)\.(\d+)(\D.*)?$", version)
-  if result:
-    version_file.write("#define {}_Version_Major {}\n".format(define_name, int(result.group(1))))
-    version_file.write("#define {}_Version_Minor {}\n".format(define_name, int(result.group(2))))
-    version_file.write("#define {}_Version_Revision {}\n".format(define_name, int(result.group(3))))
+with open("include/versions.h", "w") as version_file:
+    version_file.write("#pragma once\n\n")
+    version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
+    version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
+    # additional_defines = dict()
+    for name, version in openknx_modules.items():
+        define_name = "MODULE_" + name.split("-")[1]
+        version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
+        result = re.match(r"^(\d+)\.(\d+)\.(\d+)(\D.*)?$", version)
+        if result:
+            version_file.write("#define {}_Version_Major {}\n".format(define_name, int(result.group(1))))
+            version_file.write("#define {}_Version_Minor {}\n".format(define_name, int(result.group(2))))
+            version_file.write("#define {}_Version_Revision {}\n".format(define_name, int(result.group(3))))
 
-  ets = get_ets_version(version)
-  if ets != None:
-    version_file.write("#define {} {}\n".format(define_name + "_ETS", ets))
-  
-  print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
+        ets = get_ets_version(version)
+        if ets != None:
+            version_file.write("#define {} {}\n".format(define_name + "_ETS", ets))
 
-version_file.close()
+        print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
+
 print()
 
 # buildtime.h is kept separate from versions.h: BUILD_DATETIME/BUILD_TIMESTAMP
@@ -163,11 +162,10 @@ print("{}Generate include/buildtime.h{}".format(console_color.YELLOW, console_co
 now = datetime.datetime.now()
 build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
 build_timestamp = int(now.timestamp())
-build_file = open("include/buildtime.h", "w")
-build_file.write("#pragma once\n\n")
-build_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
-build_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
-build_file.close()
+with open("include/buildtime.h", "w") as build_file:
+    build_file.write("#pragma once\n\n")
+    build_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
+    build_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
 print("{}  Build: {}{}".format(console_color.CYAN, build_datetime, console_color.END))
 print()
 
