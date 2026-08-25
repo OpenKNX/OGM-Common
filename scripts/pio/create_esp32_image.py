@@ -22,7 +22,7 @@ from os.path import basename, join
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C, RULE, warn, identity_line
+from _pio_common import C, RULE, warn, identity_line, show_lib_sizes
 from _pio_common import human_bytes as _human
 
 
@@ -138,6 +138,50 @@ def _ota_slots(part_path):
     return sum(1 for _, _, _, kind in _partitions(part_path) if kind in ("ota_0", "ota_1"))
 
 
+BUS_SLOW = 480  # B/s, OpenKNX IP-Interface / IPro
+BUS_FAST = 630  # B/s, MDT with its fast mode
+# Measured on real image pairs: a packed release-to-release patch came out at 8 % of the image, a raw one
+# at 13 %. Eight is what a normal release costs; a release that moves a lot of code can double it.
+PATCH_FRACTION = 0.08
+
+
+def _has_define(name):
+    """Is a build flag set for this environment?"""
+    try:
+        from SCons.Script import DefaultEnvironment
+        defines = DefaultEnvironment().get("CPPDEFINES", [])
+    except Exception:
+        return False
+    return any((d == name) or (isinstance(d, (tuple, list)) and len(d) > 0 and d[0] == name) for d in defines)
+
+
+def _bus_time(nbytes):
+    """How long that many bytes take on the bus, as the span between a slow and a fast interface."""
+    slow = nbytes / BUS_SLOW / 60.0
+    fast = nbytes / BUS_FAST / 60.0
+    if slow < 1.5:
+        return f"{nbytes / BUS_FAST:.0f}-{nbytes / BUS_SLOW:.0f} s"
+    if slow < 10:
+        return f"{fast:.1f}-{slow:.1f} min"
+    return f"{fast:.0f}-{slow:.0f} min"
+
+
+def _row(label, over_bus, staged, verdict, note=""):
+    """One line of the update table.
+
+    The verdict leads, because that is the one thing a reader is looking for; the numbers behind it are
+    what makes the verdict checkable. Columns stay aligned so the two ways to update can be compared
+    without reading a sentence.
+    """
+    glyph, col = {"ok": ("✔", C.GREEN), "no": ("✘", C.RED),
+                  "off": ("·", C.GRAY), "usb": ("!", C.AMBER)}[verdict]
+    bus = _human(over_bus) if over_bus else "—"
+    st = _human(staged) if staged else "—"
+    tm = _bus_time(over_bus) if over_bus else "—"
+    print(f"  {col}{glyph}{C.END} {label:<26}{bus:>10}{st:>11}{tm:>12}"
+          + (f"   {C.GRAY}{note}{C.END}" if note else ""))
+
+
 def _ota_fit(app_size, fs_size, app_path=None, part_path=None):
     """Report whether a firmware update over the KNX bus can be staged on this device.
 
@@ -152,20 +196,41 @@ def _ota_fit(app_size, fs_size, app_path=None, part_path=None):
     packed, measured = _packed_size(app_path, app_size) if app_path else (int(app_size * 0.65), False)
     how = "gzip -9" if measured else "estimated"
 
-    print(f"{C.BOLD}Update over the KNX bus (knxOTA){C.END}  {C.GRAY}(the image is staged in the filesystem first){C.END}")
-    print(f"{C.GRAY}filesystem {_human(fs_size)} · usable {_human(usable)} · compressed {_human(packed)} ({how}, {packed * 100 // app_size} %){C.END}")
-    if part_path is not None and _ota_slots(part_path) < 2:
-        print(f"{C.AMBER}no OTA slot{C.END}  {C.GRAY}the table has a single app partition — an update cannot be applied here{C.END}")
-        print(f"{C.GRAY}  update this device over USB; a second app slot does not fit on this flash size{C.END}")
+    slots = _ota_slots(part_path) if part_path is not None else None
+    delta_on = _has_define("OPENKNX_FTC_DELTA_UPDATE")
+
+    print(f"{C.BOLD}{C.CYAN}knxOTA{C.END}  {C.BOLD}firmware update over the KNX bus{C.END}  "
+          f"{C.GRAY}what it costs to reach this device without touching it{C.END}")
+    print(f"{C.GRAY}    {'':<26}{'over bus':>10}{'staged':>11}{'time':>12}{C.END}")
+
+    if slots is not None and slots < 2:
+        _row("full image · gzip", packed, packed, "usb", "single app partition — nothing can be applied here")
+        print(f"{C.GRAY}    filesystem {_human(fs_size)} · usable {_human(usable)} · {C.AMBER}no second app slot{C.END}")
+        print(f"{C.GRAY}    other ways in: ArduinoOTA over the network · USB (esptool, firmware.factory.bin){C.END}")
         return
-    if packed <= usable and app_size <= usable:
-        print(f"{C.GREEN}fits{C.END}  {C.GRAY}compressed ~{_human(packed)} · uncompressed {_human(app_size)}{C.END}")
-    elif packed <= usable:
-        print(f"{C.AMBER}fits only compressed{C.END}  {C.GRAY}~{_human(packed)} · uncompressed {_human(app_size)} would not fit{C.END}")
-        print(f"{C.GRAY}  a device without OPENKNX_FTC_GZIP_UPDATE cannot be updated over the bus{C.END}")
+
+    # Full image: the whole thing travels and the whole thing is staged.
+    if packed <= usable:
+        _row("full image · gzip", packed, packed, "ok")
     else:
-        print(f"{C.RED}does not fit{C.END}  {C.GRAY}even compressed ~{_human(packed)} exceeds {_human(usable)}{C.END}")
-        print(f"{C.GRAY}  update this device over USB, or enlarge board_build.filesystem_size{C.END}")
+        _row("full image · gzip", packed, packed, "no", f"needs {_human(packed)} of {_human(usable)} usable")
+
+    # Delta: the patch travels AND is the only thing staged -- on ESP32 the rebuilt image goes straight
+    # into the second app slot and never becomes a file. That is the whole difference to RP.
+    patch = int(app_size * PATCH_FRACTION)
+    if not delta_on:
+        _row("delta patch", None, None, "off", "add -D OPENKNX_FTC_DELTA_UPDATE to offer it")
+    elif patch <= usable:
+        _row("delta patch · typical", patch, patch, "ok", "rebuilt straight into the second slot")
+    else:
+        _row("delta patch · typical", patch, patch, "no", f"needs {_human(patch)} of {_human(usable)} usable")
+
+    print(f"{C.GRAY}    filesystem {_human(fs_size)} · usable {_human(usable)} · app slots {slots} · {how} ({packed * 100 // app_size} %) · applied by esp_ota{C.END}")
+    if delta_on:
+        print(f"{C.GRAY}    a patch is ~{int(PATCH_FRACTION * 100)} % of the image for a normal release; a big change can double it{C.END}")
+    # knxOTA is not the only way in. ArduinoOTA writes straight into the slot and stages nothing, so a
+    # verdict here says nothing about whether the device can be reached remotely at all.
+    print(f"{C.GRAY}    other ways in: ArduinoOTA over the network (stages nothing) · USB (esptool, firmware.factory.bin){C.END}")
 
 
 def _identity(app_path):
@@ -262,10 +327,14 @@ def esp32_create_combined_bin(source, target, env):
     else:
         warn("identity", "not stamped — a client cannot tell which device this file is for")
     print(RULE)
+    app_size_for_libs = os.path.getsize(fw) if os.path.exists(fw) else 0
     try:
         app_max = int(env.BoardConfig().get("upload.maximum_size", 0))
     except (TypeError, ValueError):
         app_max = 0
+    print(RULE)
+    show_lib_sizes(env, app_size_for_libs)
+    print(RULE)
     _report(images, _flash_bytes(flash_size), app_max)
     part = next((p for o, p in images if basename(p).startswith("partitions")), None)
     app_size = os.path.getsize(fw) if os.path.exists(fw) else 0

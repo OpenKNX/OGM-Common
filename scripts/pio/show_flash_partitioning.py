@@ -8,7 +8,7 @@ from platformio.proc import exec_command
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C, section, ok, warn, err, human_bytes
+from _pio_common import C, section, ok, warn, err, human_bytes, show_lib_sizes
 
 
 class FlashRegion:
@@ -159,6 +159,8 @@ def show_flash_partitioning(source, target, env):
 
     sorted_flash_elements = sorted(flash_elements, key=lambda element: (element.start, -element.size()))
 
+    show_lib_sizes(env, firmware_end)
+
     section("Flash partitions", "(linker sizes + FLASH_OFFSET/SIZE defines)")
     found_oversized = build_tree(flash_start, flash_end, sorted_flash_elements, 1, [])
     if knx_used > 0:
@@ -177,35 +179,116 @@ def show_flash_partitioning(source, target, env):
     # hard fail via -D OPENKNX_OTA_FS_ASSERT.
     if projenv["PIOPLATFORM"] == "raspberrypi" and env["FS_START"] > 0 and env["FS_START"] != env["FS_END"]:
         fs_size = env["FS_END"] - env["FS_START"]
-        OTA_COMPRESS_RATIO = 0.65
+        # Measured, not guessed. The fixed 0.65 was optimistic: a real image of this project compresses
+        # to about 0.668, so the estimate came in ~19 KB LOW on a megabyte -- and that is exactly the
+        # margin this check exists to judge. The binary is right there by the time this runs, so it is
+        # gzipped for real; the ratio only stands in when it is not (a link-only run).
+        OTA_COMPRESS_RATIO = 0.67
         FS_USABLE_FRACTION = 0.90
         est_compressed = int(firmware_end * OTA_COMPRESS_RATIO)
+        est_measured = False
+        try:
+            import gzip as _gzip
+            _bin = os.path.join(env.subst("$BUILD_DIR"), "firmware.bin")
+            if os.path.isfile(_bin):
+                with open(_bin, "rb") as _f:
+                    est_compressed = len(_gzip.compress(_f.read(), 9))
+                    est_measured = True
+        except Exception as _e:
+            print("{}    (could not measure the compressed size: {}){}".format(C.GRAY, _e, C.END))
         fs_usable = int(fs_size * FS_USABLE_FRACTION)
         opt_in_assert = any(
             (d == "OPENKNX_OTA_FS_ASSERT") or
             (isinstance(d, (tuple, list)) and len(d) > 0 and d[0] == "OPENKNX_OTA_FS_ASSERT")
             for d in projenv["CPPDEFINES"])
 
-        section("Update over the KNX bus (knxOTA)", "(the compressed image is staged in the filesystem first)")
-        print("{}firmware {} · est. gzip {} (x{:.2f}) · filesystem {} · usable {} (x{:.2f}){}".format(
-            C.GRAY, human_bytes(firmware_end), human_bytes(est_compressed), OTA_COMPRESS_RATIO,
-            human_bytes(fs_size), human_bytes(fs_usable), FS_USABLE_FRACTION, C.END))
+        # --- One table, both ways to update ---------------------------------------------------------
+        # The two differ in what has to sit in the filesystem, and that is the whole story on RP: the
+        # bootloader copies a FILE into the application area. A full update stages the COMPRESSED image
+        # and the bootloader unpacks it; a delta stages the REBUILT image, uncompressed, because the
+        # device produced it itself. So a device can be perfectly able to take a full update and still
+        # have no room for a delta -- worth knowing here rather than in the field.
+        BUS_SLOW, BUS_FAST = 480, 630  # B/s: OpenKNX IP-Interface/IPro .. MDT with its fast mode
+        # Two different figures, and confusing them is what made an earlier version of this report promise
+        # an update that then ran out of space on the device. What travels is the PACKED patch; what has to
+        # lie next to the rebuilt image is the UNPACKED one, because that is the form the interpreter reads.
+        # Both measured on real release-to-release pairs: 8 % packed, 13 % unpacked.
+        PATCH_OVER_BUS = 0.08
+        PATCH_ON_DISK = 0.13
+
+        def bus_time(n):
+            if n / BUS_SLOW < 90:
+                return "{:.0f}-{:.0f} s".format(n / BUS_FAST, n / BUS_SLOW)
+            fmt = "{:.1f}-{:.1f} min" if n / BUS_SLOW < 600 else "{:.0f}-{:.0f} min"
+            return fmt.format(n / BUS_FAST / 60, n / BUS_SLOW / 60)
+
+        def row(glyph, colour, label, over_bus, staged, note=""):
+            print("  {}{}{} {:<26}{:>10}{:>11}{:>12}{}".format(
+                colour, glyph, C.END, label,
+                human_bytes(over_bus) if over_bus else "—",
+                human_bytes(staged) if staged else "—",
+                bus_time(over_bus) if over_bus else "—",
+                "   {}{}{}".format(C.GRAY, note, C.END) if note else ""))
+
+        # explicit -D, or implied by PROFILE_MANAGER (FileTransferConfig.h enables delta in that profile)
+        delta_on = any(
+            (d in ("OPENKNX_FTC_DELTA_UPDATE", "OPENKNX_FTC_PROFILE_MANAGER")) or
+            (isinstance(d, (tuple, list)) and len(d) > 0 and d[0] in ("OPENKNX_FTC_DELTA_UPDATE", "OPENKNX_FTC_PROFILE_MANAGER"))
+            for d in projenv["CPPDEFINES"])
+        patch = int(firmware_end * PATCH_OVER_BUS)
+        # The rebuilt image AND the unpacked patch exist at the same time -- the patch cannot be freed
+        # while it is still being read.
+        delta_needed = firmware_end + int(firmware_end * PATCH_ON_DISK)
+
+        # Through section() so this block gets the same rule and spacing as every other one; the feature
+        # name is coloured inside the title so it still leads the line.
+        section("{}knxOTA{}  firmware update over the KNX bus".format(C.CYAN, C.END + C.BOLD),
+                "what it costs to reach this device without touching it")
+        print("{}    {:<26}{:>10}{:>11}{:>12}{}".format(C.GRAY, "", "over bus", "staged", "time", C.END))
 
         if est_compressed > fs_usable:
-            # Genuine miss: red so it stands out from the amber "tight" case. Does NOT fail the build by
-            # itself (other OAMs must not break); only the opt-in OPENKNX_OTA_FS_ASSERT hard-fails.
-            err("OTA will not fit", "flash over USB, or enlarge board_build.filesystem_size / shrink firmware (est. {} > usable {})".format(
+            row("✘", C.RED, "full image · gzip", est_compressed, est_compressed,
+                "needs {} of {} usable".format(human_bytes(est_compressed), human_bytes(fs_usable)))
+            if not est_measured:
+                print("{}    (estimated from a ratio - the binary was not there to measure){}".format(C.GRAY, C.END))
+        elif est_compressed > int(fs_size * 0.82):
+            row("!", C.AMBER, "full image · gzip", est_compressed, est_compressed, "headroom is tight")
+        else:
+            row("✔", C.GREEN, "full image · gzip", est_compressed, est_compressed)
+
+        if not delta_on:
+            row("·", C.GRAY, "delta patch", None, None, "add -D OPENKNX_FTC_DELTA_UPDATE (or the MANAGER profile) to offer it")
+        elif delta_needed > fs_size:
+            row("✘", C.RED, "delta patch · typical", patch, delta_needed,
+                "rebuilt image is staged uncompressed — no room next to it")
+        elif delta_needed > int(fs_size * 0.95):
+            row("!", C.AMBER, "delta patch · typical", patch, delta_needed, "headroom is tight")
+        else:
+            row("✔", C.GREEN, "delta patch · typical", patch, delta_needed)
+
+        print("{}    firmware {} · filesystem {} · usable {} (x{:.2f}) · applied by picoOTA{}".format(
+            C.GRAY, human_bytes(firmware_end), human_bytes(fs_size), human_bytes(fs_usable),
+            FS_USABLE_FRACTION, C.END))
+        if delta_on:
+            print("{}    a normal release costs ~{} % of the image over the bus and ~{} % on the filesystem{}".format(
+                C.GRAY, int(PATCH_OVER_BUS * 100), int(PATCH_ON_DISK * 100), C.END))
+        # knxOTA is not the only way to reach a device without touching it. ArduinoOTA streams straight
+        # into the application area and stages nothing at all, so a filesystem too small for knxOTA says
+        # nothing about whether the device can be updated remotely -- worth stating, or the reader walks
+        # away believing USB is the only option left.
+        print("{}    other ways in: ArduinoOTA over the network (stages nothing) · USB (.uf2 via BOOTSEL){}".format(
+            C.GRAY, C.END))
+
+        if est_compressed > fs_usable:
+            # Genuine miss. Does NOT fail the build by itself (other OAMs must not break); only the
+            # opt-in OPENKNX_OTA_FS_ASSERT hard-fails.
+            err("knxOTA will not fit", "use ArduinoOTA over the network or USB, or enlarge board_build.filesystem_size / shrink firmware (est. {} > usable {})".format(
                 human_bytes(est_compressed), human_bytes(fs_usable)))
             if opt_in_assert:
                 sys.stdout.flush()
                 sys.stderr.flush()
                 time.sleep(1)
                 sys.exit(1)
-        elif est_compressed > int(fs_size * 0.82):
-            warn("OTA headroom tight", "est. compressed ~{} vs filesystem {}".format(
-                human_bytes(est_compressed), human_bytes(fs_size)))
-        else:
-            ok("fits", "est. compressed ~{} in usable {}".format(human_bytes(est_compressed), human_bytes(fs_usable)))
 
     print()
 
