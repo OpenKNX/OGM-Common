@@ -11,7 +11,7 @@ or more OFMs (OpenKNX Function Modules).
 
 > **Not self-contained:** OGM-Common cannot be compiled on its own. It
 > needs a concrete device project that provides `hardware.h`, `knxprod.h`,
-> `versions.h`, and a `main.cpp` with the device-specific setup. OFMs
+> `versions.h`, `version_main.h`, and a `main.cpp` with the device-specific setup. OFMs
 > (e.g. OFM-Network under `../OFM-Network`) build on top of OGM-Common —
 > not the other way around.
 
@@ -239,7 +239,7 @@ Runs as a PlatformIO pre-script on **every** OAM build (device project),
 not per module — must be wired into the device project's `platformio.ini`
 as `extra_scripts`. Generates `include/versions.h` (module/build versions)
 among other things, and cleans up stale
-`lib/OGM-Common/include/{knxprod,versions,hardware}.h` (leftovers from an
+`lib/OGM-Common/include/{knxprod,versions,version_main,hardware}.h` (leftovers from an
 earlier convention).
 
 ### Web Assets (`include/webassets.h`)
