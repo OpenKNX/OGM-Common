@@ -32,6 +32,9 @@ Open ■
 .PARAMETER RP2350
     Mark the image as RP2350 (gzip for OTA); affects only the displayed chip type.
 
+.PARAMETER NoSearch
+    Skip the mDNS search that runs on start and ask for the target IP right away.
+
 .PARAMETER Lang
     Display language: DE or EN. Auto-detected from the system locale if omitted (default DE).
 
@@ -59,6 +62,7 @@ param(
     [switch]$RP2040,
     [switch]$RP2350,
     [string]$Ip = "",
+    [switch]$NoSearch,               # skip the mDNS search on start and ask for the IP right away
     [string]$Lang = "",
     [Alias('h')]
     [switch]$Help,
@@ -83,6 +87,10 @@ if ($_lang -notin @('DE', 'EN')) { $_lang = 'DE' }
 $_strings = @{
     EN = @{
         Title          = 'OTA Firmware Update'
+        Way            = 'Network'
+        NoteOta        = 'OTA may first have to be enabled on the device, via programming mode.'
+        WayHintRp      = 'ArduinoOTA · gzip · device found over mDNS'
+        WayHintEsp     = 'ArduinoOTA · raw .bin · device found over mDNS'
         Firmware       = "  Firmware : {0}"
         Target         = "  Target   : {0}:{1}"
         TypeRp         = "  Type     : {0} (gzip for OTA)"
@@ -91,17 +99,30 @@ $_strings = @{
         NotFound       = "Firmware file not found: {0}"
         Compressing    = "  Compressing image (gzip)..."
         CompressFail   = "  Compression failed."
-        AskIp          = "  IP address of the update target"
+        AskIp          = "  IP address of the update target (x = cancel)"
+        AskIpScan      = "  IP address of the update target (r = search again, x = cancel)"
         BadIp          = "  Invalid IP address. Please try again."
-        ChooseTarget   = "How do you want to select the target?"
-        OptEnterIp     = "Enter IP address manually"
-        OptScan        = "Search the network (mDNS)"
-        MenuChoice     = "Selection (1-2)"
+        BadChoice      = "  Invalid choice."
+        Aborted        = "  Cancelled."
         Scanning       = "Searching for OpenKNX devices (mDNS)..."
-        ScanHint       = "Only devices with mDNS enabled appear (default). If mDNS is disabled on the OpenKNX device, enter the IP manually."
+        ScanHint       = "only devices with mDNS on - otherwise enter the IP by hand"
+        ColNo          = "#"
+        ColName        = "NAME"
+        ColIp          = "IP"
+        ColPa          = "PA"
+        ColChip        = "CHIP"
+        ColVer         = "VERSION"
+        ColEts         = "ETS"
+        ColOta         = "OTA ACCESS"
+        EtsYes         = "yes"
+        EtsNo          = "no"
+        EtsUnknown     = "-"
+        OtaProg        = "press the programming button first"
+        OtaAlways      = "ready to flash"
         ScanNone       = "No OpenKNX devices found via mDNS."
-        ScanFound      = "Found {0} device(s):"
-        ScanPick       = "Select device (1-{0}), or 0 to enter an IP manually"
+        ScanFound      = "{0} device(s) found"
+        ScanPick       = "Select device (1-{0}), 0/m = enter IP manually, r = search again, x = cancel"
+        ScanPickOne    = "Enter = use this device, 0/m = enter IP manually, r = search again, x = cancel"
         EspotaMissing  = "espota not found."
         EspotaOpt1     = "  Option 1 - OpenKNX tools (recommended):"
         EspotaOpt1b    = "    https://github.com/OpenKNX/OpenKNXproducer/releases -> Install-OpenKNX-Tools"
@@ -112,6 +133,10 @@ $_strings = @{
     }
     DE = @{
         Title          = 'OTA Firmware-Update'
+        Way            = 'Netzwerk'
+        NoteOta        = 'OTA muss am Gerät ggf. erst im Programmiermodus freigegeben werden.'
+        WayHintRp      = 'ArduinoOTA · gzip · Gerät über mDNS gesucht'
+        WayHintEsp     = 'ArduinoOTA · rohe .bin · Gerät über mDNS gesucht'
         Firmware       = "  Firmware : {0}"
         Target         = "  Ziel     : {0}:{1}"
         TypeRp         = "  Typ      : {0} (gzip für OTA)"
@@ -120,17 +145,30 @@ $_strings = @{
         NotFound       = "Firmware-Datei nicht gefunden: {0}"
         Compressing    = "  Komprimiere Image (gzip)..."
         CompressFail   = "  Komprimierung fehlgeschlagen."
-        AskIp          = "  IP-Adresse des Update-Ziels"
+        AskIp          = "  IP-Adresse des Update-Ziels (x = abbrechen)"
+        AskIpScan      = "  IP-Adresse des Update-Ziels (r = erneut suchen, x = abbrechen)"
         BadIp          = "  Ungültige IP-Adresse. Bitte erneut eingeben."
-        ChooseTarget   = "Wie möchtest du das Ziel auswählen?"
-        OptEnterIp     = "IP-Adresse manuell eingeben"
-        OptScan        = "Netzwerk durchsuchen (mDNS)"
-        MenuChoice     = "Auswahl (1-2)"
+        BadChoice      = "  Ungültige Auswahl."
+        Aborted        = "  Abgebrochen."
         Scanning       = "Suche OpenKNX-Geräte (mDNS)..."
-        ScanHint       = "Es erscheinen nur Geräte mit aktiviertem mDNS (Standard). Ist mDNS am OpenKNX Gerät deaktiviert, bitte IP manuell eingeben."
+        ScanHint       = "nur Geräte mit aktivem mDNS - sonst IP von Hand eingeben"
+        ColNo          = "#"
+        ColName        = "NAME"
+        ColIp          = "IP"
+        ColPa          = "PA"
+        ColChip        = "CHIP"
+        ColVer         = "VERSION"
+        ColEts         = "ETS"
+        ColOta         = "OTA-FREIGABE"
+        EtsYes         = "ja"
+        EtsNo          = "nein"
+        EtsUnknown     = "-"
+        OtaProg        = "Programmiertaste vorher drücken"
+        OtaAlways      = "direkt möglich"
         ScanNone       = "Keine OpenKNX-Geräte per mDNS gefunden."
-        ScanFound      = "{0} Gerät(e) gefunden:"
-        ScanPick       = "Gerät auswählen (1-{0}), oder 0 für manuelle IP-Eingabe"
+        ScanFound      = "{0} Gerät(e) gefunden"
+        ScanPick       = "Gerät auswählen (1-{0}), 0/m = IP manuell, r = erneut suchen, x = abbrechen"
+        ScanPickOne    = "Enter = dieses Gerät, 0/m = IP manuell, r = erneut suchen, x = abbrechen"
         EspotaMissing  = "espota nicht gefunden."
         EspotaOpt1     = "  Option 1 - OpenKNX-Tools (empfohlen):"
         EspotaOpt1b    = "    https://github.com/OpenKNX/OpenKNXproducer/releases -> Install-OpenKNX-Tools"
@@ -141,6 +179,18 @@ $_strings = @{
     }
 }
 $s = $_strings[$_lang]
+
+# ─── the shared header ─────────────────────────────────────────────────────────────────────────────
+# The same header the USB and KNX scripts print. Optional here: this route needs neither ftc nor the
+# shared file, so a release without it falls back to the plain logo line rather than refusing to run.
+# A release ships ONE file per device. espota needs the raw application image, so it is derived from
+# the package here -- the same unwrapping ftc and the extractor script use.
+$_imgLib = Join-Path $PSScriptRoot "OpenKNX-Image-Generic.ps1"
+if (Test-Path -PathType Leaf $_imgLib) { . $_imgLib }
+
+$_uiPath = Join-Path $PSScriptRoot "OpenKNX-UI-Generic.ps1"
+$_haveUi = (Test-Path -PathType Leaf $_uiPath)
+if ($_haveUi) { . $_uiPath }
 
 function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
@@ -312,7 +362,8 @@ function Get-OpenKnxDevices([int]$timeoutMs = 2500) {
     return @($out.Values | Sort-Object Name)
 }
 
-OpenKNX_ShowLogo $s.Title
+if ($_haveUi) { OpenKNX_ShowTitle -Way $s.Way -Lang $_lang }
+else { OpenKNX_ShowLogo $s.Title }
 
 # resolve firmware
 # Resolve a relative firmware name against the CWD first, then against the CALLING wrapper's directory
@@ -362,60 +413,121 @@ if ($espota -match '\.py$') {
     $runner = @($espota)
 }
 
+# What is about to happen, before it happens: the context block names the device the firmware belongs
+# to, so the warning about matching device and file is one the reader can actually act on.
+if ($_haveUi) {
+    if ($isEsp) { $_wayHint = $s.WayHintEsp } else { $_wayHint = $s.WayHintRp }
+    # ftc reads the version out of the firmware file. It is not needed for this route, so it is used
+    # only when it happens to be there -- without it the line falls back to the processor alone.
+    $_ftcExe = ""
+    $_roots = @()
+    foreach ($_rel in @("../Tools", "../../Tools", "../../../Tools", ".")) { $_roots += (Join-Path $PSScriptRoot $_rel) }
+    $_ftc = OpenKNX_FindFtc -SearchDirs $_roots
+    if ($_ftc.Installed) { $_ftcExe = $_ftc.Installed } elseif ($_ftc.Shipped) { $_ftcExe = $_ftc.Shipped }
+    $_facts = OpenKNX_GetFirmwareFacts -FirmwarePath $firmwarePath -FtcExe $_ftcExe -Mcu $chip -Lang $_lang
+    OpenKNX_ShowContext -Facts $_facts -Way $s.Way -WayHint $_wayHint -Note $s.NoteOta -Lang $_lang
+}
+
+# Handed a package rather than an image: unwrap it once, into a temporary file espota can send.
+if ($firmwarePath -match '\.(uf2|factory\.bin)$') {
+    if (-not (Get-Command OpenKNX_SaveAppImage -ErrorAction SilentlyContinue)) {
+        Write-Host "  OpenKNX-Image-Generic.ps1 fehlt - das Paket kann nicht ausgepackt werden." -ForegroundColor Red
+        if (-not $AutoExit) { Read-Host $s.PressEnter }
+        exit 1
+    }
+    $_stem = [System.IO.Path]::GetFileName($firmwarePath) -replace '\.factory\.bin$','' -replace '\.uf2$',''
+    $_tmp = Join-Path ([System.IO.Path]::GetTempPath()) ($_stem + ".app.bin")
+    if ($null -eq (OpenKNX_SaveAppImage -Path $firmwarePath -Target $_tmp)) {
+        Write-Host "  aus diesem Paket liess sich kein Anwendungsimage holen." -ForegroundColor Red
+        if (-not $AutoExit) { Read-Host $s.PressEnter }
+        exit 1
+    }
+    $firmwarePath = $_tmp
+}
+
 # RP: gzip; ESP: raw
 if ($isEsp) {
-    Write-Host ($s.TypeEsp -f $chip) -ForegroundColor DarkGray
+    if (-not $_haveUi) { Write-Host ($s.TypeEsp -f $chip) -ForegroundColor DarkGray }
     $upload = $firmwarePath
 } else {
-    Write-Host ($s.TypeRp -f $chip) -ForegroundColor DarkGray
+    if (-not $_haveUi) { Write-Host ($s.TypeRp -f $chip) -ForegroundColor DarkGray }
     Write-Host $s.Compressing -ForegroundColor DarkGray
     $upload = Compress-Gzip $firmwarePath
     if (-not $upload) { Write-Host $s.CompressFail -ForegroundColor Red; if (-not $AutoExit) { Read-Host $s.PressEnter }; exit 1 }
 }
 
-Write-Host ($s.Firmware -f $upload) -ForegroundColor Cyan
-Write-Host ""
-Write-Host $s.Hint -ForegroundColor DarkYellow
-Write-Host ""
+if (-not $_haveUi) {
+    Write-Host ($s.Firmware -f $upload) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host $s.Hint -ForegroundColor DarkYellow
+    Write-Host ""
+}
 
-# Target selection: an explicit -Ip wins; otherwise a menu (manual IP entry / mDNS network search).
+# Target selection: an explicit -Ip wins; otherwise the mDNS search runs right away (unless -NoSearch)
+# and the device is picked from its result. 0/m switches to manual entry, r searches again, x cancels.
 $ipAddress = $null
 $pickedPort = $null   # OTA port reported by a scan-picked device (overrides the caller's -p)
 if ($Ip -and [System.Net.IPAddress]::TryParse($Ip.Trim(), [ref]$null)) { $ipAddress = $Ip.Trim() }
+$askIpPrompt = if ($NoSearch) { $s.AskIp } else { $s.AskIpScan }
+$scanNext = -not $NoSearch   # search once on start; 'r' re-arms it
+$manual   = $false           # set by 0/m: stay on manual entry although devices were found
+$found    = @()
 while (-not $ipAddress) {
-    Write-Host ""
-    Write-Host $s.ChooseTarget -ForegroundColor Yellow
-    Write-Host "  [1] $($s.OptEnterIp)"
-    Write-Host "  [2] $($s.OptScan)"
-    $mode = (Read-Host $s.MenuChoice).Trim()
-    if ($mode -eq '2') {
+    if ($scanNext) {
+        $scanNext = $false
+        $manual   = $false
         Write-Host ""
         Write-Host $s.Scanning -ForegroundColor DarkGray
-        Write-Host "  $($s.ScanHint)" -ForegroundColor DarkGray
+        Write-Host ("  {0}  {1}" -f ([char]::ConvertFromUtf32(0x2139)), $s.ScanHint) -ForegroundColor DarkGray
         $found = @(Get-OpenKnxDevices)
-        if ($found.Count -eq 0) { Write-Host "  $($s.ScanNone)" -ForegroundColor Yellow; continue }
         Write-Host ""
-        Write-Host ($s.ScanFound -f $found.Count) -ForegroundColor Yellow
-        for ($i = 0; $i -lt $found.Count; $i++) {
-            $d = $found[$i]
-            $line = "  [{0}] {1,-18} {2,-15}" -f ($i + 1), $d.Name, $d.Ip
-            if ($d.Pa)         { $line += "  PA $($d.Pa)" }
-            if ($d.OtaPort)    { $line += "  OTA $($d.OtaPort)"; if ($d.OtaMode) { $line += " ($($d.OtaMode))" } }
-            if ($d.Version)    { $line += "  v$($d.Version)" }
-            if ($d.Configured) { $line += "  cfg=$($d.Configured)" }
-            Write-Host $line
+        if ($found.Count -eq 0) { Write-Host "  $($s.ScanNone)" -ForegroundColor Yellow }
+        else {
+            Write-Host ($s.ScanFound -f $found.Count) -ForegroundColor Yellow
+            Write-Host ""
+            # One aligned table. The OTA mode used to read "(prog)" / "(always)", which says what the
+            # device reports rather than what the person has to DO about it -- so it is spelled out,
+            # and coloured by whether it asks something of them: amber when it does, green when not.
+            $fmt = "  {0,-3}{1,-20}{2,-16}{3,-11}{4,-15}{5,-9}{6,-6}"
+            Write-Host (($fmt -f $s.ColNo, $s.ColName, $s.ColIp, $s.ColPa, $s.ColChip, $s.ColVer, $s.ColEts) + $s.ColOta) -ForegroundColor DarkGray
+            for ($i = 0; $i -lt $found.Count; $i++) {
+                $d = $found[$i]
+                # "no" is a statement, "-" is the absence of one. A device that never answered the
+                # question must not look like one that answered "not programmed".
+                $ets = $s.EtsUnknown
+                if ($d.Configured -match '^(1|true|yes|ja)$') { $ets = $s.EtsYes }
+                elseif ($d.Configured -match '^(0|false|no|nein)$') { $ets = $s.EtsNo }
+                $ver = ""
+                if ($d.Version) { $ver = "v$($d.Version)" }
+                Write-Host ($fmt -f ($i + 1), $d.Name, $d.Ip, $d.Pa, $d.Chip, $ver, $ets) -NoNewline
+                # A column now, so no brackets: they marked it as an aside, and it stopped being one
+                # the moment it got a heading of its own.
+                if ($d.OtaMode -eq 'prog') { Write-Host $s.OtaProg -ForegroundColor Yellow }
+                elseif ($d.OtaMode -eq 'always') { Write-Host $s.OtaAlways -ForegroundColor Green }
+                else { Write-Host $s.EtsUnknown -ForegroundColor DarkGray }
+            }
+            Write-Host ""
         }
-        Write-Host ""
-        $sel = (Read-Host ($s.ScanPick -f $found.Count)).Trim()
+    }
+    if ($found.Count -gt 0 -and -not $manual) {
+        $prompt = if ($found.Count -eq 1) { $s.ScanPickOne } else { $s.ScanPick -f $found.Count }
+        $sel = (Read-Host $prompt).Trim()
+        if ($sel -eq '' -and $found.Count -eq 1) { $sel = '1' }   # Enter picks the only device
+        if ($sel -match '^[xX]$') { Write-Host $s.Aborted -ForegroundColor Yellow; exit 0 }
+        if ($sel -match '^[rR]$') { $scanNext = $true; continue }
+        if ($sel -match '^(0|[mM])$') { $manual = $true; continue }
         $idx = $sel -as [int]
         if ($null -ne $idx -and $idx -ge 1 -and $idx -le $found.Count) {
             $ipAddress  = $found[$idx - 1].Ip
             $pickedPort = $found[$idx - 1].OtaPort   # use the port the device itself reports
         }
+        else { Write-Host $s.BadChoice -ForegroundColor Red }
         continue
     }
-    # manual IP entry (option 1 / default)
-    $entered = (Read-Host $s.AskIp).Trim()
+    # manual IP entry: nothing found, 0/m chosen, or -NoSearch
+    $entered = (Read-Host $askIpPrompt).Trim()
+    if ($entered -match '^[xX]$') { Write-Host $s.Aborted -ForegroundColor Yellow; exit 0 }
+    if (-not $NoSearch -and $entered -match '^[rR]$') { $scanNext = $true; continue }
     if ([System.Net.IPAddress]::TryParse($entered, [ref]$null)) { $ipAddress = $entered }
     else { Write-Host $s.BadIp -ForegroundColor Red }
 }

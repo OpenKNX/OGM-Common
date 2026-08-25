@@ -59,6 +59,7 @@ param(
 $BuilderVersion = '0.0.2'        # eigene Version dieses Builders (im Titel angezeigt)
 $ShowWarnings = $true            # OpenKNXproducer-Warnungen in der Fertig-Box anzeigen (true/false)
 $MaxWarnings  = 10               # max. angezeigte Warnzeilen (Rest als "… und N weitere")
+$ExitTimeout  = 60               # Sekunden bis zum Auto-Schließen der Abschluss-Box (Zeit zum Lesen des Hinweises)
 # Hinweis: KEIN eigener Versions-Floor mehr. Die Mindest-Producer-Version steht in der
 # XML (minOpenKNXproducerVersion); OpenKNXproducer prüft sie selbst und bricht mit klarer
 # Meldung ab. Wir prüfen nur noch, ob der Producer überhaupt vorhanden/lauffähig ist.
@@ -111,6 +112,18 @@ $L = @{
         Next1          = 'Die .knxprod in der ETS über den Katalog importieren (ETS 5.7.7 oder neuer, ETS 6).'
         Next2          = 'Dann Physikalische Adresse und - nach der Parametrierung - die Applikation programmieren.'
         Next3          = 'Update-Hinweise (Firmware- und/oder ETS-Update) siehe Applikationsbeschreibung.'
+        NoteTitle      = '⚠︎ Wichtiger Hinweis'
+        NoteBody       = @(
+            'OpenKNX ist ein unabhängiges Open-Source-Projekt. Wir stellen offenen Quellcode bereit – die Produktdatenbank hast du',
+            'dir daraus soeben selbst erzeugt. Sie ist von niemandem geprüft, registriert oder freigegeben.',
+            '',
+            'Die Software wird unentgeltlich und ohne Gewährleistung bereitgestellt; für die Haftung gelten die Regelungen der',
+            'Lizenz (GPL-3.0, §§ 15-16).',
+            ''
+        )
+        NoteOwn        = @(
+            'Die von dir erzeugte Datei und ihr Einsatz liegen allein in deiner Verantwortung und setzen Fachkenntnis voraus.'
+        )
         Hints          = 'Hinweise ({0}):'
         HintsMore      = '… und {0} weitere'
         ProducerLog    = 'Producer-Ausgabe (Aufruf + komplettes Protokoll)'
@@ -145,6 +158,18 @@ $L = @{
         Next1          = 'Import the .knxprod into ETS via the catalog (ETS 5.7.7 or newer, ETS 6).'
         Next2          = 'Then assign the physical address and - after parametrisation - program the application.'
         Next3          = 'See the application description for update notes (firmware and/or ETS update).'
+        NoteTitle      = '⚠︎ Important note'
+        NoteBody       = @(
+            'OpenKNX is an independent open-source project. We publish source code only – you generated this product database from',
+            'it yourself, just now. It has not been checked, registered or approved by anyone.',
+            '',
+            'The software is provided free of charge and without warranty; liability is governed by the license (GPL-3.0, §§ 15-16).',
+            ''
+        )
+        NoteOwn        = @(
+            'The file you generated, and how you use it, is entirely your own responsibility and requires the corresponding',
+            'expertise.'
+        )
         Hints          = 'Notes ({0}):'
         HintsMore      = '… and {0} more'
         ProducerLog    = 'Producer output (command + full log)'
@@ -193,6 +218,11 @@ function Show-Head($title, [ConsoleColor]$color = [ConsoleColor]::White) {
 function Show-Item($text, [ConsoleColor]$color = [ConsoleColor]::White) {
     Write-Host ($COL_MK + [char]0x2022 + '  ') -ForegroundColor DarkGray -NoNewline                   # •
     Write-Host $text -ForegroundColor $color
+}
+
+# Plain indented text line (no marker); an empty string prints a blank separator line.
+function Show-Text($text, [ConsoleColor]$color = [ConsoleColor]::DarkGray) {
+    if ([string]::IsNullOrEmpty($text)) { Write-Host "" } else { Write-Host ('  ' + $text) -ForegroundColor $color }
 }
 
 # Key/value detail line:  Label  value   (label padded so values align).
@@ -426,6 +456,12 @@ if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
     Show-Item $s.Next2
     Show-Item $s.Next3 DarkGray
     Show-Rule
+    # Disclaimer - shown on success only, i.e. exactly when a product database was produced.
+    Write-Host ""
+    Show-Head $s.NoteTitle DarkYellow
+    foreach ($noteLine in $s.NoteBody) { Show-Text $noteLine }
+    foreach ($noteLine in $s.NoteOwn) { Show-Text $noteLine White }
+    Show-Rule
     if ($Detailed) {
         Write-Host ""
         Show-Head $s.ProducerLog
@@ -445,5 +481,5 @@ if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
 }
 
 Write-Host ""
-Wait-EnterOrTimeout 30
+Wait-EnterOrTimeout $ExitTimeout
 if ($code -ne 0) { exit 1 }

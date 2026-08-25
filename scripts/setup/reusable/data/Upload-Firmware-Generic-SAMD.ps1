@@ -1,4 +1,4 @@
-function OpenKNX_ShowLogo($AddCustomText = $null) {
+﻿function OpenKNX_ShowLogo($AddCustomText = $null) {
     Write-Host ""
     Write-Host "Open " -NoNewline
     #Write-Host "■" -ForegroundColor Green

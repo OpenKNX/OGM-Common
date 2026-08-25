@@ -1,4 +1,4 @@
-# This script builds the release variant of the firmware.
+﻿# This script builds the release variant of the firmware.
 # Call it with the following parameters:
 #    scripts/Build-Step.ps1 <pio-environment> <firmware-name> <binary-format> [<product-name>] <project-dir>
 #    scripts/Build-Step.ps1 -pioEnv <pio-environment> -firmwareName <firmware-name> -binaryFormat <binary-format> [-productName <product-name>] -projectDir <project-dir>
@@ -65,6 +65,12 @@ $pioPath = $null
 
 # Try to find in PATH first (works for IDE extension and standalone)
 $pioCmd = Get-Command pio, pio.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+# Windows PowerShell 5.1 defines neither $IsMacOS nor $IsLinux; reading them there yields $null, so the
+# Windows branch is taken for the right reason rather than by accident (and it survives Set-StrictMode).
+if ($null -eq (Get-Variable -Name 'IsMacOS' -ErrorAction SilentlyContinue)) {
+    $IsMacOS = $false; $IsLinux = $false; $IsWindows = $true
+}
+
 if ($pioCmd) {
   $pioPath = $pioCmd.Source
   Write-Host "Found PlatformIO in PATH: $pioPath" -ForegroundColor DarkGray
@@ -175,7 +181,6 @@ $binaryFormat = "uf2"
 $OTAbinaryFormat = "bin"
 $processor = "RP2040"
 $withIP = $false;
-$withTP = $true;
 if ($featureSet -eq "bin") {
   $processor = "SAMD"
   $binaryFormat = "bin"
@@ -183,23 +188,18 @@ if ($featureSet -eq "bin") {
   $binaryFormat = "factory.bin"
   $processor = "ESP32"
   $withIP = $true;
-  $withTP = $false;
 } elseif ($featureSet -eq "esp32-tp") {
   $binaryFormat = "factory.bin"
   $processor = "ESP32"
   $withIP = $false;
-  $withTP = $true; # FW update over KNX is supported on ESP32 (FileTransferModule cmdFwUpdate, gzip via miniz)
 } elseif ($featureSet -eq "esp32-tpip" -or $featureSet -eq "esp32-iptp") {
   $binaryFormat = "factory.bin"
   $processor = "ESP32"
   $withIP = $true;
-  $withTP = $true; # FW update over KNX is supported on ESP32 (FileTransferModule cmdFwUpdate, gzip via miniz)
 } elseif ($featureSet -eq "rp2040-ip" -or $featureSet -eq "rp2350-ip") {
   $withIP = $true;
-  $withTP = $false;
 } elseif ($featureSet -eq "rp2040-tpip" -or $featureSet -eq "rp2040-iptp" -or $featureSet -eq "rp2350-tpip" -or $featureSet -eq "rp2350-iptp") {
   $withIP = $true;
-  $withTP = $true;
 } elseif ($featureSet -eq "uf2" -or $featureSet -eq "rp2040-tp" -or $featureSet -eq "rp2350-tp") {
   $withIP = $false;
 } else {
@@ -210,6 +210,68 @@ if ($featureSet -eq "bin") {
 # if no product name is given, use firmware name without "firmware-" prefix
 if (!$productName) {
   $productName = $firmwareName.Replace("firmware-", "")
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
+# The facts a tool would otherwise have to assume about a firmware package, written down by the build
+# that actually knows them. Everything that reads a release -- ftc, the extractor script, anything
+# third-party -- reads this instead of hard-coding an offset or guessing where an image ends.
+#
+# Derived AND VERIFIED here: the slice this file describes is compared against the real application
+# image, so a layout change breaks the BUILD visibly instead of breaking a user's tool silently.
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
+function Write-ImageFacts {
+    param(
+        [string]$AppImage,   # the raw application image (.pio/build/<env>/firmware.bin)
+        [string]$Package,    # the .uf2 / .factory.bin the release ships
+        [string]$Format,     # uf2 | factory | raw
+        [string]$Target      # where to write the facts file
+    )
+    if (-not (Test-Path -PathType Leaf $AppImage)) { return $false }
+    $app = [System.IO.File]::ReadAllBytes($AppImage)
+    $sha = [System.BitConverter]::ToString(
+        [System.Security.Cryptography.SHA256]::Create().ComputeHash($app)).Replace("-", "").ToLower()
+
+    $appOffset = 0
+    if ($Format -eq "factory" -and (Test-Path -PathType Leaf $Package)) {
+        # Read from the partition table rather than assume 0x10000: if the layout ever moves, this
+        # follows it, and the check below catches it if it does not.
+        $pkg = [System.IO.File]::ReadAllBytes($Package)
+        $PT = 0x8000
+        for ($e = $PT; ($e + 32) -le $pkg.Length -and $e -lt ($PT + 0x1000); $e += 32) {
+            if ($pkg[$e] -ne 0xAA -or $pkg[$e + 1] -ne 0x50) { break }
+            if ($pkg[$e + 2] -ne 0) { continue }                       # type 0 = app
+            $off = [uint32]$pkg[$e + 4] + ([uint32]$pkg[$e + 5] * 256) + `
+                   ([uint32]$pkg[$e + 6] * 65536) + ([uint32]$pkg[$e + 7] * 16777216)
+            $sub = $pkg[$e + 3]
+            if ($sub -eq 0) { $appOffset = [int]$off; break }
+            if ($appOffset -eq 0 -and $sub -ge 0x10 -and $sub -le 0x1F) { $appOffset = [int]$off }
+        }
+        if ($appOffset -eq 0 -or ($appOffset + $app.Length) -gt $pkg.Length) {
+            Write-Host "ERROR: the application image does not fit where the partition table says" -ForegroundColor Red
+            return $false
+        }
+        # The stated slice MUST be the application image. If it is not, the assumption is already wrong
+        # and the build should say so now, not a user's tool three months from now.
+        for ($i = 0; $i -lt 4096; $i++) {
+            if ($pkg[$appOffset + $i] -ne $app[$i]) {
+                Write-Host "ERROR: the package does not carry the application image at offset $appOffset" -ForegroundColor Red
+                return $false
+            }
+        }
+    }
+
+    $nl = [Environment]::NewLine
+    $txt = "# OpenKNX firmware image facts - written by the build, read by tools." + $nl +
+           "# appLength is what a .uf2 cannot state: it is block-padded, so its payload is longer." + $nl +
+           "format    = $Format" + $nl +
+           "package   = " + (Split-Path -Leaf $Package) + $nl +
+           "appOffset = $appOffset" + $nl +
+           "appLength = " + $app.Length + $nl +
+           "appSha256 = $sha" + $nl
+    [System.IO.File]::WriteAllText($Target, $txt, (New-Object System.Text.UTF8Encoding $false))
+    return $true
 }
 
 # Create source and target path for firmware
@@ -245,13 +307,31 @@ if ( Test-Path $CopyItem_Source ) {
     exit 1
   }
 
-  # copy OTA image
-  if ($withIP) {    
-    $CopyItem2_Source = ".pio/build/$pioEnv/firmware.$OTAbinaryFormat"
-    $CopyItem2_Target = Join-Path $CopyItem_Target_Dir "$firmwareName.$OTAbinaryFormat"
-    Copy-Item $CopyItem2_Source $CopyItem2_Target
-    if (!$?) {
-      Write-Host "ERROR: Firmware could noch be copied!"
+  # NOT copied any more: the OTA image and the "application image" were the same bytes as the package
+  # already carries, shipped twice more. A release now holds ONE file per device; everything that needs
+  # the raw image derives it, guided by the <name>.image.txt written below.
+
+  # Raw application image. Everything else in a release is a WRAPPER: .uf2 carries the image in 256-byte
+  # blocks, .factory.bin prepends bootloader and partition table. A delta update needs the image itself,
+  # because that is what the device is running and what a patch is computed against. Without this file a
+  # user would have to unwrap a release by hand before a patch could be built for it -- so it ships, and
+  # the next release can be reached from this one.
+  $CopyItem3_Source = ".pio/build/$pioEnv/firmware.bin"
+  if (![string]::IsNullOrEmpty($ProjectDir)) {
+    $CopyItem3_Source = Join-Path $ProjectDir ".pio/build/$pioEnv/firmware.bin"
+  }
+  if (Test-Path $CopyItem3_Source) {
+
+    # Alongside it: what the package does NOT say about itself.
+    $factsFormat = "raw"
+    if ($binaryFormat -eq "uf2") { $factsFormat = "uf2" }
+    elseif ($binaryFormat -eq "factory.bin") { $factsFormat = "factory" }
+    $factsFile = Join-Path $CopyItem_Target_Dir "$firmwareName.image.txt"
+    if (Write-ImageFacts -AppImage $CopyItem3_Source -Package $CopyItem_Target -Format $factsFormat -Target $factsFile) {
+      Write-Host "Wrote: $factsFile  ($factsFormat, $((Get-Item $CopyItem3_Source).Length) B)"
+    }
+    else {
+      Write-Host "ERROR: image facts could not be written for $firmwareName" -ForegroundColor Red
       exit 1
     }
   }
@@ -278,7 +358,7 @@ if ($withIP) {
   elseif ($featureSet -match "rp2040") { $espotaArgs = "'-p 2040'"; $chipArg = "-RP2040" }
 
   # Write the script file content to the file
-  $scriptContent = "& `"`$PSScriptRoot/../../data/OTA-Upload-Firmware-Generic.ps1`" $firmwareName.$OTAbinaryFormat $espotaArgs $chipArg"
+  $scriptContent = "& `"`$PSScriptRoot/../../data/OTA-Upload-Firmware-Generic.ps1`" $CopyItem_Target_Name $espotaArgs $chipArg"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
@@ -287,18 +367,43 @@ if ($withIP) {
   }
 } 
 # KNX-Upload
-if ($withTP) {
+# Every processor that runs the file-transfer module can be updated over the bus -- an ESP32 just as much
+# as an RP. The script used to be tied to $withTP, which is about the KNX MEDIUM, not about whether the
+# device can take an update this way; a device declared "ip" was left without the script even though it
+# sits on the same bus. SAMD is the one exception: no file-transfer module, no bus update.
+if ($processor -ne "SAMD") {
   # create KNX-Upload-Firmware-<firmwarename>.ps1 script
   $fileName = "$CopyItem_Target_Dir/KNX-Upload-Firmware.ps1"
 
-  # Write the script file content to the file 
-  $scriptContent = "& `"`$PSScriptRoot/../../data/KNX-Upload-Firmware-Generic.ps1`" $CopyItem_Target_Name"
+  # NOT $CopyItem_Target_Name: that is the USB format, and for an ESP32 it is the .factory.bin -- an
+  # esptool package with the bootloader and the partition table in front of the image. The device's own
+  # updater writes an APPLICATION image, and a .factory.bin does not even state its identity at offset 0,
+  # so knxOTA refused it outright. Over the bus an ESP32 therefore gets the raw application image, which
+  # is copied for every target anyway; an RP keeps the .uf2, which is the only RP file carrying identity.
+  # The package, for both families: ftc reads the application image out of it, guided by image.txt.
+  $knxUploadName = $CopyItem_Target_Name
+  # Write the script file content to the file. @args forwards -Ip / -Pa / -From / -NoDelta, so the same
+  # wrapper serves both the interactive run and a scripted one.
+  $scriptContent = "& `"`$PSScriptRoot/../../data/KNX-Upload-Firmware-Generic.ps1`" $knxUploadName @args"
   if (Test-Path $fileName) { Clear-Content -Path $fileName }
   Add-Content -Path $fileName -Value $scriptContent
   if (!$?) {
     Write-Host "ERROR: $fileName could not be created!"
     exit 1
   }
+}
+
+# Extract-Images
+# The release ships ONE file per device. Everything that needs the raw application image derives it --
+# ftc for the bus, the OTA script for the network -- and this is the same derivation for a person who
+# wants the file itself: for their own tooling, their own checksum, or an OTA path that is not ours.
+$fileName = "$CopyItem_Target_Dir/Extract-Images.ps1"
+$scriptContent = "& `"`$PSScriptRoot/../../data/Extract-AppImage-Generic.ps1`" `"`$PSScriptRoot/$CopyItem_Target_Name`" @args"
+if (Test-Path $fileName) { Clear-Content -Path $fileName }
+Add-Content -Path $fileName -Value $scriptContent
+if (!$?) {
+  Write-Host "ERROR: $fileName could not be created!"
+  exit 1
 }
 
 # USB-Upload

@@ -138,6 +138,9 @@ $_strings = @{
         Platform_Windows   = "Platform: Windows detected"
         ChipUnknown        = "Unknown chip type. Use -Chip RP2040 or -Chip ESP32, or pass a .uf2 / .bin firmware file."
         Firmware           = "Firmware: {0}"
+        Way                = 'USB'
+        WayHintUsb         = 'connect the device in bootsel mode'
+        NoteUsb            = 'Check that the connected device is the one this firmware belongs to.'
         FirmwareFile       = "  File    :  {0}"
         FirmwarePath       = "  Path    :  {0}"
         FirmwareWarn       = "  Warning :  Make sure the connected device matches this firmware file!"
@@ -293,6 +296,9 @@ $_strings = @{
         Platform_Windows   = "Plattform: Windows erkannt"
         ChipUnknown        = "Unbekannter Chip-Typ. Bitte -Chip RP2040 oder -Chip ESP32 angeben, oder eine .uf2 / .bin Datei übergeben."
         Firmware           = "Firmware: {0}"
+        Way                = 'USB'
+        WayHintUsb         = 'Gerät im Bootsel-Modus anstecken'
+        NoteUsb            = 'Prüfen, dass das angeschlossene Gerät zu dieser Firmware gehört.'
         FirmwareFile       = "  Datei   :  {0}"
         FirmwarePath       = "  Pfad    :  {0}"
         FirmwareWarn       = "  Hinweis :  Sicherstellen, dass das angeschlossene Gerät zu dieser Firmware-Datei passt!"
@@ -445,6 +451,19 @@ $_strings = @{
 }
 $s = $_strings[$_lang]
 
+# ─── the shared header ─────────────────────────────────────────────────────────────────────────────
+# The same header the network and KNX scripts print. Optional here: this route needs neither ftc nor
+# the shared file, so a release without it falls back to the previous title line rather than refusing.
+$_uiPath = Join-Path $PSScriptRoot "OpenKNX-UI-Generic.ps1"
+$_haveUi = (Test-Path -PathType Leaf $_uiPath)
+if ($_haveUi) { . $_uiPath }
+
+function OpenKNX_UsbTitle {
+    <# @brief The unified title where the shared header is available, the previous one where it is not. #>
+    if ($_haveUi) { OpenKNX_ShowTitle -Way $s.Way -Lang $_lang }
+    else { OpenKNX_ShowLogo('OpenKNX - Generic Firmware Upload  -  RP2040/RP2350  &  ESP32') }
+}
+
 # ─── Minimum PowerShell version check (requires PS 5.1 / Windows 10+) ─────────
 if ($PSVersionTable.PSVersion.Major -lt 5 -or
     ($PSVersionTable.PSVersion.Major -eq 5 -and $PSVersionTable.PSVersion.Minor -lt 1)) {
@@ -474,7 +493,7 @@ function OpenKNX_ShowLogo($AddCustomText = $null) {
 # rather than via `Get-Help -Full`, because on some platforms / PS versions Get-Help on a
 # script-by-path returns only the auto-syntax. Short-circuits before any device work.
 if ($Help) {
-    OpenKNX_ShowLogo('OpenKNX - Generic Firmware Upload  -  RP2040/RP2350  &  ESP32')
+    OpenKNX_UsbTitle
     $helpTarget = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Path }
 
     $syntaxLine = (Get-Command $helpTarget -Syntax | Out-String) -split "`r?`n" |
@@ -1908,7 +1927,7 @@ function Select-FirmwareFile {
         Clear-Host
         $sep = [string][char]0x2500 * 62
         Write-Host
-        OpenKNX_ShowLogo('OpenKNX - Generic Firmware Upload  -  RP2040/RP2350  &  ESP32')
+        OpenKNX_UsbTitle
         Write-Host "  $sep" -ForegroundColor DarkCyan
         Write-Host "  $($script:s.SelectFwTitle)" -ForegroundColor Cyan
         Write-Host "  $sep" -ForegroundColor DarkCyan
@@ -2024,11 +2043,13 @@ $platformDisplay = if ($IsMacOS) { 'macOS' } elseif ($IsLinux) { 'Linux' } else 
 $chipAutoLabel     = if ($chipWasAutoDetected) { '  (detected from selected firmware)' } else { '' }
 $platformAutoLabel = '  (detected)'
 
-OpenKNX_ShowLogo('OpenKNX - Generic Firmware Upload  -  RP2040/RP2350  &  ESP32')
-Write-Host "  Target MCU:  $chipDisplay$chipAutoLabel" -ForegroundColor DarkGray
-Write-Host "  Platform  :  $platformDisplay$platformAutoLabel" -ForegroundColor DarkGray
-Write-Host "  PowerShell:  $($PSVersionTable.PSVersion)" -ForegroundColor DarkGray
-Write-Host
+OpenKNX_UsbTitle
+if (-not $_haveUi) {
+    Write-Host "  Target MCU:  $chipDisplay$chipAutoLabel" -ForegroundColor DarkGray
+    Write-Host "  Platform  :  $platformDisplay$platformAutoLabel" -ForegroundColor DarkGray
+    Write-Host "  PowerShell:  $($PSVersionTable.PSVersion)" -ForegroundColor DarkGray
+    Write-Host
+}
 
 if ($Chip -notin @('RP2040', 'ESP32')) {
     Write-Host $s.ChipUnknown -ForegroundColor Red
@@ -2054,13 +2075,26 @@ if ([System.IO.Path]::IsPathRooted($FirmwareName)) {
 
 $fwFileName = [System.IO.Path]::GetFileName($firmwarePath)
 $fwDir      = [System.IO.Path]::GetDirectoryName($firmwarePath)
-$sep = [string][char]0x2500 * 62
-Write-Host "  $sep" -ForegroundColor DarkGray
-Write-Host ($s.FirmwareFile -f $fwFileName) -ForegroundColor White
-Write-Host ($s.FirmwarePath -f $fwDir)      -ForegroundColor DarkGray
-Write-Host ($s.FirmwareWarn)                -ForegroundColor DarkYellow
-Write-Host "  $sep" -ForegroundColor DarkGray
-Write-Host
+if ($_haveUi) {
+    # The context block names the device the firmware belongs to, so the warning about matching device
+    # and file is one the reader can act on rather than merely worry about.
+    $_ftcExe = ""
+    $_roots = @()
+    foreach ($_rel in @("../Tools", "../../Tools", "../../../Tools", ".")) { $_roots += (Join-Path $PSScriptRoot $_rel) }
+    $_ftc = OpenKNX_FindFtc -SearchDirs $_roots
+    if ($_ftc.Installed) { $_ftcExe = $_ftc.Installed } elseif ($_ftc.Shipped) { $_ftcExe = $_ftc.Shipped }
+    $_facts = OpenKNX_GetFirmwareFacts -FirmwarePath $firmwarePath -FtcExe $_ftcExe -Mcu $chipDisplay -Lang $_lang
+    OpenKNX_ShowContext -Facts $_facts -Way $s.Way -WayHint $s.WayHintUsb -Note $s.NoteUsb -Lang $_lang
+}
+else {
+    $sep = [string][char]0x2500 * 62
+    Write-Host "  $sep" -ForegroundColor DarkGray
+    Write-Host ($s.FirmwareFile -f $fwFileName) -ForegroundColor White
+    Write-Host ($s.FirmwarePath -f $fwDir)      -ForegroundColor DarkGray
+    Write-Host ($s.FirmwareWarn)                -ForegroundColor DarkYellow
+    Write-Host "  $sep" -ForegroundColor DarkGray
+    Write-Host
+}
 
 if (-not (Test-Path $firmwarePath)) {
     Write-Host ($s.FirmwareNotFound -f $firmwarePath) -ForegroundColor Red

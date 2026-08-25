@@ -1,4 +1,4 @@
-# This script is responsible for all common tasks before a release build is executed
+﻿# This script is responsible for all common tasks before a release build is executed
 
 $moduleName = 'Microsoft.PowerShell.Archive'
 $minVersion = [version]'1.2.3.0'
@@ -55,6 +55,12 @@ if($settings.compileWith -eq "openknxproducer")
   # package and builds a .knxprod from the already preprocessed XML (command "knxprod"). Its
   # $checkVersion forces every user to update their tools, so bump it only when the shipped XML
   # or the "knxprod" command itself actually needs a newer producer.
+  # Windows PowerShell 5.1 defines neither $IsMacOS nor $IsLinux; reading them there yields $null, so
+  # the Windows branch is taken for the right reason rather than by accident (survives Set-StrictMode).
+  if ($null -eq (Get-Variable -Name 'IsMacOS' -ErrorAction SilentlyContinue)) {
+    $IsMacOS = $false; $IsLinux = $false; $IsWindows = $true
+  }
+
   # check for existance of OpenKNXProducer
   $OpenKNXproducer = "~/bin/OpenKNXproducer.exe"
 

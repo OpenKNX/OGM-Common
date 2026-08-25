@@ -39,6 +39,47 @@ if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
   Copy-Item scripts/Readme-Hardware.html release/
 }
 
+# --- ftc, the client for updates over the KNX bus ------------------------------------------------
+# Two conditions, and both have to hold before anything is shipped:
+#
+#   1. the project actually uses OFM-FileTransferModule. It is an optional module; a product without it
+#      has no bus-update path, and a tool for one would only raise questions.
+#   2. a built ftc is at hand. It is a separate project with its own release cycle and is NOT built here,
+#      so its absence is normal and must never fail a firmware release.
+#
+# When it is missing, the release still carries the upload script -- it then works with an ftc the user
+# installed themselves, and says so if there is none. That keeps this pipeline independent of a tool
+# that has not been released yet.
+$ftmInUse = (Test-Path -Path "lib/OFM-FileTransferModule" ) -or (Test-Path -Path "lib/OFM-FileTransferModule.git")
+if ($ftmInUse) {
+  $ftcSources = @(
+    "lib/OFM-FileTransferModule/ftc-cli/release",
+    "lib/OFM-FileTransferModule/ftc-cli/.pio/build"
+  )
+  $ftcFiles = @()
+  foreach ($src in $ftcSources) {
+    if (Test-Path -Path $src -PathType Container) {
+      $ftcFiles += Get-ChildItem -Path $src -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -eq 'ftc' -or $_.Name -eq 'ftc.exe' }
+    }
+  }
+  if ($ftcFiles.Count -gt 0) {
+    if (!(Test-Path -Path release/Tools -PathType Container)) {
+      New-Item -ItemType Directory -Force -Path release/Tools | Out-Null
+    }
+    foreach ($f in $ftcFiles) {
+      # One per platform; the build directory names them, so the platform stays visible in the release.
+      $tag = Split-Path -Leaf (Split-Path -Parent $f.FullName)
+      $name = if ($tag -match 'ftc-cli-(.+)$') { "ftc-$($Matches[1])$($f.Extension)" } else { $f.Name }
+      Copy-Item $f.FullName (Join-Path "release/Tools" $name) -Force
+    }
+    Write-Host "Copied $($ftcFiles.Count) ftc build(s) to release/Tools/" -ForegroundColor Blue
+  }
+  else {
+    Write-Host "ftc not found -- release/Tools stays empty; KNX-Upload will use an installed ftc" -ForegroundColor DarkYellow
+  }
+}
+
 # cleanup -- the transient knxprod is named after the source (releaseName), e.g. IP-Interface-Dev.knxprod
 if (Test-Path -Path "release/$($settings.releaseName).knxprod" -PathType Leaf) {
   Remove-Item "release/$($settings.releaseName).knxprod"
