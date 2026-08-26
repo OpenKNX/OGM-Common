@@ -2,6 +2,8 @@
 
 ## upcoming releases
 
+* Fix (ESP32): GPIO expanders did not build on ESP32 — `GPIO::Manager::init()` called `setSDA()`/`setSCL()`, which only exist in arduino-pico. On ESP32 the pins are now passed to `OPENKNX_GPIO_WIRE.begin(sda, scl)` instead; the `OPENKNX_GPIO_SDA`/`OPENKNX_GPIO_SCL` defines are unchanged
+
 ## 1.9.1: 2026-08-14
 
 * Hotfix: The setup script rejected an installed OpenKNXproducer 4.3.11 as outdated. The required version was written with four components while the producer reports three, so `[System.Version]` treated `4.3.11` (Revision -1) as lower than `4.3.11.0`. Both sides are padded to four components before comparing now
