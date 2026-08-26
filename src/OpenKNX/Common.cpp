@@ -3,11 +3,26 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
 #ifdef ARDUINO_ARCH_RP2040
     #include <USB.h>
-    #ifdef OPENKNX_USB_MSC
-        #include <tusb-msc.h>
-    #endif
-    #include <class/msc/msc.h>
     #include <device/usbd.h>
+    #include <class/msc/msc.h>
+    #include <tusb-msc.h>
+    #if !defined(OPENKNX_USB_MSC) || defined(OPENKNX_DEBUGGER)
+// LDF pulls in tusb-msc regardless of #ifdef guards. Without OPENKNX_USB_MSC
+// these stubs satisfy the missing callbacks at link time.
+extern "C"
+{
+    uint8_t tud_msc_get_maxlun_cb(void) { return 0; }
+    void tud_msc_inquiry_cb(uint8_t, uint8_t[8], uint8_t[16], uint8_t[4]) {}
+    bool tud_msc_test_unit_ready_cb(uint8_t) { return false; }
+    void tud_msc_capacity_cb(uint8_t, uint32_t* block_count, uint16_t* block_size) { *block_count = 0; *block_size = 0; }
+    bool tud_msc_start_stop_cb(uint8_t, uint8_t, bool, bool) { return false; }
+    bool tud_msc_is_writable_cb(uint8_t) { return false; }
+    int32_t tud_msc_read10_cb(uint8_t, uint32_t, uint32_t, void*, uint32_t) { return -1; }
+    int32_t tud_msc_write10_cb(uint8_t, uint32_t, uint32_t, uint8_t*, uint32_t) { return -1; }
+    void tud_msc_write10_complete_cb(uint8_t) {}
+    int32_t tud_msc_scsi_cb(uint8_t, uint8_t const[16], void*, uint16_t) { return -1; }
+}
+    #endif
 #endif
 
 #ifndef ParamBASE_InternalTime
@@ -110,24 +125,10 @@ namespace OpenKNX
     void Common::showDebugInfo()
     {
         logDebugP("Debug logging is enabled!");
-    #if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+    #if defined(OPENKNX_TRACE)
         logDebugP("Trace logging is enabled with:");
         logIndentUp();
-        #ifdef OPENKNX_TRACE1
-        logDebugP("Filter 1: %s", TRACE_STRINGIFY(OPENKNX_TRACE1));
-        #endif
-        #ifdef OPENKNX_TRACE2
-        logDebugP("Filter 2: %s", TRACE_STRINGIFY(OPENKNX_TRACE2));
-        #endif
-        #ifdef OPENKNX_TRACE3
-        logDebugP("Filter 3: %s", TRACE_STRINGIFY(OPENKNX_TRACE3));
-        #endif
-        #ifdef OPENKNX_TRACE4
-        logDebugP("Filter 4: %s", TRACE_STRINGIFY(OPENKNX_TRACE4));
-        #endif
-        #ifdef OPENKNX_TRACE5
-        logDebugP("Filter 5: %s", TRACE_STRINGIFY(OPENKNX_TRACE5));
-        #endif
+        logDebugP("Filter: %s", TRACE_STRINGIFY(OPENKNX_TRACE));
         logIndentDown();
     #endif
     }

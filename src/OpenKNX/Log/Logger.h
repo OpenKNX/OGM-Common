@@ -1,8 +1,12 @@
 #pragma once
 #include "Arduino.h"
+#include <functional>
 #include <string>
 #ifdef ARDUINO_ARCH_RP2040
     #include "pico/sync.h"
+#endif
+#ifdef ARDUINO_ARCH_ESP32
+    #include "freertos/semphr.h"
 #endif
 
 #ifdef OPENKNX_RTT
@@ -41,23 +45,7 @@
 #define logHexInfo(...) openknx.logger.logHexMacroWrapper(0, __VA_ARGS__)
 #define logHexInfoP(...) openknx.logger.logHexMacroWrapper(0, logPrefix().c_str(), __VA_ARGS__)
 
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
-
-    #ifndef OPENKNX_TRACE1
-        #define OPENKNX_TRACE1
-    #endif
-    #ifndef OPENKNX_TRACE2
-        #define OPENKNX_TRACE2
-    #endif
-    #ifndef OPENKNX_TRACE3
-        #define OPENKNX_TRACE3
-    #endif
-    #ifndef OPENKNX_TRACE4
-        #define OPENKNX_TRACE4
-    #endif
-    #ifndef OPENKNX_TRACE5
-        #define OPENKNX_TRACE5
-    #endif
+#if defined(OPENKNX_TRACE)
 
     #define TRACE_STRINGIFY2(X) #X
     #define TRACE_STRINGIFY(X) TRACE_STRINGIFY2(X)
@@ -97,6 +85,8 @@
 
 #ifdef ARDUINO_ARCH_RP2040
     #define STATE_BY_CORE(X) X[rp2040.cpuid()]
+#elif defined(ARDUINO_ARCH_ESP32)
+    #define STATE_BY_CORE(X) X[xPortGetCoreID()]
 #else
     #define STATE_BY_CORE(X) X
 #endif
@@ -121,17 +111,31 @@ namespace OpenKNX
     {
         class Logger
         {
+          public:
+#ifdef OPENKNX_WEBCONSOLE
+    #ifndef OPENKNX_WEBCONSOLE_BUFSIZE
+        #define OPENKNX_WEBCONSOLE_BUFSIZE 4096
+    #endif
+            static constexpr uint32_t RING_SIZE = OPENKNX_WEBCONSOLE_BUFSIZE;
+            const char* ringBuf() const { return _ringBuf; }
+            uint32_t ringWritePos() const { return _ringWritePos; }
+#endif
+
           private:
-            struct {
-                const char magic[4] = {0x06, 0x9F, 0xFD, 0xCC}; // magic values for comparison of _wall
+            struct
+            {
+                const char magic[4] = {0x06, 0x9F, 0xFD, 0xCC};
                 char output[OPENKNX_MAX_LOG_MESSAGE_LENGTH] = {};
                 char wall[4] = {0x06, 0x9F, 0xFD, 0xCC};
             } _buffer;
 #ifdef ARDUINO_ARCH_RP2040
-            // use individual values per core
             volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
             volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
             recursive_mutex_t _mutex;
+#elif defined(ARDUINO_ARCH_ESP32)
+            volatile uint8_t _color[2] = {(uint8_t)0, (uint8_t)0};
+            volatile uint8_t _indent[2] = {(uint8_t)0, (uint8_t)0};
+            SemaphoreHandle_t _mutex = nullptr;
 #else
             uint8_t _color = 0;
             uint8_t _indent = 0;
@@ -160,6 +164,12 @@ namespace OpenKNX
             void printColorCode();
             void printIndent();
             uint8_t getIndent();
+#ifdef OPENKNX_WEBCONSOLE
+            void appendWebconsoleBuffer(const char* s);
+            void appendWebconsoleBuffer(int n);
+            char _ringBuf[RING_SIZE] = {};
+            uint32_t _ringWritePos = 0;
+#endif
 
           public:
 #ifdef OPENKNX_RTT
@@ -168,18 +178,7 @@ namespace OpenKNX
             Logger();
             void init();
 
-            /*
-             * Fetches an exclusive lock to allow contiguous output.
-             * This can be called multiple times per thread.
-             *
-             * Attention: The function blocks the other core if it also wants to output something.
-             * The lock should be active as short as possible. Do not use it if you do not know what you are doing!
-             */
             void begin();
-
-            /*
-             * Release the exclusive lock.
-             */
             void end();
 
             std::string buildPrefix(const char* prefix, const char* id);
@@ -200,7 +199,7 @@ namespace OpenKNX
 
             void logHeader(const char* header);
             void logDividingLine();
-       
+
             void logHex(const uint8_t* data, size_t size);
             void logHexWithPrefix(const char* prefix, const uint8_t* data, size_t size);
             void logHexWithPrefix(const std::string& prefix, const uint8_t* data, size_t size);
@@ -216,8 +215,32 @@ namespace OpenKNX
             void indentDown();
             void indent(uint8_t indent);
 
-#if defined(OPENKNX_TRACE1) || defined(OPENKNX_TRACE2) || defined(OPENKNX_TRACE3) || defined(OPENKNX_TRACE4) || defined(OPENKNX_TRACE5)
+#if defined(OPENKNX_TRACE)
             bool checkTrace(const std::string& prefix);
+
+          private:
+            /*
+             * Matches a target against a ';' separated list of trace filters (e.g.
+             * "Test1<1-4>;Test2<8>"). ';' is used as separator so commas stay reserved for
+             * list/range subs like "Channel<4,5,7>". Returns true if any single filter
+             * matches. Heap-free, works on const char*.
+             */
+            static bool matchTraceFilterList(const char* list, const char* target);
+            /*
+             * Matches a log prefix in the form PREFIX<SUB> (e.g. "Channel<4>") against a
+             * single trace filter (given by pointer + length) using the same format.
+             * Supports a trailing '*' wildcard on the prefix and within the sub part,
+             * numeric ranges (e.g. "1-19") and comma separated lists (e.g. "4,5,7") in the
+             * sub part. A filter without a <sub> part ignores the target's sub.
+             */
+            static bool matchTraceFilter(const char* filter, size_t filterLen, const char* target);
+            /*
+             * Compares a single part (prefix or sub list element) of length filterLen against
+             * target of length targetLen. A trailing '*' in the filter part means startsWith.
+             */
+            static bool matchPart(const char* filter, size_t filterLen, const char* target, size_t targetLen);
+
+          public:
 #endif
             void printPrompt();
             void clearPreviouseLine();

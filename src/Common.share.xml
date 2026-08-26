@@ -26,6 +26,9 @@
   <op:config name="%BASE_ShowDeviceDependentLedSelector%" value="0"></op:config>
   <op:nowarn id="7" regex="_R-100000202"/>
   <op:nowarn id="3" regex="invokeFunctionPropertyWrapper"/>
+  <op:nowarn id="3" regex="BASE_Nop"/>
+  <op:nowarn id="3" regex="BASE_MarkInactive"/>
+  <op:nowarn id="3" regex="BASE_SyncChannelType"/>
   
   <ManufacturerData>
     <Manufacturer RefId="M-00FA">
@@ -40,6 +43,10 @@
               <!-- short description -->
               <ParameterType Id="%AID%_PT-Text40Byte" Name="Text40Byte">
                 <TypeText SizeInBit="320" />
+              </ParameterType>
+              <!-- short description with inactive sign -->
+              <ParameterType Id="%AID%_PT-Text45Byte" Name="Text45Byte">
+                <TypeText SizeInBit="360" />
               </ParameterType>
               <!-- long description -->
               <ParameterType Id="%AID%_PT-Text80Byte" Name="Text80Byte">
@@ -75,6 +82,12 @@
               <!-- Boolean values -->
               <ParameterType Id="%AID%_PT-CheckBox" Name="CheckBox">
                 <TypeNumber SizeInBit="1" Type="unsignedInt" minInclusive="0" maxInclusive="1" UIHint="CheckBox" />
+              </ParameterType>
+              <ParameterType Id="%AID%_PT-Suspended" Name="Suspended">
+                <TypeRestriction Base="Value" SizeInBit="1">
+                  <Enumeration Text="Nein" Value="0" Id="%ENID%" />
+                  <Enumeration Text="Ja" Value="1" Id="%ENID%" />
+                </TypeRestriction>
               </ParameterType>
               <ParameterType Id="%AID%_PT-OnOffYesNo" Name="OnOffYesNo">
                 <TypeRestriction Base="Value" SizeInBit="1">
@@ -301,8 +314,8 @@
               <!-- Location -->
               <Union SizeInBit="64">
                 <Memory CodeSegment="%MID%" Offset="69" BitOffset="0" />
-                <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" />
-                <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764"  />
+                <Parameter Id="%AID%_UP-%TT%00142" Name="Latitude"  ParameterType="%AID%_PT-Latitude"  Offset="0" BitOffset="0" Text="Breitengrad" Value="50.115377" SuffixText="°N" />
+                <Parameter Id="%AID%_UP-%TT%00143" Name="Longitude" ParameterType="%AID%_PT-Longitude" Offset="4" BitOffset="0" Text="Längengrad"  Value="8.683764" SuffixText="°O" />
               </Union>
 
               <!-- Extended -->
@@ -426,27 +439,6 @@
               <op:include href="Common.script.js" prefix="BASE" type="script" />
             </Script>            
           </Static>
-          <ModuleDefs>
-            <ModuleDef Id="%AID%_MD-%TT%00001" Name="KommentarModule">
-              <!-- <Arguments>
-                <Argument Id="%AID%_MD-%TT%00001_A-1" Name="argHelpContext" Type="Text" />
-              </Arguments> -->
-              <Static>
-                <Parameters>
-                  <Parameter Id="%AID%_MD-%TT%00001_P-%TT%00001" Name="Kommentar-%TT%00001" ParameterType="%AID%_PT-Text512Byte" Text="Kommentar" Value="" />
-                </Parameters>
-                <ParameterRefs>
-                  <ParameterRef Id="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" RefId="%AID%_MD-%TT%00001_P-%TT%00001" />
-                </ParameterRefs>
-              </Static>
-              <Dynamic>
-                <ParameterBlock Id="%AID%_MD-%TT%00001_PB-nnn" Inline="true">
-                  <ParameterRefRef RefId="%AID%_MD-%TT%00001_P-%TT%00001_R-%TT%0000101" HelpContext="BASE-Comment" />
-                  <Button Id="%AID%_MD-%TT%00001_B-%TT%00001" Text="Alle '\n' im Text durch neue Zeile(n) ersetzen" EventHandler="newline" EventHandlerParameters="{ &quot;textbox&quot;:&quot;BASE_Kommentar-%TT%00001&quot; }" />
-                </ParameterBlock>
-              </Dynamic>
-            </ModuleDef> 
-          </ModuleDefs>
           <Dynamic>
             <!-- <ChannelIndependentBlock> -->
             <Channel Id="%AID%_CH-%PREFIX%" Number="%PREFIX%" Name="Main" Text="OpenKNX" Icon="openknx" HelpContext="BASE-OpenKNX">
@@ -499,6 +491,7 @@
                   </when>
                 </choose>
 
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Uhrzeit &amp; Datum" UIHint="Headline" />
                 <choose ParamRefId="%AID%_UP-%TT%00006_R-%TT%0000601">
                   <when test="0">
@@ -597,6 +590,7 @@
                   </when>
                 </choose>
 
+                <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                 <ParameterSeparator Id="%AID%_PS-nnn" Text="Gerätestandort" UIHint="Headline" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00142_R-%TT%0014201" HelpContext="BASE-Geraetestandort" IndentLevel="1" />
                 <ParameterRefRef RefId="%AID%_UP-%TT%00143_R-%TT%0014301" HelpContext="BASE-Geraetestandort" IndentLevel="1" />
@@ -638,6 +632,7 @@
                     <ParameterRefRef RefId="%AID%_P-%TT%00011_R-%TT%0001101" HelpContext="%DOC%" IndentLevel="1" />
                     <choose ParamRefId="%AID%_P-%TT%00011_R-%TT%0001101">
                       <when test="1">
+                        <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                         <ParameterSeparator Id="%AID%_PS-nnn" Text="Erweitertes Speichern" UIHint="Headline" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%00090_R-%TT%0009001" HelpContext="BASE-Erweitertes-Speichern" IndentLevel="1" />
                         <ParameterRefRef RefId="%AID%_UP-%TT%00091_R-%TT%0009101" HelpContext="BASE-Erweitertes-Speichern" IndentLevel="1" />
@@ -682,6 +677,7 @@
                 <ParameterRefRef RefId="%AID%_P-0099900_R-009990001" />
                 <choose ParamRefId="%AID%_P-0099900_R-009990001">
                   <when test="%BASE_ShowSyncModulesButton%">
+                    <ParameterSeparator Id="%AID%_PS-nnn" Text="" UIHint="HorizontalRuler" />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Abgleich mit dem Gerät" UIHint="Headline" />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Diese Applikation unterstützt die Verwendung mit verschiedenen Geräten. Einzelne Module können von der angeschlossenen Hardware abhängig sein." />
                     <ParameterSeparator Id="%AID%_PS-nnn" Text="Nachdem das Gerät programmiert wurde (PA + Applikation) ist ein Abgleich mit den Fähigkeiten der Hardware möglich:" />

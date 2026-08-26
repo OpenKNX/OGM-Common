@@ -1,6 +1,7 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Flash/Driver.h"
+#include "buildtime.h"
 
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"

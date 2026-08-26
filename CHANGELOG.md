@@ -1,9 +1,35 @@
 # Changes
 
-## upcomming releases
+## upcoming releases
 
+* Fix (ESP32): GPIO expanders did not build on ESP32 — `GPIO::Manager::init()` called `setSDA()`/`setSCL()`, which only exist in arduino-pico. On ESP32 the pins are now passed to `OPENKNX_GPIO_WIRE.begin(sda, scl)` instead; the `OPENKNX_GPIO_SDA`/`OPENKNX_GPIO_SCL` defines are unchanged
+
+## 1.9.1: 2026-08-14
+
+* Hotfix: The setup script rejected an installed OpenKNXproducer 4.3.11 as outdated. The required version was written with four components while the producer reports three, so `[System.Version]` treated `4.3.11` (Revision -1) as lower than `4.3.11.0`. Both sides are padded to four components before comparing now
+
+## 1.9.0: 2026-08-14
+
+* Update: Increase minimum OpenKNXproducer version to 4.3.11.0
+* Feature: Web console log support — additional plain byte ring buffer in `Logger` (`OPENKNX_WEBCONSOLE`, size via `OPENKNX_WEBCONSOLE_BUFSIZE`, default 4096), accessible via `ringBuf()`/`ringWritePos()`
+* Feature: PSRAM helpers in `src/OpenKNX/Helper.h` for RP2350 and ESP32 — `PSRAM_MALLOC`/`PSRAM_CALLOC`/`PSRAM_REALLOC`, `psram_new()`/`psram_delete()`, `PsramAllocator<T>`, `PSRAM_DATA`/`PSRAM_CODE`
+  * Fix: Correct RP2350/ESP32 PSRAM section names and macros, data silently ended up in normal RAM before
+* Fix: `platformio.base.ini` now sets a dummy `lib_deps` entry, since PlatformIO re-resolves/re-downloads all included modules on every build whenever `lib_deps` is empty
+* Fix: `BUILD_DATETIME`/`BUILD_TIMESTAMP` moved out of `include/versions.h` into their own generated `include/buildtime.h`, since they change on every build and previously forced a full rebuild of everything including `versions.h` (via `defines.h`) even when no module version changed
+* Feature: Add `OpenKNX::Charset` (`src/OpenKNX/Charset.hpp`) — header-only `encodeUtf8()`/`decodeUtf8()` conversion between the firmware/KNX-bus encoding (ISO-8859-15) and UTF-8, for modules that expose bus/filesystem strings over a browser-facing boundary (WebSocket, HTTP) that forces UTF-8. Gated behind `#ifdef OPENKNX_CHARSET`; not enabled by OGM-Common itself
+* Feature: `prepare.py` now generates `include/webassets.h` from every included module's (and the project's own) `web/assets/` folder — plain, readable `.css`/`.js`/`.svg`/`.jpg`/`.png` source files are minified and gzip-compressed into flash-resident byte arrays at build time, so modules no longer need to hand-minify web assets into C++ string literals
+* Feature: Add shared HelpContext topics `BASE-ChannelSelect` and `BASE-ChannelSuspended` for modules using the tab-based Kanalauswahl pattern, replacing per-module placeholder help texts
+* Change: `PT-Suspended` now renders as a Ja/Nein selection instead of a checkbox, consistent with `PT-OnOffYesNo`
+* Feature (ETS): Horizontal ruler in front of section headlines
+* Feature (ETS): Generic JS helper to mark inactive channels (`MarkInactiveChannel`), the value representing "inactive" is taken from the context so it works for any numeric UI control
+* Fix (ESP32): Logger uses a recursive mutex/semaphore, fixing log output from nested/multi-task contexts
+* Change: `prepare.py` section headlines now match the names of the generated files
+* Doc: `openknx-channelselect` skill updated to reference the new shared HelpContext values instead of `Empty`/`%DOC%` placeholders; note added to `BASE-Verfuegbare-Kanaele` that it is the legacy pattern superseded by the Kanalauswahl-Tabelle
+* Breaking: Trace filter reworked. The regex dependency (`nickgammon/Regexp`, ~80&nbsp;kB flash when tracing was enabled) is removed and replaced by a compact custom matcher. `OPENKNX_TRACE1..5` are dropped in favor of a single `OPENKNX_TRACE` define holding one or more filters separated by `;` (e.g. `OPENKNX_TRACE=Test1<1-4>;Test2<8>`). New filter syntax `PREFIX<SUB>`: prefix exact or `*` suffix wildcard; optional `<sub>` with exact value, numeric range (`1-19`), comma list (`4,5,7`, combinable `1-5,9`), or `*` suffix wildcard. A filter without `<sub>` ignores the sub part. Existing regex filters must be migrated (e.g. `OPENKNX_TRACE1=Common.*` → `OPENKNX_TRACE=Common*`).
 * Fix: `uptime()` race condition causing wrong uptime display (~49d) on multi-core/interrupt contexts — read path no longer writes shared state
 * Fix: USB MSC support in Common.cpp
+* Breaking: Remove ETS-ModuleDef of KommentarModule, not used anymore since introduction of ConfigTransfer (not compatible).
+* Add suffix °N/°O to location coordinates 
 * Change: Generate build timestamp in prepare hook and use ISO-DateTime format in console instead of __DATE__/__TIME__
 * Refactor: Optimize CPU temperature logging and remove unused ADC temperature sensor initialization
 * Update: RP2040 Environment

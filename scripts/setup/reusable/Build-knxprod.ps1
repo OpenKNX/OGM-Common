@@ -1,7 +1,23 @@
-$checkVersion = "3.4.0"
+# ANWENDER-Seite: Dieses Script landet im Release-Paket (release/data) und wird vom
+# Anwender ausgefuehrt, um aus der mitgelieferten, bereits fertig praeprozessierten
+# ../data/*.xml seine eigene .knxprod zu bauen (Producer-Kommando "knxprod").
+#
+# $checkVersion ist damit die Mindestversion, die JEDER ANWENDER installiert haben muss.
+# Nicht automatisch mit anheben, wenn nur der Producer fuer den Applikations-Build (Entwickler-
+# Seite, siehe Build-Release-Preprocess.ps1 -> Kommando "create") neue Features braucht:
+# Ein Bump hier zwingt alle Anwender zum Tool-Update, ohne dass sich fuer sie etwas aendert.
+# Nur anheben, wenn das Kommando "knxprod" selbst oder das ausgelieferte XML-Format
+# eine neuere Producer-Version voraussetzt.
+$checkVersion = "4.3.11"
 $toolsExist = Test-Path -PathType Leaf ~/bin/OpenKNXproducer.exe
 if ($toolsExist) {
-    $toolsExist = [System.Version]((~/bin/OpenKNXproducer version) -split ' ')[1] -ge [System.Version]$checkVersion
+    # Auf vier Komponenten auffuellen: der Producer meldet die Version dreiteilig,
+    # [System.Version] setzt Revision dann auf -1 und "4.3.11" gilt gegen "4.3.11.0" als kleiner.
+    function Get-PaddedVersion($version) {
+        $parts = @($version -split '\.') + @('0', '0', '0', '0')
+        return [System.Version]($parts[0..3] -join '.')
+    }
+    $toolsExist = (Get-PaddedVersion ((~/bin/OpenKNXproducer version) -split ' ')[1]) -ge (Get-PaddedVersion $checkVersion)
 }
 if ($toolsExist) {
     $toolsExist = Test-Path -PathType Leaf ~/bin/bossac.exe

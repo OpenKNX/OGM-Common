@@ -10,6 +10,7 @@ import datetime
 
 class console_color:
     BLUE = '\033[94m'
+    DARKBLUE = '\033[34m'  # normales ANSI-Blau, dunkler als BLUE (94)
     CYAN = '\033[96m'
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
@@ -112,7 +113,7 @@ def get_ets_version(version_string):
 get_all_library_dependencies(project)
 
 print()
-print("{}Read OpenKNX Module version and build defines:{}".format(console_color.YELLOW, console_color.END))
+print("{}Generate include/versions.h{}".format(console_color.YELLOW, console_color.END))
 
 openknx_modules = {k: v for k, v in library_versions.items() if k.startswith("OGM") or k.startswith("OFM")}
 # openknx_modules["nodir"] = None # to test missing directory
@@ -131,33 +132,40 @@ for name, lib_version in openknx_modules.items():
     pass
 
 # build defines
-version_file = open("include/versions.h", "w")
-version_file.write("#pragma once\n\n")
-version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
-version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
-# additional_defines = dict()
-for name, version in openknx_modules.items():
-  define_name = "MODULE_" + name.split("-")[1]
-  version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
-  result = re.match(r"^(\d+)\.(\d+)\.(\d+)(\D.*)?$", version)
-  if result:
-    version_file.write("#define {}_Version_Major {}\n".format(define_name, int(result.group(1))))
-    version_file.write("#define {}_Version_Minor {}\n".format(define_name, int(result.group(2))))
-    version_file.write("#define {}_Version_Revision {}\n".format(define_name, int(result.group(3))))
+with open("include/versions.h", "w") as version_file:
+    version_file.write("#pragma once\n\n")
+    version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
+    version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
+    # additional_defines = dict()
+    for name, version in openknx_modules.items():
+        define_name = "MODULE_" + name.split("-")[1]
+        version_file.write("#define {} \"{}\"\n".format(define_name + "_Version", version))
+        result = re.match(r"^(\d+)\.(\d+)\.(\d+)(\D.*)?$", version)
+        if result:
+            version_file.write("#define {}_Version_Major {}\n".format(define_name, int(result.group(1))))
+            version_file.write("#define {}_Version_Minor {}\n".format(define_name, int(result.group(2))))
+            version_file.write("#define {}_Version_Revision {}\n".format(define_name, int(result.group(3))))
 
-  ets = get_ets_version(version)
-  if ets != None:
-    version_file.write("#define {} {}\n".format(define_name + "_ETS", ets))
-  
-  print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
+        ets = get_ets_version(version)
+        if ets != None:
+            version_file.write("#define {} {}\n".format(define_name + "_ETS", ets))
 
+        print("{}  {}: {} ({}){}".format(console_color.CYAN, define_name, version, name, console_color.END))
+
+print()
+
+# buildtime.h is kept separate from versions.h: BUILD_DATETIME/BUILD_TIMESTAMP
+# change on every single build, so bundling them into versions.h would force a
+# full rebuild (versions.h is pulled in via defines.h, i.e. by virtually every
+# source file) even when no module version actually changed.
+print("{}Generate include/buildtime.h{}".format(console_color.YELLOW, console_color.END))
 now = datetime.datetime.now()
 build_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
 build_timestamp = int(now.timestamp())
-version_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
-version_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
-
-version_file.close()
+with open("include/buildtime.h", "w") as build_file:
+    build_file.write("#pragma once\n\n")
+    build_file.write("#define BUILD_DATETIME \"{}\"\n".format(build_datetime))
+    build_file.write("#define BUILD_TIMESTAMP {}\n".format(build_timestamp))
 print("{}  Build: {}{}".format(console_color.CYAN, build_datetime, console_color.END))
 print()
 
@@ -170,6 +178,186 @@ if os.path.isfile("lib/OGM-Common/include/versions.h"):
 
 if os.path.isfile("lib/OGM-Common/include/hardware.h"):
     os.remove("lib/OGM-Common/include/hardware.h")
+
+
+# ── Web assets ────────────────────────────────────────────────────────────
+#
+# Jedes eingebundene Modul (und das Projekt selbst) darf einen web/assets/
+# Ordner mit sauber formatierten .css/.js/.svg/.jpg/.png-Dateien anlegen.
+# Hier werden sie minifiziert + gzip-komprimiert in include/webassets.h
+# geschrieben. Es wird ausschliesslich gzip ausgeliefert (keine Content-
+# Negotiation) -- die Firmware-Seite muss "Content-Encoding: gzip" setzen.
+#
+# Bezeichner sind flach (kein Modul-Praefix) und werden aus dem relativen
+# Pfad unter web/assets/ abgeleitet. Jede Kollision -- auch zwischen dem
+# Projekt selbst und einem Modul -- ist ein Fehler, kein Override.
+
+import gzip as _gzip
+
+WEBASSET_MIME = {
+    ".css": "text/css",
+    ".js": "text/javascript",
+    ".svg": "image/svg+xml",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+}
+
+
+def _webasset_identifier(rel_posix_path):
+    ident = re.sub(r"[^0-9a-zA-Z_]", "_", rel_posix_path)
+    if ident and ident[0].isdigit():
+        ident = "_" + ident
+    return ident
+
+
+def _minify_css(text):
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"\s*([{}:;,])\s*", r"\1", text)
+    text = re.sub(r";}", "}", text)
+    return text.strip()
+
+
+def _minify_js(text):
+    # Nur Whitespace am Zeilenanfang/-ende und Leerzeilen entfernen. Keine
+    # Kommentar-Entfernung: ein Regex kann '//' in einem String- oder
+    # Regex-Literal nicht sicher von einem echten Kommentar unterscheiden.
+    lines = [line.strip() for line in text.splitlines()]
+    return "\n".join(line for line in lines if line)
+
+
+def _minify_svg(text):
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+    text = re.sub(r">\s+<", "><", text)
+    return text.strip()
+
+
+def _format_byte_array(data, width=20):
+    hexed = ["0x{:02x}".format(b) for b in data]
+    return "\n".join(
+        "    " + ",".join(hexed[i:i + width]) + ","
+        for i in range(0, len(hexed), width)
+    )
+
+
+def _get_library_roots(root):
+    roots = []
+
+    def walk(node):
+        for lb in node.depbuilders:
+            roots.append((lb.name, pathlib.Path(lb.path)))
+            if lb.depbuilders:
+                walk(lb)
+
+    walk(root)
+    return roots
+
+
+def _collect_webassets(root):
+    seen_dirs = set()
+    seen_ident = {}  # identifier -> (owner label, source file)
+    entries = []     # (identifier, extension, absolute file path)
+
+    sources = _get_library_roots(root) + [("<project>", pathlib.Path(env.subst("$PROJECT_DIR")))]
+    for owner, lib_path in sources:
+        assets_dir = lib_path / "web" / "assets"
+        if not assets_dir.is_dir():
+            continue
+        real = assets_dir.resolve()
+        if real in seen_dirs:
+            continue
+        seen_dirs.add(real)
+
+        for file_path in sorted(assets_dir.rglob("*")):
+            if not file_path.is_file():
+                continue
+            ext = file_path.suffix.lower()
+            if ext not in WEBASSET_MIME:
+                continue
+
+            rel = file_path.relative_to(assets_dir).as_posix()
+            ident = _webasset_identifier(rel)
+
+            if ident in seen_ident:
+                other_owner, other_file = seen_ident[ident]
+                print("{}Duplicate web asset identifier '{}':{}".format(
+                    console_color.RED, ident, console_color.END))
+                print("  {} ({})".format(file_path, owner))
+                print("  {} ({})".format(other_file, other_owner))
+                raise SystemExit(1)
+            seen_ident[ident] = (owner, file_path)
+            entries.append((ident, ext, file_path))
+
+    return entries
+
+
+def _generate_webassets_header():
+    entries = _collect_webassets(project)
+    target = pathlib.Path("include/webassets.h")
+
+    if not entries:
+        if target.is_file():
+            target.unlink()
+        return
+
+    parts = [
+        "#pragma once",
+        "// Auto-generated by OGM-Common/scripts/pio/prepare.py from web/assets/",
+        "// directories across all included modules -- do not edit by hand.",
+        "#include <cstddef>",
+        "#include <cstdint>",
+        "",
+        "namespace WebAssets",
+        "{",
+    ]
+
+    total_raw = 0
+    total_gz = 0
+    minifiers = {".css": _minify_css, ".js": _minify_js, ".svg": _minify_svg}
+
+    print("{}Generate include/webassets.h{}".format(console_color.YELLOW, console_color.END))
+
+    for ident, ext, file_path in entries:
+        raw = file_path.read_bytes()
+        if ext in minifiers:
+            minified = minifiers[ext](raw.decode("utf-8")).encode("utf-8")
+        else:
+            minified = raw  # .jpg/.png -- binaer, kein Minifier sinnvoll
+
+        compressed = _gzip.compress(minified, compresslevel=9, mtime=0)
+        total_raw += len(raw)
+        total_gz += len(compressed)
+
+        pct = round(len(compressed) * 100 / len(raw)) if raw else 0
+        print("{}  {}: {} -> {} bytes ({}%){}".format(
+            console_color.CYAN, ident, len(raw), len(compressed), pct, console_color.END))
+
+        # Keine separate _gz_len-Konstante: die Groesse ist ueber sizeof(x_gz) am
+        # Aufruf bereits bekannt (Array mit fester Bound) -- ein Laengenfeld waere
+        # nur eine redundante, von Hand nachzufuehrende Zahl. Wichtig: das ist NICHT
+        # NUL-terminiert -- gzip-Bytes sind Binaerdaten und enthalten praktisch immer
+        # ein 0x00 irgendwo im Stream; strlen() wuerde den Inhalt zufaellig abschneiden.
+        parts.append("    inline const uint8_t {}_gz[] = {{".format(ident))
+        parts.append(_format_byte_array(compressed))
+        parts.append("    };")
+        parts.append("    inline const char* const {}_mime = \"{}\";".format(ident, WEBASSET_MIME[ext]))
+        parts.append("")
+
+    parts.append("} // namespace WebAssets")
+    parts.append("")
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("\n".join(parts), encoding="utf-8")
+
+    total_pct = round(total_gz * 100 / total_raw) if total_raw else 0
+    print("{}  Total: {} files, {} -> {} bytes ({}%){}".format(
+        console_color.DARKBLUE, len(entries), total_raw, total_gz, total_pct, console_color.END))
+    print()
+
+
+_generate_webassets_header()
+
 
 # def make_macro_name(lib_name):
 #     lib_name = lib_name.upper()
