@@ -594,6 +594,31 @@ function ScanPicoPorts() {
     }
 }
 
+# Polls for BOOTSEL volumes until at least one appears. Returns the paths (empty on timeout).
+function Wait-BootselPaths($timeoutSec = 15) {
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        $found = @(ScanBootselPaths)
+        if ($found.Count -gt 0) { return $found }
+        Start-Sleep -Milliseconds 250
+    }
+    return @()
+}
+
+# Waits until a BOOTSEL volume is really usable. The mountpoint exists before the FAT is
+# mounted, so a write can fail on a path that Test-Path already reports. INFO_UF2.TXT is
+# readable only once the volume is up.
+function Wait-BootselReady([string]$path, $timeoutSec = 10) {
+    if ($IsWindows) { return $true }
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        try { if ((Get-Item (Join-Path $path 'INFO_UF2.TXT') -ErrorAction Stop).Length -gt 0) { return $true } } catch {}
+        Start-Sleep -Milliseconds 250
+    }
+    dbg "Wait-BootselReady timeout on $path"
+    return $false
+}
+
 # Copies firmware with animated spinner. Returns $true on success.
 function Copy-FirmwareWithSpinner($label, $sourcePath, $devicePath) {
     if ($IsWindows) {
@@ -618,36 +643,42 @@ function Copy-FirmwareWithSpinner($label, $sourcePath, $devicePath) {
     $target  = Join-Path $devicePath ([System.IO.Path]::GetFileName($sourcePath))
     $bufSize = 16384
     $buf     = New-Object byte[] $bufSize
-    $written = 0
     $cells   = 24
-    $lastPct = -1
-    $src = $null; $dst = $null
-    try { [Console]::CursorVisible = $false } catch {}
-    try {
-        $src = [System.IO.File]::OpenRead($sourcePath)
-        $dst = [System.IO.File]::Create($target)
-        while ($true) {
-            $n = $src.Read($buf, 0, $bufSize)
-            if ($n -le 0) { break }
-            try { $dst.Write($buf, 0, $n); $dst.Flush() } catch { $written += $n; break }  # device ejected on last block
-            $written += $n
-            $pct = if ($total -gt 0) { [Math]::Min(100, [int](100 * $written / $total)) } else { 0 }
-            if ($pct -ne $lastPct) {
-                $lastPct = $pct
-                $fill = [int]($cells * $pct / 100)
-                Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
-                Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
-                Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
+    $ok      = $false
+    # Retry: a freshly enumerated BOOTSEL volume can still reject the first open
+    for ($attempt = 1; $attempt -le 3 -and -not $ok; $attempt++) {
+        if ($attempt -gt 1) { Start-Sleep -Seconds 1; [void](Wait-BootselReady $devicePath 5) }
+        $written = 0
+        $lastPct = -1
+        $src = $null; $dst = $null
+        try { [Console]::CursorVisible = $false } catch {}
+        try {
+            $src = [System.IO.File]::OpenRead($sourcePath)
+            $dst = [System.IO.File]::Create($target)
+            while ($true) {
+                $n = $src.Read($buf, 0, $bufSize)
+                if ($n -le 0) { break }
+                try { $dst.Write($buf, 0, $n); $dst.Flush() } catch { $written += $n; break }  # device ejected on last block
+                $written += $n
+                $pct = if ($total -gt 0) { [Math]::Min(100, [int](100 * $written / $total)) } else { 0 }
+                if ($pct -ne $lastPct) {
+                    $lastPct = $pct
+                    $fill = [int]($cells * $pct / 100)
+                    Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
+                    Write-Host (([string][char]0x25A0 * $fill) + ([string][char]0x25A1 * ($cells - $fill))) -ForegroundColor Green -NoNewline
+                    Write-Host ("]  {0,3} %" -f $pct) -ForegroundColor DarkGray -NoNewline
+                }
             }
+        } catch {
+            dbg "Copy attempt $attempt failed: $($_.Exception.Message)"   # completion is decided by the bytes written
+        } finally {
+            if ($dst) { try { $dst.Close() } catch {} }
+            if ($src) { try { $src.Close() } catch {} }
+            try { [Console]::CursorVisible = $true } catch {}
         }
-    } catch {
-        # completion is decided by the bytes written below, not by this error
-    } finally {
-        if ($dst) { try { $dst.Close() } catch {} }
-        if ($src) { try { $src.Close() } catch {} }
-        try { [Console]::CursorVisible = $true } catch {}
+        $ok = ($total -gt 0 -and $written -ge $total)
+        if (-not $ok) { Write-Host ("`r" + (' ' * ($cells + 14)) + "`r") -NoNewline }
     }
-    $ok = ($total -gt 0 -and $written -ge $total)
     if ($ok) {
         Write-Host "`r  [" -ForegroundColor DarkGray -NoNewline
         Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
@@ -1805,6 +1836,11 @@ function Read-Choice([string]$prompt, [string[]]$valid, [scriptblock]$Reprint = 
         $consoleOk = $true
         try { $null = [Console]::KeyAvailable } catch { $consoleOk = $false }
 
+        # Menus whose options are all single letters ([I]/[X], [J]/[A]/[X], ...) act on the keystroke
+        # itself -- no Enter. Lists with double-digit entries ("10") still need Enter, and so does the
+        # hidden '??', so those keep the typed-buffer path.
+        $singleKey = -not ($valid | Where-Object { $_.Length -ne 1 })
+
         if (-not $consoleOk -or $script:NoTimeout) {
             $v = (Read-Host $prompt).Trim()
         } else {
@@ -1828,9 +1864,17 @@ function Read-Choice([string]$prompt, [string[]]$valid, [scriptblock]$Reprint = 
                     elseif ($key.Key -eq 'Backspace') {
                         if ($buffer.Length -gt 0) { $buffer = $buffer.Substring(0, $buffer.Length - 1); Write-Host "`b `b" -NoNewline }
                     } elseif ([int][char]$key.KeyChar -ge 32) {
-                        $buffer += [string]$key.KeyChar; Write-Host $key.KeyChar -NoNewline
+                        $ch = [string]$key.KeyChar
+                        if ($singleKey -and $buffer -eq '' -and $ch.ToUpper() -in $valid) {
+                            Write-Host $ch                 # echo the key, then act on it
+                            $v = $ch
+                            break
+                        }
+                        $buffer += $ch; Write-Host $ch -NoNewline
                     }
-                } elseif ($buffer -eq '') {
+                } else {
+                    # Idle close runs whether or not something was typed -- a half-typed entry used to
+                    # disable it entirely and the tool then waited for Enter forever.
                     $idle = ((Get-Date) - $lastKey).TotalSeconds
                     if ($idle -ge $idleSec) {
                         $remain = [int][Math]::Ceiling(($idleSec + $countdownSec) - $idle)
@@ -1845,8 +1889,6 @@ function Read-Choice([string]$prompt, [string[]]$valid, [scriptblock]$Reprint = 
                             $cd = $true
                         }
                     }
-                    Start-Sleep -Milliseconds 150
-                } else {
                     Start-Sleep -Milliseconds 150
                 }
             }
@@ -2296,8 +2338,7 @@ if ($Chip -eq 'RP2040') {
             try { $serial.Open() }
             catch {}
             finally { if ($serial.IsOpen) { $serial.Close() } }
-            Start-Sleep -Seconds 2
-            $newBootsel = @(ScanBootselPaths)
+            $newBootsel = @(Wait-BootselPaths 15)   # poll for the mount instead of a fixed sleep
             if ($newBootsel.Count -eq 0) {
                 Write-Host $s.NoDeviceFound -ForegroundColor Red
                 Write-Host
@@ -2311,6 +2352,7 @@ if ($Chip -eq 'RP2040') {
         }
 
         if (-not $devicePath) { Write-Host; continue }
+        [void](Wait-BootselReady $devicePath 10)   # FAT must be readable before writing
 
         # ── Verify uf2 family matches the BOOTSEL device (RP2040 vs RP2350) ────
         if ($VerifyRpFamily) {
