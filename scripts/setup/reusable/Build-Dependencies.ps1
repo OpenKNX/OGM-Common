@@ -61,6 +61,14 @@ foreach ($subproject in $projects) {
 
         $commitHash = git --git-dir $subproject/.git log -1 --pretty=format:"%h"
         $remoteUrl = git --git-dir $subproject/.git config --get remote.origin.url
+
+        # A module without a remote exists only on this machine. Listing it would name a commit
+        # nobody else can fetch, so the file would no longer describe a reproducible build.
+        if (-not $remoteUrl) {
+            Write-Host "NOTE: '$subproject' has no remote -- local-only, not listed" -ForegroundColor Yellow
+            continue
+        }
+
         $dependencies += "$commitHash $branch $subproject $remoteUrl"
     } else {
         $info = "-> ignore directory '" + $subproject + "'"
