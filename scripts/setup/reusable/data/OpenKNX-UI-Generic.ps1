@@ -230,6 +230,299 @@ function OpenKNX_ReadChoice {
     return $answer.Trim()
 }
 
+
+function OpenKNX_SelectInteractive {
+    <#
+    .SYNOPSIS
+        Pick a row with the arrow keys. Returns the index, -1 on cancel, -2 for "one level up",
+        and -3 when this console cannot do it -- then the caller falls back to numbers.
+    .DESCRIPTION
+        Up / Down move, Enter takes, Backspace or Left goes up a level, Esc cancels, a letter jumps to
+        the next entry starting with it. Everything is drawn in place, so the screen does not fill up.
+        Works in Windows PowerShell 5.1 and in PowerShell 7 -- ReadKey and SetCursorPosition are .NET,
+        not a PowerShell feature. A redirected input has no keys at all, hence the -3.
+    #>
+    param([string[]]$Lines, [string]$Header = "", [int]$Selected = 0, [string]$Hint = "")
+    if (-not $Lines -or $Lines.Count -eq 0) { return -1 }
+    try { if ([Console]::IsInputRedirected) { return -3 } } catch { return -3 }
+
+    $winH = 15
+    try { $winH = [Math]::Max(5, [Math]::Min(20, [Console]::WindowHeight - 8)) } catch { }
+    $count = $Lines.Count
+    if ($Selected -lt 0 -or $Selected -ge $count) { $Selected = 0 }
+    $off = 0
+    $shown = [Math]::Min($winH, $count)
+    $width = 100
+    try { $width = [Math]::Max(40, [Console]::WindowWidth - 1) } catch { }
+
+    # Print the block once, then derive the top from where the cursor ended up -- that way the anchor
+    # is right even when the window scrolled while printing.
+    $block = $shown + 2
+    for ($i = 0; $i -lt $block; $i++) { Write-Host "" }
+    $top = 0
+    try { $top = [Console]::CursorTop - $block } catch { return -3 }
+    if ($top -lt 0) { $top = 0 }
+
+    # On the way out the block clears itself. Otherwise every level walked through stays on screen and
+    # the display grows with each step -- this is ONE list that changes, not a stack of lists. finally
+    # also catches the returns from inside the loop.
+    try {
+
+    while ($true) {
+        if ($Selected -lt $off) { $off = $Selected }
+        if ($Selected -ge $off + $shown) { $off = $Selected - $shown + 1 }
+        try { [Console]::SetCursorPosition(0, $top) } catch { return -3 }
+
+        $head = $Header
+        if ($count -gt $shown) { $head = "$Header   ($($Selected + 1)/$count)" }
+        Write-Host ($head.PadRight($width).Substring(0, $width)) -ForegroundColor DarkGray
+        for ($i = 0; $i -lt $shown; $i++) {
+            $idx = $off + $i
+            $text = ""
+            if ($idx -lt $count) { $text = $Lines[$idx] }
+            $mark = "   "
+            if ($idx -eq $Selected) { $mark = " > " }
+            $row = ($mark + $text)
+            if ($row.Length -gt $width) { $row = $row.Substring(0, $width) }
+            if ($idx -eq $Selected) { Write-Host $row.PadRight($width) -ForegroundColor Black -BackgroundColor Green }
+            else { Write-Host $row.PadRight($width) }
+        }
+        Write-Host ($Hint.PadRight($width).Substring(0, $width)) -ForegroundColor DarkGray
+
+        $key = $null
+        try { $key = [Console]::ReadKey($true) } catch { return -3 }
+        switch ($key.Key) {
+            "UpArrow"    { if ($Selected -gt 0) { $Selected-- } else { $Selected = $count - 1 }; break }
+            "DownArrow"  { if ($Selected -lt $count - 1) { $Selected++ } else { $Selected = 0 }; break }
+            "Home"       { $Selected = 0; break }
+            "End"        { $Selected = $count - 1; break }
+            "PageUp"     { $Selected = [Math]::Max(0, $Selected - $shown); break }
+            "PageDown"   { $Selected = [Math]::Min($count - 1, $Selected + $shown); break }
+            "Enter"      { return $Selected }
+            "Spacebar"   { return $Selected }
+            "RightArrow" { return $Selected }
+            "Backspace"  { return -2 }
+            "LeftArrow"  { return -2 }
+            "Escape"     { return -1 }
+            default {
+                $ch = $key.KeyChar
+                if ($ch -and [char]::IsLetterOrDigit($ch)) {
+                    # Jump to the next entry starting with this letter, counting from the current row.
+                    for ($k = 1; $k -le $count; $k++) {
+                        $idx = ($Selected + $k) % $count
+                        $t = $Lines[$idx].TrimStart()
+                        if ($t.Length -gt 0 -and [char]::ToLower($t[0]) -eq [char]::ToLower($ch)) { $Selected = $idx; break }
+                    }
+                }
+            }
+        }
+    }
+
+    }
+    finally {
+        try {
+            [Console]::SetCursorPosition(0, $top)
+            for ($i = 0; $i -lt $block; $i++) { Write-Host ("".PadRight($width)) }
+            [Console]::SetCursorPosition(0, $top)
+        } catch { }
+    }
+}
+
+function OpenKNX_ListRoots {
+    <#
+    .SYNOPSIS
+        Where "up" ends: the drives of this machine.
+    .DESCRIPTION
+        Windows has several roots, Unix has one -- but a firmware often sits on a stick, and that is
+        mounted under /Volumes (macOS) or /media, /run/media, /mnt (Linux). Those are listed too, so
+        walking up leads to the stick instead of a dead end at "/".
+    #>
+    $out = @()
+    if (OpenKNX_UI_OnWindows) {
+        foreach ($d in (Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue)) {
+            if ($d.Root) { $out += $d.Root }
+        }
+        return $out
+    }
+    $out += "/"
+    $mounts = @()
+    if (OpenKNX_UI_OnMac) { $mounts = @("/Volumes") }
+    else { $mounts = @("/media/$env:USER", "/run/media/$env:USER", "/media", "/mnt") }
+    foreach ($m in $mounts) {
+        if (-not (Test-Path -PathType Container $m)) { continue }
+        foreach ($v in (Get-ChildItem -LiteralPath $m -Directory -ErrorAction SilentlyContinue)) {
+            $out += $v.FullName
+        }
+    }
+    return ($out | Select-Object -Unique)
+}
+
+function OpenKNX_PickFileNative {
+    <#
+    .SYNOPSIS
+        The system's own file chooser, where there is one.
+    .DESCRIPTION
+        Windows gets the common dialog, macOS the Finder chooser, Linux zenity or kdialog if installed.
+        Every one of them can be absent or refuse to open (no desktop session, PowerShell running MTA);
+        that is not an error here -- the caller falls back to walking the folders in the terminal.
+        Returns "" when nothing was chosen.
+    #>
+    param([string]$Start = ".", [string[]]$Include = @("*"))
+    $start = (Resolve-Path -ErrorAction SilentlyContinue $Start)
+    if ($start) { $start = $start.Path } else { $start = (Get-Location).Path }
+
+    if (OpenKNX_UI_OnWindows) {
+        try {
+            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            $dlg = New-Object System.Windows.Forms.OpenFileDialog
+            $dlg.InitialDirectory = $start
+            $pat = ($Include -join ';')
+            $dlg.Filter = "Firmware ($pat)|$pat|Alle Dateien (*.*)|*.*"
+            $dlg.Multiselect = $false
+            if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { return $dlg.FileName }
+        } catch { }
+        return ""
+    }
+    if (OpenKNX_UI_OnMac) {
+        # `choose file` returns an alias; POSIX path makes it usable. A cancel raises -128 -> empty.
+        $script = 'try' + "`n" +
+                  'set f to choose file with prompt "OpenKNX: Firmware auswaehlen" default location POSIX file "' + $start + '"' + "`n" +
+                  'POSIX path of f' + "`n" + 'end try'
+        try {
+            $out = (& osascript -e $script 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $out) { return ($out | Select-Object -First 1).Trim() }
+        } catch { }
+        return ""
+    }
+    foreach ($tool in @("zenity", "kdialog")) {
+        $cmd = Get-Command $tool -ErrorAction SilentlyContinue
+        if (-not $cmd) { continue }
+        try {
+            if ($tool -eq "zenity") { $out = (& $cmd --file-selection --filename "$start/" 2>$null) }
+            else { $out = (& $cmd --getopenfilename "$start" 2>$null) }
+            if ($LASTEXITCODE -eq 0 -and $out) { return ($out | Select-Object -First 1).Trim() }
+        } catch { }
+    }
+    return ""
+}
+
+function OpenKNX_WalkFile {
+    <#
+    .SYNOPSIS
+        Step through folders in the terminal -- the fallback that always works.
+    .DESCRIPTION
+        Over SSH, in a build console and on a machine without a desktop there is no dialog. Arrow keys
+        move, Enter takes, Backspace goes up, Esc cancels; a console that cannot do keys (redirected
+        input) gets the numbered list instead. Walking up past the root lists the drives, so a firmware
+        on a stick is reachable. Returns "" when nothing was chosen.
+    #>
+    param([string]$Start = ".", [string[]]$Include = @("*"), [string]$Prompt = "Auswahl")
+    $cur = (Resolve-Path -ErrorAction SilentlyContinue $Start)
+    if ($cur) { $cur = $cur.Path } else { $cur = (Get-Location).Path }
+    $hint = "  Pfeile bewegen . Enter waehlt . Backspace eine Ebene hoch . Esc bricht ab"
+
+    while ($true) {
+        $labels = @()
+        $entries = @()
+
+        if ($cur -eq "@roots") {
+            foreach ($r in (OpenKNX_ListRoots)) {
+                $labels += $r
+                $entries += @{ Kind = "dir"; Path = $r }
+            }
+            $head = "  Laufwerke"
+        }
+        else {
+            $upTxt = ".."
+            if (-not (Split-Path -Parent $cur)) { $upTxt = ".. (Laufwerke)" }
+            $labels += $upTxt
+            $entries += @{ Kind = "up" }
+            if ($script:OpenKNX_HaveNativePicker) {
+                $labels += "Dateidialog des Systems oeffnen ..."
+                $entries += @{ Kind = "native" }
+            }
+
+            foreach ($d in (Get-ChildItem -LiteralPath $cur -Directory -ErrorAction SilentlyContinue | Sort-Object Name)) {
+                $labels += ($d.Name + "/")
+                $entries += @{ Kind = "dir"; Path = $d.FullName }
+            }
+            # -Include beisst ohne -Recurse nicht zuverlaessig; deshalb selbst filtern.
+            $files = @(Get-ChildItem -LiteralPath $cur -File -ErrorAction SilentlyContinue |
+                       Where-Object { $n = $_.Name; @($Include | Where-Object { $n -like $_ }).Count -gt 0 } |
+                       Sort-Object LastWriteTime -Descending)
+            foreach ($f in $files) {
+                $labels += ("{0,-46} {1,10:N0} B   {2:dd.MM. HH:mm}" -f $f.Name, $f.Length, $f.LastWriteTime)
+                $entries += @{ Kind = "file"; Path = $f.FullName }
+            }
+            $head = "  " + $cur
+        }
+
+        $pick = OpenKNX_SelectInteractive -Lines $labels -Header $head -Hint $hint
+        if ($pick -eq -3) {
+            # No keys (redirected input): fall back to the numbered list.
+            Write-Host ""
+            Write-Host $head -ForegroundColor DarkGray
+            for ($i = 0; $i -lt $labels.Count; $i++) { Write-Host ("  [{0}] {1}" -f ($i + 1), $labels[$i]) }
+            Write-Host ""
+            $answer = Read-Host ("  $Prompt (Nummer, Pfad, leer = abbrechen)")
+            if (-not $answer) { return "" }
+            $answer = $answer.Trim()
+            $n = 0
+            if ([int]::TryParse($answer, [ref]$n) -and $n -ge 1 -and $n -le $entries.Count) { $pick = $n - 1 }
+            else {
+                $cand = $answer
+                if (-not [System.IO.Path]::IsPathRooted($cand)) { $cand = Join-Path $cur $cand }
+                if (Test-Path -PathType Leaf $cand) { return (Resolve-Path $cand).Path }
+                if (Test-Path -PathType Container $cand) { $cur = (Resolve-Path $cand).Path; continue }
+                Write-Host ("  nicht gefunden: {0}" -f $answer) -ForegroundColor Yellow
+                continue
+            }
+        }
+        if ($pick -eq -1) { return "" }
+        if ($pick -eq -2) {
+            if ($cur -eq "@roots") { return "" }
+            $up = Split-Path -Parent $cur
+            if ($up) { $cur = $up } else { $cur = "@roots" }
+            continue
+        }
+        $e = $entries[$pick]
+        if ($e.Kind -eq "up") {
+            $up = Split-Path -Parent $cur
+            if ($up) { $cur = $up } else { $cur = "@roots" }
+            continue
+        }
+        if ($e.Kind -eq "native") {
+            $n = OpenKNX_PickFileNative -Start $cur -Include $Include
+            if ($n -and (Test-Path -PathType Leaf $n)) { return $n }
+            continue                                  # cancelled: back to the list
+        }
+        if ($e.Kind -eq "dir") { $cur = $e.Path; continue }
+        return $e.Path
+    }
+}
+
+function OpenKNX_PickFile {
+    <#
+    .SYNOPSIS
+        Choose a file: arrow keys in the terminal, with the system dialog one row away.
+    .DESCRIPTION
+        The keyboard leads -- it works in every console, over SSH and without a desktop. Where a native
+        chooser exists it is offered as a row in the list, so nobody has to leave the terminal for it and
+        nobody gets a window popped at them who did not ask. "" = nothing chosen.
+    #>
+    param([string]$Start = ".", [string[]]$Include = @("*"), [string]$Prompt = "Auswahl")
+    $script:OpenKNX_HaveNativePicker = $false
+    try {
+        if (-not [Console]::IsInputRedirected) {
+            if (OpenKNX_UI_OnWindows) { $script:OpenKNX_HaveNativePicker = $true }
+            elseif (OpenKNX_UI_OnMac) { $script:OpenKNX_HaveNativePicker = $true }
+            elseif ((Get-Command zenity -ErrorAction SilentlyContinue) -or
+                    (Get-Command kdialog -ErrorAction SilentlyContinue)) { $script:OpenKNX_HaveNativePicker = $true }
+        }
+    } catch { }
+    return (OpenKNX_WalkFile -Start $Start -Include $Include -Prompt $Prompt)
+}
+
 function OpenKNX_GetFtcVersion {
     <#
     .SYNOPSIS
