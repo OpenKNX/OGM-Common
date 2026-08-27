@@ -393,12 +393,14 @@ if ($processor -ne "SAMD") {
   }
 }
 
-# Extract-Images
-# The release ships ONE file per device. Everything that needs the raw application image derives it --
-# ftc for the bus, the OTA script for the network -- and this is the same derivation for a person who
-# wants the file itself: for their own tooling, their own checksum, or an OTA path that is not ours.
-$fileName = "$CopyItem_Target_Dir/Extract-Images.ps1"
-$scriptContent = "& `"`$PSScriptRoot/../../data/Extract-AppImage-Generic.ps1`" `"`$PSScriptRoot/$CopyItem_Target_Name`" @args"
+# Prepare-Firmware
+# The release ships ONE file per device -- a package. Everything that needs the raw application image
+# derives it (ftc for the bus, the OTA script for the network); this is the same derivation for a person
+# who wants the files themselves: the plain image for USB or their own checksum, the gzipped one for a
+# knxOTA transfer, or a difference to an older release. The three upload scripts next to it send; this
+# one prepares. None of them calls it.
+$fileName = "$CopyItem_Target_Dir/Prepare-Firmware.ps1"
+$scriptContent = "& `"`$PSScriptRoot/../../data/Prepare-Firmware-Generic.ps1`" `"`$PSScriptRoot/$CopyItem_Target_Name`" @args"
 if (Test-Path $fileName) { Clear-Content -Path $fileName }
 Add-Content -Path $fileName -Value $scriptContent
 if (!$?) {
