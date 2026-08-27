@@ -1,3 +1,4 @@
+
 Import("env")
 Import("projenv")
 import os
@@ -8,7 +9,7 @@ from platformio.proc import exec_command
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C, section, ok, warn, err, human_bytes, show_lib_sizes
+from _pio_common import C, section, ok, warn, err, human_bytes, show_lib_sizes, quiet_action, G_OK, G_FAIL
 
 
 class FlashRegion:
@@ -247,24 +248,24 @@ def show_flash_partitioning(source, target, env):
         print("{}    {:<26}{:>10}{:>11}{:>12}{}".format(C.GRAY, "", "over bus", "staged", "time", C.END))
 
         if est_compressed > fs_usable:
-            row("✘", C.RED, "full image · gzip", est_compressed, est_compressed,
+            row(G_FAIL, C.RED, "full image · gzip", est_compressed, est_compressed,
                 "needs {} of {} usable".format(human_bytes(est_compressed), human_bytes(fs_usable)))
             if not est_measured:
                 print("{}    (estimated from a ratio - the binary was not there to measure){}".format(C.GRAY, C.END))
         elif est_compressed > int(fs_size * 0.82):
             row("!", C.AMBER, "full image · gzip", est_compressed, est_compressed, "headroom is tight")
         else:
-            row("✔", C.GREEN, "full image · gzip", est_compressed, est_compressed)
+            row(G_OK, C.GREEN, "full image · gzip", est_compressed, est_compressed)
 
         if not delta_on:
             row("·", C.GRAY, "delta patch", None, None, "add -D OPENKNX_FTC_DELTA_UPDATE (or the MANAGER profile) to offer it")
         elif delta_needed > fs_size:
-            row("✘", C.RED, "delta patch · typical", patch, delta_needed,
+            row(G_FAIL, C.RED, "delta patch · typical", patch, delta_needed,
                 "rebuilt image is staged uncompressed — no room next to it")
         elif delta_needed > int(fs_size * 0.95):
             row("!", C.AMBER, "delta patch · typical", patch, delta_needed, "headroom is tight")
         else:
-            row("✔", C.GREEN, "delta patch · typical", patch, delta_needed)
+            row(G_OK, C.GREEN, "delta patch · typical", patch, delta_needed)
 
         print("{}    firmware {} · filesystem {} · usable {} (x{:.2f}) · applied by picoOTA{}".format(
             C.GRAY, human_bytes(firmware_end), human_bytes(fs_size), human_bytes(fs_usable),
@@ -294,4 +295,6 @@ def show_flash_partitioning(source, target, env):
 
 
 if projenv["PIOPLATFORM"] != "espressif32":
-    env.AddPostAction("checkprogsize", show_flash_partitioning)
+    # Bare function -> SCons prints its own call line above the report. The block has a header of
+    # its own, so the label is noise; an empty command string suppresses it.
+    env.AddPostAction("checkprogsize", quiet_action(show_flash_partitioning))

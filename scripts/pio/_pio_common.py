@@ -7,8 +7,11 @@
 #  the version and webasset steps.
 # ---------------------------------------------------------------------------
 
+import io
+import locale
 import os
 import re
+import sys
 
 from platformio.proc import exec_command
 
@@ -25,7 +28,43 @@ class C:
     RED = "\033[91m"
 
 
-RULE = C.GRAY + "─" * 78 + C.END
+# --- Console encoding ---------------------------------------------------------------------------
+# On Windows a REDIRECTED stdout falls back to the code page (cp1252/cp850), and the box/check glyphs
+# are not in it -> UnicodeEncodeError, and the build dies on a REPORT. Ask for UTF-8 first; if that is
+# refused, fall back to ASCII glyphs. A report must never be the reason a build fails.
+def _stdout_utf8():
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        return True
+    except Exception:
+        pass
+    # SCons replaces sys.stdout with an object of its own -- it has neither reconfigure nor encoding.
+    # Then the system locale decides, not "ascii": otherwise macOS/Linux falls back for no reason.
+    enc = getattr(sys.stdout, "encoding", None) or locale.getpreferredencoding(False) or "ascii"
+    try:
+        "─✔✘█·—".encode(enc)
+        return True
+    except Exception:
+        pass
+    try:                     # cannot switch: at least never abort with an error
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding=sys.stdout.encoding or "ascii",
+                                      errors="replace", line_buffering=True)
+    except Exception:
+        pass
+    return False
+
+
+UNICODE_OK = _stdout_utf8()
+
+# Glyphs in one place, so the ASCII fallback reaches every one of them.
+G_RULE = "─" if UNICODE_OK else "-"
+G_OK = "✔" if UNICODE_OK else "+"
+G_FAIL = "✘" if UNICODE_OK else "x"
+G_BAR = "█" if UNICODE_OK else "#"
+G_DOT = "·" if UNICODE_OK else "."
+G_DASH = "—" if UNICODE_OK else "--"
+
+RULE = C.GRAY + G_RULE * 78 + C.END
 
 
 def human_bytes(n):
@@ -35,6 +74,12 @@ def human_bytes(n):
     if n >= 1024:
         return "{:.0f} KB".format(n / 1024)
     return "{} B".format(n)
+
+
+def quiet_action(fn):
+    """Post-Action ohne SCons-Aufrufzeile: die Bloecke drucken ihre eigene Ueberschrift."""
+    from SCons.Script import Action
+    return Action(fn, strfunction=lambda *a, **k: "")
 
 
 def section(title, note=""):
@@ -53,7 +98,7 @@ def step(title):
 
 
 def ok(msg, note=""):
-    print(C.GREEN + "✔" + C.END + " " + msg + (("  " + C.GRAY + note + C.END) if note else ""))
+    print(C.GREEN + G_OK + C.END + " " + msg + (("  " + C.GRAY + note + C.END) if note else ""))
 
 
 def warn(msg, note=""):
@@ -212,7 +257,10 @@ def show_lib_sizes(env, binary_size=0):
             human_bytes(sum(x[1] for x in small)), len(small), C.END))
     # No "core + SDK" row: ours are upper bounds, so a remainder computed from them is meaningless.
     if binary_size:
-        print("{}    {:<30}{:>10}{}".format(C.GRAY, "binary (text + data)", human_bytes(binary_size), C.END))
+        # Same emphasis as in the web-asset block: the total carries the statement.
+        print("{}{:<30}{:>10}{}".format(
+            "    " + C.GRAY + G_RULE * 47 + C.END + "\n    " + C.BOLD, "binary (text + data)",
+            human_bytes(binary_size), C.END))
     print("{}    upper bounds: the linker drops unused sections afterwards, and the Arduino core{}"
           .format(C.GRAY, C.END))
     print("{}    and the SDK link from prebuilt archives, so they are not among these rows{}"

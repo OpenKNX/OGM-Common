@@ -7,7 +7,7 @@ from platformio.proc import exec_command
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C, section, ok, warn, identity_line
+from _pio_common import C, section, ok, warn, identity_line, quiet_action
 
 
 def _define(content, name, width):
@@ -61,4 +61,4 @@ def post_program_action(source, target, env):
     ok("firmware.uf2", "KNX identity tag written")
 
 
-env.AddPostAction("buildprog", post_program_action)
+env.AddPostAction("buildprog", quiet_action(post_program_action))

@@ -22,7 +22,7 @@ from os.path import basename, join
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C, RULE, warn, identity_line, show_lib_sizes
+from _pio_common import C, RULE, warn, identity_line, show_lib_sizes, quiet_action, section, G_OK, G_FAIL, G_BAR, G_DOT, G_RULE
 from _pio_common import human_bytes as _human
 
 
@@ -76,20 +76,27 @@ def _show_partitions(part_path, total, app_size):
     parts = _partitions(part_path)
     if not parts:
         return
-    print(f"{C.BOLD}Partitions{C.END}  {C.GRAY}(from the partition table){C.END}")
+    section("Partitions", "(from the partition table)")
+    print("{}    {:<30}{:>10}{:>11}{}".format(C.GRAY, "", "size", "offset", C.END))
     prev_end = parts[0][0]
     for start, size, label, kind in parts:
         if start > prev_end:
-            print(f"{C.GRAY}  {hex(prev_end):<10} {_human(start - prev_end):>10}   (unpartitioned){C.END}")
+            print("    {}{:<30}{:>10}{:>11}{}".format(
+                C.GRAY, "(unpartitioned)", _human(start - prev_end), "0x%06X" % prev_end, C.END))
         used = ""
         if kind in ("factory", "ota_0") and app_size and size > 0:
             pct = app_size * 100 // size
             col = C.AMBER if pct > 90 else C.GREEN
             used = f"   {col}{_human(app_size)} used · {pct} %{C.END}"
-        print(f"  {C.BLUE}{hex(start):<10}{C.END} {_human(size):>10}   {label:<10} {C.GRAY}{kind}{C.END}{used}")
+        lb = "{:<16}".format(label[:16])
+        kd = "{:<14}".format(kind[:14])
+        print("    {}{}{}{}{}{}{:>10}{}{:>11}{}{}".format(
+            C.CYAN, lb, C.END, C.GRAY, kd, C.END, _human(size), C.GRAY,
+            "0x%06X" % start, C.END, used))
         prev_end = start + size
     if total > prev_end:
-        print(f"{C.GRAY}  {hex(prev_end):<10} {_human(total - prev_end):>10}   (unpartitioned){C.END}")
+        print("    {}{:<30}{:>10}{:>11}{}".format(
+            C.GRAY, "(unpartitioned)", _human(total - prev_end), "0x%06X" % prev_end, C.END))
 
 
 def _fs_partition(part_path):
@@ -173,7 +180,7 @@ def _row(label, over_bus, staged, verdict, note=""):
     what makes the verdict checkable. Columns stay aligned so the two ways to update can be compared
     without reading a sentence.
     """
-    glyph, col = {"ok": ("✔", C.GREEN), "no": ("✘", C.RED),
+    glyph, col = {"ok": (G_OK, C.GREEN), "no": (G_FAIL, C.RED),
                   "off": ("·", C.GRAY), "usb": ("!", C.AMBER)}[verdict]
     bus = _human(over_bus) if over_bus else "—"
     st = _human(staged) if staged else "—"
@@ -199,8 +206,9 @@ def _ota_fit(app_size, fs_size, app_path=None, part_path=None):
     slots = _ota_slots(part_path) if part_path is not None else None
     delta_on = _has_define("OPENKNX_FTC_DELTA_UPDATE")
 
-    print(f"{C.BOLD}{C.CYAN}knxOTA{C.END}  {C.BOLD}firmware update over the KNX bus{C.END}  "
-          f"{C.GRAY}what it costs to reach this device without touching it{C.END}")
+    # Same section() as the RP2040 block prints, so both platforms show one and the same report.
+    section("{}knxOTA{}  firmware update over the KNX bus".format(C.CYAN, C.END + C.BOLD),
+            "what it costs to reach this device without touching it")
     print(f"{C.GRAY}    {'':<26}{'over bus':>10}{'staged':>11}{'time':>12}{C.END}")
 
     if slots is not None and slots < 2:
@@ -255,8 +263,8 @@ def _report(images, total, app_max=0):
     The application's room is its PARTITION, not the rest of the chip — that is the number the size check
     reports and the only one that can actually overflow.
     """
-    print(f"{C.BOLD}Flash image{C.END}  {C.GRAY}(chip flash {_human(total)}){C.END}")
-    print(f"{C.GRAY}{'OFFSET':<10}{'SIZE':>10}  {'ROOM':>10}  NAME{C.END}")
+    section("Flash image", f"(chip flash {_human(total)})")
+    print("{}    {:<30}{:>10}{:>11}{}".format(C.GRAY, "", "size", "room", C.END))
 
     used = 0
     for idx, (off, path) in enumerate(images):
@@ -269,14 +277,22 @@ def _report(images, total, app_max=0):
         else:
             room = total - off
         tight = size > room * 0.9
-        color = C.AMBER if tight else (C.BLUE if idx % 2 else C.GREEN)
-        print(f"{color}{hex(off):<10}{_human(size):>10}  {C.GRAY}{_human(room):>10}{color}  {basename(path)}{C.END}")
+        # Pad first, colour second -- an escape sequence would push the columns out of line.
+        nm = "{:<30}".format(basename(path)[:30])
+        sz = "{:>10}".format(_human(size))
+        rm = "{:>11}".format(_human(room))
+        print("    {}{}{}{}{}{}{}{}   {}{}{}".format(
+            C.CYAN, nm, C.END,
+            C.AMBER if tight else "", sz, C.END if tight else "",
+            C.GRAY, rm, C.GRAY, "0x%06X" % off, C.END))
 
     # Usage bar over the real flash size: filled = written, dim = free.
-    width = 66
+    width = 51
     fill = min(width, max(1, int(used / total * width)))
-    print(f"{C.GRAY}0x000000{C.END} [{C.GREEN}{'█' * fill}{C.GRAY}{'·' * (width - fill)}{C.END}] {C.GRAY}{_human(total)}{C.END}")
-    print(f"{C.GRAY}written {_human(used)} · {used * 100 // total} % of the chip{C.END}")
+    print("    {}{}{}".format(C.GRAY, G_RULE * width, C.END))
+    print("    {}{:<30}{:>10}{}{}   {} % of {}{}".format(
+        C.BOLD, "written", _human(used), C.END, C.GRAY, used * 100 // total, _human(total), C.END))
+    print("    {}[{}{}{}{}]{}".format(C.GRAY, C.GREEN, G_BAR * fill, C.GRAY, G_DOT * (width - fill - 2), C.END))
 
 
 try:
@@ -326,26 +342,20 @@ def esp32_create_combined_bin(source, target, env):
         print(identity_line(*ident, note="stamped, checksum + SHA-256 intact"))
     else:
         warn("identity", "not stamped — a client cannot tell which device this file is for")
-    print(RULE)
     app_size_for_libs = os.path.getsize(fw) if os.path.exists(fw) else 0
     try:
         app_max = int(env.BoardConfig().get("upload.maximum_size", 0))
     except (TypeError, ValueError):
         app_max = 0
-    print(RULE)
     show_lib_sizes(env, app_size_for_libs)
-    print(RULE)
     _report(images, _flash_bytes(flash_size), app_max)
     part = next((p for o, p in images if basename(p).startswith("partitions")), None)
     app_size = os.path.getsize(fw) if os.path.exists(fw) else 0
     if part:
-        print(RULE)
         _show_partitions(part, _flash_bytes(flash_size), app_size)
         fs = _fs_partition(part)
         if fs:
-            print(RULE)
             _ota_fit(app_size, fs, fw, part)
-    print(RULE)
 
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -355,10 +365,10 @@ def esp32_create_combined_bin(source, target, env):
         print(f"{C.GRAY}{' '.join(cmd)}{C.END}")
         raise
 
-    print(f"{C.GREEN}✔{C.END} {basename(out)}   {C.GRAY}{_human(os.path.getsize(out))} · flash to offset 0x0{C.END}")
+    print(f"{C.GREEN}{G_OK}{C.END} {basename(out)}   {C.GRAY}{_human(os.path.getsize(out))} · flash to offset 0x0{C.END}")
     print(f"{C.GRAY}  {build_dir}{C.END}")
     print(RULE)
     print()
 
 
-env.AddPostAction("buildprog", esp32_create_combined_bin)
+env.AddPostAction("buildprog", quiet_action(esp32_create_combined_bin))

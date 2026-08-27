@@ -7,7 +7,7 @@ import struct
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C
+from _pio_common import C, quiet_action
 
 # ---------------------------------------------------------------------------
 #  OpenKNX ESP32 identity stamp
@@ -142,4 +142,4 @@ def post_program_action(source, target, env):
     # finished binary and prints them with the flash report, so the build says it once and says it proven.
 
 
-env.AddPostAction("buildprog", post_program_action)
+env.AddPostAction("buildprog", quiet_action(post_program_action))

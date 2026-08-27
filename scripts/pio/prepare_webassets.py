@@ -21,7 +21,7 @@ from SCons.Script import Action
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
-from _pio_common import C, step, resolve_project
+from _pio_common import C, step, resolve_project, section, human_bytes, quiet_action, G_RULE
 
 # Gate: only for products that actually run a webserver.
 _defines = set(str(d[0] if isinstance(d, (list, tuple)) else d) for d in env.get("CPPDEFINES", []))
@@ -127,7 +127,7 @@ if "OPENKNX_WEBSERVER" in _defines:
             raw = f.read_bytes()
             data = WEBASSET_MINIFY[ext](raw.decode()).encode() if ext in WEBASSET_MINIFY else raw
             gz = gzip.compress(data, compresslevel=9, mtime=0)
-            head.append("//   E {} {}".format(ident, len(gz)))
+            head.append("//   E {} {} {}".format(ident, len(gz), len(data)))
             rows = ["0x{:02x}".format(b) for b in gz]
             arr = "\n".join("    " + ",".join(rows[i:i + 20]) + "," for i in range(0, len(rows), 20))
             body += ["    inline const uint8_t {}_gz[] = {{".format(ident), arr, "    };",
@@ -139,8 +139,18 @@ if "OPENKNX_WEBSERVER" in _defines:
         WEBASSET_HEADER.write_text("\n".join(head + body + ["} // namespace WebAssets", ""]))
 
     def _webasset_nm():
+        # Windows carries a .exe suffix, so a substitution anchored at the end of the string misses --
+        # and the untouched candidate is then the COMPILER itself, which exists and would be run with
+        # nm's arguments. It answers nothing, every asset looks linker-removed, and the report lies.
+        # Split the suffix off, substitute on the stem, put it back.
         cc = env.subst("$CC")
-        for c in (cc + "-nm", re.sub(r"(gcc|g\+\+|cc)$", "nm", cc), "nm"):
+        stem, ext = os.path.splitext(cc)
+        cands = [stem + "-nm" + ext,
+                 re.sub(r"(gcc|g\+\+|cc)$", "nm", stem) + ext,
+                 "nm" + ext, "nm"]
+        for c in cands:
+            if os.path.basename(c) == os.path.basename(cc):
+                continue  # the substitution did not bite -- that is the compiler, not nm
             hit = c if (os.path.isabs(c) and os.path.exists(c)) else shutil.which(c)
             if hit:
                 return hit
@@ -152,8 +162,9 @@ if "OPENKNX_WEBSERVER" in _defines:
         try:
             for line in WEBASSET_HEADER.read_text().splitlines():
                 if line.startswith("//   E "):
-                    ident, gz = line[7:].split()
-                    manifest[ident] = int(gz)
+                    parts = line[7:].split()
+                    ident, gz = parts[0], int(parts[1])
+                    manifest[ident] = (gz, int(parts[2]) if len(parts) > 2 else 0)
         except OSError:
             pass
         nm = _webasset_nm()
@@ -164,16 +175,39 @@ if "OPENKNX_WEBSERVER" in _defines:
         except (OSError, subprocess.SubprocessError):
             return
         present = set(re.findall(r"WebAssets::(\w+)_gz\b", out))
-        in_bin = 0
-        for ident in sorted(manifest):
-            gz = manifest[ident]
-            if ident in present:
-                in_bin += gz
-                print("{}  {}: {} B gz -> in firmware{}".format(C.CYAN, ident, gz, C.END))
-            else:
-                print("{}  {}: dropped (unused, linker-removed){}".format(C.DARKBLUE, ident, C.END))
-        print("{}  total in firmware: {}/{} assets, {} B gz{}".format(
-            C.DARKBLUE, len(present & manifest.keys()), len(manifest), in_bin, C.END))
+        section("Web assets", "(gzipped in flash - `raw` is the size after minifying, before gzip)")
+        print("{}    {:<30}{:>10}{:>11}{}".format(C.GRAY, "", "flash", "raw", C.END))
+
+        # Biggest first: the report exists to answer "what costs the space", and that answer is
+        # useless in alphabetical order.
+        kept = sorted(((gz, raw, i) for i, (gz, raw) in manifest.items() if i in present), reverse=True)
+        in_bin = sum(gz for gz, _r, _i in kept)
+        shown = kept[:14]
+        for gz, raw, ident in shown:
+            nm_ = "{:<30}".format(ident[:30])
+            fl = "{:>10}".format(human_bytes(gz))
+            rw = "{:>11}".format(human_bytes(raw) if raw else "-")
+            big = gz >= 8 * 1024                       # a web asset this size is worth a second look
+            print("    {}{}{}{}{}{}{}{}".format(
+                C.CYAN, nm_, C.END,
+                C.AMBER if big else "", fl, C.END if big else "",
+                C.GRAY + rw, C.END))
+        rest = kept[len(shown):]
+        if rest:
+            print("{}    {:<30}{:>10}{:>11}   {} more{}".format(
+                C.GRAY, "(smaller ones)", human_bytes(sum(x[0] for x in rest)),
+                human_bytes(sum(x[1] for x in rest)), len(rest), C.END))
+
+        dropped = sorted(i for i in manifest if i not in present)
+        if dropped:
+            names = ", ".join(dropped)
+            print("{}    {:<30}{:>10}{:>11}   {}{}".format(
+                C.GRAY, "dropped (linker-removed)", "-", "-",
+                names if len(names) <= 40 else "{} assets".format(len(dropped)), C.END))
+        # Die Summe ist die Aussage des Blocks -- sie darf nicht zwischen den Zeilen untergehen.
+        print("{}{:<30}{:>10}{:>11}{}{}   {} of {} assets{}".format(
+            "    " + C.GRAY + G_RULE * 47 + C.END + "\n    " + C.BOLD, "total in firmware", human_bytes(in_bin),
+            human_bytes(sum(r for _g, r, _i in kept)), C.END, C.GRAY, len(kept), len(manifest), C.END))
 
     _webasset_generate()
-    env.AddPostAction("checkprogsize", Action(_webasset_report, "Web assets: firmware report"))
+    env.AddPostAction("checkprogsize", quiet_action(_webasset_report))
