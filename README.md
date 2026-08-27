@@ -16,6 +16,7 @@ Includes ETS configuration and own group objects, see
   - [Heartbeat Modes](#heartbeat-modes)
 - [I2C Support](#i2c-support)
 - [GPIO Abstraction Layer](#gpio-abstraction-layer)
+- [Release Hooks](#release-hooks)
 - [Usage](#usage)
 
 ---
@@ -433,6 +434,37 @@ class MyModule : public OpenKNX::Module {
 
 OpenKNX Common Library is part of the OpenKNX project.  
 Licensed under GNU GPL v3.0
+
+---
+
+## Release Hooks
+
+`Build-Release-Preprocess.ps1` / `Build-Release-Postprocess.ps1` run a release step for every module
+that brings one. The scripts here know no module names -- the hooks are found by convention:
+
+```
+lib/<Module>/scripts/release/Pre.ps1     # before the firmware build
+lib/<Module>/scripts/release/Post.ps1    # after it, before the release is zipped
+```
+
+A module that is not in `lib/` has no hook and contributes nothing, so a product never has to ask
+whether it uses a given module.
+
+**Contract**
+
+| | |
+|---|---|
+| Invocation | `-ReleaseRoot <absolute path of release/>`, `-BuildParam Dev\|Release` |
+| Working directory | the project root |
+| Order | alphabetical by path, so a release stays reproducible |
+| Failure | logged as a warning, the release continues |
+
+The last point is deliberate: hooks ship optional companion artifacts -- a PC tool with its own
+release cycle, an example tree -- and a firmware release must never hinge on one.
+
+**Example** -- `OFM-FileTransferModule/scripts/release/Post.ps1` puts the PC FileTransferClient into
+the release as `Tools/ftc-cli/<OS>/<arch>/ftc[.exe]`. The layout lives in that module because it is
+that module's artifact.
 
 ---
 

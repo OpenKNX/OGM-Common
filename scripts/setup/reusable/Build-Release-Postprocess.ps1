@@ -39,44 +39,23 @@ if (Test-Path -Path scripts/Readme-Hardware.html -PathType Leaf) {
   Copy-Item scripts/Readme-Hardware.html release/
 }
 
-# --- ftc, the client for updates over the KNX bus ------------------------------------------------
-# Two conditions, and both have to hold before anything is shipped:
+# --- module release hooks ------------------------------------------------------------------------
+# Every module may ship scripts/release/Post.ps1 and assemble its own share of the release: companion
+# tools, example trees, whatever belongs to that module. Found by convention, so NO module is named
+# here -- a module that is not in lib/ simply has no hook and contributes nothing.
 #
-#   1. the project actually uses OFM-FileTransferModule. It is an optional module; a product without it
-#      has no bus-update path, and a tool for one would only raise questions.
-#   2. a built ftc is at hand. It is a separate project with its own release cycle and is NOT built here,
-#      so its absence is normal and must never fail a firmware release.
+# Contract: the hook is called with -ReleaseRoot <abs path of release/> and -BuildParam Dev|Release,
+# and runs in the project root. Order is alphabetical by path, so a release stays reproducible.
 #
-# When it is missing, the release still carries the upload script -- it then works with an ftc the user
-# installed themselves, and says so if there is none. That keeps this pipeline independent of a tool
-# that has not been released yet.
-$ftmInUse = (Test-Path -Path "lib/OFM-FileTransferModule" ) -or (Test-Path -Path "lib/OFM-FileTransferModule.git")
-if ($ftmInUse) {
-  $ftcSources = @(
-    "lib/OFM-FileTransferModule/ftc-cli/release",
-    "lib/OFM-FileTransferModule/ftc-cli/.pio/build"
-  )
-  $ftcFiles = @()
-  foreach ($src in $ftcSources) {
-    if (Test-Path -Path $src -PathType Container) {
-      $ftcFiles += Get-ChildItem -Path $src -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -eq 'ftc' -or $_.Name -eq 'ftc.exe' }
-    }
-  }
-  if ($ftcFiles.Count -gt 0) {
-    if (!(Test-Path -Path release/Tools -PathType Container)) {
-      New-Item -ItemType Directory -Force -Path release/Tools | Out-Null
-    }
-    foreach ($f in $ftcFiles) {
-      # One per platform; the build directory names them, so the platform stays visible in the release.
-      $tag = Split-Path -Leaf (Split-Path -Parent $f.FullName)
-      $name = if ($tag -match 'ftc-cli-(.+)$') { "ftc-$($Matches[1])$($f.Extension)" } else { $f.Name }
-      Copy-Item $f.FullName (Join-Path "release/Tools" $name) -Force
-    }
-    Write-Host "Copied $($ftcFiles.Count) ftc build(s) to release/Tools/" -ForegroundColor Blue
-  }
-  else {
-    Write-Host "ftc not found -- release/Tools stays empty; KNX-Upload will use an installed ftc" -ForegroundColor DarkYellow
+# A failing hook warns but does NOT fail the release: these are optional companion artifacts, often
+# with their own release cycle, and a firmware release must never hinge on one.
+$releaseRoot = (Resolve-Path "release" -ErrorAction SilentlyContinue).Path
+if ($releaseRoot) {
+  foreach ($hook in @(Get-ChildItem -Path "lib/*/scripts/release/Post.ps1" -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+    $moduleName = Split-Path -Leaf (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $hook.FullName)))
+    Write-Host "Release hook: $moduleName" -ForegroundColor Blue
+    try   { & $hook.FullName -ReleaseRoot $releaseRoot -BuildParam $args[0] }
+    catch { Write-Host "  hook $moduleName failed: $($_.Exception.Message) -- continuing" -ForegroundColor DarkYellow }
   }
 }
 

@@ -167,4 +167,19 @@ else {
   Write-Host "Pre - ERROR: $releaseTarget could not be found!" -ForegroundColor Red
   exit 1
 }
+
+# --- module release hooks ------------------------------------------------------------------------
+# Counterpart of the Post.ps1 hooks in Build-Release-Postprocess.ps1, same contract, run before the
+# firmware build. Present so the convention is symmetric: a module shipping scripts/release/Pre.ps1
+# must not be silently ignored. Found by convention -- NO module is named here.
+$releaseRoot = (Resolve-Path "release" -ErrorAction SilentlyContinue).Path
+if ($releaseRoot) {
+  foreach ($hook in @(Get-ChildItem -Path "lib/*/scripts/release/Pre.ps1" -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+    $moduleName = Split-Path -Leaf (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $hook.FullName)))
+    Write-Host "Release hook (pre): $moduleName" -ForegroundColor Blue
+    try   { & $hook.FullName -ReleaseRoot $releaseRoot -BuildParam $args[0] }
+    catch { Write-Host "  hook $moduleName failed: $($_.Exception.Message) -- continuing" -ForegroundColor DarkYellow }
+  }
+}
+
 exit 0
