@@ -13,6 +13,7 @@ import sys
 import re
 import gzip
 import hashlib
+import inspect
 import shutil
 import pathlib
 import subprocess
@@ -43,7 +44,16 @@ if "OPENKNX_WEBSERVER" in _defines:
         return re.sub(r";}", "}", t).strip()
 
     def _webasset_min_js(t):
-        return "\n".join(s for s in (ln.strip() for ln in t.splitlines()) if s)
+        # Whole-line // comments go too: they explain the source, and every device would carry them
+        # in flash forever. Conservative on purpose -- a trailing // (which may sit inside a string
+        # or a regex) and block comments are left alone, so no expression can change meaning.
+        out = []
+        for ln in t.splitlines():
+            s = ln.strip()
+            if not s or s.startswith("//"):
+                continue
+            out.append(s)
+        return "\n".join(out)
 
     def _webasset_min_svg(t):
         t = re.sub(r"<!--.*?-->", "", t, flags=re.DOTALL)
@@ -88,7 +98,15 @@ if "OPENKNX_WEBSERVER" in _defines:
                 WEBASSET_HEADER.unlink()
             return
 
+        # The minifiers belong in the signature: changing one produces different bytes from unchanged
+        # sources, and without this the header would keep the old ones forever. Hashing their source
+        # (not a version constant) means nobody has to remember to bump anything.
         sig = hashlib.sha256(WEBASSET_FORMAT.encode())
+        for fn in (_webasset_min_css, _webasset_min_js, _webasset_min_svg):
+            try:
+                sig.update(inspect.getsource(fn).encode())
+            except (OSError, TypeError):
+                pass
         for ident, (ext, f) in entries.items():
             sig.update("{}\0{}\0".format(ident, ext).encode())
             sig.update(hashlib.sha256(f.read_bytes()).digest())
