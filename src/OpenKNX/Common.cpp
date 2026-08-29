@@ -409,6 +409,9 @@ namespace OpenKNX
         if (!_setup1Ready) return;
 #endif
 
+        // 1 Hz TP bus-load sampler; feeds the console and every widget from one source.
+        openknx.busLoad.loop();
+
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT

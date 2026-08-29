@@ -1,5 +1,6 @@
 #pragma once
 #include "Helper.h"
+#include "OpenKNX/BusLoad.h"
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Flash/Default.h"
@@ -52,6 +53,7 @@ namespace OpenKNX
         TimerInterrupt timerInterrupt;
         Hardware hardware;
         Watchdog watchdog;
+        BusLoad busLoad;
         Time::TimeManager time;
 #ifdef ParamBASE_Latitude
         Sun::SunCalculation sun;
