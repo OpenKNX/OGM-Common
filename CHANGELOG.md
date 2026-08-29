@@ -2,6 +2,48 @@
 
 ## upcoming releases
 
+The entries below are on `ec/v1dev-ec` and not released upstream yet.
+
+**Build and release tooling**
+* Feature: build-time flash and knxOTA reporting — every build prints what the image costs and what fits over the bus, so a target running out of flash is visible before the linker says so
+* Feature: one upload path for all targets, and delta patches generated from released packages
+* Feature: `Prepare-Firmware.ps1` replaces `Extract-Images` — a menu offering full image, gzip or delta, with a real file browser (arrow keys, up to drive level, Windows/macOS/Linux) instead of a fixed path
+* Feature: shared file chooser in the script UI (`OpenKNX_SelectInteractive`, `OpenKNX_PickFile`), usable by any OpenKNX script
+* Feature: module release hooks by convention — a module contributes to the release without the product script knowing about it
+* Feature: ESP32 knxOTA (over KNX) enabled in the scripts
+* Change: the build reports are unified in layout, sorting and totals, and their output is fixed on Windows — a redirected stdout falls back to cp1252/cp850, where the box and check glyphs raised `UnicodeEncodeError`
+* Change: `prepare.py` is split, with one shared style and resolver module used by all build scripts
+* Fix: JS comments are dropped when embedding web assets, which the minifier left in before
+* Fix: the flash script waits for the BOOTSEL volume before writing the `.uf2` instead of failing on a volume that is not mounted yet
+* Fix: a `lib/` module without a remote is skipped in the dependency snapshot — it used to be listed with an empty URL, naming a commit nobody else can fetch
+* Fix: mDNS discovery and the espota upload work on Windows
+* Fix: `prepare.py` writes files through `with open(...)`
+
+**Bus load**
+* Feature: `OpenKNX::BusLoad` (`openknx.busLoad`) samples TP1 line occupancy once per second, keeps a one minute history and a peak, and offers `reset()`; every product with a TP line gets it without a change of its own
+* Feature: occupancy comes from the TPUart frame bit counter, so a saturated line reads 100 % whatever the telegram length — a fixed bytes-per-second ceiling cannot do that
+* Fix: `Statistics::getBusLoad()` resets the window it measures, so its callers took the value from each other; `WidgetKnxBcu` and both console blocks read the shared sampler now
+* Fix: a BCU reset zeroes the TPUart counters — the sampler detects the backward jump and skips one sample instead of reporting a spike
+
+**Display widgets**
+* Fix: the common widgets are registered from `loop()` instead of `processAfterStartupDelay()`, which waits on a KNX parameter an unprogrammed device never provides -- the widgets were missing with no message at all
+* Feature: the system-info widget gains a diagnose page: heap and stack low-water marks, watchdog resets and period, chip and clock -- it reports the minimum rather than the current value, because a leak only shows in the low-water mark
+* Change: the system-info widget drops its network page and the whole `WSI_HAS_NETWORK` detection; those values belong to OFM-Network, which ships them as a widget of its own now
+* Change: system-info and BCU widget put the title left and show page dots instead of an "n/N" counter, and keep clear of the manager corner
+
+**Device info**
+* Feature: the console prints the KNX download counter once the device is programmed, so a download is visible without ETS
+
+**Firmware**
+* Feature: ESP32 stamps the OpenKNX identity into the app image, and the combined-image report is corrected
+* Feature: `pausePeriodicSave()` suspends periodic flash writes, for code paths that must not be interrupted by one
+* Feature: human-readable stat formatting plus 32-bit counter-wrap handling for widgets — 8 to 10 digit bus counters overran the 21-character OLED rows
+* Change: raw `MASK_VERSION` checks are replaced by the semantic layer from the knx stack
+* Change: the "console disabled" notice names the external session holding it, in red
+* Fix: uptime rollover, unreadable bus counters and unchecked module registration
+* Doc: the Info-LED help text says the count and labeling are device-dependent
+
+
 * Update: Increase minimum OpenKNXproducer version to 4.3.12 (from 4.3.5 in Common.share.xml)
   * Resulting changes:
     * Disable ReadOnInitFlag for KOs
