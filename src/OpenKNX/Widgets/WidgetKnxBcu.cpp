@@ -160,9 +160,8 @@ namespace OpenKNX
     // ---- Auto-range load bar bookkeeping ---------------------------------------
     void WidgetKnxBcu::updateLoadRatchet()
     {
-        TpUartDataLinkLayer *dll = bcuDll();
-        _lastLoad = dll ? (uint32_t)dll->getTPUart().getStatistics().getBusLoad() : 0;
-        if (_lastLoad > _loadPeak) _loadPeak = _lastLoad;
+        _lastLoad = openknx.busLoad.currentBytesPerSec();
+        _loadPeak = openknx.busLoad.peakBytesPerSec();
         uint32_t needed = niceScale(_loadPeak);
         if (needed > _loadScale) _loadScale = needed; // ratchet up only (no decay)
     }

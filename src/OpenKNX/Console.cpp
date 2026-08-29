@@ -330,7 +330,8 @@ namespace OpenKNX
             snprintf(line, sizeof(line), "TX %s | RX %s (%s) | Discarded %s | Received %s | Load %s/s",
                      humanCount(st.getTxFrames()).c_str(), humanCount(st.getRxFrames()).c_str(),
                      humanBytes(st.getRxFrameBytes()).c_str(), humanBytes(st.getRxDiscardedBytes()).c_str(),
-                     humanBytes(st.getRxReceivedBytes()).c_str(), humanBytes(st.getBusLoad()).c_str());
+                     humanBytes(st.getRxReceivedBytes()).c_str(),
+                     humanBytes(openknx.busLoad.currentBytesPerSec()).c_str());
             openknx.logger.logWithPrefix(pfx, line);
 
             // Line 2: buffer / health counters (always shown; health getters return 0 without TPUART_BCU_HEALTH).
@@ -421,7 +422,7 @@ namespace OpenKNX
                      humanBytes(st.getRxFrameBytes()).c_str());
             snprintf(vDisc, sizeof(vDisc), "%s", humanBytes(st.getRxDiscardedBytes()).c_str());
             snprintf(vRecv, sizeof(vRecv), "%s", humanBytes(st.getRxReceivedBytes()).c_str());
-            snprintf(vLoad, sizeof(vLoad), "%s/s", humanBytes(st.getBusLoad()).c_str());
+            snprintf(vLoad, sizeof(vLoad), "%s/s", humanBytes(openknx.busLoad.currentBytesPerSec()).c_str());
             snprintf(vBuf, sizeof(vBuf), "%u", tp.getReceiver().getSearchBufferPosition());
             snprintf(vAwait, sizeof(vAwait), "%u", tp.getReceiver().getAwaitBytes());
             snprintf(vRep, sizeof(vRep), "%s", humanCount(st.getRxRepetitions()).c_str());
