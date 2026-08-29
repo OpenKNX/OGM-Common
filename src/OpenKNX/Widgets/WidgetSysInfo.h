@@ -26,7 +26,7 @@ namespace OpenKNX
     class WidgetSysInfo : public Widget
     {
       public:
-        static constexpr size_t PAGE_COUNT = 4; // Gerät / Firmware / Runtime / Netzwerk
+        static constexpr size_t PAGE_COUNT = 4; // Geraet / Firmware / Runtime / Diagnose
 
         const std::string logPrefix() { return "WidgetSysInfo"; }
         WidgetSysInfo(uint32_t displayTime, WidgetFlags action);

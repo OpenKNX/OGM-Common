@@ -10,33 +10,6 @@
     #include "WidgetSysInfo.h"
     #include "OpenKNX.h"
 
-    // Robustly couple the Netzwerk page to OFM-Network, but keep OGM-Common
-    // buildable WITHOUT it. The guard is deliberately TWO-fold:
-    //
-    //   1. __has_include("NetworkModule.h") - the library must be on the include path.
-    //   2. defined(KNX_IP_LAN) || defined(KNX_IP_WIFI) - NetworkModule.h wraps its ENTIRE
-    //      contents (the class AND the `extern NetworkModule openknxNetwork`) behind
-    //      exactly this flag. Without it the header resolves but is empty, so keying only
-    //      on __has_include would leave openknxNetwork undefined -> link/compile break.
-    //
-    // Both conditions => WSI_HAS_NETWORK. Otherwise the Netzwerk page shows "—" instead
-    // of breaking the build. (A build could also force-disable by defining WSI_NO_NETWORK.)
-    #if !defined(WSI_NO_NETWORK)
-        #if defined(KNX_IP_LAN) || defined(KNX_IP_WIFI)
-            #if defined(__has_include)
-                #if __has_include("NetworkModule.h")
-                    #include "NetworkModule.h"
-                    #define WSI_HAS_NETWORK 1
-                #endif
-            #else
-                // Toolchain without __has_include: the KNX_IP_* flag alone means the
-                // network module is part of this firmware, so include it directly.
-                #include "NetworkModule.h"
-                #define WSI_HAS_NETWORK 1
-            #endif
-        #endif
-    #endif
-
 namespace OpenKNX
 {
 
@@ -225,9 +198,9 @@ namespace OpenKNX
     {
         const uint16_t screenW = _display->GetDisplayWidth();
 
-        // Header title (widget name) centered on the top line.
+        // Title left, like every other widget.
         const std::string &title = getName();
-        _display->display->setCursor((int16_t)((screenW - (title.length() * 6)) / 2), 0);
+        _display->display->setCursor(0, 0);
         _display->display->print(title.c_str());
 
         // Countdown marker travelling along the header divider, mirroring
@@ -243,12 +216,17 @@ namespace OpenKNX
 
         _display->display->drawLine(0, 10, screenW, 10, WHITE);
 
-        // Page indicator "n/4" in the top-right corner.
-        char pageInd[8] = {};
-        snprintf(pageInd, sizeof(pageInd), "%u/%u",
-                 (unsigned)(_currentPage + 1), (unsigned)PAGE_COUNT);
-        _display->display->setCursor((int16_t)(screenW - (strlen(pageInd) * 6)), 0);
-        _display->display->print(pageInd);
+        // Page indicator: dots, not "n/N". They end at screenW-12 because the manager owns the
+        // corner there (pause/play glyph, busmon badge).
+        const int16_t startX = (int16_t)screenW - 12 - (int16_t)PAGE_COUNT * 6;
+        for (uint8_t i = 0; i < PAGE_COUNT; i++)
+        {
+            const int16_t x = startX + i * 6 + 2;
+            if (i == _currentPage)
+                _display->display->fillCircle(x, 4, 2, WHITE);
+            else
+                _display->display->drawCircle(x, 4, 1, WHITE);
+        }
     }
 
     void WidgetSysInfo::drawKeyValueRow(uint8_t row, const char *key, const std::string &value)
@@ -296,52 +274,41 @@ namespace OpenKNX
                 drawKeyValueRow(rtRow, "Uptime", openknx.logger.buildUptime());
                 break;
             }
-            case 3: // Netzwerk
+            case 3: // Diagnose -- values the console shows but the display never did
             {
-                const std::string dash = "-"; // ASCII placeholder (SSD1306 CP437 has no em dash)
-    #ifdef WSI_HAS_NETWORK
-                // openknxNetwork facade present -> pull live IP/link.
-                //
-                // Host: NetworkModule exposes no public hostName() getter (only the
-                // private _hostName), so we keep the mockup's host id = serial tail.
-                // Adding a getter would touch OFM-Network (not owned here); if one is
-                // added later, swap this line to openknxNetwork.hostName().
-                drawKeyValueRow(0, "Host", openknx.info.humanSerialNumber());
+                char buf[24] = {};
 
-                // Link: phyMode() is a stub ("Auto"), so it is NOT a trustworthy link
-                // indicator. Use established() (connected AND has a non-zero IP) as the
-                // robust fallback -> "up"/"down". A real link-speed string ("100 Mbit")
-                // can replace this once phyMode()/a speed getter is implemented upstream.
-                const bool up = openknxNetwork.established();
-                drawKeyValueRow(2, "Link", up ? std::string("up") : std::string("down"));
+                // The MINIMUM matters, not the current value: a leak shows in the low-water mark.
+                snprintf(buf, sizeof(buf), "%.1f KiB", (float)openknx.common.freeMemoryMin() / 1024.0f);
+                drawKeyValueRow(0, "Heap min", std::string(buf));
 
-                // IP: only meaningful while established; otherwise show "—" instead of
-                // a misleading 0.0.0.0.
-                if (up)
-                    drawKeyValueRow(1, "IP", std::string(openknxNetwork.localIP().toString().c_str()));
-                else
-                    drawKeyValueRow(1, "IP", dash);
-
-                // Age of the current link, or of the ongoing outage. Built on uptime() seconds
-                // inside OFM-Network, so it survives the 49.7-day millis() rollover.
-                const uint32_t netUp = openknxNetwork.netUptimeSec();
-                const uint32_t netDown = openknxNetwork.netDowntimeSec();
-                if (netUp > 0)
-                    drawKeyValueRow(3, "Net-Up", humanDuration(netUp));
-                else if (netDown > 0)
-                    drawKeyValueRow(3, "Net-Dn", humanDuration(netDown));
-                else
-                    drawKeyValueRow(3, "Net-Up", dash);
+    #ifdef OPENKNX_DUALCORE
+                snprintf(buf, sizeof(buf), "%i / %i B", openknx.common.freeStackMin(),
+                         openknx.common.freeStackMin1());
     #else
-                // No OFM-Network in this build: show "—" everywhere instead of breaking
-                // the build ("ohne '—' statt Bruch").
-                drawKeyValueRow(0, "Host", dash);
-                drawKeyValueRow(1, "IP", dash);
-                drawKeyValueRow(2, "Link", dash);
-                drawKeyValueRow(3, "Net-Up", dash);
+                snprintf(buf, sizeof(buf), "%i B", openknx.common.freeStackMin());
     #endif
+                drawKeyValueRow(1, "Stack", std::string(buf));
+
+                // Silent restarts are invisible otherwise.
+                if (openknx.watchdog.active())
+                    snprintf(buf, sizeof(buf), "%u (%us)", (unsigned)openknx.watchdog.resets(),
+                             (unsigned)openknx.watchdog.maxPeriod());
+                else
+                    snprintf(buf, sizeof(buf), "off");
+                drawKeyValueRow(2, "Watchdog", std::string(buf));
+
+    #if defined(ARDUINO_ARCH_ESP32)
+                snprintf(buf, sizeof(buf), "%s %u MHz", ESP.getChipModel(), (unsigned)getCpuFrequencyMhz());
+    #elif defined(ARDUINO_ARCH_RP2040)
+                snprintf(buf, sizeof(buf), "RP %u MHz", (unsigned)(F_CPU / 1000000UL));
+    #else
+                snprintf(buf, sizeof(buf), "-");
+    #endif
+                drawKeyValueRow(3, "Chip", std::string(buf));
                 break;
             }
+
             default:
                 break;
         }
