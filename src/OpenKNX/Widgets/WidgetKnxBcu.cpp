@@ -203,10 +203,12 @@ namespace OpenKNX
         const uint16_t w = _display->GetDisplayWidth();
 
         const std::string &title = getName();
-        _display->display->setCursor((int16_t)((w - (title.length() * 6)) / 2), 0);
+        _display->display->setCursor(0, 0);
         _display->display->print(title.c_str());
 
-        // Countdown marker running along the divider = widget dwell progress.
+        // Dwell marker on the divider. It has to be drawn here, inside the widget's own rebuild:
+        // drawn from the manager after the fact it would leave a trail, because the frame underneath
+        // is only rebuilt on the widget's redraw interval.
         if (_displayTime > 0)
         {
             uint32_t elapsed = millis() - _startTime;
@@ -217,11 +219,17 @@ namespace OpenKNX
         }
         _display->display->drawLine(0, 10, w, 10, WHITE);
 
-        // Page indicator "n/N" top-right.
-        char pg[8] = {};
-        snprintf(pg, sizeof(pg), "%u/%u", (unsigned)(_currentPage + 1), (unsigned)PAGE_COUNT);
-        _display->display->setCursor((int16_t)(w - (strlen(pg) * 6)), 0);
-        _display->display->print(pg);
+        // Page indicator: dots, not "n/N". They end at w-12 because the manager owns the corner
+        // (pause/play glyph, busmon badge).
+        const int16_t startX = (int16_t)w - 12 - (int16_t)PAGE_COUNT * 6;
+        for (uint8_t i = 0; i < PAGE_COUNT; i++)
+        {
+            const int16_t x = startX + i * 6 + 2;
+            if (i == _currentPage)
+                _display->display->fillCircle(x, 4, 2, WHITE);
+            else
+                _display->display->drawCircle(x, 4, 1, WHITE);
+        }
     }
 
     // Label left, value right-aligned (mock: "Texte linksbündig, Werte rechts").
