@@ -412,6 +412,13 @@ namespace OpenKNX
         // 1 Hz TP bus-load sampler; feeds the console and every widget from one source.
         openknx.busLoad.loop();
 
+#ifdef DEVICE_DISPLAY_MODULE
+        // Once, as soon as every module's setup() has run. NOT in processAfterStartupDelay(): that
+        // waits for a KNX bus parameter, and on an unprogrammed device it reads erased memory and
+        // never elapses -- the widgets were then missing with no message at all.
+        registerCommonWidgets();
+#endif
+
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT
@@ -680,12 +687,6 @@ namespace OpenKNX
         {
             openknx.modules.list[i]->processAfterStartupDelay();
         }
-
-#ifdef DEVICE_DISPLAY_MODULE
-        // Registered here because DeviceDisplay::init()/setup() has already run, so the
-        // widget manager is valid. Runs once (guarded) and no-ops if the display is absent.
-        registerCommonWidgets();
-#endif
 
         logIndentDown();
 
