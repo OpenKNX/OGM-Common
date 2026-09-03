@@ -113,13 +113,26 @@ def get_ets_version(version_string):
 get_all_library_dependencies(project)
 
 print()
+base_dir = pathlib.Path().resolve()
+
+print("{}Generate include/version_main.h{}".format(console_color.YELLOW, console_color.END))
+with open("include/version_main.h", "w") as version_file:
+    version_file.write("//\n")
+    version_file.write("// IMPORTANT: Do NOT include this file in git, as this will NOT match the resulting commit-hash!\n")
+    version_file.write("// => you should add include/version_main.h to .gitignore\n")
+    version_file.write("//\n\n")
+    version_file.write("#pragma once\n\n")
+    version_main = get_git_version(base_dir)
+    version_file.write("#define MAIN_Version \"{}\"\n".format(version_main))
+    print("{}  {}: {} ({}){}".format(console_color.CYAN, "MAIN_Version", version_main, "this OAM", console_color.END))
+print()
+
 print("{}Generate include/versions.h{}".format(console_color.YELLOW, console_color.END))
 
 openknx_modules = {k: v for k, v in library_versions.items() if k.startswith("OGM") or k.startswith("OFM")}
 # openknx_modules["nodir"] = None # to test missing directory
 
 # get git versions
-base_dir = pathlib.Path().resolve()
 for name, lib_version in openknx_modules.items():
   try:
     git_version = get_git_version(base_dir / basepath / name)
@@ -134,7 +147,6 @@ for name, lib_version in openknx_modules.items():
 # build defines
 with open("include/versions.h", "w") as version_file:
     version_file.write("#pragma once\n\n")
-    version_file.write("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
     version_file.write("#define KNX_Version \"{}\"\n".format(library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
     # additional_defines = dict()
     for name, version in openknx_modules.items():

@@ -7,6 +7,7 @@
     * Disable ReadOnInitFlag for KOs
     * Small HOTFIX: DPT 251.600 (RGBW) check was incorrect (expected 4 Bytes, correct are 6 Bytes).
 * Fix (ESP32): GPIO expanders did not build on ESP32 — `GPIO::Manager::init()` called `setSDA()`/`setSCL()`, which only exist in arduino-pico. On ESP32 the pins are now passed to `OPENKNX_GPIO_WIRE.begin(sda, scl)` instead; the `OPENKNX_GPIO_SDA`/`OPENKNX_GPIO_SCL` defines are unchanged
+* Fix: Move MAIN_version from `include/versions.h` into own generated `include/version_main.h`, as this version can never be included in git release commit
 
 ## 1.9.1: 2026-08-14
 

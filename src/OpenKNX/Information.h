@@ -3,6 +3,7 @@
 #include "knxprod.h"
 #include <knx.h>
 #include <string>
+#include <version_main.h>
 
 namespace OpenKNX
 {
