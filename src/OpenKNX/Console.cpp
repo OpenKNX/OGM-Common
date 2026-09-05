@@ -370,8 +370,12 @@ namespace OpenKNX
         {
             printHelpLine("bcu", "Compact BCU status (+ERROR line on faults)");
             printHelpLine("bcu stat", "Full BCU / TPUart statistics table");
+    #if MASK_VERSION != 0x091A
+            // A device that advertises the ROUTING service family must not offer a bus monitor
+            // (03_08_04 2.2.4), so a router never gets the command -- nor its help line.
             printHelpLine("bcu mon", "Start/Stop BCU monitoring ('bus mon')");
             printHelpLine("bus mon", "Alias for 'bcu mon'");
+    #endif
             printHelpLine("bcu rst", "Reset BCU");
     #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 2
             printHelpLine("bcu autoack on|off", "Chip acknowledges by itself (on) or host only (off)");
@@ -558,15 +562,17 @@ namespace OpenKNX
             boxRule('=');
             return true;
         }
+    #if MASK_VERSION != 0x091A
         else if (cmd.compare("bcu mon") == 0 || cmd.compare("bus mon") == 0)
         {
-#ifdef TPUART_BCU_REGISTER_INFO
+        #ifdef TPUART_BCU_REGISTER_INFO
             dll->toggleConsoleMonitor();  // start/stop the local console busmon (raw echo); coexists with an ETS busmon
-#else
+        #else
             dll->monitor();               // upstream fallback: monitor without console echo (start-only)
-#endif
+        #endif
             return true;
         }
+    #endif
     #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 2
         else if (cmd.compare(0, 12, "bcu autoack ") == 0)
         {
