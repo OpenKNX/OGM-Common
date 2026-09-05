@@ -498,9 +498,10 @@ namespace OpenKNX
             kv("Xmit-Err", vTe, "Proto-Err", vPe);
             kv("Temp-Warn", vTw, nullptr, nullptr);
     #endif
-            // The NCN rails use the extended TPUart API (getBcuType/getSystemState), which is absent
-            // upstream. Gate on the product flag so OGM-Common still compiles against a stock TPUart
-            // (section simply omitted there).
+            // The NCN rails and chip identification use the extended TPUart API (getBcuType/
+            // getSystemState/getNcnChipName/ncnChipInferred/getNcnRevId/getNcnAsr0/ASR0_TSD), which is
+            // absent upstream. Gate on the product flag so OGM-Common still compiles against a stock
+            // TPUart (section simply omitted there).
 #ifdef TPUART_BCU_REGISTER_INFO
             // NCN supervisor rails (already polled via U_SystemStat, 1 Hz).
             if (tp.getBcuType() == TPUart::BCU_NCN5120)
@@ -527,6 +528,31 @@ namespace OpenKNX
                     kv("V20V", ss.v20v() ? "ok" : "LOW", "VDD2", ss.vdd2() ? "ok" : "LOW");
                     kv("XTAL", ss.xtal() ? "ok" : "FAIL", "Mode", ss.modeString());
                 }
+
+    #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 3
+                // Read once at init; shown only when a register answered with its documented reset value.
+                // "unknown" is a real outcome here -- the chip is named only when its part number was read,
+                // or flagged as inferred when the RevID register did not answer within the timeout.
+                if (tp.ncnRegValid())
+                {
+                    char vChip[28], vRev[12];
+                    if (tp.getNcnChip() == TPUart::NCN_CHIP_UNKNOWN && tp.getNcnRevId())
+                        snprintf(vChip, sizeof(vChip), "unknown (RevID 0x%02X)", tp.getNcnRevId());
+                    else
+                        snprintf(vChip, sizeof(vChip), "%s%s", tp.getNcnChipName(),
+                                 tp.ncnChipInferred() ? " (inferred)" : "");
+                    if (tp.getNcnChip() == TPUart::NCN_CHIP_5130 || tp.getNcnChip() == TPUart::NCN_CHIP_5121)
+                        snprintf(vRev, sizeof(vRev), "%u", (tp.getNcnRevId() >> 5) & 0x07);
+                    else
+                        snprintf(vRev, sizeof(vRev), "-"); // no part number read -> no revision to show
+                    boxRow(" NCN Chip", CONSOLE_HEADLINE_COLOR);
+                    kv("Chip", vChip, "Silicon Rev", vRev);
+                    // ASR0 has its own validity: _ncnRegValid does not cover it, and "no" would otherwise
+                    // be a positive claim about a register that never replied.
+                    kv("Thermal-SD", tp.ncnAsr0Valid() ? ((tp.getNcnAsr0() & ASR0_TSD) ? "YES (history)" : "no")
+                                                       : "not read", nullptr, nullptr);
+                }
+    #endif
             }
 #endif // TPUART_BCU_REGISTER_INFO
             boxRule('=');
