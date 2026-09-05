@@ -31,9 +31,6 @@ The entries below are on `ec/v1dev-ec` and not released upstream yet.
 * Change: the system-info widget drops its network page and the whole `WSI_HAS_NETWORK` detection; those values belong to OFM-Network, which ships them as a widget of its own now
 * Change: system-info and BCU widget put the title left and show page dots instead of an "n/N" counter, and keep clear of the manager corner
 
-**Device info**
-* Feature: the console prints the KNX download counter once the device is programmed, so a download is visible without ETS
-
 **Firmware**
 * Feature: ESP32 stamps the OpenKNX identity into the app image, and the combined-image report is corrected
 * Feature: `pausePeriodicSave()` suspends periodic flash writes, for code paths that must not be interrupted by one

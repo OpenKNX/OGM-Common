@@ -664,10 +664,6 @@ namespace OpenKNX
         openknx.logger.logWithPrefix("Name", HARDWARE_NAME);
 #endif
         openknx.logger.logWithPrefix("Serial number", openknx.info.humanSerialNumber().c_str());
-        // Download counter (PID_DOWNLOAD_COUNTER): shown once the device is programmed. It is RAM-backed;
-        // persisting it across reboot is product-optional (a module keeps it in flash -- see DeviceObject).
-        if (knx.configured())
-            openknx.logger.logWithPrefixAndValues("Downloads", "%u", (unsigned)knx.bau().deviceObject().downloadCounter());
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Firmware");
