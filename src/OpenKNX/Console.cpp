@@ -549,12 +549,16 @@ namespace OpenKNX
                         snprintf(vRev, sizeof(vRev), "%u", (tp.getNcnRevId() >> 5) & 0x07);
                     else
                         snprintf(vRev, sizeof(vRev), "-"); // no part number read -> no revision to show
-                    boxRow(" NCN Chip", CONSOLE_HEADLINE_COLOR);
-                    kv("Chip", vChip, "Silicon Rev", vRev);
                     // ASR0 has its own validity: _ncnRegValid does not cover it, and "no" would otherwise
                     // be a positive claim about a register that never replied.
-                    kv("Thermal-SD", tp.ncnAsr0Valid() ? ((tp.getNcnAsr0() & ASR0_TSD) ? "YES (history)" : "no")
-                                                       : "not read", nullptr, nullptr);
+                    const char* vTsd = tp.ncnAsr0Valid()
+                                           ? ((tp.getNcnAsr0() & ASR0_TSD) ? "YES (history)" : "no")
+                                           : "not read";
+                    boxRow(" NCN Chip", CONSOLE_HEADLINE_COLOR);
+                    // Chip takes a full-width row: the value carries a qualifier or a raw RevID byte and
+                    // overflows the 16-column value field of a two-pair row.
+                    kv("Chip", vChip, nullptr, nullptr);
+                    kv("Silicon Rev", vRev, "Thermal-SD", vTsd);
                 }
     #endif
             }
