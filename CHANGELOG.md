@@ -21,6 +21,11 @@ The entries below are on `ec/v1dev-ec` and not released upstream yet.
 * Change: the download counter is gone from the device information, because the knx stack no longer exposes PID 30
 
 **Build and release tooling**
+* Feature: the image facts file carries identity and provenance next to the checksums — order number, firmware name and version, MCU, ETS application id, build environment and date
+* Feature: the MCU is read out of the package (`.uf2` family id, `.factory.bin`) instead of being guessed from the file extension, which never told RP2040 and RP2350 apart
+* Feature: the OTA upload names the product of every device it finds, refuses a target whose chip does not match the image, and asks before sending to a different product -- `-Force` skips both checks
+* Change: the device table sizes its columns from the content: a product name comes from the device, and one value wider than a fixed column shifted the whole row
+* Fix: `-AutoExit` aborts a product mismatch with a message instead of sending silently, because there is nobody to answer the question
 * Feature: build-time flash and knxOTA reporting — every build prints what the image costs and what fits over the bus, so a target running out of flash is visible before the linker says so
 * Feature: one upload path for all targets, and delta patches generated from released packages
 * Feature: `Prepare-Firmware.ps1` replaces `Extract-Images` — a menu offering full image, gzip or delta, with a real file browser (arrow keys, up to drive level, Windows/macOS/Linux) instead of a fixed path
