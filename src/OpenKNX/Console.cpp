@@ -376,8 +376,8 @@ namespace OpenKNX
     #ifdef TPUART_BCU_MARKER
             printHelpLine("bcu marker on|off", "NCN frame-end MARKER (bench measurement)");
     #endif
-            printHelpLine("bcu poff", "Bus power off");
-            printHelpLine("bcu pon", "Bus power on");
+            printHelpLine("bcu poff", "Disable the NCN aux rails (20V + VDD2), not KNX bus power");
+            printHelpLine("bcu pon", "Enable the NCN aux rails (20V + VDD2)");
             printHelpLine("bcu debug", "Toggle BCU debug logging");
             return true;
         }
