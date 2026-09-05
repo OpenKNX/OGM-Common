@@ -170,23 +170,23 @@ namespace OpenKNX
         {
             openknx.flash.save();
         }
-        else if (cmd == "flash knx")
+        else if (!diagnoseKo && (cmd == "flash knx"))
         {
             showMemoryContent(openknx.knxFlash.flashAddress(), openknx.knxFlash.size());
         }
-        else if (cmd == "flash openknx")
+        else if (!diagnoseKo && (cmd == "flash openknx"))
         {
             showMemoryContent(openknx.openknxFlash.flashAddress(), openknx.openknxFlash.size());
         }
-        else if (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6)
+        else if (!diagnoseKo && (cmd.substr(0, 6) == "mem 0x" && cmd.length() > 6))
         {
             std::string addrstr = cmd.substr(6, cmd.length() - 6);
             uint32_t addr = std::stoi(addrstr, nullptr, 16);
             showMemoryContent((uint8_t*)addr, 0x40);
         }
 #ifndef ARDUINO_ARCH_SAMD
-        else if ((!diagnoseKo && (cmd.compare(0, 3, "dw ") == 0 || cmd.compare(0, 3, "aw ") == 0)) ||
-                 (cmd.compare(0, 3, "dr ") == 0 || cmd.compare(0, 3, "ar ") == 0))
+        else if (!diagnoseKo && (cmd.compare(0, 3, "dw ") == 0 || cmd.compare(0, 3, "aw ") == 0 ||
+                                 cmd.compare(0, 3, "dr ") == 0 || cmd.compare(0, 3, "ar ") == 0))
         {
             processPinCommand(cmd);
         }
@@ -312,6 +312,12 @@ namespace OpenKNX
             erase(EraseMode::All);
         }
 #ifdef KNX_HAS_TP
+        // TP/BCU commands are local-console only: none of them writes to the diagnose KO, and some
+        // ("bcu mon", "bcu rst", "bcu poff") take the TP link down. Never run them from the KO.
+        else if (diagnoseKo && (cmd.compare(0, 3, "bcu") == 0 || cmd.compare("bus mon") == 0))
+        {
+            return false;
+        }
         else if (cmd.compare("bcu") == 0)
         {
             // Compact overview: two fixed lines (state+traffic, buffer+health counters) plus a

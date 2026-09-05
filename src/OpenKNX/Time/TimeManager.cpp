@@ -233,6 +233,11 @@ namespace OpenKNX
 #endif
         bool TimeManager::processCommand(std::string& cmd, bool diagnoseKo)
         {
+            // Local console only: nothing here answers over the diagnose KO, so a KO caller only ever got
+            // side effects with no feedback. (SunCalculation in the same chain does answer, and keeps doing so.)
+            if (diagnoseKo)
+                return false;
+
             if (cmd.rfind("tm") == 0)
             {
                 if (cmd == "tm")
