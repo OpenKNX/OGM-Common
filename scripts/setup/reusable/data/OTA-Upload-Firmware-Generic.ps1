@@ -66,7 +66,8 @@ param(
     [string]$Lang = "",
     [Alias('h')]
     [switch]$Help,
-    [switch]$AutoExit                # never pause on error; default pauses so the window stays readable
+    [switch]$AutoExit,               # never pause on error; default pauses so the window stays readable
+    [switch]$Force                   # skip the chip / product guards (they abort or ask by default)
 )
 
 # PowerShell 5.1 has no $IsWindows/$IsMacOS/$IsLinux -- define them.
@@ -112,8 +113,19 @@ $_strings = @{
         ColPa          = "PA"
         ColChip        = "CHIP"
         ColVer         = "VERSION"
+        ColProduct     = "PRODUCT"
         ColEts         = "ETS"
         ColOta         = "OTA ACCESS"
+        LegEts         = "ETS:  {0} = programmed with ETS  ·  {1} = not programmed yet  ·  {2} = not reported"
+        HwLabel        = "Hardware"
+        ChipMismatch   = "Firmware is for {0}, the selected device is {1}. Upload aborted."
+        ChipForceHint  = "Use -Force to send it anyway (at your own risk)."
+        ChipOk         = "Chip matches the device ({0})"
+        ProdHead       = "The selected device is a different product than the firmware."
+        ProdFw         = "Firmware for"
+        ProdDev        = "Device reports"
+        ProdAsk        = "Send anyway? [J/Y] yes  ·  [X] cancel"
+        ProdAuto       = "Product mismatch and no one to ask (-AutoExit). Upload aborted - use -Force to override."
         EtsYes         = "yes"
         EtsNo          = "no"
         EtsUnknown     = "-"
@@ -161,8 +173,19 @@ $_strings = @{
         ColPa          = "PA"
         ColChip        = "CHIP"
         ColVer         = "VERSION"
+        ColProduct     = "PRODUKT"
         ColEts         = "ETS"
         ColOta         = "OTA-FREIGABE"
+        LegEts         = "ETS:  {0} = mit ETS programmiert  ·  {1} = noch nicht programmiert  ·  {2} = keine Angabe"
+        HwLabel        = "Hardware"
+        ChipMismatch   = "Firmware ist für {0}, das gewählte Gerät ist {1}. Upload abgebrochen."
+        ChipForceHint  = "Mit -Force trotzdem senden (auf eigene Gefahr)."
+        ChipOk         = "Chip passt zum Gerät ({0})"
+        ProdHead       = "Das gewählte Gerät ist ein anderes Produkt als die Firmware."
+        ProdFw         = "Firmware für"
+        ProdDev        = "Gerät meldet"
+        ProdAsk        = "Trotzdem übertragen? [J] ja  ·  [X] abbrechen"
+        ProdAuto       = "Produkt weicht ab und niemand kann antworten (-AutoExit). Upload abgebrochen - mit -Force erzwingen."
         EtsYes         = "ja"
         EtsNo          = "nein"
         EtsUnknown     = "-"
@@ -358,6 +381,7 @@ function Get-OpenKnxDevices([int]$timeoutMs = 2500) {
                 Name = ($inst -replace '\._openknx\._tcp\.local\.?$', '')
                 Ip = $ip; Pa = $tx['address']; Version = $tx['version']; OtaPort = $otaPort; Chip = $chip
                 Configured = $tx['configured']; Firmware = $tx['firmware']; Serial = $tx['serial']; OtaMode = $tx['otamode']
+                Product = $tx['product']; Hardware = $tx['hardware']; Order = $tx['order']
             }
         }
     } catch {
@@ -473,6 +497,7 @@ if (-not $_haveUi) {
 # and the device is picked from its result. 0/m switches to manual entry, r searches again, x cancels.
 $ipAddress = $null
 $pickedPort = $null   # OTA port reported by a scan-picked device (overrides the caller's -p)
+$pickedDev  = $null   # the whole device record -- the guards below compare against what it reported
 if ($Ip -and [System.Net.IPAddress]::TryParse($Ip.Trim(), [ref]$null)) { $ipAddress = $Ip.Trim() }
 $askIpPrompt = if ($NoSearch) { $s.AskIp } else { $s.AskIpScan }
 $scanNext = -not $NoSearch   # search once on start; 'r' re-arms it
@@ -494,24 +519,45 @@ while (-not $ipAddress) {
             # One aligned table. The OTA mode used to read "(prog)" / "(always)", which says what the
             # device reports rather than what the person has to DO about it -- so it is spelled out,
             # and coloured by whether it asks something of them: amber when it does, green when not.
-            $fmt = "  {0,-3}{1,-20}{2,-16}{3,-11}{4,-15}{5,-9}{6,-6}"
-            Write-Host (($fmt -f $s.ColNo, $s.ColName, $s.ColIp, $s.ColPa, $s.ColChip, $s.ColVer, $s.ColEts) + $s.ColOta) -ForegroundColor DarkGray
-            for ($i = 0; $i -lt $found.Count; $i++) {
-                $d = $found[$i]
+            # Build every cell first, then size the columns from the content. Fixed widths cannot work:
+            # the product name comes from the device ("IP-Router (Dev)"), and one value wider than the
+            # guess shunts the whole row out of alignment.
+            # VERSION sits next to PRODUCT: it is that product's version, and the two read as one fact.
+            $heads = @($s.ColNo, $s.ColName, $s.ColProduct, $s.ColVer, $s.ColIp, $s.ColPa, $s.ColChip, $s.ColEts)
+            $cells = @()
+            foreach ($d in $found) {
                 # "no" is a statement, "-" is the absence of one. A device that never answered the
                 # question must not look like one that answered "not programmed".
                 $ets = $s.EtsUnknown
                 if ($d.Configured -match '^(1|true|yes|ja)$') { $ets = $s.EtsYes }
                 elseif ($d.Configured -match '^(0|false|no|nein)$') { $ets = $s.EtsNo }
-                $ver = ""
-                if ($d.Version) { $ver = "v$($d.Version)" }
-                Write-Host ($fmt -f ($i + 1), $d.Name, $d.Ip, $d.Pa, $d.Chip, $ver, $ets) -NoNewline
+                $ver = if ($d.Version) { "v$($d.Version)" } else { "" }
+                $prod = if ($d.Product) { [string]$d.Product } else { $s.EtsUnknown }
+                $cells += , @([string]($cells.Count + 1), [string]$d.Name, $prod, $ver,
+                              [string]$d.Ip, [string]$d.Pa, [string]$d.Chip, $ets)
+            }
+            # Widest of header and values, plus two spaces of gutter. The last column (OTA) is not
+            # padded -- it ends the line and its text is coloured per row.
+            $w = @()
+            for ($c = 0; $c -lt $heads.Count; $c++) {
+                $max = $heads[$c].Length
+                foreach ($r in $cells) { if ($r[$c].Length -gt $max) { $max = $r[$c].Length } }
+                $w += ($max + 2)
+            }
+            $fmt = "  " + (($(for ($c = 0; $c -lt $w.Count; $c++) { "{$c,-$($w[$c])}" })) -join "")
+            Write-Host (($fmt -f $heads) + $s.ColOta) -ForegroundColor DarkGray
+            for ($i = 0; $i -lt $found.Count; $i++) {
+                Write-Host ($fmt -f $cells[$i]) -NoNewline
                 # A column now, so no brackets: they marked it as an aside, and it stopped being one
                 # the moment it got a heading of its own.
+                $d = $found[$i]
                 if ($d.OtaMode -eq 'prog') { Write-Host $s.OtaProg -ForegroundColor Yellow }
                 elseif ($d.OtaMode -eq 'always') { Write-Host $s.OtaAlways -ForegroundColor Green }
                 else { Write-Host $s.EtsUnknown -ForegroundColor DarkGray }
             }
+            Write-Host ""
+            # "ja" alone does not say what it answers -- spell the question out once, under the table.
+            Write-Host ("  " + ($s.LegEts -f $s.EtsYes, $s.EtsNo, $s.EtsUnknown)) -ForegroundColor DarkGray
             Write-Host ""
         }
     }
@@ -526,6 +572,7 @@ while (-not $ipAddress) {
         if ($null -ne $idx -and $idx -ge 1 -and $idx -le $found.Count) {
             $ipAddress  = $found[$idx - 1].Ip
             $pickedPort = $found[$idx - 1].OtaPort   # use the port the device itself reports
+            $pickedDev  = $found[$idx - 1]
         }
         else { Write-Host $s.BadChoice -ForegroundColor Red }
         continue
@@ -536,6 +583,87 @@ while (-not $ipAddress) {
     if (-not $NoSearch -and $entered -match '^[rR]$') { $scanNext = $true; continue }
     if ([System.Net.IPAddress]::TryParse($entered, [ref]$null)) { $ipAddress = $entered }
     else { Write-Host $s.BadIp -ForegroundColor Red }
+}
+
+# ── Guards: what is about to be written, against what actually answered ─────────────────────────
+# Only a scan-picked device can be checked -- a hand-typed IP says nothing about what sits behind it.
+if ($pickedDev) {
+    if ($pickedDev.Hardware) {
+        Write-Host ""
+        Write-Host ("  " + $s.HwLabel.PadRight(14) + $pickedDev.Hardware) -ForegroundColor DarkGray
+    }
+
+    # Chip: provable, not guessed. The device answers on port 2040 (RP) or 3232 (ESP) -- that IS the
+    # CHIP column. A contradiction is a fact, so this aborts instead of asking.
+    $devChip = $pickedDev.Chip
+    $chipClash = $devChip -and (($isEsp -and $devChip -notmatch 'ESP') -or (-not $isEsp -and $devChip -notmatch 'RP'))
+    if ($chipClash -and -not $Force) {
+        Write-Host ""
+        Write-Host ("  " + ($s.ChipMismatch -f $chip, $devChip)) -ForegroundColor Red
+        Write-Host ("  " + $s.ChipForceHint) -ForegroundColor DarkGray
+        Write-Host ""
+        if (-not $AutoExit) { Read-Host $s.PressEnter }
+        exit 1
+    }
+    if (-not $chipClash -and $devChip) { Write-Host ("  " + ($s.ChipOk -f $devChip)) -ForegroundColor Green }
+
+    # Product: a name comparison, so it can be wrong -- it asks instead of deciding. Compared segment
+    # by segment, never "contains": product "Sensor" must not silently match a "SensorPlus-REG1" image.
+    # What the build wrote next to the firmware. orderNumber is the KNX order info -- the SAME string
+    # the device reports as "order", so this is a plain comparison instead of a guess at folder names.
+    $fwDevice = if ($_haveUi -and $_facts) { $_facts.Device } else { "" }
+    $imgFacts = $null
+    if (Get-Command OpenKNX_ImageFacts -ErrorAction SilentlyContinue) {
+        $imgFacts = OpenKNX_ImageFacts $firmwarePath
+    }
+    $fwOrder = if ($imgFacts) { [string]$imgFacts['orderNumber'] } else { "" }
+
+    if ($fwOrder -and $pickedDev.Order -and -not $Force) {
+        # Both ends name the product the same way -- nothing to interpret.
+        if ($fwOrder -ine [string]$pickedDev.Order) {
+            $fwShown  = if ($imgFacts -and $imgFacts['firmwareName']) { $imgFacts['firmwareName'] } else { $fwOrder }
+            $devShown = if ($pickedDev.Product) { $pickedDev.Product } else { $pickedDev.Order }
+            Write-Host ""
+            Write-Host ("  !  " + $s.ProdHead) -ForegroundColor DarkYellow
+            Write-Host ("     " + $s.ProdFw.PadRight(16) + $fwShown)
+            Write-Host ("     " + $s.ProdDev.PadRight(16) + $devShown)
+            Write-Host ""
+            if ($AutoExit) {
+                Write-Host ("  " + $s.ProdAuto) -ForegroundColor Red
+                Write-Host ""
+                exit 1
+            }
+            $ans = (Read-Host ("  " + $s.ProdAsk)).Trim()
+            if ($ans -notmatch '^[jJyY]$') { Write-Host $s.Aborted -ForegroundColor Yellow; exit 0 }
+        }
+    }
+    # Fallback for an older release (no orderNumber written) or an older device (no order reported):
+    # compare the reported name against the release folder. Approximate, so it only asks.
+    elseif ($pickedDev.Product -and $fwDevice -and -not $Force) {
+        # The device reports the firmware name WITH its build suffix ("IP-Interface (Dev)"), the release
+        # folder never carries one. Compare without it -- the display keeps the full name, because that
+        # trailing "(Dev)" is how you see at a glance that a development build is running.
+        $prodCmp = ([string]$pickedDev.Product -replace '\s*\([^)]*\)\s*$', '').Trim()
+        $segs = $fwDevice.Split('-')
+        $prodMatch = $false
+        for ($k = 1; $k -le $segs.Count; $k++) {
+            if ((($segs[0..($k - 1)]) -join '-') -ieq $prodCmp) { $prodMatch = $true; break }
+        }
+        if (-not $prodMatch) {
+            Write-Host ""
+            Write-Host ("  !  " + $s.ProdHead) -ForegroundColor DarkYellow
+            Write-Host ("     " + $s.ProdFw.PadRight(16) + $fwDevice)
+            Write-Host ("     " + $s.ProdDev.PadRight(16) + $pickedDev.Product)
+            Write-Host ""
+            if ($AutoExit) {   # nobody there to answer -- say so, do not send silently
+                Write-Host ("  " + $s.ProdAuto) -ForegroundColor Red
+                Write-Host ""
+                exit 1
+            }
+            $ans = (Read-Host ("  " + $s.ProdAsk)).Trim()
+            if ($ans -notmatch '^[jJyY]$') { Write-Host $s.Aborted -ForegroundColor Yellow; exit 0 }
+        }
+    }
 }
 
 # extra espota args: a scan-picked device reports its own OTA port (authoritative); otherwise use the
