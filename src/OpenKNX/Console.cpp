@@ -367,6 +367,9 @@ namespace OpenKNX
             printHelpLine("bcu mon", "Start/Stop BCU monitoring ('bus mon')");
             printHelpLine("bus mon", "Alias for 'bcu mon'");
             printHelpLine("bcu rst", "Reset BCU");
+    #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 2
+            printHelpLine("bcu autoack on|off", "Chip acknowledges by itself (on) or host only (off)");
+    #endif
     #ifdef TPUART_BCU_DEBUG
             printHelpLine("bcu dis", "Force BCU disconnect (test)");
     #endif
@@ -444,12 +447,31 @@ namespace OpenKNX
             }
             else
                 kv("State", tp.getBcuStateInfo(), nullptr, nullptr);
+    #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 2
+            kv("Chip AutoACK", tp.isAutoAcknowledge() ? "ON" : "off",
+               "Chip CRC", tp.isExtendedCRC() ? "CCITT" : "off");
+    #endif
             boxRow(" Traffic", CONSOLE_HEADLINE_COLOR);
             kv("TX Frames", vTx, "RX Frames", vRx);
             kv("Discarded", vDisc, "Received", vRecv);
             kv("Load", vLoad, "Buffer", vBuf);
             kv("Await", vAwait, "Repetitions", vRep);
+    #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 2
+            char vAckDrop[12];
+            snprintf(vAckDrop, sizeof(vAckDrop), "%s", humanCount(tp.getTransmitter().droppedAcknowledges()).c_str());
+            kv("Overflow", vOv, "ACK dropped", vAckDrop);
+        #ifdef TPUART_BUSMON_INTEGRITY
+            // Only measured when the driver collects the per-octet status; without it a row of zeroes
+            // would read as "no errors" instead of "not measured".
+            char vByteErr[26];
+            snprintf(vByteErr, sizeof(vByteErr), "%s/%s/%s/%s",
+                     humanCountShort(st.getRxByteFraming()).c_str(), humanCountShort(st.getRxByteParity()).c_str(),
+                     humanCountShort(st.getRxByteBreak()).c_str(), humanCountShort(st.getRxByteOverrun()).c_str());
+            kv("ByteErr FE/PE/BE/OE", vByteErr, nullptr, nullptr);
+        #endif
+    #else
             kv("Overflow", vOv, nullptr, nullptr);
+    #endif
     #ifdef TPUART_BCU_HEALTH
             char vRes[12], vDisc2[12], vCon[12];
             snprintf(vRes, sizeof(vRes), "%s", humanCount(st.getBcuResets()).c_str());
@@ -470,32 +492,34 @@ namespace OpenKNX
             kv("Xmit-Err", vTe, "Proto-Err", vPe);
             kv("Temp-Warn", vTw, nullptr, nullptr);
     #endif
-            // NCN rails + register snapshot use the extended TPUart API (getBcuType/getSystemState rails/
-            // ncnRegValid/getNcnRevId/getNcnAsr0/ASR0_TSD), which is absent upstream. Gate on the product flag
-            // so OGM-Common still compiles against a stock TPUart (section simply omitted there).
+            // The NCN rails use the extended TPUart API (getBcuType/getSystemState), which is absent
+            // upstream. Gate on the product flag so OGM-Common still compiles against a stock TPUart
+            // (section simply omitted there).
 #ifdef TPUART_BCU_REGISTER_INFO
-            // NCN5130/5121 supervisor rails (already polled via U_SystemStat, 1 Hz) + boot register snapshot.
+            // NCN supervisor rails (already polled via U_SystemStat, 1 Hz).
             if (tp.getBcuType() == TPUart::BCU_NCN5120)
             {
                 auto& ss = tp.getSystemState();
-                boxRow(" NCN Rails", CONSOLE_HEADLINE_COLOR);
-                kv("VBUS", ss.vbus() ? "ok" : "LOW", "VFILT", ss.vfilt() ? "ok" : "LOW");
-                kv("V20V", ss.v20v() ? "ok" : "LOW", "VDD2", ss.vdd2() ? "ok" : "LOW");
-                kv("XTAL", ss.xtal() ? "ok" : "FAIL", "Mode", ss.modeString());
-
-                if (tp.ncnRegValid())
+                // requestState() is skipped in busmonitor, so the rails are whatever was last read --
+                // power-up defaults if nothing ever was. Say so instead of printing an alarming LOW/FAIL.
+                if (!ss.seen())
                 {
-                    const uint8_t pn = tp.getNcnRevId() & 0x1F; // silicon-rev [7:5] masked off
-                    const char* chip = pn == 0x0C ? "NCN5130" : pn == 0x0D ? "NCN5121" : "NCN5120";
-                    char vRev[12], vTsd[20];
-                    if (pn == 0x0C || pn == 0x0D)
-                        snprintf(vRev, sizeof(vRev), "%u", (tp.getNcnRevId() >> 5) & 0x07);
-                    else
-                        snprintf(vRev, sizeof(vRev), "-"); // NCN5120 has no RevID register
-                    snprintf(vTsd, sizeof(vTsd), (tp.getNcnAsr0() & ASR0_TSD) ? "YES (history)" : "no");
-                    boxRow(" NCN Chip", CONSOLE_HEADLINE_COLOR);
-                    kv("Chip", chip, "Silicon Rev", vRev);
-                    kv("Thermal-SD", vTsd, nullptr, nullptr);
+                    boxRow(" NCN Rails", CONSOLE_HEADLINE_COLOR);
+                    kv("State", "not read (no reply yet)", nullptr, nullptr);
+                }
+                else if (tp.isMonitoring())
+                {
+                    boxRow(" NCN Rails (stale, busmonitor)", CONSOLE_HEADLINE_COLOR);
+                    kv("VBUS", ss.vbus() ? "ok" : "LOW", "VFILT", ss.vfilt() ? "ok" : "LOW");
+                    kv("V20V", ss.v20v() ? "ok" : "LOW", "VDD2", ss.vdd2() ? "ok" : "LOW");
+                    kv("XTAL", ss.xtal() ? "ok" : "FAIL", "Mode", ss.modeString());
+                }
+                else
+                {
+                    boxRow(" NCN Rails", CONSOLE_HEADLINE_COLOR);
+                    kv("VBUS", ss.vbus() ? "ok" : "LOW", "VFILT", ss.vfilt() ? "ok" : "LOW");
+                    kv("V20V", ss.v20v() ? "ok" : "LOW", "VDD2", ss.vdd2() ? "ok" : "LOW");
+                    kv("XTAL", ss.xtal() ? "ok" : "FAIL", "Mode", ss.modeString());
                 }
             }
 #endif // TPUART_BCU_REGISTER_INFO
@@ -511,6 +535,19 @@ namespace OpenKNX
 #endif
             return true;
         }
+    #if defined(TPUART_API_LEVEL) && TPUART_API_LEVEL >= 2
+        else if (cmd.compare(0, 12, "bcu autoack ") == 0)
+        {
+            // Off withholds U_SetAddress.req, which is what enables the chip's own acknowledge; the host
+            // then decides alone. Exact words only -- a typo must not toggle the mode and reset the BCU.
+            const std::string arg = cmd.substr(12);
+            if (arg == "on" || arg == "off")
+                dll->getTPUart().chipAutoAcknowledge(arg == "on");
+            else
+                openknx.logger.log("usage: bcu autoack on|off");
+            return true;
+        }
+    #endif
         else if (cmd.compare("bcu rst") == 0)
         {
             dll->reset();
