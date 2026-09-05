@@ -4,6 +4,22 @@
 
 The entries below are on `ec/v1dev-ec` and not released upstream yet.
 
+**Console safety**
+* Fix: `flash knx`, `flash openknx` and `mem 0x...` are refused over the diagnose group object -- anyone able to send to that group address could dump memory or trigger a flash write
+* Fix: `bcu` and `bus mon` are refused there too: none of them answers over the object and some take the TP link down
+* Fix: the pin commands were bracketed so that the reads `dr` and `ar` stayed reachable from the group object, where `processPinCommand` runs `std::stoi` on unvalidated text and aborts the device on anything that is not a number
+* Fix: the time commands answer only on the local console, so a group-object caller got side effects without feedback
+
+**Device and bus diagnostics**
+* Feature: `bcu stat` shows the four byte-error counters the driver now separates -- framing, parity, break and overrun. The parity column is the one that matters on a bus, because the NCN encodes a bus-side bit error there, while framing and overrun describe the link to the chip
+* Feature: the row appears only where the driver actually collects the status, so a run of zeroes cannot be read as "no errors" on a product that never measured
+* Feature: the chip's own acknowledge and CRC state are shown; they were read from the chip and never displayed. `bcu autoack on|off` switches the acknowledge
+* Feature: the acknowledge-drop counter moves into the traffic block, where it is visible without the health build flag
+* Change: the NCN rails say "stale" while a busmonitor runs and "not read" before the first reply -- the driver does not poll the state in monitor mode, and the block showed power-up defaults (VBUS/V20V LOW, XTAL FAIL) on a healthy device
+* Change: every new call is gated on `TPUART_API_LEVEL`, so this still builds against an older driver
+* Fix: the help for `bcu poff`/`bcu pon` said "Bus power", which reads as the KNX bus supply; the command clears `V20VEN` and `DC2EN` in the NCN's ACR0, which are the transceiver's own auxiliary rails
+* Change: the download counter is gone from the device information, because the knx stack no longer exposes PID 30
+
 **Build and release tooling**
 * Feature: build-time flash and knxOTA reporting — every build prints what the image costs and what fits over the bus, so a target running out of flash is visible before the linker says so
 * Feature: one upload path for all targets, and delta patches generated from released packages
