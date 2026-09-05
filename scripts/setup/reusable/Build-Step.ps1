@@ -221,12 +221,48 @@ if (!$productName) {
 # Derived AND VERIFIED here: the slice this file describes is compared against the real application
 # image, so a layout change breaks the BUILD visibly instead of breaking a user's tool silently.
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
+# Order the identity block is written in -- grouped by what a reader looks for first.
+$ExtraOrder = @("orderNumber", "firmwareName", "firmwareVersion", "mcu",
+                "openKnxId", "appNumber", "appVersion",
+                "env", "buildDate", "mainVersion")
+
+# One #define out of a generated header. Returns the token with quotes stripped, or "".
+function Get-DefineValue([string]$File, [string]$Name) {
+    if (-not (Test-Path -PathType Leaf $File)) { return "" }
+    foreach ($line in (Get-Content -LiteralPath $File)) {
+        if ($line -match ('^\s*#define\s+' + [regex]::Escape($Name) + '\s+(.+?)\s*$')) {
+            return $Matches[1].Trim().Trim('"')
+        }
+    }
+    return ""
+}
+
+# The MCU as a tool needs it: the .uf2 family id says RP2040 vs RP2350 exactly, a .factory.bin is ESP32.
+# Derived from the package, not from the file extension -- the extension is what tools guess today.
+function Get-PackageMcu([string]$Package, [string]$Format) {
+    if ($Format -eq "factory") { return "ESP32" }
+    if ($Format -ne "uf2" -or -not (Test-Path -PathType Leaf $Package)) { return "" }
+    try {
+        $fs = [System.IO.File]::OpenRead($Package)
+        $b = New-Object byte[] 32
+        $n = $fs.Read($b, 0, 32); $fs.Close()
+        if ($n -lt 32) { return "" }
+        $fam = [BitConverter]::ToUInt32($b, 28)
+        # The L suffix matters: without it PowerShell parses 0xE48BFF56 as a NEGATIVE Int32 and the
+        # comparison against the UInt32 read from the file is never true.
+        if ($fam -eq 0xE48BFF56L) { return "RP2040" }
+        if ($fam -eq 0xE48BFF59L -or $fam -eq 0xE48BFF5AL -or $fam -eq 0xE48BFF5BL) { return "RP2350" }
+    } catch { }
+    return ""
+}
+
 function Write-ImageFacts {
     param(
         [string]$AppImage,   # the raw application image (.pio/build/<env>/firmware.bin)
         [string]$Package,    # the .uf2 / .factory.bin the release ships
         [string]$Format,     # uf2 | factory | raw
-        [string]$Target      # where to write the facts file
+        [string]$Target,     # where to write the facts file
+        [hashtable]$Extra = @{}  # identity/provenance, in the order given by $ExtraOrder
     )
     if (-not (Test-Path -PathType Leaf $AppImage)) { return $false }
     $app = [System.IO.File]::ReadAllBytes($AppImage)
@@ -265,11 +301,21 @@ function Write-ImageFacts {
     $nl = [Environment]::NewLine
     $txt = "# OpenKNX firmware image facts - written by the build, read by tools." + $nl +
            "# appLength is what a .uf2 cannot state: it is block-padded, so its payload is longer." + $nl +
-           "format    = $Format" + $nl +
-           "package   = " + (Split-Path -Leaf $Package) + $nl +
-           "appOffset = $appOffset" + $nl +
-           "appLength = " + $app.Length + $nl +
-           "appSha256 = $sha" + $nl
+           "format          = $Format" + $nl +
+           "package         = " + (Split-Path -Leaf $Package) + $nl +
+           "appOffset       = $appOffset" + $nl +
+           "appLength       = " + $app.Length + $nl +
+           "appSha256       = $sha" + $nl
+    if ($Extra.Count -gt 0) {
+        # Identity and provenance: what the package cannot say about itself. Tools compare on
+        # orderNumber (the KNX order info, what ETS shows) -- firmwareName carries a build suffix.
+        $txt += $nl + "# identity and provenance" + $nl
+        foreach ($k in $ExtraOrder) {
+            if ($Extra.ContainsKey($k) -and "$($Extra[$k])" -ne "") {
+                $txt += ($k.PadRight(15) + " = " + $Extra[$k]) + $nl
+            }
+        }
+    }
     [System.IO.File]::WriteAllText($Target, $txt, (New-Object System.Text.UTF8Encoding $false))
     return $true
 }
@@ -327,7 +373,34 @@ if ( Test-Path $CopyItem_Source ) {
     if ($binaryFormat -eq "uf2") { $factsFormat = "uf2" }
     elseif ($binaryFormat -eq "factory.bin") { $factsFormat = "factory" }
     $factsFile = Join-Path $CopyItem_Target_Dir "$firmwareName.image.txt"
-    if (Write-ImageFacts -AppImage $CopyItem3_Source -Package $CopyItem_Target -Format $factsFormat -Target $factsFile) {
+
+    # Identity straight out of the generated headers -- the same numbers the firmware reports at runtime,
+    # so a tool can compare the two without unpacking anything. The ETS version is "major.minor.revision":
+    # major/minor are the two nibbles of MAIN_ApplicationVersion, the revision is its own define.
+    $hdrDir  = if ([string]::IsNullOrEmpty($ProjectDir)) { "include" } else { Join-Path $ProjectDir "include" }
+    $knxprod = Join-Path $hdrDir "knxprod.h"
+    $vers    = Join-Path $hdrDir "versions.h"
+    $appVerRaw = Get-DefineValue $knxprod "MAIN_ApplicationVersion"
+    $fwVersion = ""
+    if ($appVerRaw -match '^\d+$') {
+        $av = [int]$appVerRaw
+        $rev = Get-DefineValue $knxprod "MAIN_FirmwareRevision"
+        if ($rev -notmatch '^\d+$') { $rev = "0" }
+        $fwVersion = "{0}.{1}.{2}" -f (($av -band 0xF0) -shr 4), ($av -band 0x0F), $rev
+    }
+    $extra = @{
+        orderNumber     = Get-DefineValue $knxprod "MAIN_OrderNumber"
+        firmwareName    = Get-DefineValue $knxprod "MAIN_FirmwareName"
+        firmwareVersion = $fwVersion
+        mcu             = Get-PackageMcu $CopyItem_Target $factsFormat
+        openKnxId       = Get-DefineValue $knxprod "MAIN_OpenKnxId"
+        appNumber       = Get-DefineValue $knxprod "MAIN_ApplicationNumber"
+        appVersion      = $appVerRaw
+        env             = $pioEnv
+        buildDate       = (Get-Date -Format "yyyy-MM-dd")
+        mainVersion     = Get-DefineValue $vers "MAIN_Version"
+    }
+    if (Write-ImageFacts -AppImage $CopyItem3_Source -Package $CopyItem_Target -Format $factsFormat -Target $factsFile -Extra $extra) {
       Write-Host "Wrote: $factsFile  ($factsFormat, $((Get-Item $CopyItem3_Source).Length) B)"
     }
     else {
