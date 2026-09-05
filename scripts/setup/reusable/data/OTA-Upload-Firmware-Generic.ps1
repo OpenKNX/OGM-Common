@@ -128,6 +128,9 @@ $_strings = @{
         EspotaOpt1b    = "    https://github.com/OpenKNX/OpenKNXproducer/releases -> Install-OpenKNX-Tools"
         EspotaOpt2     = "  Option 2 - pip:  pip install esptool"
         Done           = "  Done."
+        DoneNote       = "  The device is now applying the firmware and restarting - do not power it off."
+        DoneNoteRp     = "  RP2040/RP2350: the compressed image is unpacked at boot, so this takes a moment."
+        DoneNoteEsp    = "  ESP32: it restarts from the new OTA partition, usually within a few seconds."
         Failed         = "  espota returned an error. Upload may have failed."
         PressEnter     = "  Press Enter to exit"
     }
@@ -174,6 +177,9 @@ $_strings = @{
         EspotaOpt1b    = "    https://github.com/OpenKNX/OpenKNXproducer/releases -> Install-OpenKNX-Tools"
         EspotaOpt2     = "  Option 2 - pip:  pip install esptool"
         Done           = "  Fertig."
+        DoneNote       = "  Das Gerät schreibt die Firmware und startet neu - bitte nicht stromlos machen."
+        DoneNoteRp     = "  RP2040/RP2350: das komprimierte Image wird beim Booten entpackt, das dauert einen Moment."
+        DoneNoteEsp    = "  ESP32: Neustart von der neuen OTA-Partition, meist innerhalb weniger Sekunden."
         Failed         = "  espota meldet einen Fehler. Upload möglicherweise fehlgeschlagen."
         PressEnter     = "  Drücke Enter zum Beenden"
     }
@@ -552,7 +558,15 @@ $espArgs += '-f', $upload
 $code = $LASTEXITCODE
 
 Write-Host ""
-if ($code -eq 0) { Write-Host $s.Done -ForegroundColor Green } else { Write-Host $s.Failed -ForegroundColor Red }
+if ($code -eq 0) {
+    Write-Host $s.Done -ForegroundColor Green
+    # espota is done once the bytes are sent -- the device still has to write and reboot, and how long
+    # that takes differs per MCU. Without this the transfer looks finished while the device is still busy.
+    Write-Host ""
+    Write-Host $s.DoneNote -ForegroundColor DarkYellow
+    Write-Host $(if ($isEsp) { $s.DoneNoteEsp } else { $s.DoneNoteRp }) -ForegroundColor DarkGray
+}
+else { Write-Host $s.Failed -ForegroundColor Red }
 Write-Host ""
 if ($code -ne 0 -and -not $AutoExit) { Read-Host $s.PressEnter }
 exit $code
