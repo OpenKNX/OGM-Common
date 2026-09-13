@@ -31,9 +31,13 @@ namespace OpenKNX
         void Manager::init()
         {
 #if OPENKNX_GPIO_NUM > 0
+    #ifdef ARDUINO_ARCH_ESP32
+            OPENKNX_GPIO_WIRE.begin(OPENKNX_GPIO_SDA, OPENKNX_GPIO_SCL);
+    #else
             OPENKNX_GPIO_WIRE.setSDA(OPENKNX_GPIO_SDA);
             OPENKNX_GPIO_WIRE.setSCL(OPENKNX_GPIO_SCL);
             OPENKNX_GPIO_WIRE.begin();
+    #endif
             OPENKNX_GPIO_WIRE.setClock(OPENKNX_GPIO_CLOCK);
 #endif
 

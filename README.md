@@ -69,7 +69,7 @@ To configure the Hardware-Setup use the following defines in hardware.h
 | OPENKNX_RUNTIME_STAT_BUCKETN       |          16 |       | the number of histogram buckets for Runtime-Statistics                                                                                                                                     |
 | OPENKNX_RUNTIME_STAT_BUCKETS       | default set |  µs   | The upper (included) limits of histogram bucket, without last bucket as this will be limited by data-type only. Must be a comma-separated list with OPENKNX_RUNTIME_STAT_BUCKETN-1 entries |
 | OPENKNX_DEBUG                      |             |       | Enable debug mode                                                                                                                                                                          |
-| OPENKNX_TRACE1..5                  |             |       | Enable debug mode + tracing. to see trace logs, they must match one of the 5 regex filters.                                                                                                |
+| OPENKNX_TRACE                      |             |       | Enable debug mode + tracing. To see trace logs, the log prefix (format `PREFIX<SUB>`, e.g. `Channel<4>`) must match a filter. Filter syntax: prefix exact or `*` suffix wildcard (`Channel`, `Channel*`); optional `<sub>` with exact value, numeric range `1-19`, comma list `4,5,7` (combinable: `1-5,9`), or `*` suffix wildcard (`Test*`). A filter without `<sub>` ignores the sub part (matches all). Combine several filters with `;`, e.g. `OPENKNX_TRACE=Test1<1-4>;Test2<8>` (commas stay reserved for the sub list). |
 | OPENKNX_DEBUGGER                   |             |       | Must be defined if you want to use a debugger (SWD). (e.g., switches off watchdog)                                                                                                         |
 | OPENKNX_TIME_DIGAGNOSTIC           |             |       | Enable time diagnostic console commands. Will be automatically defined if OPENKNX_DEBUG is defined.                                                                                        |
 | OPENKNX_TIME_TESTCOMMAND           |             |       | Enable time text command to check the behavior of the posix time calculation functions                                                                                                     |
@@ -78,6 +78,50 @@ To configure the Hardware-Setup use the following defines in hardware.h
 | OPENKNX_OVERRIDE_MASK_VERSION      |             |       | defines a mask version which will be returned regardless of the MASK_VERSION used for the build. Set this define if the used mask version does not match the media type.                   |
 | OPENKNX_RTT                        |             |       | Enable RTT Mode (Disable USB Serial output) + Increase BUFFER_SIZE_UP to 10240!                                                                                                            |
 | BUFFER_SIZE_UP                     |        1024 | Bytes | Using by Segger RTT                                                                                                                                                                        |
+
+### Memory Management
+
+#### PSRAM Helper Macros
+On ESP32 and RP2350, you can utilize PSRAM for both static data and dynamic memory allocation. The following macros are provided in `helper.h`:
+
+| Macro | Function | With OPENKNX_PSRAM | Without OPENKNX_PSRAM |
+|-------|----------|-------------------|----------------------|
+| `PSRAM_MALLOC(size)` | Allocate dynamic memory | ESP32 `ps_malloc`, RP2350 `pmalloc` | `malloc(size)` |
+| `PSRAM_CALLOC(count, size)` | Allocate and zero memory | ESP32 `ps_calloc`, RP2350 `pcalloc` | `calloc(count, size)` |
+| `PSRAM_REALLOC(ptr, size)` | Reallocate memory | ESP32 `ps_realloc`, RP2350 `realloc` | `realloc(ptr, size)` |
+| `psram_new(Type)` | Placement-new in PSRAM | PSRAM allocation | Normal allocation |
+| `psram_delete(p)` | Destruct + free PSRAM object | `~T()` + `free()` | `delete p` |
+| `PsramAllocator<T>` | STL allocator using PSRAM | `PSRAM_MALLOC`-backed | `std::allocator<T>` |
+| `PSRAM_DATA` | Place variable/array in PSRAM | RP2350 section `.psram`, ESP32 `EXT_RAM_BSS_ATTR` | No-op |
+| `PSRAM_CODE` | Place function in PSRAM | RP2350 section `.psram_code` | No-op (ESP32 cannot execute from PSRAM) |
+
+The section names are not free-form: arduino-pico's linker script collects `*(.psram*)` into the PSRAM region (`lib/rp2350/memmap_default.ld`), ESP-IDF uses `.ext_ram.bss`. A section name outside those patterns links without error and silently ends up in normal RAM — verify placement in the `.map` file (RP2350 PSRAM window starts at `0x11000000`).
+
+**ESP32 caveat verified by build:** `PSRAM_DATA` only places data in PSRAM if the underlying `sdkconfig` has `CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y` — `EXT_RAM_BSS_ATTR` degrades itself to a no-op otherwise (checked in `esp_attr.h`), and the sdkconfig shipped with this project's pinned pioarduino release does **not** set it. `PSRAM_MALLOC`/`PsramAllocator` are unaffected — confirmed via `nm` that `PsramAllocator<T>::allocate()` calls the real `ps_malloc`, not a stub. RP2350 has no equivalent gate: `PSRAM_DATA` there is proven placed at `0x11000000` with just `RP2350_PSRAM_CS` set.
+
+`PSRAM_DATA` variables live in a `NOLOAD` section: they **cannot be statically initialized** and are not zeroed at startup. Initialize them explicitly at runtime.
+
+**Control defines:**
+- `OPENKNX_PSRAM` — automatically defined when ESP32 `BOARD_HAS_PSRAM` or RP2350 `RP2350_PSRAM_CS` is detected. Only these two are checked, because they are what the cores themselves use to bring the PSRAM heap up — defining any other name would enable the macros without an initialized heap. On PlatformIO the board must also declare `upload.psram_length`, otherwise the PSRAM region has zero length
+- `OPENKNX_DISABLE_PSRAM` — define in `hardware.h` to disable PSRAM and force fallback to normal RAM/Flash (useful for debugging with Segger, etc.)
+
+**Example usage:**
+```cpp
+// Dynamic allocation
+uint8_t *buf = (uint8_t*)PSRAM_MALLOC(8192);  // PSRAM if available
+free(buf);                                    // always free with free()
+
+MyClass *obj = psram_new(MyClass)();          // Placement-new in PSRAM
+psram_delete(obj);                            // destructs + frees correctly
+
+// STL container in PSRAM
+std::vector<uint8_t, PsramAllocator<uint8_t>> vec;
+vec.resize(8192);
+
+// Static allocation
+PSRAM_DATA uint8_t largeBuf[8192];            // Array in PSRAM
+PSRAM_CODE void heavyComputation() { }        // Function in PSRAM (frees Flash)
+```
 
 ### LEDs
 

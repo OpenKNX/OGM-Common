@@ -1,6 +1,7 @@
 #include "OpenKNX/Console.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Flash/Driver.h"
+#include "buildtime.h"
 
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
@@ -400,8 +401,9 @@ namespace OpenKNX
 #else
         openknx.logger.logWithPrefixAndValues("KNX-Type", "%04X", MASK_VERSION);
 #endif
-        if (openknx.hardware.cpuTemperature() > 0)
-            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, openknx.hardware.cpuTemperature());
+        float cpuTemp = openknx.hardware.cpuTemperature();
+        if (cpuTemp > 0)
+            openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s (Temperature %.1f °C)", cpuMode, cpuTemp);
         else
             openknx.logger.logWithPrefixAndValues("CPU-Mode", "%s", cpuMode);
 
@@ -510,8 +512,7 @@ namespace OpenKNX
             openknx.logger.logWithPrefix(openknx.modules.list[i]->name().c_str(), openknx.modules.list[i]->version().c_str());
         }
         openknx.logger.logDividingLine();
-        openknx.logger.logWithPrefix("Builddate", __DATE__);
-        openknx.logger.logWithPrefix("Buildtime", __TIME__);
+        openknx.logger.logWithPrefix("Buildtime", BUILD_DATETIME);
         openknx.logger.logDividingLine();
         logEnd();
     }

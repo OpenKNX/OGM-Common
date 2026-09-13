@@ -6,6 +6,37 @@ function newline(device, online, progress, context) {
     text.value = replaced;
 }
 
+// this function does nothing, inteded use is in ParameterCalculations for inverse calculation without any changes to the value
+function BASE_Nop(input, output, context) { }
+
+
+// used to mark the text of an inactive channel with a "inactive" symbol in front of the text
+function BASE_MarkInactive(input, output, context) {
+    output.TextOutput = (input.CheckboxInactive ? '\u26D4 ' : '') + input.TextInput;
+}
+
+// used to mark the text of an inactive channel with a "inactive" symbol in front of the text
+// input.InactiveControl might be any UI control with numeric content
+// the value, which represents inacive state is stored in context as.InactiveValue
+// the json for context.InactiveValue is something like this: {"InactiveValue":1},
+// but must be escaped properly for XML, e.g. by using &quot; instead of " directly in the XML
+// i.e. {"InactiveValue":1} is represented as {&quot;InactiveValue&quot;:1} in the XML
+function BASE_MarkInactiveChannel(input, output, context) {
+    var inactiveMarker = (Number(input.InactiveControl) == Number(context.InactiveValue)) ? '\u26D4 ' : '';
+    output.TextOutput = inactiveMarker + input.TextInput;
+}
+
+// use this to sync channel type on channel page and on channel selection table
+// Only necessary if channel type is also changeable on the channel page itself (channel header)
+// and not only on channel selection page.
+function BASE_SyncChannelType(input, output, context) {
+    // Log.info("BASE_SyncChannelType: input.TypeValue = " + input.TypeValue + ", output.TypeValue = " + output.TypeValue);
+    if (input.TypeValue > 0 && input.TypeValue != output.TypeValue)
+    {
+        output.TypeValue = input.TypeValue;
+    }
+}
+
 function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     var sync = context.Sync;
 

@@ -12,7 +12,6 @@ namespace OpenKNX
 
 #ifdef ARDUINO_ARCH_RP2040
         adc_init();
-        adc_set_temp_sensor_enabled(true);
 #endif
 #if OPENKNX_LITTLE_FS
         initFilesystem();
