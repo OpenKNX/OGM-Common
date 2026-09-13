@@ -56,24 +56,28 @@ namespace OpenKNX
             float elevation() { return _elevation; }
 #endif
             /*
-             * Returns the sun rise time in UTC for the current day
+             * Returns the sun rise time in UTC for the current (local time!) day.
+             * The day in UTC might differ from local day, depending on time-zone offset and day time of sun rise.
+             * Will change on local day change only.
              */
-            TimeOnly sunRiseUtc() { return _sunRiseUtc; }
+            DateTime sunRiseUtc() { return _sunRiseUtc; }
 
             /*
-             * Returns the sun set time in UTC for the current day
+             * Returns the sun set time in UTC for the current (local time!) day.
+             * The day in UTC might differ from local day, depending on time-zone offset and day time of sun rise.
+             * Will change on local day change only.
              */
-            TimeOnly sunSetUtc() { return _sunSetUtc; }
+            DateTime sunSetUtc() { return _sunSetUtc; }
 
             /*
              * Returns the sun rise time in local time for the current day
              */
-            TimeOnly sunRiseLocalTime() { return _sunRiseLocalTime; }
+            DateTime sunRiseLocalTime() { return _sunRiseLocalTime; }
 
             /*
              * Returns the sun set time in local time for the current day
              */
-            TimeOnly sunSetLocalTime() { return _sunSetLocalTime; }
+            DateTime sunSetLocalTime() { return _sunSetLocalTime; }
         };
     } // namespace Sun
 } // namespace OpenKNX
