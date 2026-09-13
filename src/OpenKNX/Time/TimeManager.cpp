@@ -484,7 +484,7 @@ namespace OpenKNX
                         timezoneString = "CET-5CET-6,366,367";
                         break;
                     case 6:
-                        timezoneString = "CET-CET-7,366,367";
+                        timezoneString = "CET-6CET-7,366,367";
                         break;
                     case 7:
                         timezoneString = "CET-7CET-8,366,367";
