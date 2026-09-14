@@ -91,6 +91,11 @@ namespace OpenKNX
             _firmwareRevision = firmwareRevision;
         }
 
+        uint8_t firmwareRevision()
+        {
+            return _firmwareRevision;
+        }
+
         std::string humanFirmwareVersion(bool withHash = false)
         {
             char buffer[52] = {}; // "15.15.31+" and a short git hash, which git extends up to 40 characters

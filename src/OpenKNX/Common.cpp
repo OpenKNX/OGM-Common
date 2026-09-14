@@ -3,6 +3,9 @@
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
     #include <esp_heap_caps.h> // heap taken per module ("mem modules")
 #endif
+#if __has_include("buildtime.h") // generated per build; a target whose scripts skip it reports 0
+    #include "buildtime.h"
+#endif
 #if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32) // ESP-only: heap_caps_* is ESP-IDF
     #include "OpenKNX/Heap/HeapCheck.h"
 #endif
@@ -227,6 +230,44 @@ namespace OpenKNX
 #ifdef MAIN_OrderNumber
         knx.orderNumber((const uint8_t*)MAIN_OrderNumber); // set the OrderNumber
 #endif
+#ifdef KNX_HAS_DEVICE_INFORMATION
+        // Descriptive device information. The text Properties keep pointers into flash, so the strings
+        // must have static storage duration.
+    #ifdef DEVICE_NAME
+        knx.bau().deviceObject().deviceName(DEVICE_NAME);
+    #elif defined(HARDWARE_NAME)
+        knx.bau().deviceObject().deviceName(HARDWARE_NAME);
+    #endif
+    #ifdef DEVICE_ID
+        knx.bau().deviceObject().hardwareId(DEVICE_ID);
+    #endif
+    #ifdef MAIN_FirmwareName
+        knx.bau().deviceObject().firmwareName(MAIN_FirmwareName);
+    #elif defined(FIRMWARE_NAME)
+        knx.bau().deviceObject().firmwareName(FIRMWARE_NAME);
+    #endif
+    #ifdef MAIN_Version
+        knx.bau().deviceObject().firmwareBuild(MAIN_Version); // short git hash of this build
+    #endif
+    #ifdef BUILD_TIMESTAMP
+        knx.bau().deviceObject().buildTimestamp(BUILD_TIMESTAMP);
+    #endif
+        // openknx.info carries the effective revision: the MAIN_FirmwareRevision macro on the generated
+        // path, and the init() argument where a product passes it at runtime. On mask 2920h the value is
+        // stored but never read - PID_FIRMWARE_REVISION must not exist there, PID_VERSION carries it.
+        knx.bau().deviceObject().firmwareRevision(openknx.info.firmwareRevision());
+
+        // 03_05_01 4.3.6: 2 octets application manufacturer, then 8 octets manufacturer specific DEVICE
+        // type. Only the board goes in there: which application runs on it is already in PID_HARDWARE_TYPE
+        // and, written by ETS, in PID_PROGRAM_VERSION of the Application Program Object.
+    #ifdef DEVICE_HW_ID
+        const uint8_t productId[LEN_PRODUCT_ID] = {
+            0x00, 0xFA,
+            (uint8_t)(((uint16_t)DEVICE_HW_ID) >> 8), (uint8_t)(((uint16_t)DEVICE_HW_ID) & 0xFF),
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        knx.bau().deviceObject().productId(productId);
+    #endif
+#endif // KNX_HAS_DEVICE_INFORMATION
         logIndentDown();
     }
 
