@@ -45,6 +45,11 @@ FILEPATH: lib/OGM-Common/scripts/setup/reusable/data/Upload-Firmware-Generic.ps1
     By default (fast path) a single detected device is flashed directly without asking; pass
     -Ask to force the [J/A/X] prompt. Ignored in -Multi mode (which always confirms per device).
 
+.PARAMETER Dev
+    Open the developer menu before flashing. The fast path asks nothing, so there is no prompt to type
+    '??' into -- this is the way in. It also carries the CHIP ERASE, which wipes the flash with picotool
+    or esptool instead of the device console, so it still works when no firmware is left to talk to.
+
 .PARAMETER Help
     Show the logo/header and full help (parameters + examples), then exit. Alias: -h.
 
@@ -82,7 +87,10 @@ param(
     [Alias('h')]
     [switch]$Help,                   # show logo + full help and exit
     [switch]$DebugSerial = $false,   # show serial debug output when reading device info
-    [switch]$AutoExit                # never pause on error; default pauses so the window stays readable
+    [switch]$AutoExit,               # never pause on error; default pauses so the window stays readable
+    [switch]$Dev                     # open the developer menu right away -- the only way in when the fast
+                                     # path flashes without a prompt, and the way to reach the chip erase
+                                     # on a device that has no firmware left to talk to
 )
 
 # Platform detection – ensures compatibility with PowerShell 5.1 on Windows
@@ -271,6 +279,20 @@ $_strings = @{
         WipeEraseOknx       = "erase openknx   -  Erase OpenKNX module data"
         WipeEraseFiles      = "erase files     -  Erase filesystem"
         WipeEraseAll        = "erase all       -  Erase EVERYTHING!"
+        WipeEraseChip       = "CHIP ERASE      -  wipe the whole flash, no firmware needed"
+        WipeChipHead        = "Full chip erase via the flash tool, NOT via the device console"
+        WipeChipWhy         = @(
+            "The four commands above are sent to the running firmware. With no firmware, a broken one,",
+            "or a dead console they cannot work. This erases the flash with the same tool that writes it:",
+            "  RP2040/RP2350 : picotool -- BOOTSEL lives in ROM, so the chip always comes back",
+            "  ESP32         : esptool  -- the ROM bootloader stays, app/NVS/partitions go"
+        )
+        WipeChipConfirm     = "!! CHIP ERASE -- firmware, filesystem, KNX parameters, everything. No undo."
+        WipeChipNoTool      = "{0} not found. Install the OpenKNX tools (~/bin) or put it on PATH."
+        WipeChipBootsel     = "Putting the device into BOOTSEL mode..."
+        WipeChipRunning     = "Erasing the flash ({0})..."
+        WipeChipOk          = "Flash erased. The device is empty and waiting for a firmware."
+        WipeChipFail        = "Erase failed. On ESP32 hold the BOOT button while it starts, then retry."
         WipeInfo           = @(
             "This menu erases data on a connected OpenKNX device via the serial console.",
             "The device must be running and reachable via serial port.",
@@ -429,6 +451,20 @@ $_strings = @{
         WipeEraseOknx       = "erase openknx   -  OpenKNX Moduldaten löschen"
         WipeEraseFiles      = "erase files     -  Dateisystem löschen"
         WipeEraseAll        = "erase all       -  ALLES löschen!!"
+        WipeEraseChip       = "CHIP LÖSCHEN    -  ganzen Flash löschen, ohne Firmware"
+        WipeChipHead        = "Kompletter Chip-Löschvorgang über das Flash-Werkzeug, NICHT über die Gerätekonsole"
+        WipeChipWhy         = @(
+            "Die vier Befehle oben gehen an die laufende Firmware. Ohne Firmware, mit einer defekten",
+            "oder ohne Konsole können sie nicht wirken. Hier löscht dasselbe Werkzeug, das auch schreibt:",
+            "  RP2040/RP2350 : picotool -- BOOTSEL steckt im ROM, der Chip kommt immer zurück",
+            "  ESP32         : esptool  -- der ROM-Bootloader bleibt, App/NVS/Partitionen gehen"
+        )
+        WipeChipConfirm     = "!! CHIP LÖSCHEN -- Firmware, Dateisystem, KNX-Parameter, alles. Kein Zurück."
+        WipeChipNoTool      = "{0} nicht gefunden. OpenKNX-Tools installieren (~/bin) oder in den PATH legen."
+        WipeChipBootsel     = "Versetze das Gerät in den BOOTSEL-Modus..."
+        WipeChipRunning     = "Lösche den Flash ({0})..."
+        WipeChipOk          = "Flash gelöscht. Das Gerät ist leer und wartet auf eine Firmware."
+        WipeChipFail        = "Löschen fehlgeschlagen. Beim ESP32 die BOOT-Taste beim Start halten und erneut versuchen."
         WipeInfo           = @(
             "Dieses Menü löscht Daten auf einem angeschlossenen OpenKNX-Gerät über die serielle Konsole.",
             "Das Gerät muss laufen und über einen seriellen Port erreichbar sein.",
@@ -1595,6 +1631,44 @@ function Update-DeviceLabel($device, $espPorts, $esptool) {
 
 # Wipe / Erase menu – only accessible from Dev Settings ([W]).
 # Scans serial devices, lets user pick a device + erase command, confirms, then sends via serial.
+# Full chip erase with the flash tool instead of the device console. This is the path for a device that
+# has nothing to talk to: no firmware, a broken one, or a dead console. Neither tool can brick the chip --
+# the RP2040 BOOTSEL loader sits in mask ROM and the ESP32 ROM bootloader is not in the erased area.
+function Invoke-ChipErase([string]$Port, [string]$BootselPath) {
+    $s = $script:s
+
+    if ($BootselPath -or (-not $Port)) {
+        # RP already in BOOTSEL, or nothing but a volume to go by.
+        $tool = FindPicotool
+        if (-not $tool) { Write-Host ("  " + ($s.WipeChipNoTool -f "picotool")) -ForegroundColor Red; return $false }
+        Write-Host ("  " + ($s.WipeChipRunning -f "picotool erase -a")) -ForegroundColor Yellow
+        & $tool erase -a
+        return ($LASTEXITCODE -eq 0)
+    }
+
+    # A serial port: RP (VID 2E8A) goes to BOOTSEL first, anything else is treated as ESP.
+    $isRp = @(ScanPicoPorts) -contains $Port
+    if ($isRp) {
+        $tool = FindPicotool
+        if (-not $tool) { Write-Host ("  " + ($s.WipeChipNoTool -f "picotool")) -ForegroundColor Red; return $false }
+        Write-Host "  $($s.WipeChipBootsel)" -ForegroundColor DarkGray
+        # Same 1200-baud trick the flash path uses; the volume is then waited for, not assumed.
+        $sp = New-Object System.IO.Ports.SerialPort $Port, 1200, 'None', 8, 1
+        try { $sp.Open() } catch {} finally { if ($sp.IsOpen) { $sp.Close() } }
+        [void](Wait-BootselPaths 15)
+        Write-Host ("  " + ($s.WipeChipRunning -f "picotool erase -a")) -ForegroundColor Yellow
+        & $tool erase -a
+        return ($LASTEXITCODE -eq 0)
+    }
+
+    $tool = FindEsptool
+    if (-not $tool) { Write-Host ("  " + ($s.WipeChipNoTool -f "esptool")) -ForegroundColor Red; return $false }
+    $cmd = Get-EsptoolCmd $tool "erase_flash"   # v5 wants the hyphen form
+    Write-Host ("  " + ($s.WipeChipRunning -f "esptool $cmd")) -ForegroundColor Yellow
+    & $tool --port $Port $cmd
+    return ($LASTEXITCODE -eq 0)
+}
+
 function Show-WipeMenu {
     $sep  = [string][char]0x2550 * 52
     $sep2 = [string][char]0x2500 * 52
@@ -1617,7 +1691,9 @@ function Show-WipeMenu {
 
     # ── Scan all serial devices (RP2040 + ESP32) ─────────────────────────────
     Write-Host "  $($script:s.WipeSearching)" -ForegroundColor DarkGray
-    $ports = @(@(ScanPicoPorts) + @(ScanEsp32Ports) | Select-Object -Unique)
+    # BOOTSEL volumes belong in this list: a device without firmware has no serial port at all, and
+    # that is exactly the case the chip erase below exists for.
+    $ports = @(@(ScanPicoPorts) + @(ScanEsp32Ports) + @(ScanBootselPaths) | Select-Object -Unique)
 
     if ($ports.Count -eq 0) {
         Write-Host "  $($script:s.WipeNoDevices)" -ForegroundColor DarkYellow
@@ -1651,7 +1727,7 @@ function Show-WipeMenu {
     $selectedPort = $null
     if ($devChoice -eq 'A') {
         $allPaths  = @($devices | ForEach-Object { $_.Path })
-        $appeared  = Wait-AutoDetect $allPaths { @(ScanPicoPorts) + @(ScanEsp32Ports) | Select-Object -Unique }
+        $appeared  = Wait-AutoDetect $allPaths { @(ScanPicoPorts) + @(ScanEsp32Ports) + @(ScanBootselPaths) | Select-Object -Unique }
         if (-not $appeared) { return }
         $selectedPort = $appeared
     } else {
@@ -1672,11 +1748,34 @@ function Show-WipeMenu {
     Write-Host "  [2]  $($script:s.WipeEraseOknx)"  -ForegroundColor White
     Write-Host "  [3]  $($script:s.WipeEraseFiles)" -ForegroundColor White
     Write-Host "  [4]  $($script:s.WipeEraseAll)"   -ForegroundColor Red
+    Write-Host "  [5]  $($script:s.WipeEraseChip)"  -ForegroundColor Red
     Write-Host "  [X]  $($script:s.OptCancel)"      -ForegroundColor DarkGray
     Write-Host
 
-    $cmdChoice = Read-Choice "$($script:s.ChoicePrompt) [1/2/3/4/X]" @('1','2','3','4','X')
+    $cmdChoice = Read-Choice "$($script:s.ChoicePrompt) [1/2/3/4/5/X]" @('1','2','3','4','5','X')
     if ($cmdChoice -eq 'X') { return }
+
+    # ── [5] Chip erase: the flash tool, not the console ──────────────────────
+    if ($cmdChoice -eq '5') {
+        Write-Host
+        Write-Host "  $($script:s.WipeChipHead)" -ForegroundColor Yellow
+        Write-Host
+        foreach ($l in $script:s.WipeChipWhy) { Write-Host "  $l" -ForegroundColor Gray }
+        Write-Host
+        Write-Host "  $($script:s.WipeChipConfirm)" -ForegroundColor Red
+        Write-Host
+        $c2 = Read-Choice "$($script:s.WipeConfirmPrompt)" @('J','Y','N')
+        if ($c2 -eq 'N') { Write-Host; return }
+        Write-Host
+        $bootsel = if (@(ScanBootselPaths) -contains $selectedPort) { $selectedPort } else { "" }
+        $ok = Invoke-ChipErase $(if ($bootsel) { "" } else { $selectedPort }) $bootsel
+        Write-Host
+        if ($ok) { Write-Host "  $($script:s.WipeChipOk)" -ForegroundColor Green }
+        else     { Write-Host "  $($script:s.WipeChipFail)" -ForegroundColor Red }
+        Write-Host
+        Read-Host "  [Enter] $($script:s.OptBack)" | Out-Null
+        return
+    }
 
     $eraseCmd = switch ($cmdChoice) {
         '1' { 'erase knx'     }
@@ -1828,18 +1927,13 @@ function Show-DevSettings {
 # Reads a validated choice from the user. Typing ?? opens the dev settings menu.
 # Optional $Reprint ScriptBlock is called after the dev menu to redisplay context.
 function Read-Choice([string]$prompt, [string[]]$valid, [scriptblock]$Reprint = $null) {
-    $idleSec      = 5     # grace before the countdown starts
-    $countdownSec = 30    # then count down and close the tool
+    $idleSec      = 30    # grace before the countdown starts
+    $countdownSec = 90    # then count down and close the tool
     while ($true) {
         # Use interactive key polling with idle auto-close; fall back to Read-Host when
         # there is no real console (redirected / CI) so behaviour stays unchanged there.
         $consoleOk = $true
         try { $null = [Console]::KeyAvailable } catch { $consoleOk = $false }
-
-        # Menus whose options are all single letters ([I]/[X], [J]/[A]/[X], ...) act on the keystroke
-        # itself -- no Enter. Lists with double-digit entries ("10") still need Enter, and so does the
-        # hidden '??', so those keep the typed-buffer path.
-        $singleKey = -not ($valid | Where-Object { $_.Length -ne 1 })
 
         if (-not $consoleOk -or $script:NoTimeout) {
             $v = (Read-Host $prompt).Trim()
@@ -1864,13 +1958,9 @@ function Read-Choice([string]$prompt, [string[]]$valid, [scriptblock]$Reprint = 
                     elseif ($key.Key -eq 'Backspace') {
                         if ($buffer.Length -gt 0) { $buffer = $buffer.Substring(0, $buffer.Length - 1); Write-Host "`b `b" -NoNewline }
                     } elseif ([int][char]$key.KeyChar -ge 32) {
-                        $ch = [string]$key.KeyChar
-                        if ($singleKey -and $buffer -eq '' -and $ch.ToUpper() -in $valid) {
-                            Write-Host $ch                 # echo the key, then act on it
-                            $v = $ch
-                            break
-                        }
-                        $buffer += $ch; Write-Host $ch -NoNewline
+                        # Every choice is confirmed with Enter, single letter or not: a keystroke that acts
+                        # on its own gives no chance to notice a mistyped entry before it takes effect.
+                        $buffer += [string]$key.KeyChar; Write-Host $key.KeyChar -NoNewline
                     }
                 } else {
                     # Idle close runs whether or not something was typed -- a half-typed entry used to
@@ -2150,6 +2240,11 @@ $script:NoTimeout = $false   # disables the idle auto-close countdown in Read-Ch
 # Fast path: flash a single detected device without the confirm menu. On by default
 # ($FastSingleDevice); -Ask forces the prompt. Never active in Multi mode (deliberate per-device flow).
 $script:FastFlash = ($FastSingleDevice -and -not $Ask)
+
+# -Dev opens the developer menu before anything is flashed. It is the only way in when the fast path
+# runs: that path asks nothing, so there is no prompt to type '??' into. It is also how the chip erase
+# is reached on a device whose firmware is gone -- there is no console left to send 'erase all' to.
+if ($Dev) { Show-DevSettings }
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RP2040 main loop
