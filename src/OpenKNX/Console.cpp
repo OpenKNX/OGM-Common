@@ -246,12 +246,81 @@ namespace OpenKNX
 #if MASK_VERSION == 0x07B0 || MASK_VERSION == 0x091A
         else if (cmd.compare("bcu") == 0)
         {
-            logInfo("BCU<Status>", "%s", dll->getTPUart().getBcuStateInfo());
             TPUart::Statistics& statistics = dll->getTPUart().getStatistics();
-            logInfo("BCU<Stats>", "TX Frames: %u | RX Frames: %u (%u B) | Discarded: %u B | Received: %u B | Load: %u B/s | Buffer: %u | Await %u | Repetitions %u | Overflow %u/%u/%u/%u\n",
-                    statistics.getTxFrames(), statistics.getRxFrames(), statistics.getRxFrameBytes(), statistics.getRxDiscardedBytes(), statistics.getRxReceivedBytes(),
-                    statistics.getBusLoad(), dll->getTPUart().getReceiver().getSearchBufferPosition(), dll->getTPUart().getReceiver().getAwaitBytes(), statistics.getRxRepetitions(),
-                    statistics.getRxUartOverflow(), statistics.getRxSearchBufferOverflow(), statistics.getRxFrameBufferOverflow(), statistics.getTxOverflowFrameBuffer());
+
+            // Only the NCN5121/5130 have a revision register.
+            TPUart::BcuChip bcuChip = dll->getTPUart().bcuChip();
+            char chip[24] = "";
+            if (bcuChip == TPUart::BcuChip::Ncn5121 || bcuChip == TPUart::BcuChip::Ncn5130)
+                snprintf(chip, sizeof(chip), " | %s (Rev %u)", TPUart::bcuChipName(bcuChip), (unsigned)dll->getTPUart().ncnRevision());
+            else if (bcuChip != TPUart::BcuChip::Unknown)
+                snprintf(chip, sizeof(chip), " | %s", TPUart::bcuChipName(bcuChip));
+
+            char baud[16] = "";
+            if (dll->getTPUart().connectedBaudRate() > 0)
+                snprintf(baud, sizeof(baud), " | %u Baud", (unsigned)dll->getTPUart().connectedBaudRate());
+
+            // Bus load belongs here, not to RX: the chip echoes every octet we send, so our own traffic is
+            // part of it. Percent is busy TIME (octets plus the fixed gap and ack slot per frame), so 100%
+            // really means "no room left".
+            logInfo("BCU<Status>", "%s | Load %u%% (%u B/s)%s%s", dll->getTPUart().getBcuStateInfo(),
+                    statistics.getBusLoadPercent(), statistics.getBusLoad(), chip, baud);
+
+            // The tick drives everything below it. A tick that comes too rarely shows up as suppressed
+            // acknowledges and interface backlog, not as an error.
+            //
+            // "Deferred" counts how often the tick was held up, the value in brackets is the LAST delay -
+            // a maximum would saturate on the first flash write and say nothing afterwards. Read the
+            // counter before and after a suspect action to find the culprit.
+            //
+            // "Max run" justifies the raised IRQ priority: whoever preempts other interrupts must show it
+            // is brief. "ack" is our own acknowledge callback inside it - if both are close, the runtime is
+            // ours, not the library's.
+            //
+            // A missing tick is NOT diagnosed here: the library reports that itself ("Tick stopped").
+            logInfo("BCU<Tick>", "Timer @ %uus | Deferred %u (last %uus) | Max run %uus (ack %uus)",
+                    (unsigned)TPUart::Timer::instance().interval(),
+                    statistics.getTickDeferrals(), statistics.getTickLastDeferredUs(),
+                    statistics.getTickDurationMaxUs(), statistics.getCheckAcknowledgeMaxUs());
+
+            // DO NOT SUM THESE. "Bytes" counts every byte read, the categories only those of a COMPLETED
+            // sequence - and a frame dropped for lack of ring space is counted both in "frame" and in
+            // "Dropped". Different questions, not a partition.
+            logInfo("BCU<RX>", "Frames %u valid / %u invalid / %u repeated | Bytes %u (frame %u, ctrl %u) | Dropped %u B in %u resync",
+                    statistics.getRxFrames(), statistics.getRxInvalidFrames(), statistics.getRxRepeatedFrames(),
+                    statistics.getRxBytes(), statistics.getRxFrameBytes(), statistics.getRxControlBytes(),
+                    statistics.getRxDroppedBytes(), statistics.getRxResyncs());
+
+            // "No con" is the watchdog: no confirmation at all, the BCU had to be reset. A NEGATIVE
+            // L_Data.con is deliberately not shown - that says nobody on the bus acknowledged, which is a
+            // statement about the bus, not a fault of the link.
+            logInfo("BCU<TX>", "Frames %u | Bytes %u (%u ctrl) | Ack %u sent / %u suppressed | No con %u",
+                    statistics.getTxFrames(), statistics.getTxBytes(), statistics.getTxControlBytes(),
+                    statistics.getTxAcknowledges(), statistics.getTxAcknowledgesSuppressed(),
+                    statistics.getTxConfirmTimeouts());
+
+            // Fill levels, same names and order as the overflow counters below: there "how often it was too
+            // late", here "how much room is left". The interface has no percentage - only the platform
+            // knows its buffer size (RP2040 256 bytes by default, ESP32 512).
+            const unsigned rxSize = (unsigned)TPUart::TPUART_RX_QUEUE_SIZE;
+            const unsigned txSize = (unsigned)TPUART_TX_BUFFER_SIZE;
+            const unsigned ctrlSize = (unsigned)TPUart::TPUART_CTRL_QUEUE_SIZE;
+
+            logInfo("BCU<Peak>", "if %u B | rx %u%% (%u/%u B) | tx %u%% (%u/%u B) | ctrl %u%% (%u/%u B)",
+                    statistics.getRxInterfacePeakBytes(),
+                    statistics.getRxQueuePeakBytes() * 100 / rxSize, statistics.getRxQueuePeakBytes(), rxSize,
+                    statistics.getTxQueuePeakBytes() * 100 / txSize, statistics.getTxQueuePeakBytes(), txSize,
+                    statistics.getTxControlQueuePeakBytes() * 100 / ctrlSize, statistics.getTxControlQueuePeakBytes(), ctrlSize);
+
+            // Errors only. SC/RE/TE/PE/TW are the chip's own error bits, same abbreviations as in the
+            // TP error line.
+            logInfo("BCU<Error>", "Overflow if %u / rx %u / tx %u / ctrl %u | Chip SC %u RE %u TE %u PE %u TW %u | Disconnects %u\n",
+                    statistics.getRxInterfaceOverflows(), statistics.getRxQueueOverflows(),
+                    statistics.getTxQueueOverflows(), statistics.getTxControlQueueOverflows(),
+                    statistics.getChipSlaveCollisions(), statistics.getChipReceiveErrors(),
+                    statistics.getChipTransmitErrors(), statistics.getChipProtocolErrors(),
+                    statistics.getChipTemperatureWarnings(),
+                    statistics.getConnectionLosses());
 
             return true;
         }
