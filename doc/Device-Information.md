@@ -3,9 +3,9 @@
 Was OGM-Common beim Start über das Gerät auf den KNX-Bus stellt, woher jeder Wert kommt und was
 ein Produktentwickler dafür tun muss.
 
-> Die Spec-Seite — alle Properties des Device Objects, Konformitätsbewertung je PID mit Fundstelle,
-> Wertebereiche — steht in `OAM-IP-Interface/doc/DEVICE-OBJECT-PROPERTIES.md`. Dieses Dokument
-> beschreibt nur die OGM-Common-Seite: welche Makros gelesen werden und wo sie herkommen.
+> Dieses Dokument beschreibt die OGM-Common-Seite: welche Makros gelesen werden, wo sie herkommen und
+> was auf welcher Maske erlaubt ist. Die Spec-Seite — Konformitätsbewertung je PID mit Fundstelle im
+> KNX-Standard und die Wertebereiche — liegt in `DEVICE-OBJECT-PROPERTIES.md`.
 
 ---
 
@@ -233,12 +233,14 @@ ftc -i <ip> <pa> info         # ein Busgerät über die Schnittstelle
 ```
 
 ```powershell
-Import-Module OpenKnx.Knx.psm1
+Import-Module ./scripts/knx/OpenKnx.Knx.psm1
 Get-KnxPropertyText -InterfaceIp 11.11.0.210 -PropertyId 19
 Get-KnxPropertyText -InterfaceIp 11.11.0.210 -PropertyId 19 -Pa 5.0.7
 ```
 
-Das Modul und das Beispielskript `Read-KnxDeviceObject.ps1` liegen in `OAM-IP-Interface/scripts/`.
+Das Modul und das Beispielskript liegen in `scripts/knx/` dieses Repos — `OpenKnx.Knx.psm1` trägt die
+Protokollarbeit, `Read-KnxDeviceObject.ps1` ist ein Beispiel für ihre Verwendung. Beide müssen im selben
+Ordner bleiben: das Skript lädt das Modul über `$PSScriptRoot`.
 
 ETS zeigt die Felder nicht in der Oberfläche an — sie sind über die Property-Dienste erreichbar, nicht
 über den Gerätedialog.
