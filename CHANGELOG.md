@@ -1,8 +1,11 @@
 # Changes
 
-## upcoming releases
+## ec/v2.0.0-beta.1: 2026-09-15
 
-The entries below are on `ec/v1dev-ec` and not released upstream yet.
+The entries below are on `ec/v1dev-ec` and not released upstream yet. The library version moves to
+`2.0.0-beta.1` with this tag, so the file and the tag state the same thing -- a tag naming a version
+its own `library.json` does not carry is what made a pinned dependency resolve to the wrong code
+elsewhere in this workspace.
 
 **Build**
 * Fix: `buildtime.h` is generated on the ESP-IDF path as well. `Console.cpp` has included it unconditionally since `60cade2`, but the `esp32idf` script list never ran `prepare_buildtime.py`, so a clean tree failed on a missing header in a core file -- the file is git-ignored, which is why it only showed on a fresh checkout
