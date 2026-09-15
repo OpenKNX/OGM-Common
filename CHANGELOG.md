@@ -4,6 +4,12 @@
 
 The entries below are on `ec/v1dev-ec` and not released upstream yet.
 
+**Build**
+* Fix: `buildtime.h` is generated on the ESP-IDF path as well. `Console.cpp` has included it unconditionally since `60cade2`, but the `esp32idf` script list never ran `prepare_buildtime.py`, so a clean tree failed on a missing header in a core file -- the file is git-ignored, which is why it only showed on a fresh checkout
+
+**Flashing**
+* Feature: the upload script has a developer menu behind `-Dev`, the only way in when the fast path flashes without a prompt. Menu item 5 erases the whole flash with `picotool erase -a` or `esptool erase_flash`, behind its own confirmation; it is the path for a device whose console is dead, where the console-based wipe cannot run
+
 **Console safety**
 * Fix: `flash knx`, `flash openknx` and `mem 0x...` are refused over the diagnose group object -- anyone able to send to that group address could dump memory or trigger a flash write
 * Fix: `bcu` and `bus mon` are refused there too: none of them answers over the object and some take the TP link down
