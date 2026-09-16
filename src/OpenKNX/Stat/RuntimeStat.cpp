@@ -6,7 +6,6 @@
 
 
 // TODO/Feature: Allow pause measuring for special case handling, especially long debug outputs on console
-// TODO/Feature: add measuring for core1
 // TODO/Improvement: check integration of RuntimeStat in Module
 // TODO/Feature: Allow measurement of Channels
 
