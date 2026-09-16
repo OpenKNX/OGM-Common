@@ -62,7 +62,9 @@ jobs:
 
           - oam: OAM-StateEngine
             # knxprod_xml: StateEngine-DFA16-Release
-            ref: v1
+            # TODO check changeing back to # ref: v1
+            # ref: baaf54e9498e9fc6842908d9a89a9af8162f1e66
+            ref: ref/test/OGM-Common
             prefix: StateEngine
             target: DFA16-Release
 
