@@ -548,7 +548,11 @@ namespace OpenKNX
         {
             RUNTIME_MEASURE_BEGIN(openknx.modules.runtime[_currentModule]);
             openknx.modules.list[_currentModule]->loop(configured);
+#if OPENKNX_RUNTIME_STAT_MODULE_WARNING > 0
+            RUNTIME_MEASURE_END_WARN(openknx.modules.runtime[_currentModule], OPENKNX_RUNTIME_STAT_MODULE_WARNING, openknx.modules.list[_currentModule]->name().c_str());
+#else
             RUNTIME_MEASURE_END(openknx.modules.runtime[_currentModule]);
+#endif
         }
         while (freeLoopIterate(openknx.modules.count, _currentModule, processed));
     }

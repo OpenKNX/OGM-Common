@@ -60,10 +60,13 @@ jobs:
             prefix: RaumController
             target: Release
 
-          - oam: OAM-StateEngine
-            # knxprod_xml: StateEngine-DFA16-Release
-            prefix: StateEngine
-            target: DFA16-Release
+          # - oam: OAM-StateEngine
+          #   # knxprod_xml: StateEngine-DFA16-Release
+          #   # TODO check changeing back to # ref: v1
+          #   # ref: baaf54e9498e9fc6842908d9a89a9af8162f1e66
+          #   ref: ref/test/OGM-Common
+          #   prefix: StateEngine
+          #   target: DFA16-Release
 
     uses: openknx/actions/.github/workflows/openknx-ofm-check.yml@v0
     with:
