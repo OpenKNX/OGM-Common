@@ -29,8 +29,8 @@ jobs:
   oam-build:
     runs-on: ubuntu-latest
     env:
-      PRODUCER_VERSION: 4.3.5
-      PRODUCER_CHECKSUM: 0322b8bd5bf2fae4e0045c779534f6b7013f8e82d3452f7ed943ab2aa1f984c6
+      PRODUCER_VERSION: 4.3.12
+      PRODUCER_CHECKSUM: c73d3a5181edc41551637a1ad31935b8a23f88694bd115f10127ead060e76266
       PRODUCER_URL: https://github.com/OpenKNX/OpenKNXproducer/releases/download/v${PRODUCER_VERSION}/OpenKNXproducer-${PRODUCER_VERSION}.zip
       PRODUCER_FILENAME: OpenKNXproducer-${PRODUCER_VERSION}.zip
 
@@ -57,7 +57,7 @@ jobs:
       # 3. overwrite OFM with current commit
 
       - name: Checkout Reference OAM
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: openknx/${{ inputs.oam }}
           # TODO fixme: branch-handling
@@ -72,7 +72,7 @@ jobs:
           ./Restore-Dependencies.ps1
 
       - name: Restore Current OFM Commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # ref: ${{ github.ref_name }}
           # TODO introduce parameter?
@@ -107,13 +107,13 @@ jobs:
       - name: Unzip OpenKNXproducer and Make Executable
         run: |
           cd OpenKNXproducer
-          unzip "${{env.PRODUCER_FILENAME}}" || test -f tools/Linux/OpenKNXproducer
-          chmod u+x tools/Linux/OpenKNXproducer
+          unzip "${{env.PRODUCER_FILENAME}}" || test -f tools/Linux/x64/OpenKNXproducer
+          chmod u+x tools/Linux/x64/OpenKNXproducer
       - name: Check OpenKNXproducer
-        run: OpenKNXproducer/tools/Linux/OpenKNXproducer version || echo Ignore OpenKNXproducer always returning 1...
+        run: OpenKNXproducer/tools/Linux/x64/OpenKNXproducer version || echo Ignore OpenKNXproducer always returning 1...
 
       - name: Install OpenKNXproducer
-        run: cp -av OpenKNXproducer/tools/Linux/OpenKNXproducer /usr/local/bin/OpenKNXproducer
+        run: cp -av OpenKNXproducer/tools/Linux/x64/OpenKNXproducer /usr/local/bin/OpenKNXproducer
 
       - name: Create knxprod
         run: |
@@ -121,7 +121,7 @@ jobs:
           OpenKNXproducer create --Debug -h include/knxprod.h src/${{inputs.KNXPROD_PREFIX}}${{ inputs.target != '' && format('-{0}', inputs.target) || '' }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
