@@ -57,6 +57,7 @@ jobs:
       matrix:
         include:
           - oam: OAM-RaumController
+            ref: v1
             prefix: RaumController
             target: Release
 
@@ -73,7 +74,7 @@ jobs:
       # use repo vars for ofm and ofm_ref
       ofm_prefix: BASE
       oam: ${{ matrix.oam }}
-      oam_ref: v1
+      oam_ref: ${{ matrix.ref }}
       target: ${{ matrix.target }}
       KNXPROD_PREFIX: ${{ matrix.prefix }}
 
