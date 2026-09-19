@@ -4,7 +4,7 @@
     "dependencies": {
         "khoih-prog/TimerInterrupt_Generic": "^1.13.0",
         "robtillaart/ANSI": "^0.2.0",
-        "RTTStream": "https://github.com/koendv/RTTStream#1.4.0"
+        "RTTStream": "https://github.com/koendv/RTTStream#1.4.1"
     },
     "description": "Common routines and helpers, used in OpenKNX projects",
     "homepage": "https://openknx.de",
