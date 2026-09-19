@@ -83,7 +83,7 @@ namespace OpenKNX
 #ifdef BASE_KoDiagnose
         void processDiagnoseKo(GroupObject& ko);
         void writeDiagnoseKo(const char* message, ...);
-        void writeDiagenoseKo(const char* message, ...);
+        [[deprecated("Use writeDiagnoseKo(...) without the typo!")]] void writeDiagenoseKo(const char* message, ...);
 #endif
     };
 } // namespace OpenKNX
