@@ -41,9 +41,22 @@ namespace OpenKNX
         // logInfoP("Some-Integer: %i", myInteger);
     }
 
+    bool Module::processCommand(bool configured, const std::string cmd, bool diagnoseKo)
+    {
+        if (configured)
+            return processCommand(cmd, diagnoseKo);
+        else
+            return false;
+    }
+
     bool Module::processCommand(const std::string cmd, bool diagnoseKo)
     {
         return false;
+    }
+
+    void Module::showHelp(bool configured)
+    {
+        if (configured) showHelp();
     }
 
     void Module::showHelp()
