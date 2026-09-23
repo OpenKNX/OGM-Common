@@ -100,8 +100,18 @@ def post_program_action(source, target, env):
     # device reports the real revision — and knxOTA then calls identical firmware a downgrade.
     m = re.search(r"#define MAIN_FirmwareRevision (\d{1,3})", content)
     if m is None:
-        m = re.search(r"const uint8_t firmwareRevision = ([0-9]+);",
-                      open(env["PROJECT_SRC_DIR"] + "/main.cpp", "r").read())
+        # A custom IDF build points PROJECT_SRC_DIR at .dummy while the IDF libs are compiled, and
+        # that pass runs its buildprog post actions after the nested build — read the project's
+        # sources, not PROJECT_SRC_DIR.
+        # An unreadable main.cpp leaves the image unstamped instead of failing the build.
+        src = env.subst("$PROJECT_SRC_DIR")
+        if os.path.basename(src) == ".dummy":
+            src = env.GetProjectConfig().get("platformio", "src_dir")
+        try:
+            m = re.search(r"const uint8_t firmwareRevision = ([0-9]+);",
+                          open(os.path.join(src, "main.cpp"), "r").read())
+        except OSError:
+            m = None
     if m is None:
         print("{}  firmware revision not readable — image left unstamped{}".format(C.RED, C.END))
         return
