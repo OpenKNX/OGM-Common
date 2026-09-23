@@ -199,18 +199,25 @@ This separation is intentional:
 
 ```
 lib/OGM-Common/
+├── platformio.esp32.ini                 ← [ESP32] + develop/release, flash-size and upload sections
+│                                          and [esp32_scripts_common]; must be in extra_configs
 ├── platformio.esp32idf.ini              ← [esp32idf] section: registers extra_scripts
 ├── platformio.esp32idf.example.ini      ← Step-by-step usage example for new projects
 └── scripts/
     ├── pio/
-    │   ├── generate_versions.py         ← Pre-script: lightweight versions.h generator
-    │   ├── create_esp32_image.py        ← Post-script: merge bootloader+partitions+app → factory.bin
+    │   ├── generate_versions.py         ← Default (post) script, acts at load time: versions.h
+    │   ├── prepare_buildtime.py         ← Default (post) script, acts at load time: buildtime.h
+    │   ├── patch_esp32.py               ← Default (post) script, acts on buildprog: OpenKNX id (shared)
+    │   ├── create_esp32_image.py        ← Default (post) script, acts on buildprog: factory.bin (shared)
     │   ├── prepare.py                   ← (Arduino only) versions.h via PlatformIO library resolver
+    │   ├── prepare_webassets.py         ← (Arduino only) webassets.h via PlatformIO library resolver
     │   ├── patch_uf2.py                 ← UF2 patcher
     │   └── show_flash_partitioning.py   ← Flash partition info
     └── idf/
         ├── idf_generate_crt_asm.py      ← Pre-script: sdkconfig, .S files, --wrap IDF version
         ├── idf_clean_artifacts.py       ← Pre-script: remove IDF artifacts on clean
+        ├── idf_webassets_guard.py       ← Default (post) script, acts at load time: stops a build
+        │                                   that defines OPENKNX_WEBSERVER
         ├── idf_setup_components.py      ← Helper: set up managed_components
         ├── idf-build-architecture.md    ← This document
         └── certs/
@@ -230,15 +237,33 @@ Defines the `[esp32idf]` section inherited by every project via `extends = esp32
 [esp32idf]
 extra_scripts =
   lib/OGM-Common/scripts/pio/generate_versions.py
-  lib/OGM-Common/scripts/pio/create_esp32_image.py
+  lib/OGM-Common/scripts/pio/prepare_buildtime.py
+  lib/OGM-Common/scripts/idf/idf_webassets_guard.py
+  ${esp32_scripts_common.extra_scripts}
   pre:lib/OGM-Common/scripts/idf/idf_generate_crt_asm.py
   pre:lib/OGM-Common/scripts/idf/idf_clean_artifacts.py
 ```
 
-IDF scripts are registered as `pre:` — they run **before** the actual build.
-`generate_versions.py` and `create_esp32_image.py` run as default (post) scripts.
+`[esp32_scripts_common]` lives in `platformio.esp32.ini` and holds the two post-build scripts both
+lists share: `patch_esp32.py` and `create_esp32_image.py`. That file must therefore be listed in
+`extra_configs` as well.
+
+The two IDF pre-scripts (`idf_generate_crt_asm.py`, `idf_clean_artifacts.py`) are registered as
+`pre:` — they run **before** the build script. Every other entry, `idf_webassets_guard.py` included,
+is a default (post) script. `pre:` would be wrong for the guard: build_flags only become `CPPDEFINES`
+during the platform build script, so a `pre:` script finds no `CPPDEFINES` key, reads an empty list
+and never fires — the build then fails on the missing `include/webassets.h`, or links a stale one.
+
 `idf_clean_artifacts.py` internally checks `env.GetOption("clean")` and does
 nothing outside of `--target clean`.
+
+A build that compiles the IDF libs runs the whole script list twice: `idf_lib_copy()` in pioarduino's
+`espidf.py` starts a nested run of the same env as a post action on `checkprogsize`, and that nested
+run compiles the real project sources. 55.03.36 and 55.03.37 delete the build directory before the
+nested run (`shutil.rmtree`), 54.03.21-2 leaves it in place. In the outer pass `PROJECT_SRC_DIR`
+points at the `.dummy` stub project, and `env.Depends(target_firm, "checkprogsize")` puts that pass's
+`ElfToBin` and its `buildprog` post actions after the nested run — which is why `patch_esp32.py` reads
+the project's sources instead of `PROJECT_SRC_DIR`.
 
 > **"Last wins" strategy:** PlatformIO's `extends` does NOT merge `extra_scripts` —
 > the last definition wins. By placing `esp32idf` at the **end** of an env's `extends`
@@ -278,8 +303,15 @@ pio run --environment release_..._LOW_POWER_CONSUMPTION
 │              → Write result to framework-arduinoespressif32-libs/
 │              → Create framework-arduinoespressif32-libs/sdkconfig (hash marker)
 │
-└─ [pioarduino] Compile Arduino sources + link
-     → firmware.elf / firmware.bin
+├─ [outer pass] link the .dummy project  →  checkprogsize
+│
+├─ [pioarduino] idf_lib_copy() (post action on checkprogsize)
+│    ├── Copy the build result into framework-arduinoespressif32-libs/
+│    └── nested run of the same env: the whole script list a second time
+│         → compiles the real project sources + link + its own buildprog post actions
+│
+└─ [outer pass] ElfToBin, then the buildprog post actions a second time
+     → patch_esp32.py stamps the bin, create_esp32_image.py merges factory.bin
 ```
 
 ### Follow-up Builds (IDF libs already cached)
@@ -534,12 +566,14 @@ custom_sdkconfig = ${esp32s3_sdkcfg_low_power.custom_sdkconfig}
 
 > **Key:** `esp32idf` must be the **last** entry in `extends` so its `extra_scripts`
 > shadow those from `[ESP32]` ("last wins"). This replaces `prepare.py` with
-> `generate_versions.py` (IDF-compatible) and keeps `create_esp32_image.py` for
-> factory.bin generation.
+> `generate_versions.py` (IDF-compatible), leaves out `prepare_webassets.py` and adds
+> `idf_webassets_guard.py`, which stops a build that defines `OPENKNX_WEBSERVER`. The shared
+> `[esp32_scripts_common]` scripts stay.
 
 ### Checklist
 
-- [ ] `platformio.esp32idf.ini` listed in `extra_configs`
+- [ ] `platformio.esp32.ini` **and** `platformio.esp32idf.ini` listed in `extra_configs`
+      (`[esp32idf]` references `[esp32_scripts_common]` from the first file)
 - [ ] `platformio.custom.sdkcfg.ini` listed in `extra_configs` (before `platformio.custom.ini`)
 - [ ] Per-chip preset section (e.g. `[esp32s3_sdkcfg_low_power]`) defined in `platformio.custom.sdkcfg.ini`
 - [ ] `esp32idf` at the **end** of the `extends` list in the `[env:*]` section
