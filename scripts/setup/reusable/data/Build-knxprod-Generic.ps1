@@ -16,6 +16,17 @@ Open ■
     Cross-platform: builds the .knxprod on Windows, macOS and Linux (OpenKNXproducer
     now runs on all three). If the producer is not installed, a friendly hint is shown.
 
+    When it runs from a developer build output (<repo>/release/data), it also compares
+    the built .knxprod with <repo>/include/knxprod.h, the header compiled into the
+    firmware: the application identity ETS checks before a full application download and
+    the size of the parameter block. A difference means the XML in release/data and the
+    header come from different producer runs; the script shows what differs and what it
+    causes. A match does not prove an identical layout: a parameter moved within a block
+    of the same size, under the same identity, is not detected.
+
+    Exit code: 1 when the build fails or cannot start, 0 otherwise (a created .knxprod,
+    -Help, or a cancelled XML selection).
+
     Targets Windows PowerShell 5.1 (Win10 default) and PowerShell 7+ (macOS/Linux).
 
 .PARAMETER Lang
@@ -56,7 +67,7 @@ param(
 )
 
 # ── Config (hier anpassbar) ──────────────────────────────────────────────────────
-$BuilderVersion = '0.0.2'        # eigene Version dieses Builders (im Titel angezeigt)
+$BuilderVersion = '0.0.3'        # eigene Version dieses Builders (im Titel angezeigt)
 $ShowWarnings = $true            # OpenKNXproducer-Warnungen in der Fertig-Box anzeigen (true/false)
 $MaxWarnings  = 10               # max. angezeigte Warnzeilen (Rest als "… und N weitere")
 $ExitTimeout  = 60               # Sekunden bis zum Auto-Schließen der Abschluss-Box (Zeit zum Lesen des Hinweises)
@@ -108,6 +119,15 @@ $L = @{
         DoneFile       = 'Datei'
         DoneSize       = 'Größe'
         DoneVer        = 'Version'
+        DoneHdr        = 'Header'
+        HdrMatch       = 'passt zu include/knxprod.h ({0})'
+        HdrBadTitle    = 'knxprod passt NICHT zu include/knxprod.h in diesem Quellbaum'
+        HdrBad1        = 'Die beiden Dateien passen nicht zusammen:'
+        HdrBadIdent    = 'Einen kompletten Applikations-Download auf eine Firmware aus diesem Quellbaum bricht die ETS ab, weil die Applikation nicht passt.'
+        HdrBadSize     = 'Eine Firmware, die aus diesem Quellbaum gebaut wird, liest die ETS-Parameter an falschen Stellen.'
+        HdrBad3        = 'Firmware und knxprod immer aus demselben Build-Release.ps1-Lauf verwenden.'
+        HdrLblApp      = 'Applikation'
+        HdrLblSize     = 'Parameterblock'
         NextTitle      = 'Nächste Schritte'
         Next1          = 'Die .knxprod in der ETS über den Katalog importieren (ETS 5.7.7 oder neuer, ETS 6).'
         Next2          = 'Dann Physikalische Adresse und - nach der Parametrierung - die Applikation programmieren.'
@@ -154,6 +174,15 @@ $L = @{
         DoneFile       = 'File'
         DoneSize       = 'Size'
         DoneVer        = 'Version'
+        DoneHdr        = 'Header'
+        HdrMatch       = 'matches include/knxprod.h ({0})'
+        HdrBadTitle    = 'knxprod does NOT match include/knxprod.h in this source tree'
+        HdrBad1        = 'The two files do not match:'
+        HdrBadIdent    = 'ETS aborts a full application download to firmware built from this source tree because the application does not match.'
+        HdrBadSize     = 'Firmware built from this source tree would read the ETS parameters at the wrong offsets.'
+        HdrBad3        = 'Always use firmware and knxprod from the same Build-Release.ps1 run.'
+        HdrLblApp      = 'Application'
+        HdrLblSize     = 'Parameter block'
         NextTitle      = 'Next steps'
         Next1          = 'Import the .knxprod into ETS via the catalog (ETS 5.7.7 or newer, ETS 6).'
         Next2          = 'Then assign the physical address and - after parametrisation - program the application.'
@@ -257,6 +286,79 @@ function Wait-EnterOrTimeout([int]$seconds) {
         Start-Sleep -Milliseconds 100
     }
     Write-Host ""
+}
+
+# Reads a numeric #define (decimal or 0x-hex) from a generated knxprod.h; $null when absent.
+function Get-HeaderDefine([string]$text, [string]$name) {
+    $m = [regex]::Match($text, '(?m)^\s*#define\s+' + $name + '\s+(0[xX][0-9A-Fa-f]+|\d+)\b')
+    if (-not $m.Success) { return $null }
+    $v = $m.Groups[1].Value
+    if ($v -match '^0[xX]') { return [Convert]::ToInt64($v.Substring(2), 16) }
+    return [int64]$v
+}
+
+# Compares the built knxprod with include/knxprod.h of the source tree this engine runs in.
+# Applies only to a developer build output (<repo>/release/data); the end-user package has no
+# include/ folder. Returns $null when not applicable or unreadable - never blocks the build.
+function Get-KnxprodHeaderCheck([string]$knxprodPath) {
+    try {
+        $releaseDir = Split-Path -Parent $PSScriptRoot
+        if (-not $releaseDir -or (Split-Path -Leaf $releaseDir) -ne 'release') { return $null }
+        $repoRoot = Split-Path -Parent $releaseDir
+        if (-not $repoRoot) { return $null }
+        $hdrPath = Join-Path (Join-Path $repoRoot 'include') 'knxprod.h'
+        if (-not (Test-Path -LiteralPath $hdrPath -PathType Leaf)) { return $null }
+        $hdr = Get-Content -Raw -LiteralPath $hdrPath -ErrorAction Stop
+
+        # .NET resolves a relative path against the process directory, not the PowerShell location
+        $zipPath = (Resolve-Path -LiteralPath $knxprodPath -ErrorAction Stop).ProviderPath
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+        try {
+            $entry = $zip.Entries | Where-Object { $_.FullName -match 'M-[0-9A-Fa-f]{4}_A-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{4}\.xml$' } | Select-Object -First 1
+            if (-not $entry) { return $null }
+            $reader = New-Object System.IO.StreamReader($entry.Open())
+            try { $app = $reader.ReadToEnd() } finally { $reader.Dispose() }
+        } finally { $zip.Dispose() }
+
+        # Identity: the hardware type ETS compares with the device's property 78 before a full
+        # application download (masks 07B0/57B0 run the compare in load procedures all/ap1 only).
+        # The firmware builds it from the header as 00 00 OpenKnxId AppNumber AppVersion 00. The
+        # ApplicationVersion attribute is not comparable: the header carries version minus revision.
+        $pIdent = @([regex]::Matches($app, '<LdCtrlCompareProp\b[^>]*>') | ForEach-Object {
+                if ($_.Value -match '\bPropId="78"' -and $_.Value -match '\bInlineData="([0-9A-Fa-f]+)"') { $matches[1].ToUpperInvariant() }
+            } | Select-Object -Unique)
+        # LSM index 4 = application program; its segment size is the parameter block ETS writes
+        $pSize = @([regex]::Matches($app, '<LdCtrlRelSegment\b[^>]*>') | ForEach-Object {
+                if ($_.Value -match '\bLsmIdx="4"' -and $_.Value -match '\bSize="(\d+)"') { [int64]$matches[1] }
+            } | Select-Object -Unique)
+
+        $hId   = Get-HeaderDefine $hdr 'MAIN_OpenKnxId'
+        $hNum  = Get-HeaderDefine $hdr 'MAIN_ApplicationNumber'
+        $hVer  = Get-HeaderDefine $hdr 'MAIN_ApplicationVersion'
+        $hSize = Get-HeaderDefine $hdr 'MAIN_ParameterSize'
+
+        # Compare only what both sides carry; an absent value is skipped, not reported.
+        $rows = @()
+        if ($null -ne $hId -and $null -ne $hNum -and $null -ne $hVer -and $pIdent.Count -eq 1) {
+            $hIdent = '0000{0:X2}{1:X2}{2:X2}00' -f $hId, $hNum, $hVer
+            $rows += [PSCustomObject]@{ Kind = 'Ident'; Label = $s.HdrLblApp;  Prod = $pIdent[0]; Hdr = $hIdent; Same = ($pIdent[0] -eq $hIdent) }
+        }
+        # AbsoluteSegment products (mask 091A) carry no LsmIdx 4 RelSegment - the size is skipped there
+        if ($null -ne $hSize -and $pSize.Count -eq 1) {
+            $rows += [PSCustomObject]@{ Kind = 'Size';  Label = $s.HdrLblSize; Prod = "$($pSize[0])"; Hdr = "$hSize"; Same = ($pSize[0] -eq $hSize) }
+        }
+        if ($rows.Count -eq 0) { return $null }
+        $diff = @($rows | Where-Object { -not $_.Same })
+        return [PSCustomObject]@{
+            Rows      = $rows
+            Match     = ($diff.Count -eq 0)
+            IdentDiff = (@($diff | Where-Object { $_.Kind -eq 'Ident' }).Count -gt 0)
+            Compared  = (($rows | ForEach-Object { $_.Label }) -join ', ')
+        }
+    } catch {
+        return $null
+    }
 }
 
 function Show-Help {
@@ -423,7 +525,8 @@ $clearW = try { [Console]::WindowWidth - 1 } catch { 100 }
 Write-Host ("`r" + (' ' * $clearW) + "`r") -NoNewline   # clear the spinner+message line
 
 # ── Result ───────────────────────────────────────────────────────────────────────
-if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
+$built = ($code -eq 0 -and (Test-Path -PathType Leaf $outFile))
+if ($built) {
     # Final build line: full green bar + FERTIG!
     Write-Host ('  [') -ForegroundColor DarkGray -NoNewline
     Write-Host ([string][char]0x25A0 * $cells) -ForegroundColor Green -NoNewline
@@ -438,6 +541,8 @@ if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
     Show-Field $s.DoneFile $outFile
     Show-Field $s.DoneSize "$sizeKb KB"
     if ($AppVersion) { Show-Field $s.DoneVer $AppVersion }
+    $hdrCheck = Get-KnxprodHeaderCheck $outFile
+    if ($hdrCheck -and $hdrCheck.Match) { Show-Field $s.DoneHdr "$($s.HdrMatch -f $hdrCheck.Compared)  $TICK" }
     if ($ShowWarnings) {
         $warns = @($producerOut -split "`r?`n" | Where-Object { $_ -match '(?i)warn' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
         if ($warns.Count -gt 0) {
@@ -449,6 +554,21 @@ if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
                 Write-Host ('    ' + ($s.HintsMore -f ($warns.Count - $MaxWarnings))) -ForegroundColor DarkYellow
             }
         }
+    }
+    if ($hdrCheck -and -not $hdrCheck.Match) {
+        Write-Host ""
+        Show-Head $s.HdrBadTitle Red
+        Show-Item $s.HdrBad1 Yellow
+        foreach ($row in $hdrCheck.Rows) {
+            $rowColor = if ($row.Same) { [ConsoleColor]::DarkGray } else { [ConsoleColor]::Red }
+            Show-Text ('      {0,-16}knxprod {1,-14}knxprod.h {2}' -f $row.Label, $row.Prod, $row.Hdr) $rowColor
+        }
+        # A different identity makes ETS abort a full application download; an equal identity with
+        # a different block size is the case where the parameters are read at the wrong offsets.
+        $consequence = if ($hdrCheck.IdentDiff) { $s.HdrBadIdent } else { $s.HdrBadSize }
+        Show-Item $consequence White
+        Show-Item $s.HdrBad3 Cyan
+        Show-Rule
     }
     Write-Host ""
     Show-Head $s.NextTitle
@@ -482,4 +602,8 @@ if ($code -eq 0 -and (Test-Path -PathType Leaf $outFile)) {
 
 Write-Host ""
 Wait-EnterOrTimeout $ExitTimeout
-if ($code -ne 0) { exit 1 }
+# Exit explicitly on both paths. Without it the wrapper would pass on $LASTEXITCODE of whatever
+# native command ran last - on macOS/Linux the 'clear' behind Clear-Host, which fails without a
+# TERM - and a producer that returns 0 without writing the file would count as success.
+if ($built) { exit 0 }
+exit 1

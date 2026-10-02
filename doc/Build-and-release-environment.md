@@ -225,6 +225,15 @@ Alle Inhalte werden ins Setup kopiert und zum flashen der Prozessor-Firmware ver
 
 Dieses Skript wird ins Setup kopiert und dient zum Bauen der knxprod beim Kunden.
 
+Die Arbeit macht `data/Build-knxprod-Generic.ps1`. Exit-Code: 1, wenn der Build fehlschlägt oder nicht starten kann, sonst 0.
+
+Läuft das Skript in der Build-Ausgabe eines Entwicklers (`<repo>/release/data`), vergleicht es die erzeugte knxprod mit `<repo>/include/knxprod.h`, dem Header, der in die Firmware kompiliert wird:
+
+- die Applikationskennung (`LdCtrlCompareProp`, PropId 78), die die ETS vor einem kompletten Applikations-Download mit dem Gerät vergleicht (bei Maske 07B0/57B0 nur dann, bei 091A vor jedem Applikations-Download),
+- die Größe des Parameterblocks (`LdCtrlRelSegment`, LsmIdx 4). Produkte ohne dieses Segment (Maske 091A) werden nur über die Kennung verglichen.
+
+Eine Abweichung bedeutet: das XML in `release/data` und der Header stammen aus verschiedenen OpenKNXproducer-Läufen. Weicht die Kennung ab, bricht die ETS einen kompletten Applikations-Download auf eine Firmware aus diesem Quellbaum ab. Weicht nur die Größe ab, liest diese Firmware die ETS-Parameter an falschen Stellen. Ein Treffer beweist kein identisches Layout: einen innerhalb eines gleich großen Blocks verschobenen Parameter bei gleicher Kennung erkennt der Vergleich nicht. Beim Kunden (entpacktes Release-Paket, ohne `include/`) entfällt der Vergleich.
+
 #### **Build-Release-Preprocess.ps1
 
 Dieses Skript erzeugt alle notwendigen Verzeichnisse und kopiert alle notwendigen Dateien für das Setup.
