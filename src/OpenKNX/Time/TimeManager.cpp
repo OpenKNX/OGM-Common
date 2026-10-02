@@ -594,10 +594,11 @@ namespace OpenKNX
 #if defined(KoBASE_Time) || defined(KoBASE_Date) || defined(KoBASE_DateTime)
                     const uint8_t knxDayOfWeek = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
 
-                    // Zero-initialised and with the weekday set: the DPT encoders read fields this block
-                    // does not assign, and an indeterminate tm_wday made the encode fail, which left the
-                    // KO holding the previous time. tm_wday carries the KNX numbering here (0 = no day,
-                    // 1 = Monday ... 7 = Sunday), not the POSIX one.
+                    // KNX tm convention expected by dptconvert.cpp: tm_year absolute (2026, not 126) and
+                    // tm_mon 1..12 for DPT 11/19, tm_wday 0 = no day / 1 = Monday ... 7 = Sunday for
+                    // DPT 10. DateTime::toTm() fills the same struct POSIX-counted and is no drop-in
+                    // here: DPT 11 and 19 reject it on the year check, DPT 10 accepts it and sends
+                    // Sunday as "no day". Zero-initialised so no member is left indeterminate.
                     tm knxTime = {0};
                     knxTime.tm_year = localTime.year;
                     knxTime.tm_mon = localTime.month;

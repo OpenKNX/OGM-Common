@@ -102,6 +102,10 @@ namespace OpenKNX
         this->isUtc = isUtc;
     }
 
+    /// @brief Fills a POSIX tm: tm_year - 1900, tm_mon 0..11, tm_wday 0 = Sunday (for mktime/strftime).
+    /// Not the KNX-counted tm dptconvert.cpp expects (tm_year absolute and tm_mon 1..12 for DPT 11/19,
+    /// tm_wday 0 = no day / 1 = Monday ... 7 = Sunday for DPT 10, see TimeManager::loop): DPT 11 and 19
+    /// reject this one on the year check, DPT 10 accepts it and sends Sunday as "no day".
     void DateTime::toTm(tm& tm) const
     {
         tm = {0};
