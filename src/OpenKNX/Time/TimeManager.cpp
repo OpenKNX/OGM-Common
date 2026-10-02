@@ -594,13 +594,18 @@ namespace OpenKNX
 #if defined(KoBASE_Time) || defined(KoBASE_Date) || defined(KoBASE_DateTime)
                     const uint8_t knxDayOfWeek = localTime.dayOfWeek == 0 ? 7 : localTime.dayOfWeek;
 
-                    tm knxTime;
+                    // Zero-initialised and with the weekday set: the DPT encoders read fields this block
+                    // does not assign, and an indeterminate tm_wday made the encode fail, which left the
+                    // KO holding the previous time. tm_wday carries the KNX numbering here (0 = no day,
+                    // 1 = Monday ... 7 = Sunday), not the POSIX one.
+                    tm knxTime = {0};
                     knxTime.tm_year = localTime.year;
                     knxTime.tm_mon = localTime.month;
                     knxTime.tm_mday = localTime.day;
                     knxTime.tm_hour = localTime.hour;
                     knxTime.tm_min = localTime.minute;
                     knxTime.tm_sec = localTime.second;
+                    knxTime.tm_wday = knxDayOfWeek;
 #endif
 #ifdef KoBASE_Time
                     // begin updating time KO, and set additional day-of-week after
