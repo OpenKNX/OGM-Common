@@ -210,10 +210,10 @@ $_strings = @{
 $s = $_strings[$_lang]
 
 # ─── the shared header ─────────────────────────────────────────────────────────────────────────────
-# The same header the USB and KNX scripts print. Optional here: this route needs neither ftc nor the
+# The same header the USB and KNX scripts print. Optional here: this route needs neither oknx nor the
 # shared file, so a release without it falls back to the plain logo line rather than refusing to run.
 # A release ships ONE file per device. espota needs the raw application image, so it is derived from
-# the package here -- the same unwrapping ftc and the extractor script use.
+# the package here -- the same unwrapping oknx and the extractor script use.
 $_imgLib = Join-Path $PSScriptRoot "OpenKNX-Image-Generic.ps1"
 if (Test-Path -PathType Leaf $_imgLib) { . $_imgLib }
 
@@ -447,14 +447,14 @@ if ($espota -match '\.py$') {
 # to, so the warning about matching device and file is one the reader can actually act on.
 if ($_haveUi) {
     if ($isEsp) { $_wayHint = $s.WayHintEsp } else { $_wayHint = $s.WayHintRp }
-    # ftc reads the version out of the firmware file. It is not needed for this route, so it is used
+    # oknx reads the version out of the firmware file. It is not needed for this route, so it is used
     # only when it happens to be there -- without it the line falls back to the processor alone.
-    $_ftcExe = ""
+    $_oknxExe = ""
     $_roots = @()
     foreach ($_rel in @("../Tools", "../../Tools", "../../../Tools", ".")) { $_roots += (Join-Path $PSScriptRoot $_rel) }
-    $_ftc = OpenKNX_FindFtc -SearchDirs $_roots
-    if ($_ftc.Installed) { $_ftcExe = $_ftc.Installed } elseif ($_ftc.Shipped) { $_ftcExe = $_ftc.Shipped }
-    $_facts = OpenKNX_GetFirmwareFacts -FirmwarePath $firmwarePath -FtcExe $_ftcExe -Mcu $chip -Lang $_lang
+    $_oknx = OpenKNX_FindOknx -SearchDirs $_roots
+    if ($_oknx.Installed) { $_oknxExe = $_oknx.Installed } elseif ($_oknx.Shipped) { $_oknxExe = $_oknx.Shipped }
+    $_facts = OpenKNX_GetFirmwareFacts -FirmwarePath $firmwarePath -OknxExe $_oknxExe -Mcu $chip -Lang $_lang
     OpenKNX_ShowContext -Facts $_facts -Way $s.Way -WayHint $_wayHint -Note $s.NoteOta -Lang $_lang
 }
 

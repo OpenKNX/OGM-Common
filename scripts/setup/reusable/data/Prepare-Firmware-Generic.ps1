@@ -17,8 +17,8 @@ FILEPATH: OGM-Common/scripts/setup/reusable/data/Prepare-Firmware-Generic.ps1
     device's own updater takes, so this script writes out what is:
 
       <name>.app.bin      the plain application image — USB, ArduinoOTA, your own checksum
-      <name>.app.bin.gz   the same image compressed — what goes over the KNX bus (knxOTA, ftc)
-      <name>.okd          the difference to an older release — a fraction again, needs ftc
+      <name>.app.bin.gz   the same image compressed — what goes over the KNX bus (knxOTA, oknx)
+      <name>.okd          the difference to an older release — a fraction again, needs oknx
 
     None of the three upload scripts next to it calls this one. They send; this prepares — for a manual
     transfer through the knxOTA page of a router or interface, for another OTA tool, or for anyone who
@@ -47,7 +47,7 @@ FILEPATH: OGM-Common/scripts/setup/reusable/data/Prepare-Firmware-Generic.ps1
 
 .PARAMETER Delta
     Build a difference against the firmware that is RUNNING on the target: a .uf2 / .factory.bin /
-    .app.bin, or a folder to pick from. Needs ftc. A difference is a fraction of a full image, but the
+    .app.bin, or a folder to pick from. Needs oknx. A difference is a fraction of a full image, but the
     target refuses it unless the base matches exactly -- it checks length and checksum before it starts.
 
 .PARAMETER All
@@ -114,8 +114,8 @@ $_strings = @{
             What = '  The application image is what runs on the device - no bootloader, no wrapper.'
             MenuTitle = '  What do you need?'
             Menu1 = '  [1] application image      .app.bin   USB, ArduinoOTA, checksums'
-            Menu2 = '  [2] compressed for the bus .app.bin.gz  knxOTA, ftc - about a third of the size'
-            Menu3 = '  [3] difference to an older release  .okd   knxOTA, ftc - a fraction again'
+            Menu2 = '  [2] compressed for the bus .app.bin.gz  knxOTA, oknx - about a third of the size'
+            Menu3 = '  [3] difference to an older release  .okd   knxOTA, oknx - a fraction again'
             Menu4 = '  [4] image + compressed'
             MenuAsk = 'choice'
             GzWrote = '  {0,-52} {1,10:N0} B  ->  {2}  ({3} %)'
@@ -124,10 +124,10 @@ $_strings = @{
             DeltaOther = '  [{0}] another path ...'
             DeltaAsk = 'old firmware'
             DeltaNone = '  no older firmware found next to this folder - give a path with -Delta'
-            DeltaNoFtc = '  ftc not found - it builds the difference. Install it, or use -Gzip.'
+            DeltaNoOknx = '  oknx not found - it builds the difference. Install it, or use -Gzip.'
             DeltaBase = '  base: {0}'
             DeltaOk = '  {0,-52} {1,10:N0} B  ->  {2}  ({3} % of the image)'
-            DeltaFail = '  ftc could not build the difference: {0}'
+            DeltaFail = '  oknx could not build the difference: {0}'
             DeltaWarn = '  The target refuses a difference whose base is not EXACTLY what it runs.' }
     DE = @{ Way = 'auspacken'; NotFound = '  nicht gefunden: {0}'; NoPkg = '  keine .uf2 und keine .factory.bin gefunden.'
             NoImg = 'kein Image darin gefunden'; Same = 'liegt bereits vor, identisch'
@@ -136,8 +136,8 @@ $_strings = @{
             What = '  Das Anwendungsimage ist das, was auf dem Gerät läuft - ohne Bootloader, ohne Verpackung.'
             MenuTitle = '  Was brauchen Sie?'
             Menu1 = '  [1] Anwendungs-Abbild      .app.bin   USB, ArduinoOTA, Prüfsummen'
-            Menu2 = '  [2] komprimiert für den Bus .app.bin.gz  knxOTA, ftc - etwa ein Drittel der Größe'
-            Menu3 = '  [3] Differenz zu einer Vorversion  .okd   knxOTA, ftc - nochmal ein Bruchteil'
+            Menu2 = '  [2] komprimiert für den Bus .app.bin.gz  knxOTA, oknx - etwa ein Drittel der Größe'
+            Menu3 = '  [3] Differenz zu einer Vorversion  .okd   knxOTA, oknx - nochmal ein Bruchteil'
             Menu4 = '  [4] Abbild + komprimiert'
             MenuAsk = 'Auswahl'
             GzWrote = '  {0,-52} {1,10:N0} B  ->  {2}  ({3} %)'
@@ -146,10 +146,10 @@ $_strings = @{
             DeltaOther = '  [{0}] anderer Pfad ...'
             DeltaAsk = 'alte Firmware'
             DeltaNone = '  keine ältere Firmware neben diesem Ordner gefunden - Pfad mit -Delta angeben'
-            DeltaNoFtc = '  ftc nicht gefunden - es baut die Differenz. Installieren, oder -Gzip nutzen.'
+            DeltaNoOknx = '  oknx nicht gefunden - es baut die Differenz. Installieren, oder -Gzip nutzen.'
             DeltaBase = '  Vorlage: {0}'
             DeltaOk = '  {0,-52} {1,10:N0} B  ->  {2}  ({3} % des Abbilds)'
-            DeltaFail = '  ftc konnte die Differenz nicht bauen: {0}'
+            DeltaFail = '  oknx konnte die Differenz nicht bauen: {0}'
             DeltaWarn = '  Das Ziel lehnt eine Differenz ab, deren Vorlage nicht GENAU die laufende ist.' }
 }
 $s = $_strings[$_lang]
@@ -400,7 +400,7 @@ if ($Delta) {
         }
     }
 
-    # A package as the base works too -- it is unwrapped first, otherwise ftc would compare block
+    # A package as the base works too -- it is unwrapped first, otherwise oknx would compare block
     # frames instead of firmware.
     if ($old -notmatch '\.app\.bin$') {
         $tmpImg = OpenKNX_GetAppImage -Path $old
@@ -413,18 +413,18 @@ if ($Delta) {
         $old = $tmp
     }
 
-    $ftc = ""
-    if (Get-Command OpenKNX_FindFtc -ErrorAction SilentlyContinue) {
-        $found = OpenKNX_FindFtc -SearchDirs @($PSScriptRoot, (Split-Path -Parent $PSScriptRoot), $newDir)
-        if ($found.Installed) { $ftc = $found.Installed } elseif ($found.Shipped) { $ftc = $found.Shipped }
+    $oknx = ""
+    if (Get-Command OpenKNX_FindOknx -ErrorAction SilentlyContinue) {
+        $found = OpenKNX_FindOknx -SearchDirs @($PSScriptRoot, (Split-Path -Parent $PSScriptRoot), $newDir)
+        if ($found.Installed) { $oknx = $found.Installed } elseif ($found.Shipped) { $oknx = $found.Shipped }
     }
-    if (-not $ftc) {
-        $c = Get-Command "ftc" -ErrorAction SilentlyContinue
-        if ($c) { $ftc = $c.Source }
+    if (-not $oknx) {
+        $c = Get-Command "oknx" -ErrorAction SilentlyContinue
+        if ($c) { $oknx = $c.Source }
     }
-    if (-not $ftc) {
+    if (-not $oknx) {
         Write-Host ""
-        Write-Host $s.DeltaNoFtc -ForegroundColor Yellow
+        Write-Host $s.DeltaNoOknx -ForegroundColor Yellow
         Write-Host ""
         exit 1
     }
@@ -433,7 +433,7 @@ if ($Delta) {
     $out = "$out.okd"
     Write-Host ""
     Write-Host ($s.DeltaBase -f (Split-Path -Leaf $old)) -ForegroundColor DarkGray
-    & $ftc delta make $old $new $out 2>&1 | Out-Null
+    & $oknx delta make $old $new $out 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -PathType Leaf $out)) {
         Write-Host ($s.DeltaFail -f $LASTEXITCODE) -ForegroundColor Red
         Write-Host ""

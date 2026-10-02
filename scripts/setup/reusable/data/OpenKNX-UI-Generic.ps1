@@ -25,7 +25,7 @@ FILEPATH: OGM-Common/scripts/setup/reusable/data/OpenKNX-UI-Generic.ps1
 
     The device name comes from the firmware folder and is printed unchanged: a prettified name that is
     wrong once is worse than a plain one that is always right. Version and processor are read out of
-    the firmware file by ftc; where ftc is absent the line falls back to what the caller detected.
+    the firmware file by oknx; where oknx is absent the line falls back to what the caller detected.
 
     Nothing here talks to a device, opens a port or writes a file.
 
@@ -523,10 +523,10 @@ function OpenKNX_PickFile {
     return (OpenKNX_WalkFile -Start $Start -Include $Include -Prompt $Prompt)
 }
 
-function OpenKNX_GetFtcVersion {
+function OpenKNX_GetOknxVersion {
     <#
     .SYNOPSIS
-        ftc's own version, or "" when the binary cannot be asked.
+        oknx's own version, or "" when the binary cannot be asked.
     .DESCRIPTION
         Asking is also the executability test. A release ships one binary per platform, and picking the
         wrong one is not a theoretical mistake: a Windows build sitting in Tools/ answers nothing on a
@@ -536,7 +536,7 @@ function OpenKNX_GetFtcVersion {
     if (-not $Exe) { return "" }
     try {
         $out = & $Exe --version 2>&1 | Out-String
-        if ($out -match '(?m)^\s*ftc\s+([0-9]+\.[0-9]+\.[0-9]+)') { return $Matches[1] }
+        if ($out -match '(?m)^\s*oknx\s+([0-9]+\.[0-9]+\.[0-9]+)') { return $Matches[1] }
     }
     catch { }
     return ""
@@ -555,33 +555,33 @@ function OpenKNX_GetArch {
     return 'x64'
 }
 
-function OpenKNX_FtcCandidates {
+function OpenKNX_OknxCandidates {
     <# @brief The binary names for this platform, most specific first, the unsuffixed one last. #>
     $arch = OpenKNX_GetArch
     if (OpenKNX_UI_OnWindows) {
-        $names = @("ftc-windows-$arch.exe")
-        if ($arch -ne 'x64') { $names += "ftc-windows-x64.exe" }
-        $names += "ftc.exe"
+        $names = @("oknx-windows-$arch.exe")
+        if ($arch -ne 'x64') { $names += "oknx-windows-x64.exe" }
+        $names += "oknx.exe"
         return $names
     }
     if (OpenKNX_UI_OnMac) {
-        $names = @("ftc-macos-$arch")
-        if ($arch -ne 'x64') { $names += "ftc-macos-x64" }
-        $names += "ftc"
+        $names = @("oknx-macos-$arch")
+        if ($arch -ne 'x64') { $names += "oknx-macos-x64" }
+        $names += "oknx"
         return $names
     }
-    $names = @("ftc-linux-$arch")
-    $names += "ftc"
+    $names = @("oknx-linux-$arch")
+    $names += "oknx"
     return $names
 }
 
-function OpenKNX_GetFtcBuild {
+function OpenKNX_GetOknxBuild {
     <#
     .SYNOPSIS
-        When an ftc binary was built, as a DateTime, or $null.
+        When an oknx binary was built, as a DateTime, or $null.
     .DESCRIPTION
         Two builds of the same version report the same version -- so the version alone cannot tell a
-        release copy from a months-old installed one, and the newer copy would never be offered. ftc
+        release copy from a months-old installed one, and the newer copy would never be offered. oknx
         prints its build stamp, and that settles it. Matched by the SHAPE of the stamp rather than by
         its label, because the label is translated and the stamp is not.
 
@@ -603,10 +603,10 @@ function OpenKNX_GetFtcBuild {
     return $null
 }
 
-function OpenKNX_FindFtc {
+function OpenKNX_FindOknx {
     <#
     .SYNOPSIS
-        A usable ftc: the one shipped with this release, and the one already installed.
+        A usable oknx: the one shipped with this release, and the one already installed.
     .DESCRIPTION
         Both are reported, because which one to use is a decision worth showing rather than making
         silently. Every candidate is verified by asking it for its version -- a name alone proves
@@ -620,11 +620,11 @@ function OpenKNX_FindFtc {
     foreach ($d in $SearchDirs) {
         if (-not $d) { continue }
         if (-not (Test-Path -PathType Container $d)) { continue }
-        foreach ($n in (OpenKNX_FtcCandidates)) {
+        foreach ($n in (OpenKNX_OknxCandidates)) {
             $p = Join-Path $d $n
             if (-not (Test-Path -PathType Leaf $p)) { continue }
-            $v = OpenKNX_GetFtcVersion $p
-            if ($v) { $shipped = (Resolve-Path $p).Path; $shippedVer = $v; $shippedBuild = OpenKNX_GetFtcBuild $p; break }
+            $v = OpenKNX_GetOknxVersion $p
+            if ($v) { $shipped = (Resolve-Path $p).Path; $shippedVer = $v; $shippedBuild = OpenKNX_GetOknxBuild $p; break }
         }
         if ($shipped) { break }
     }
@@ -632,19 +632,19 @@ function OpenKNX_FindFtc {
     $installed = ""
     $installedVer = ""
     $installedBuild = $null
-    $onPathName = "ftc"
-    if (OpenKNX_UI_OnWindows) { $onPathName = "ftc.exe" }
+    $onPathName = "oknx"
+    if (OpenKNX_UI_OnWindows) { $onPathName = "oknx.exe" }
     $cmd = Get-Command $onPathName -ErrorAction SilentlyContinue
     if ($cmd) {
-        $v = OpenKNX_GetFtcVersion $cmd.Source
-        if ($v) { $installed = $cmd.Source; $installedVer = $v; $installedBuild = OpenKNX_GetFtcBuild $cmd.Source }
+        $v = OpenKNX_GetOknxVersion $cmd.Source
+        if ($v) { $installed = $cmd.Source; $installedVer = $v; $installedBuild = OpenKNX_GetOknxBuild $cmd.Source }
     }
     if (-not $installed) {
         foreach ($d in @("$HOME/.local/bin", "$HOME/bin")) {
             $p = Join-Path $d $onPathName
             if (-not (Test-Path -PathType Leaf $p)) { continue }
-            $v = OpenKNX_GetFtcVersion $p
-            if ($v) { $installed = $p; $installedVer = $v; $installedBuild = OpenKNX_GetFtcBuild $p; break }
+            $v = OpenKNX_GetOknxVersion $p
+            if ($v) { $installed = $p; $installedVer = $v; $installedBuild = OpenKNX_GetOknxBuild $p; break }
         }
     }
     return @{ Shipped = $shipped; ShippedVersion = $shippedVer; ShippedBuild = $shippedBuild
@@ -662,17 +662,17 @@ function OpenKNX_CompareVersion {
 function OpenKNX_ReadIdentityInto {
     <#
     .SYNOPSIS
-        Fill Version and Mcu from what ftc reads out of one firmware file. Silent on refusal.
+        Fill Version and Mcu from what oknx reads out of one firmware file. Silent on refusal.
     .DESCRIPTION
-        Capturing ftc's output is what keeps it offline: with --check and no interface it stops at the
+        Capturing oknx's output is what keeps it offline: with --check and no interface it stops at the
         file only when its output is NOT a terminal. A refused file simply leaves the fields as they were.
     #>
-    param([hashtable]$Facts, [string]$File, [string]$FtcExe, [string]$Lang = "")
-    if (-not $FtcExe) { return $Facts }
+    param([hashtable]$Facts, [string]$File, [string]$OknxExe, [string]$Lang = "")
+    if (-not $OknxExe) { return $Facts }
     try {
         $lang = "de"
         if ((OpenKNX_UI_Lang $Lang) -eq 'EN') { $lang = "en" }
-        $out = & $FtcExe --lang $lang knxota $File --check 2>&1 | Out-String
+        $out = & $OknxExe --lang $lang knxota $File --check 2>&1 | Out-String
         if ($out -match '(?m)^\s*Version\s+([0-9]+\.[0-9]+\.[0-9]+)') { $Facts.Version = $Matches[1] }
         if ($out -match '(?m)^\s*Hardware\s+(\S+)') { $Facts.Mcu = $Matches[1] }
     }
@@ -706,11 +706,11 @@ function OpenKNX_GetFirmwareFacts {
         What the header needs about one firmware file.
     .DESCRIPTION
         The device name is the firmware folder's name, printed unchanged. Version and processor are read
-        out of the file by ftc, whose output is captured -- and capturing it is what keeps ftc offline:
+        out of the file by oknx, whose output is captured -- and capturing it is what keeps oknx offline:
         with --check and no interface it stops at the file only when its output is NOT a terminal.
-        Without ftc the two fields stay empty and the caller's own detection fills the processor in.
+        Without oknx the two fields stay empty and the caller's own detection fills the processor in.
     #>
-    param([string]$FirmwarePath, [string]$FtcExe = "", [string]$Mcu = "", [string]$Lang = "")
+    param([string]$FirmwarePath, [string]$OknxExe = "", [string]$Mcu = "", [string]$Lang = "")
 
     $facts = @{ Device = ""; Version = ""; Mcu = $Mcu; File = ""; Size = 0; Dir = "" }
     if (-not $FirmwarePath) { return $facts }
@@ -722,8 +722,8 @@ function OpenKNX_GetFirmwareFacts {
     $facts.Dir = $item.DirectoryName
     $facts.Device = Split-Path -Leaf $item.DirectoryName
 
-    if ($FtcExe) {
-        $facts = OpenKNX_ReadIdentityInto -Facts $facts -File $item.FullName -FtcExe $FtcExe -Lang $Lang
+    if ($OknxExe) {
+        $facts = OpenKNX_ReadIdentityInto -Facts $facts -File $item.FullName -OknxExe $OknxExe -Lang $Lang
         # Some files in a release cannot state an identity: a raw RP image has none, and an ESP
         # .factory.bin carries the bootloader and the partition table in front of the image, so nothing
         # at offset 0 says what it is. Their siblings can -- the .uf2 for an RP, the application image
@@ -733,7 +733,7 @@ function OpenKNX_GetFirmwareFacts {
             $sib = Get-ChildItem -LiteralPath $facts.Dir -Filter $pattern -File -ErrorAction SilentlyContinue |
                    Select-Object -First 1
             if ($sib) {
-                $facts = OpenKNX_ReadIdentityInto -Facts $facts -File $sib.FullName -FtcExe $FtcExe -Lang $Lang
+                $facts = OpenKNX_ReadIdentityInto -Facts $facts -File $sib.FullName -OknxExe $OknxExe -Lang $Lang
             }
         }
     }

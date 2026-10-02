@@ -33,8 +33,8 @@ FILEPATH: OGM-Common/scripts/setup/reusable/data/Make-DeltaPatch-Generic.ps1
 .PARAMETER Out
     Where the patches are written. Default: "Delta-<from>-to-<to>" next to the newer release.
 
-.PARAMETER Ftc
-    The ftc tool. Default: looked up next to this script, then in the release's Tools folder, then in PATH.
+.PARAMETER Oknx
+    The oknx tool. Default: looked up next to this script, then in the release's Tools folder, then in PATH.
 
 .PARAMETER Raw
     Write uncompressed patches. Smaller devices unpack a compressed patch to a file first; if one of
@@ -52,7 +52,7 @@ param(
     [Parameter(Mandatory = $true)][string]$From,
     [Parameter(Mandatory = $true)][string]$To,
     [string]$Out = "",
-    [string]$Ftc = "",
+    [string]$Oknx = "",
     [switch]$Raw
 )
 
@@ -73,9 +73,9 @@ $BusSlow, $BusFast = 480, 630
 # on Windows, which is what makes the fallback correct rather than merely convenient.
 $onWindows = if (Get-Variable -Name 'IsWindows' -ErrorAction SilentlyContinue) { $IsWindows } else { $true }
 
-function Resolve-Ftc {
+function Resolve-Oknx {
     param([string]$Hint)
-    $exe = if ($onWindows) { "ftc.exe" } else { "ftc" }
+    $exe = if ($onWindows) { "oknx.exe" } else { "oknx" }
     $candidates = @()
     if ($Hint) { $candidates += $Hint }
     $candidates += (Join-Path $PSScriptRoot $exe)
@@ -86,7 +86,7 @@ function Resolve-Ftc {
     }
     $inPath = Get-Command $exe -ErrorAction SilentlyContinue
     if ($inPath) { return $inPath.Source }
-    throw "ftc not found. Pass -Ftc <path>; it ships in the release's Tools folder."
+    throw "oknx not found. Pass -Oknx <path>; it ships in the release's Tools folder."
 }
 
 function Get-AppImages {
@@ -121,7 +121,7 @@ function Format-Span {
 
 if (-not (Test-Path $From)) { throw "release not found: $From" }
 if (-not (Test-Path $To)) { throw "release not found: $To" }
-$ftcExe = Resolve-Ftc -Hint $Ftc
+$oknxExe = Resolve-Oknx -Hint $Oknx
 
 $fromName = (Get-Item $From).Name
 $toName = (Get-Item $To).Name
@@ -146,7 +146,7 @@ foreach ($device in ($new.Keys | Sort-Object)) {
     $target = Join-Path $Out "$device.$ext"
     $callArgs = @('delta', 'make', $old[$device], $new[$device], $target)
     if (-not $Raw) { $callArgs += '--pack' }
-    & $ftcExe @callArgs *> $null
+    & $oknxExe @callArgs *> $null
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $target)) {
         $skipped += "$device (patch could not be built)"
         continue
@@ -165,5 +165,5 @@ if ($made -eq 0) {
     exit 1
 }
 Write-Host "  $made patch(es) in $Out" -ForegroundColor Green
-Write-Host "  send one with:  ftc -i <interface> <pa> delta <patch>" -ForegroundColor DarkGray
+Write-Host "  send one with:  oknx -i <interface> <pa> delta <patch>" -ForegroundColor DarkGray
 Write-Host ""

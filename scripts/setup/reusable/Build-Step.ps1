@@ -215,7 +215,7 @@ if (!$productName) {
 
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 # The facts a tool would otherwise have to assume about a firmware package, written down by the build
-# that actually knows them. Everything that reads a release -- ftc, the extractor script, anything
+# that actually knows them. Everything that reads a release -- oknx, the extractor script, anything
 # third-party -- reads this instead of hard-coding an offset or guessing where an image ends.
 #
 # Derived AND VERIFIED here: the slice this file describes is compared against the real application
@@ -453,7 +453,7 @@ if ($processor -ne "SAMD") {
   # updater writes an APPLICATION image, and a .factory.bin does not even state its identity at offset 0,
   # so knxOTA refused it outright. Over the bus an ESP32 therefore gets the raw application image, which
   # is copied for every target anyway; an RP keeps the .uf2, which is the only RP file carrying identity.
-  # The package, for both families: ftc reads the application image out of it, guided by image.txt.
+  # The package, for both families: oknx reads the application image out of it, guided by image.txt.
   $knxUploadName = $CopyItem_Target_Name
   # Write the script file content to the file. @args forwards -Ip / -Pa / -From / -NoDelta, so the same
   # wrapper serves both the interactive run and a scripted one.
@@ -468,7 +468,7 @@ if ($processor -ne "SAMD") {
 
 # Prepare-Firmware
 # The release ships ONE file per device -- a package. Everything that needs the raw application image
-# derives it (ftc for the bus, the OTA script for the network); this is the same derivation for a person
+# derives it (oknx for the bus, the OTA script for the network); this is the same derivation for a person
 # who wants the files themselves: the plain image for USB or their own checksum, the gzipped one for a
 # knxOTA transfer, or a difference to an older release. The three upload scripts next to it send; this
 # one prepares. None of them calls it.

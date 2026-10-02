@@ -488,7 +488,7 @@ $_strings = @{
 $s = $_strings[$_lang]
 
 # ─── the shared header ─────────────────────────────────────────────────────────────────────────────
-# The same header the network and KNX scripts print. Optional here: this route needs neither ftc nor
+# The same header the network and KNX scripts print. Optional here: this route needs neither oknx nor
 # the shared file, so a release without it falls back to the previous title line rather than refusing.
 $_uiPath = Join-Path $PSScriptRoot "OpenKNX-UI-Generic.ps1"
 $_haveUi = (Test-Path -PathType Leaf $_uiPath)
@@ -2210,12 +2210,12 @@ $fwDir      = [System.IO.Path]::GetDirectoryName($firmwarePath)
 if ($_haveUi) {
     # The context block names the device the firmware belongs to, so the warning about matching device
     # and file is one the reader can act on rather than merely worry about.
-    $_ftcExe = ""
+    $_oknxExe = ""
     $_roots = @()
     foreach ($_rel in @("../Tools", "../../Tools", "../../../Tools", ".")) { $_roots += (Join-Path $PSScriptRoot $_rel) }
-    $_ftc = OpenKNX_FindFtc -SearchDirs $_roots
-    if ($_ftc.Installed) { $_ftcExe = $_ftc.Installed } elseif ($_ftc.Shipped) { $_ftcExe = $_ftc.Shipped }
-    $_facts = OpenKNX_GetFirmwareFacts -FirmwarePath $firmwarePath -FtcExe $_ftcExe -Mcu $chipDisplay -Lang $_lang
+    $_oknx = OpenKNX_FindOknx -SearchDirs $_roots
+    if ($_oknx.Installed) { $_oknxExe = $_oknx.Installed } elseif ($_oknx.Shipped) { $_oknxExe = $_oknx.Shipped }
+    $_facts = OpenKNX_GetFirmwareFacts -FirmwarePath $firmwarePath -OknxExe $_oknxExe -Mcu $chipDisplay -Lang $_lang
     OpenKNX_ShowContext -Facts $_facts -Way $s.Way -WayHint $s.WayHintUsb -Note $s.NoteUsb -Lang $_lang
 }
 else {

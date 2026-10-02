@@ -463,7 +463,7 @@ The last point is deliberate: hooks ship optional companion artifacts -- a PC to
 release cycle, an example tree -- and a firmware release must never hinge on one.
 
 **Example** -- `OFM-FileTransferModule/scripts/release/Post.ps1` puts the PC FileTransferClient into
-the release as `Tools/ftc-cli/<OS>/<arch>/ftc[.exe]`. The layout lives in that module because it is
+the release as `Tools/oknx/<OS>/<arch>/oknx[.exe]`. The layout lives in that module because it is
 that module's artifact.
 
 ---
