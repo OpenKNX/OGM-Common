@@ -21,8 +21,12 @@ Open ■
     firmware: the application identity ETS checks before a full application download and
     the size of the parameter block. A difference means the XML in release/data and the
     header come from different producer runs; the script shows what differs and what it
-    causes. A match does not prove an identical layout: a parameter moved within a block
-    of the same size, under the same identity, is not detected.
+    causes. Whatever it cannot compare - an unreadable knxprod, several application XMLs
+    for the one header, a missing or non-numeric #define, a value the knxprod does not carry
+    or carries more than once - is printed as "comparison not possible: <reason>", so a
+    skipped check does not read like a match. A match does not prove an identical layout: a
+    parameter moved within a block of the same size, under the same identity, is not detected.
+    Only a source tree without include/knxprod.h (the end-user package) is skipped silently.
 
     Exit code: 1 when the build fails or cannot start, 0 otherwise (a created .knxprod,
     -Help, or a cancelled XML selection).
@@ -128,6 +132,15 @@ $L = @{
         HdrBad3        = 'Firmware und knxprod immer aus demselben Build-Release.ps1-Lauf verwenden.'
         HdrLblApp      = 'Applikation'
         HdrLblSize     = 'Parameterblock'
+        HdrMatchPart   = 'nur {0} verglichen - passt zu include/knxprod.h'
+        HdrNoCmp       = 'Vergleich nicht möglich: {0}'
+        HdrRsnRead     = 'knxprod oder knxprod.h nicht lesbar ({0})'
+        HdrRsnNoApp    = 'keine Applikations-XML im knxprod'
+        HdrRsnMultiApp = '{0} Applikations-XMLs im knxprod, keine Zuordnung zum einen Header möglich'
+        HdrRsnHdrVal   = '{0}: {1} fehlt in knxprod.h oder ist keine Zahl'
+        HdrRsnByte     = '{0}: {1} = {2} passt nicht in ein Byte'
+        HdrRsnProdMiss = '{0}: {1} im knxprod nicht gefunden'
+        HdrRsnProdMany = '{0}: {1} verschiedene Werte im knxprod'
         NextTitle      = 'Nächste Schritte'
         Next1          = 'Die .knxprod in der ETS über den Katalog importieren (ETS 5.7.7 oder neuer, ETS 6).'
         Next2          = 'Dann Physikalische Adresse und - nach der Parametrierung - die Applikation programmieren.'
@@ -183,6 +196,15 @@ $L = @{
         HdrBad3        = 'Always use firmware and knxprod from the same Build-Release.ps1 run.'
         HdrLblApp      = 'Application'
         HdrLblSize     = 'Parameter block'
+        HdrMatchPart   = 'only {0} compared - matches include/knxprod.h'
+        HdrNoCmp       = 'Comparison not possible: {0}'
+        HdrRsnRead     = 'knxprod or knxprod.h not readable ({0})'
+        HdrRsnNoApp    = 'no application XML in the knxprod'
+        HdrRsnMultiApp = '{0} application XMLs in the knxprod, none can be tied to the single header'
+        HdrRsnHdrVal   = '{0}: {1} missing in knxprod.h or not a number'
+        HdrRsnByte     = '{0}: {1} = {2} does not fit in one byte'
+        HdrRsnProdMiss = '{0}: {1} not found in the knxprod'
+        HdrRsnProdMany = '{0}: {1} differing values in the knxprod'
         NextTitle      = 'Next steps'
         Next1          = 'Import the .knxprod into ETS via the catalog (ETS 5.7.7 or newer, ETS 6).'
         Next2          = 'Then assign the physical address and - after parametrisation - program the application.'
@@ -288,26 +310,43 @@ function Wait-EnterOrTimeout([int]$seconds) {
     Write-Host ""
 }
 
-# Reads a numeric #define (decimal or 0x-hex) from a generated knxprod.h; $null when absent.
+# Reads a numeric #define from a generated knxprod.h; $null when absent or not a plain number.
+# Accepts decimal and 0x-hex, optional parentheses (#define X (331)), an integer suffix and a comment.
+# Rejected on purpose, so no wrong number is compared: an expression, a leading-zero (octal) literal,
+# a negative value and more digits than an Int64 holds.
 function Get-HeaderDefine([string]$text, [string]$name) {
-    $m = [regex]::Match($text, '(?m)^\s*#define\s+' + $name + '\s+(0[xX][0-9A-Fa-f]+|\d+)\b')
+    $m = [regex]::Match($text, '(?m)^[ \t]*#define[ \t]+' + $name + '[ \t]+([^\r\n]*)')
     if (-not $m.Success) { return $null }
-    $v = $m.Groups[1].Value
+    $body = $m.Groups[1].Value.Trim()
+    $num  = '(0[xX][0-9A-Fa-f]{1,15}|0|[1-9]\d{0,17})'
+    $tail = '[ \t]*(?://.*|/\*.*)?$'   # trailing comment; anything else means it is not a plain number
+    $n = [regex]::Match($body, '^\([ \t]*' + $num + '[uUlL]*[ \t]*\)' + $tail + '|^' + $num + '[uUlL]*' + $tail)
+    if (-not $n.Success) { return $null }
+    $v = if ($n.Groups[1].Success) { $n.Groups[1].Value } else { $n.Groups[2].Value }
     if ($v -match '^0[xX]') { return [Convert]::ToInt64($v.Substring(2), 16) }
     return [int64]$v
 }
 
 # Compares the built knxprod with include/knxprod.h of the source tree this engine runs in.
 # Applies only to a developer build output (<repo>/release/data); the end-user package has no
-# include/ folder. Returns $null when not applicable or unreadable - never blocks the build.
+# include/ folder. $null means "does not apply here" and is the only silent outcome; every other
+# case returns Rows (what was compared) plus Notes (what could not be compared, and why), so a
+# skipped comparison is never shown as a match. Never blocks the build.
 function Get-KnxprodHeaderCheck([string]$knxprodPath) {
+    if (-not $PSScriptRoot) { return $null }   # dot-sourced / pasted: no folder to locate the repo from
+    $releaseDir = Split-Path -Parent $PSScriptRoot
+    if (-not $releaseDir -or (Split-Path -Leaf $releaseDir) -ne 'release') { return $null }
+    $repoRoot = Split-Path -Parent $releaseDir
+    if (-not $repoRoot) { return $null }
+    $hdrPath = Join-Path (Join-Path $repoRoot 'include') 'knxprod.h'
+    # No header in the source tree (end-user package): nothing to compare against, skip silently.
+    if (-not (Test-Path -LiteralPath $hdrPath -PathType Leaf)) { return $null }
+
+    $rows  = @()
+    $notes = @()
+    $app   = $null
+    $appCount = 0
     try {
-        $releaseDir = Split-Path -Parent $PSScriptRoot
-        if (-not $releaseDir -or (Split-Path -Leaf $releaseDir) -ne 'release') { return $null }
-        $repoRoot = Split-Path -Parent $releaseDir
-        if (-not $repoRoot) { return $null }
-        $hdrPath = Join-Path (Join-Path $repoRoot 'include') 'knxprod.h'
-        if (-not (Test-Path -LiteralPath $hdrPath -PathType Leaf)) { return $null }
         $hdr = Get-Content -Raw -LiteralPath $hdrPath -ErrorAction Stop
 
         # .NET resolves a relative path against the process directory, not the PowerShell location
@@ -315,12 +354,25 @@ function Get-KnxprodHeaderCheck([string]$knxprodPath) {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
         try {
-            $entry = $zip.Entries | Where-Object { $_.FullName -match 'M-[0-9A-Fa-f]{4}_A-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{4}\.xml$' } | Select-Object -First 1
-            if (-not $entry) { return $null }
-            $reader = New-Object System.IO.StreamReader($entry.Open())
-            try { $app = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            $appEntries = @($zip.Entries | Where-Object { $_.FullName -match 'M-[0-9A-Fa-f]{4}_A-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{2}-[0-9A-Fa-f]{4}\.xml$' })
+            $appCount = $appEntries.Count
+            # One header describes one application; with several application XMLs there is nothing
+            # that says which one it belongs to, so the case is named instead of picked at random.
+            if ($appCount -eq 1) {
+                $reader = New-Object System.IO.StreamReader($appEntries[0].Open())
+                try { $app = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            }
         } finally { $zip.Dispose() }
+    } catch {
+        # Read failure: say so. Staying quiet would be indistinguishable from a match.
+        return [PSCustomObject]@{ Rows = @(); Match = $false; Diff = $false; IdentDiff = $false; Compared = ''
+                                  Notes = @($s.HdrRsnRead -f $_.Exception.Message) }
+    }
 
+    if ($appCount -eq 0)     { $notes += $s.HdrRsnNoApp }
+    elseif ($appCount -gt 1) { $notes += ($s.HdrRsnMultiApp -f $appCount) }
+
+    if ($null -ne $app) {
         # Identity: the hardware type ETS compares with the device's property 78 before a full
         # application download (masks 07B0/57B0 run the compare in load procedures all/ap1 only).
         # The firmware builds it from the header as 00 00 OpenKnxId AppNumber AppVersion 00. The
@@ -328,36 +380,48 @@ function Get-KnxprodHeaderCheck([string]$knxprodPath) {
         $pIdent = @([regex]::Matches($app, '<LdCtrlCompareProp\b[^>]*>') | ForEach-Object {
                 if ($_.Value -match '\bPropId="78"' -and $_.Value -match '\bInlineData="([0-9A-Fa-f]+)"') { $matches[1].ToUpperInvariant() }
             } | Select-Object -Unique)
-        # LSM index 4 = application program; its segment size is the parameter block ETS writes
+        # LSM index 4 = application program; its segment size is the parameter block ETS writes.
+        # The digit cap keeps the Int64 cast from throwing on a malformed knxprod.
         $pSize = @([regex]::Matches($app, '<LdCtrlRelSegment\b[^>]*>') | ForEach-Object {
-                if ($_.Value -match '\bLsmIdx="4"' -and $_.Value -match '\bSize="(\d+)"') { [int64]$matches[1] }
+                if ($_.Value -match '\bLsmIdx="4"' -and $_.Value -match '\bSize="(\d{1,18})"') { [int64]$matches[1] }
             } | Select-Object -Unique)
 
-        $hId   = Get-HeaderDefine $hdr 'MAIN_OpenKnxId'
-        $hNum  = Get-HeaderDefine $hdr 'MAIN_ApplicationNumber'
-        $hVer  = Get-HeaderDefine $hdr 'MAIN_ApplicationVersion'
-        $hSize = Get-HeaderDefine $hdr 'MAIN_ParameterSize'
-
-        # Compare only what both sides carry; an absent value is skipped, not reported.
-        $rows = @()
-        if ($null -ne $hId -and $null -ne $hNum -and $null -ne $hVer -and $pIdent.Count -eq 1) {
-            $hIdent = '0000{0:X2}{1:X2}{2:X2}00' -f $hId, $hNum, $hVer
+        $identOk = $true
+        $identVals = @()
+        foreach ($defName in @('MAIN_OpenKnxId', 'MAIN_ApplicationNumber', 'MAIN_ApplicationVersion')) {
+            $v = Get-HeaderDefine $hdr $defName
+            if ($null -eq $v) { $notes += ($s.HdrRsnHdrVal -f $s.HdrLblApp, $defName); $identOk = $false; continue }
+            # Each of the three occupies one byte of the hardware type; outside 0..255 there is no
+            # identity to build, and {0:X2} would widen the string into a permanent false alarm.
+            if ($v -lt 0 -or $v -gt 255) { $notes += ($s.HdrRsnByte -f $s.HdrLblApp, $defName, $v); $identOk = $false; continue }
+            $identVals += $v
+        }
+        if ($pIdent.Count -eq 0)     { $notes += ($s.HdrRsnProdMiss -f $s.HdrLblApp, 'LdCtrlCompareProp PropId="78"'); $identOk = $false }
+        elseif ($pIdent.Count -gt 1) { $notes += ($s.HdrRsnProdMany -f $s.HdrLblApp, $pIdent.Count); $identOk = $false }
+        if ($identOk) {
+            $hIdent = '0000{0:X2}{1:X2}{2:X2}00' -f $identVals[0], $identVals[1], $identVals[2]
             $rows += [PSCustomObject]@{ Kind = 'Ident'; Label = $s.HdrLblApp;  Prod = $pIdent[0]; Hdr = $hIdent; Same = ($pIdent[0] -eq $hIdent) }
         }
-        # AbsoluteSegment products (mask 091A) carry no LsmIdx 4 RelSegment - the size is skipped there
-        if ($null -ne $hSize -and $pSize.Count -eq 1) {
+
+        $sizeOk = $true
+        $hSize = Get-HeaderDefine $hdr 'MAIN_ParameterSize'
+        if ($null -eq $hSize) { $notes += ($s.HdrRsnHdrVal -f $s.HdrLblSize, 'MAIN_ParameterSize'); $sizeOk = $false }
+        # AbsoluteSegment products (mask 091A) carry no LsmIdx 4 RelSegment - reported, not compared
+        if ($pSize.Count -eq 0)     { $notes += ($s.HdrRsnProdMiss -f $s.HdrLblSize, 'LdCtrlRelSegment LsmIdx="4"'); $sizeOk = $false }
+        elseif ($pSize.Count -gt 1) { $notes += ($s.HdrRsnProdMany -f $s.HdrLblSize, $pSize.Count); $sizeOk = $false }
+        if ($sizeOk) {
             $rows += [PSCustomObject]@{ Kind = 'Size';  Label = $s.HdrLblSize; Prod = "$($pSize[0])"; Hdr = "$hSize"; Same = ($pSize[0] -eq $hSize) }
         }
-        if ($rows.Count -eq 0) { return $null }
-        $diff = @($rows | Where-Object { -not $_.Same })
-        return [PSCustomObject]@{
-            Rows      = $rows
-            Match     = ($diff.Count -eq 0)
-            IdentDiff = (@($diff | Where-Object { $_.Kind -eq 'Ident' }).Count -gt 0)
-            Compared  = (($rows | ForEach-Object { $_.Label }) -join ', ')
-        }
-    } catch {
-        return $null
+    }
+
+    $diff = @($rows | Where-Object { -not $_.Same })
+    return [PSCustomObject]@{
+        Rows      = $rows
+        Match     = ($rows.Count -gt 0 -and $diff.Count -eq 0)
+        Diff      = ($diff.Count -gt 0)
+        IdentDiff = (@($diff | Where-Object { $_.Kind -eq 'Ident' }).Count -gt 0)
+        Compared  = (($rows | ForEach-Object { $_.Label }) -join ', ')
+        Notes     = $notes
     }
 }
 
@@ -542,7 +606,13 @@ if ($built) {
     Show-Field $s.DoneSize "$sizeKb KB"
     if ($AppVersion) { Show-Field $s.DoneVer $AppVersion }
     $hdrCheck = Get-KnxprodHeaderCheck $outFile
-    if ($hdrCheck -and $hdrCheck.Match) { Show-Field $s.DoneHdr "$($s.HdrMatch -f $hdrCheck.Compared)  $TICK" }
+    # The tick stands for a complete check; with anything skipped the line says what was compared
+    # instead, and the reasons follow. Otherwise a partial check would read like a full pass.
+    if ($hdrCheck -and $hdrCheck.Match) {
+        if ($hdrCheck.Notes.Count -eq 0) { Show-Field $s.DoneHdr "$($s.HdrMatch -f $hdrCheck.Compared)  $TICK" }
+        else                             { Show-Field $s.DoneHdr ($s.HdrMatchPart -f $hdrCheck.Compared) }
+    }
+    if ($hdrCheck) { foreach ($note in $hdrCheck.Notes) { Show-Field $s.DoneHdr ($s.HdrNoCmp -f $note) } }
     if ($ShowWarnings) {
         $warns = @($producerOut -split "`r?`n" | Where-Object { $_ -match '(?i)warn' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
         if ($warns.Count -gt 0) {
@@ -555,7 +625,7 @@ if ($built) {
             }
         }
     }
-    if ($hdrCheck -and -not $hdrCheck.Match) {
+    if ($hdrCheck -and $hdrCheck.Diff) {
         Write-Host ""
         Show-Head $s.HdrBadTitle Red
         Show-Item $s.HdrBad1 Yellow
