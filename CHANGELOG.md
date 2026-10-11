@@ -1,5 +1,16 @@
 # Changes
 
+## ec/v2.0.0-beta.2: 2026-10-11
+
+Fixes and build tooling on top of `ec/v2.0.0-beta.1`.
+
+* Fix: the time block is initialised and the weekday is set before the time is encoded. `tm` was left uninitialised, so every member the block does not assign was indeterminate when the DPT encoders and `mktime` read it, and a failed encode left the KO holding the previous time. `tm_wday` carries the KNX numbering, 0 no day, 1 Monday to 7 Sunday
+* Feature: a developer build compares the `.knxprod` it built with `include/knxprod.h`, the header the firmware uses: the application identity ETS checks before a full download and the size of the parameter block. A mismatch means XML and header come from different producer runs, where ETS aborts the download or the firmware reads parameters at wrong offsets. A match does not prove an identical layout, and the message says so
+* Fix: that comparison names every reason a line could not be compared instead of skipping it, checks each value to fit a byte, and shows the green tick only when nothing was left uncompared
+* Fix (ESP32, custom IDF build): the `.bin` carries the four OpenKNX identity bytes. The IDF script list had no `patch_esp32.py`; both lists now take the shared `[esp32_scripts_common]`, so `platformio.esp32.ini` is required in `extra_configs` of every project that uses `[esp32idf]`
+* Feature (ESP32, custom IDF build): a product with `OPENKNX_WEBSERVER` stops on the IDF script list, which generates no `include/webassets.h`, instead of failing on the missing header or linking a stale one
+* Change: the release scripts look for the desktop tool as oknx under `Tools/oknx/<OS>/<arch>/`; a release that still ships the old name is reported as missing
+
 ## ec/v2.0.0-beta.1: 2026-09-15
 
 The entries below are on `ec/v1dev-ec` and not released upstream yet. The library version moves to
