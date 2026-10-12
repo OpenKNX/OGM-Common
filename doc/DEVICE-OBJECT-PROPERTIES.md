@@ -717,13 +717,22 @@ ausprobiert.
 |---|---|
 | Gerät meldet den Chip (PID 207) | eingebaut, an RP2040 und ESP32 gemessen |
 | Werkzeug liest und zeigt ihn (`info`: "Chip") | eingebaut |
-| Werkzeug vergleicht vor dem Upload und bricht ab | **offen** |
+| Werkzeug vergleicht vor dem Upload und bricht ab | eingebaut, am RP2040-Router mit sieben Dateien gemessen |
 | RP-Gerät meldet, dass es gepackte Firmware annimmt | **offen**, erst nach dem Vergleich |
 
-Für den Vergleich noch zu lösen: eine `.gz` trägt nach außen keinen Chipnamen, das Werkzeug muss
-hineinsehen; ein rohes RP-`.bin` trägt keine Familienkennung; ein Gerät mit älterer Firmware hat kein
-PID 207 und kann nicht verglichen werden. Was der Chip **nicht** fängt, ist das Beispiel aus "Die Lücke":
-zwei Boards mit demselben Chip. Dafür bleibt der Vorschlag mit `DEVICE_HW_ID`.
+So vergleicht das Werkzeug (`knxota`, auch mit `--check`):
+
+* Eine `.uf2` nennt den Chip über die Familienkennung, ein ESP-Abbild im Kopf.
+* In eine `.gz` sieht das Werkzeug hinein: es packt die ersten 4 KiB aus und erkennt ein ESP-Abbild am
+  Kopf, ein RP2350-Abbild an der Blockmarke `FFFFDED3`, ein RP2040-Abbild an der Vektortabelle bei 0x100.
+* Stimmen die Chips nicht überein, bricht es ab, auch mit `--force`:
+  `RP2040 auf dem Gerät  ->  ESP32-S3 in der Datei · es wurde nichts übertragen`.
+* RP2350 für ARM und für RISC-V gelten als derselbe Chip.
+
+Was es **nicht** leistet: Ein Gerät mit älterer Firmware hat kein PID 207, eine Datei unbekannten Inhalts
+keinen Chipnamen — in beiden Fällen steht "nicht verglichen" in der Ausgabe und es läuft wie bisher. Die
+knxOTA-Seite im Gerät vergleicht nicht. Und das Beispiel aus "Die Lücke" fängt der Chip nicht: zwei
+Boards mit demselben Chip. Dafür bleibt der Vorschlag mit `DEVICE_HW_ID`.
 ---
 
 ## 13. Was wo hingehört — die Konsole gegen den Bus
