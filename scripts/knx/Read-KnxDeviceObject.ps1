@@ -47,7 +47,7 @@ param(
     [Parameter(Mandatory = $true)][Alias('i')][string] $InterfaceIp,
     [string] $Pa,
     [int] $Port = 3671,
-    [int[]] $Property = @(2, 9, 15, 16, 19, 25, 52, 55, 78, 83, 203, 204, 205, 206),
+    [int[]] $Property = @(2, 9, 15, 16, 19, 25, 52, 55, 78, 83, 203, 204, 205, 206, 207),
     [int] $TimeoutMs = 2000
 )
 
@@ -72,6 +72,7 @@ $KNOWN = @{
     204 = @{ Name = 'Device Name ab Werk';       Kind = 'Text'  }
     205 = @{ Name = 'Build-Zeitstempel';         Kind = 'Stamp' }
     206 = @{ Name = 'Build (Git)';               Kind = 'Text'  }
+    207 = @{ Name = 'Chip (MCU)';                Kind = 'Text'  }
 }
 
 function Format-Value([hashtable] $Info, [byte[]] $Bytes) {

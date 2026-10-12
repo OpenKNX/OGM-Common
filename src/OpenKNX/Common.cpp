@@ -10,6 +10,40 @@
     #include "OpenKNX/Heap/HeapCheck.h"
 #endif
 #include "OpenKNX/Stat/RuntimeStat.h"
+
+// The chip this firmware is built for, spelled as oknx names the chip of a firmware file
+// (uf2FamilyName(), espChipName()), so the two can be compared. Not defined for an unknown chip.
+#if defined(PICO_RP2350) && defined(__riscv)
+    #define OPENKNX_MCU_NAME "RP2350 RISC-V"
+#elif defined(PICO_RP2350)
+    #define OPENKNX_MCU_NAME "RP2350"
+#elif defined(PICO_RP2040)
+    #define OPENKNX_MCU_NAME "RP2040"
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    #define OPENKNX_MCU_NAME "ESP32-S3"
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    #define OPENKNX_MCU_NAME "ESP32-S2"
+#elif defined(CONFIG_IDF_TARGET_ESP32C2)
+    #define OPENKNX_MCU_NAME "ESP32-C2"
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    #define OPENKNX_MCU_NAME "ESP32-C3"
+#elif defined(CONFIG_IDF_TARGET_ESP32C5)
+    #define OPENKNX_MCU_NAME "ESP32-C5"
+#elif defined(CONFIG_IDF_TARGET_ESP32C61)
+    #define OPENKNX_MCU_NAME "ESP32-C61"
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+    #define OPENKNX_MCU_NAME "ESP32-C6"
+#elif defined(CONFIG_IDF_TARGET_ESP32H2)
+    #define OPENKNX_MCU_NAME "ESP32-H2"
+#elif defined(CONFIG_IDF_TARGET_ESP32P4)
+    #define OPENKNX_MCU_NAME "ESP32-P4"
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+    #define OPENKNX_MCU_NAME "ESP32"
+#elif defined(__SAMD51__)
+    #define OPENKNX_MCU_NAME "SAMD51"
+#elif defined(ARDUINO_ARCH_SAMD)
+    #define OPENKNX_MCU_NAME "SAMD21"
+#endif
 #ifdef DEVICE_DISPLAY_MODULE
     // Bare includes resolve via the OFM-DeviceDisplay src/ include path.
     #include "DeviceDisplay.h"
@@ -251,6 +285,9 @@ namespace OpenKNX
     #endif
     #ifdef BUILD_TIMESTAMP
         knx.bau().deviceObject().buildTimestamp(BUILD_TIMESTAMP);
+    #endif
+    #if defined(KNX_HAS_DEVICE_MCU) && defined(OPENKNX_MCU_NAME)
+        knx.bau().deviceObject().mcu(OPENKNX_MCU_NAME);
     #endif
         // openknx.info carries the effective revision: the MAIN_FirmwareRevision macro on the generated
         // path, and the init() argument where a product passes it at runtime. On mask 2920h the value is

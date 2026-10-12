@@ -56,6 +56,7 @@ da, **NEU** kam mit ihr dazu. Entfernt wurde nichts.
 | **204** | **`PID_MFR_DEVICE_NAME`** | wie PID 2, aber dauerhaft schreibgeschützt | `PDT_UNSIGNED_CHAR` | **NEU** |
 | **205** | **`PID_MFR_BUILD_TIMESTAMP`** | **`BUILD_TIMESTAMP`** | `PDT_UNSIGNED_LONG` | **NEU** |
 | **206** | **`PID_MFR_FIRMWARE_BUILD`** | **`MAIN_Version`** (Git-Kurzhash) | `PDT_UNSIGNED_CHAR` | **NEU** |
+| **207** | **`PID_MFR_MCU`** | **`OPENKNX_MCU_NAME`** (Chip, z. B. `RP2040`) | `PDT_UNSIGNED_CHAR` | **NEU** |
 
 **Bilanz: 15 vorhanden, 10 neu, 0 entfernt.** Einige Felder sind maskenabhängig ausgeblendet — PID 9
 entfällt auf Maske 2920h, PID 16 und 52 auf 57B0h, PID 19 auf 091A und 2920h, weil das Profil sie dort
@@ -74,6 +75,7 @@ Nur diese sieben. Alles andere setzt der Stack oder OGM-Common ohne Zutun.
 | Hardware-Kennung | `DEVICE_ID` | — | 19 | 40 Zeichen |
 | Firmware-Name | `MAIN_FirmwareName` | `FIRMWARE_NAME` | 203 | 48 Zeichen |
 | Build (Git-Kurzhash) | `MAIN_Version` | — | 206 | 16 Zeichen |
+| Chip (MCU) | `OPENKNX_MCU_NAME` | — | 207 | 16 Zeichen |
 | Build-Zeitpunkt | `BUILD_TIMESTAMP` | — | 205 | 4 Oktette |
 | Firmware-Revision | `FIRMWARE_REVISION` | `init(revision)` | 9 | 0–255 |
 | Produkt-ID | `DEVICE_HW_ID` | — | 55 | 10 Oktette |
@@ -144,6 +146,25 @@ Zwei getrennte Dateien, beide im PlatformIO-Vorlauf erzeugt.
 `BUILD_TIMESTAMP` sind Sekunden seit der Epoche und gehen unverändert auf PID 205. `MAIN_Version` ist
 der Git-Kurzhash des Builds und geht auf PID 206 — damit lässt sich am Bus feststellen, aus welchem
 Stand ein Gerät gebaut wurde, was die Versionsnummer allein nicht leistet.
+
+`OPENKNX_MCU_NAME` legt `Common.cpp` selbst fest, aus den Makros der Toolchain, und es geht auf PID 207:
+
+| Makro der Toolchain | PID 207 |
+|---|---|
+| `PICO_RP2040` | `RP2040` |
+| `PICO_RP2350` | `RP2350` |
+| `PICO_RP2350` und `__riscv` | `RP2350 RISC-V` |
+| `CONFIG_IDF_TARGET_ESP32` | `ESP32` |
+| `CONFIG_IDF_TARGET_ESP32S2` / `S3` | `ESP32-S2` / `ESP32-S3` |
+| `CONFIG_IDF_TARGET_ESP32C2` / `C3` / `C5` / `C6` / `C61` | `ESP32-C2` / `-C3` / `-C5` / `-C6` / `-C61` |
+| `CONFIG_IDF_TARGET_ESP32H2` / `P4` | `ESP32-H2` / `ESP32-P4` |
+| `ARDUINO_ARCH_SAMD` (`__SAMD51__`) | `SAMD21` (`SAMD51`) |
+
+Dieselbe Applikation gibt es für mehrere Chips (das IP-Interface für ESP32, RP2040, RP2350 und ESP32-S3),
+und sonst unterscheidet sie nichts im Device Object. Die Schreibweise ist die, mit der `oknx` den Chip
+einer Firmware-Datei benennt (`uf2FamilyName()`, `espChipName()`); so lassen sich Gerät und Datei vor
+einem Update vergleichen. Kennt die Tabelle den Chip nicht, bleibt das Makro undefiniert und PID 207
+meldet null Elemente.
 
 `Common.cpp` bindet `buildtime.h` direkt ein. Ohne diesen Include wäre `BUILD_TIMESTAMP` dort nicht
 sichtbar und PID 205 würde still 0 melden — `defines.h` zieht nur Hardware, knxprod und Versionen.
@@ -259,7 +280,8 @@ Ab PID 202 gehört der Bereich dem Hersteller (03_05_01 §4.3.1). Der PID ist ei
 | 204 | `PID_MFR_DEVICE_NAME` | Gerätename ab Werk |
 | 205 | `PID_MFR_BUILD_TIMESTAMP` | Build-Zeitpunkt |
 | 206 | `PID_MFR_FIRMWARE_BUILD` | Git-Kurzhash |
-| 207–255 | frei | |
+| 207 | `PID_MFR_MCU` | Chip, für den die Firmware gebaut ist |
+| 208–255 | frei | |
 
 **Regeln für eine neue Device-Object-PID in diesem Bereich:**
 
@@ -311,6 +333,7 @@ schlimmere Verstoß.
 | **204** | **`PID_MFR_DEVICE_NAME`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **205** | **`PID_MFR_BUILD_TIMESTAMP`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **206** | **`PID_MFR_FIRMWARE_BUILD`** | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **207** | **`PID_MFR_MCU`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | | **Summe** | **24** | **23** | **25** | **23** | **22** |
 
 Die Summenzeile ist nicht gerechnet, sondern gemessen: die Property-Listen wurden für alle fünf Masken
@@ -333,13 +356,13 @@ PID 82 hängt nicht an der Maske, sondern an `USE_RF`, und das setzt `config.h` 
 
 ### Wieviel Platz ist da
 
-* **49 freie Hersteller-PIDs** (207–255). Der PID ist ein Oktett, der Bereich ab 202 gehört dem
-  Hersteller, vier sind belegt.
+* **48 freie Hersteller-PIDs** (208–255). Der PID ist ein Oktett, der Bereich ab 202 gehört dem
+  Hersteller, fünf sind belegt.
 * Je Property bis zu **255 Elemente**. Ein einzelner Lesezugriff liefert aber höchstens **15** — die
   Elementzahl in `A_PropertyValue_Read` ist ein 4-Bit-Feld. Ein 80-Zeichen-Name kostet also 1 Telegramm
   für die Länge plus 6 für den Inhalt.
 * Kosten je Feld, gemessen: ein `CallbackProperty` belegt 48 Byte, ein `DataProperty` 40 (Host arm64,
-  64-Bit-Zeiger; auf RP2040/ESP32 entsprechend weniger). Die zehn neuen Properties zusammen kosten
+  64-Bit-Zeiger; auf RP2040/ESP32 entsprechend weniger). Die zehn Properties vor PID 207 zusammen kosten
   **+1992 Byte Code** (Host arm64, `-Os`, Maske 07B0) und **0 Byte im persistenten Abbild**.
 
 ### Kandidaten aus der Spezifikation
@@ -387,7 +410,8 @@ prüfen, und die Falle mit schreibgeschützten `DataProperty`.
 
 Der Block braucht sieben Setter auf `DeviceObject` — `deviceName()`, `hardwareId()`, `firmwareName()`,
 `firmwareBuild()`, `buildTimestamp()`, `firmwareRevision()` und `productId()`. Die gibt es ab
-**`2.5.0-beta.1`**. Ein älterer Stack kennt sie nicht.
+**`2.5.0-beta.1`**. Ein älterer Stack kennt sie nicht. Der achte, `mcu()`, kam später dazu und hat
+deshalb einen eigenen Schalter, `KNX_HAS_DEVICE_MCU`.
 
 ### Der Schalter
 
@@ -413,7 +437,7 @@ definiert es, der Block greift.
 
 `config.h` ist ab Zeile 3 vollständig in `#ifndef NO_KNX_CONFIG` gewickelt. Ein Ziel, das seine
 Konfiguration selbst mitbringt, schaltet die Datei ab — **und das Merkmalsmakro gleich mit**. Die Setter
-wären vorhanden, das Makro nicht, der Block fiele still weg, und PID 2/19/55/203–206 kämen leer heraus.
+wären vorhanden, das Makro nicht, der Block fiele still weg, und PID 2/19/55/203–207 kämen leer heraus.
 Ohne Übersetzungsfehler. In `device_object.h` kann das Makro nicht von den Settern getrennt werden, die
 es ankündigt.
 

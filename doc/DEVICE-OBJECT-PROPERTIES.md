@@ -83,12 +83,13 @@ Elementgröße, die der Typ vorgibt — `PDT_GENERIC_10` heißt schlicht: 10 Byt
 | **204** | **PID_MFR_DEVICE_NAME** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 80 | 80 B | R3 / ro | `OpenKNX REG1 Basismodul LAN+TP` | `DEVICE_NAME` — unveränderlich, auch wenn PID 2 überschrieben wurde | **NEU** |
 | **205** | **PID_MFR_BUILD_TIMESTAMP** | PDT_UNSIGNED_LONG `0x09` | 4 B | 1 | 4 B | R3 / ro | `6A A7 B1 94` → 2026-09-14 09:50:28 | `BUILD_TIMESTAMP` — Sekunden seit 1970, `0` = nicht gesetzt | **NEU** |
 | **206** | **PID_MFR_FIRMWARE_BUILD** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 16 | 16 B | R3 / ro | `b90b324` | `MAIN_Version` (kurzer Git-Hash) | **NEU** |
+| **207** | **PID_MFR_MCU** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 16 | 16 B | R3 / ro | `ESP32` | `OPENKNX_MCU_NAME` (Chip der Firmware) | **NEU** |
 
 **Zugriff** in der Form *Lesestufe / Schreibstufe*. `R3` heißt: ohne Authentisierung lesbar
 (Stufe 3 ist die niedrigste Hürde). `ro` heißt: das Gerät weist jeden Schreibversuch ab.
 
-**Zehn Felder sind neu:** 2, 9, 16, 19, 52, 55, 203, 204, 205, 206 — das Device Object wächst damit von
-14 auf 24 Felder (Maske 07B0).
+**Elf Felder sind neu:** 2, 9, 16, 19, 52, 55, 203, 204, 205, 206, 207 — das Device Object wächst damit von
+14 auf 25 Felder (Maske 07B0).
 
 Die Maxima sind frei gewählt, nicht vorgegeben. Weil die nur lesbaren Textfelder direkt aus dem Flash
 lesen (`CallbackProperty`), kostet ein hohes Maximum dort **null RAM** — es begrenzt nur, wie weit ein
@@ -143,6 +144,9 @@ Die Profiltabelle fürs Device Object steht in **Anhang A.2.3, gedruckte Seiten 
 | 83 | *leer* | für 07B0 nicht spezifiziert | ro, vorhanden | offen | `03_05_01` §4.3.33, S. 82 | Vol 6 A.2.3, S. 140 |
 | **203** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
 | **204** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
+| **205** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
+| **206** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
+| **207** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
 
 Zu den Grenzfällen: Fussnote 59 zu PID 57/58 sagt *"Mandatory for devices with an External Message
 Interface. Not allowed for devices without"*. Für das IP-Interface mit cEMI-Server ist das also
@@ -226,13 +230,14 @@ ftc -i 11.11.0.210 5.0.13 info
   Gerätename       OpenKNX REG1 Basismodul LAN+TP
   Hardware-Kennung  REG1-LAN-TP-Base
   Firmware-Name     IP-Interface (Dev)
+  Chip              ESP32
   Produkt-ID        00FA  A5 02 13 00 0000 00 00
   PEI-Typ           0
   Wiederholungen    0x33  - Busy 3 / Nak 3
 ```
 
 Mit `-q` kommen dieselben Werte als TSV (`device_name`, `hardware_id`, `firmware_name`,
-`device_name_factory`, `product_id`, `pei_type`, `max_retry`). Ein Gerät mit älterer Firmware lässt die Zeilen weg und
+`device_name_factory`, `mcu`, `product_id`, `pei_type`, `max_retry`). Ein Gerät mit älterer Firmware lässt die Zeilen weg und
 kostet dabei keine Wartezeit — es antwortet auf eine nicht vorhandene Property sofort mit
 "0 Elemente" (gemessen: 2,5 s für den gesamten Aufruf, kein Timeout).
 
@@ -276,6 +281,7 @@ Das Beispielskript nimmt dieselben beiden Wege:
   PID 204  Device Name ab Werk        OpenKNX REG1 Basismodul LAN+TP
   PID 205  Firmware Version + Build   1.3 rev 0   gebaut 2026-09-14 09:05:21
   PID 206  Build (Git)                b90b324
+  PID 207  Chip (MCU)                 ESP32
 ```
 
 Vier Fallen stecken im Modul, und jede davon ist beim Bauen aufgeschlagen:
@@ -432,7 +438,7 @@ Zum Anzeigen muss ein Werkzeug den umgekehrten Weg gehen — `ftc` und das Power
 | Flash-Abbild | auf allen fünf Masken unverändert, Byte-für-Byte geprüft + Cross-Restore |
 | Builds | 12 Firmware-Umgebungen + 8 ftc-Plattformen |
 | Unabhängige Reviews | drei Prüfer (Spec, Speichersicherheit, Shared-Lib-Regression), alle Befunde abgearbeitet |
-| **Hardware** | **nur ESP32** (`11.11.0.210`, Maske 07B0). RP2040 und RP2350 sind gebaut, aber **nicht am Gerät verifiziert** — auf der Testlinie 5.0.x steht kein RP-Gerät zur Verfügung. |
+| **Hardware** | **ESP32** (`11.11.0.210`, Maske 07B0) und, am 2026-10-13 mit PID 207 zusammen, **RP2040** (Router `11.11.0.126`, Maske 091A): Gerätename, Firmware-Name, Chip, Build-Kennung und Build-Zeitpunkt gelesen, direkt und über den Bus. RP2350 und die übrigen ESP-Chips sind **nicht am Gerät verifiziert**. |
 
 ### Die Entscheidung zu PID 2
 
@@ -547,6 +553,7 @@ OpenKnxId `0xAD`, App-Nummer 0, App-Version 8 → 0.8.
 | 204 | MFR_DEVICE_NAME | `OpenKNX REG2 PiPico2 V1` | `DEVICE_NAME`, unveränderlich | **NEU** |
 | 205 | MFR_BUILD_TIMESTAMP | Sekunden seit 1970 | `BUILD_TIMESTAMP` | **NEU** |
 | 206 | MFR_FIRMWARE_BUILD | Git-Kurzhash | `MAIN_Version` | **NEU** |
+| 207 | MFR_MCU | `RP2350` | `OPENKNX_MCU_NAME` | **NEU** |
 
 **Dieses Produkt war vom Bestellnummer-Fehler betroffen:** `"NeoPixel"` sind 8 Zeichen, also 9 Byte mit
 Terminator — der alte Code kopierte stur 10 und legte ein Fremdbyte als zehntes Oktett auf den Bus.
@@ -581,6 +588,7 @@ OpenKnxId `0xA5`, App-Nummer 2, App-Version 19 → 1.3.
 | 204 | MFR_DEVICE_NAME | `OpenKNX REG2 PiPico2 V1 Ethernet` | **NEU** |
 | 205 | MFR_BUILD_TIMESTAMP | `6A A7 B1 94` = 2026-09-14 09:50:28 | **NEU** |
 | 206 | MFR_FIRMWARE_BUILD | `b90b324` | **NEU** |
+| 207 | MFR_MCU | `RP2350` | **NEU** |
 
 ### 11.3 OAM-Meter auf REG2 PiPico V1 DeviceDisplay Meter
 
@@ -612,6 +620,7 @@ OpenKnxId `0xA3`, App-Nummer 4, App-Version 7 → 0.7.
 | 204 | MFR_DEVICE_NAME | `OpenKNX REG2 PiPico V1 DeviceDisplay Meter` | **NEU** |
 | 205 | MFR_BUILD_TIMESTAMP | Sekunden seit 1970 | **NEU** |
 | 206 | MFR_FIRMWARE_BUILD | Git-Kurzhash | **NEU** |
+| 207 | MFR_MCU | `RP2040` | **NEU** |
 
 **Hier greift die 10-Zeichen-Grenze sichtbar:** `MAIN_OrderNumber` ist „OpenKnxMeter" mit 12 Zeichen, auf
 dem Bus heißt das Produkt „OpenKnxMet". Kein Fehler im Code, sondern der harte Typ `PDT_GENERIC_10`.
@@ -688,6 +697,33 @@ und `knxota` verhält sich wie heute. Es kann also schrittweise ausgerollt werde
 **Nicht enthalten und bewusst offen:** wie `patch_uf2.py` an `DEVICE_HW_ID` kommt. Das ist der einzige
 echte Entwurfspunkt; der Rest ist Mechanik. Es ist eine Änderung an geteiltem Build-Werkzeug in
 OGM-Common und betrifft die `.uf2` jedes Produkts, gehört also besprochen bevor sie gebaut wird.
+
+### Nachtrag: der Chip als erste Stufe (PID 207)
+
+Entschieden am 2026-10-12, Feld eingebaut am 2026-10-13. Der Vergleich über `DEVICE_HW_ID` oben fängt das
+falsche **Board**; er braucht den erweiterten Stempel, und 51 von 103 Platinen haben keine `DEVICE_HW_ID`.
+Der falsche **Chip** ist der gröbere Fehler und ohne Stempel prüfbar, weil beide Seiten ihn schon kennen:
+
+* Das Gerät meldet ihn in PID 207 — immer, auch ohne `DEVICE_HW_ID`.
+* Die Datei nennt ihn selbst: eine `.uf2` über die Familienkennung, ein ESP-Abbild im Kopf.
+
+Dieselbe Applikation gibt es für mehrere Chips: das IP-Interface für ESP32, RP2040, RP2350 und ESP32-S3.
+Heute zeigt das Werkzeug bei der Datei der falschen Variante "Upgrade". Ein ESP-Gerät lehnt sie erst
+beim Einspielen ab, also nach der ganzen Übertragung. Ein RP-Gerät prüft ungepackte Dateien, reicht eine
+gepackte (`.gz`) aber ungeprüft an den Bootloader weiter. Beides ist am Code nachgelesen, nicht am Gerät
+ausprobiert.
+
+| | Stand |
+|---|---|
+| Gerät meldet den Chip (PID 207) | eingebaut, an RP2040 und ESP32 gemessen |
+| Werkzeug liest und zeigt ihn (`info`: "Chip") | eingebaut |
+| Werkzeug vergleicht vor dem Upload und bricht ab | **offen** |
+| RP-Gerät meldet, dass es gepackte Firmware annimmt | **offen**, erst nach dem Vergleich |
+
+Für den Vergleich noch zu lösen: eine `.gz` trägt nach außen keinen Chipnamen, das Werkzeug muss
+hineinsehen; ein rohes RP-`.bin` trägt keine Familienkennung; ein Gerät mit älterer Firmware hat kein
+PID 207 und kann nicht verglichen werden. Was der Chip **nicht** fängt, ist das Beispiel aus "Die Lücke":
+zwei Boards mit demselben Chip. Dafür bleibt der Vorschlag mit `DEVICE_HW_ID`.
 ---
 
 ## 13. Was wo hingehört — die Konsole gegen den Bus
@@ -779,12 +815,14 @@ läuft über. Deshalb hier verbindlich, was gilt.
 | **19** Hardware-Kennung | `DEVICE_ID` | ≤ 40 Zeichen | dito | `maxElements` |
 | **203** Firmware-Name | `MAIN_FirmwareName` | ≤ 48 Zeichen | dito | `maxElements` |
 | **206** Build-Kennung | `MAIN_Version` | ≤ 16 Zeichen | dito | `maxElements` |
+| **207** Chip | `OPENKNX_MCU_NAME` | ≤ 16 Zeichen | dito | `maxElements` |
 | **25** Major | `MAIN_ApplicationVersion` oberes Nibble | **0…15** | nicht darstellbar — das Makro ist *ein* Byte | der Typ selbst |
 | **25** Minor | unteres Nibble | **0…15** | dito | der Typ selbst |
 | **25** Revision | `openknx.init(rev)`, dann `& 0x1F` | **0…31** | **32 meldet 0** — stiller Überlauf | *niemand* |
 | **9** Revision | `openknx.init(rev)`, volles Oktett | 0…255 | nicht möglich, `uint8_t` | der Typ selbst |
 | **205** Zeitstempel | `BUILD_TIMESTAMP` | bis 07.02.2106 | `uint32`-Überlauf | der Typ selbst |
 | **206** Build-Kennung | `MAIN_Version` | ≤ 16 Zeichen | wird gekürzt | `maxElements` |
+| **207** Chip | `OPENKNX_MCU_NAME` | ≤ 16 Zeichen | wird gekürzt | `maxElements` |
 | **55** Hardware-ID | `DEVICE_HW_ID` | 0x0000…0xFFFF | — | `uint16` |
 | **52** Wiederholungen | Vorgabe `0x33` | Bit 7 und 3 müssen 0 sein | wird auf `& 0x77` maskiert | der Code |
 | alle Texte | ISO 8859-1 | Codepoints ≤ 0xFF | wird zu `?` | die Umwandlung im Gerät |
@@ -864,7 +902,7 @@ Grundsatz: jede Angabe hat **einen** Platz. Vier Überschneidungen bleiben, jede
 
 Bewusst **nicht** doppelt abgelegt: Seriennummer (nur 11), Maske (nur 83), Hardware-ID (nur 55),
 Bestellnummer (nur 15), Firmware-Name (nur 203), Build-Kennung (nur 206), Build-Zeitstempel (nur 205),
-Major und Minor (nur 25).
+Chip (nur 207), Major und Minor (nur 25).
 
 Der erste Entwurf von PID 205 trug Major, Minor und Revision zusätzlich mit — das war eine echte
 Doppelung und ist entfernt. PID 205 hat jetzt vier Oktette statt sieben und enthält nur noch, was es
@@ -895,6 +933,7 @@ darauf, dass dieselbe Zahl auch in PID 25 steckt.
 | Minor | **25** | Bits 5-0 | 0…15 (dito) |
 | Revision | **25** *und* **9** | 25: Bits 15-11 → **0…31**  ·  9: volles Oktett → **0…255** | siehe unten |
 | Build-Kennung | **206** | Text, Git-Kurzhash | ≤ 16 Zeichen |
+| Chip (MCU) | **207** | Text, z. B. `RP2040`, `ESP32-S3` | ≤ 16 Zeichen |
 | Build-Zeitpunkt | **205** | `uint32`, Sekunden seit 1970 | bis 2106 |
 
 **Die Revision steht bewusst an zwei Stellen, und zwar mit unterschiedlicher Genauigkeit:** PID 25 kappt
@@ -1032,6 +1071,9 @@ diese Doku als Regel formuliert: **Bestellnummer auf zehn Zeichen planen.**
 | `DEVICE_SMARTMF_SENSORMODUL` | `SMARTMF-SEN-V4` (14) | `Smart-MF Sensormodul V4` (23) |
 | `DEVICE_REG1_LAN_TP_BASE` | `REG1-LAN-TP-Base` (16) | `OpenKNX REG1 Basismodul LAN+TP` (30) |
 
+PID 207 gehört ebenfalls hierher: der Chip hängt am Board, nicht am Produkt. `DEVICE_REG1_LAN_TP_BASE`
+meldet `ESP32`.
+
 Das Präsenzmelder-Board ist der Fall, an dem die Kodierung sichtbar wird: der Name hat **26 Zeichen,
 aber 27 UTF-8-Bytes**, weil `ä` in der Quelle `C3 A4` ist. Auf dem Bus steht ein Oktett je Zeichen, das
 `ä` also als `E4` — PID 2 meldet Länge **26**, nicht 27.
@@ -1045,6 +1087,7 @@ ftc -i <ip> <pa> info
   Geraetename            OpenKNX UP1 Präsenzmelder+
   Hardware-Kennung       UP1-PM-HF
   Firmware-Name          RaumController
+  Chip                   <Chip des Boards>
   Firmware-Stand         5.6.1+<hash>
   Gebaut                 <Zeitstempel>
   Hardware-Typ           00 00 A0 12 56 00
