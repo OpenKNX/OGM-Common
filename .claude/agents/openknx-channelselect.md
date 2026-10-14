@@ -426,6 +426,8 @@ Manche Module haben keine Typ-Auswahl. Unterschiede zur Typ-Variante:
 
 Diesen Abschnitt verwenden, wenn ein bereits umgebautes Modul gegen das Kanalauswahl-Pattern geprüft werden soll. Jede Frage mit Ja/Nein beantworten; bei Nein ist Nacharbeit erforderlich.
 
+> **`.debug.xml`-Dateien ausschließen:** Dateien mit dem Suffix `.debug.xml` (z.B. `PMmodul.share.debug.xml`, `PMmodul.templ.debug.xml`) sind generierte Artefakte und werden **nicht analysiert**. Nur die Quelldateien (`.share.xml`, `.templ.xml`, `.parts.xml`) sind relevant. Debug-Varianten werden durch einen Rebuild mit dem OpenKNXproducer-Tool aus den Quelldateien neu erzeugt.
+
 ### share.xml — Prüfliste
 
 **VisibleChannels / Slider**
