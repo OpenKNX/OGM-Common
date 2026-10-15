@@ -150,7 +150,7 @@ namespace OpenKNX
 
         // Auto-paging: advance the page once its dwell time elapsed. Pause freezes EVERYTHING
         // — including this internal page advance (the manager's updateAutoPaging is already
-        // pause-gated, so the internal timer must be too; "Pause ist Pause").
+        // pause-gated, so the internal timer must be too; a pause is a pause).
         bool paused = false;
         if (openknxDisplayModule.getWidgetManager())
             paused = openknxDisplayModule.getWidgetManager()->isRotationPaused();
@@ -253,7 +253,7 @@ namespace OpenKNX
             case 1: // Firmware
             {
                 drawKeyValueRow(0, "Version", openknx.info.humanFirmwareVersion());
-                drawKeyValueRow(1, "Nummer", openknx.info.humanFirmwareNumber());
+                drawKeyValueRow(1, "Number", openknx.info.humanFirmwareNumber());
                 drawKeyValueRow(2, "KNX", knxTypeLabel(MASK_VERSION));
                 break;
             }

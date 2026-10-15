@@ -133,7 +133,7 @@ namespace OpenKNX
 
         // Internal auto-paging: cycle pages during the dwell. Pause freezes EVERYTHING —
         // including this internal page advance (the manager's updateAutoPaging is already
-        // pause-gated, so the internal timer must be too; "Pause ist Pause").
+        // pause-gated, so the internal timer must be too; a pause is a pause).
         bool paused = false;
         if (openknxDisplayModule.getWidgetManager())
             paused = openknxDisplayModule.getWidgetManager()->isRotationPaused();
@@ -232,7 +232,7 @@ namespace OpenKNX
         }
     }
 
-    // Label left, value right-aligned (mock: "Texte linksbündig, Werte rechts").
+    // Label left, value right-aligned (mock: labels left, values right).
     void WidgetKnxBcu::drawKeyValueRow(uint8_t row, const char *key, const std::string &value)
     {
         const int16_t y = (int16_t)(15 + row * 12);
@@ -328,7 +328,7 @@ namespace OpenKNX
                     baud = uStr((unsigned long)dll->getTPUart().getBaudrate());
                 drawKeyValueRow(0, "Status", status);
                 drawKeyValueRow(1, "Baud", baud);
-                drawKeyValueRow(2, "Adresse", openknx.info.humanIndividualAddress());
+                drawKeyValueRow(2, "Address", openknx.info.humanIndividualAddress());
                 break;
             }
     #ifdef TPUART_BCU_HEALTH

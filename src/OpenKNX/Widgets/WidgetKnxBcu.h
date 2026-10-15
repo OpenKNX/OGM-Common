@@ -14,11 +14,11 @@
     // Subclasses the DeviceDisplay Widget base (OFM-DeviceDisplay); the bare "Widget.h" /
     // "DeviceDisplay.h" includes resolve via the OFM-DeviceDisplay src/ include path.
     //
-    // Pages (blätterbar mit Rauf/Runter, auto-rotierend während der Anzeigedauer):
+    // Pages (paged with up/down, rotating automatically during the display duration):
     //   1  Stats   TX/RX Frames · Load (B/s) · Peak + Auto-Range-Load-Balken
     //   2  Stats   Discarded/Received Bytes · Await/Repetitions · Overflow
     //   3  Status  BCU-Verbindung (getBcuStateInfo) · Baudrate · Adresse
-    //   4  Health  Resets · Disconnects · CON-rescues        } nur mit TPUART_BCU_HEALTH
+    //   4  Health  Resets · Disconnects · CON-rescues        } only with TPUART_BCU_HEALTH
     //   5  NCN-Err Slave-Coll · Recv/Tx/Proto-Err · Temp-Warn }
     //
     // All values are pulled LIVE from the TP-UART data-link layer: the SECONDARY DLL on

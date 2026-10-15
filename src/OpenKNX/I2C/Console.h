@@ -597,7 +597,7 @@ namespace OpenKNX
                     if (diff > 10)
                     {
                         openknx.logger.log("  NOTICE: Queue vs Device DMA ratio differs >10%.");
-                        openknx.logger.log("          Queue zeigt Scheduling, Device echte Bus-Transaktionen.");
+                        openknx.logger.log("          Queue shows scheduling, Device the real bus transactions.");
                     }
                 }
 #endif
