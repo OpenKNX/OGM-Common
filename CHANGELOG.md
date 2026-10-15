@@ -1,8 +1,10 @@
 # Changes
 
-## ec/v2.0.0-beta.2: 2026-10-11
+## ec/v2.0.0-beta.2: 2026-10-15
 
 Fixes and build tooling on top of `ec/v2.0.0-beta.1`.
+
+* Change: the KNX and system info widgets label Address and Number in English; comments and an I2C console line are English
 
 * Fix: the time block is initialised and the weekday is set before the time is encoded. `tm` was left uninitialised, so every member the block does not assign was indeterminate when the DPT encoders and `mktime` read it, and a failed encode left the KO holding the previous time. `tm_wday` carries the KNX numbering, 0 no day, 1 Monday to 7 Sunday
 * Feature: a developer build compares the `.knxprod` it built with `include/knxprod.h`, the header the firmware uses: the application identity ETS checks before a full download and the size of the parameter block. A mismatch means XML and header come from different producer runs, where ETS aborts the download or the firmware reads parameters at wrong offsets. A match does not prove an identical layout, and the message says so
