@@ -15,9 +15,9 @@
     // "DeviceDisplay.h" includes resolve via the OFM-DeviceDisplay src/ include path.
     //
     // Pages (paged with up/down, rotating automatically during the display duration):
-    //   1  Stats   TX/RX Frames · Load (B/s) · Peak + Auto-Range-Load-Balken
+    //   1  Stats   TX/RX Frames · Load (B/s) · Peak + auto-range load bar
     //   2  Stats   Discarded/Received Bytes · Await/Repetitions · Overflow
-    //   3  Status  BCU-Verbindung (getBcuStateInfo) · Baudrate · Adresse
+    //   3  Status  BCU connection (getBcuStateInfo) · Baud rate · Address
     //   4  Health  Resets · Disconnects · CON-rescues        } only with TPUART_BCU_HEALTH
     //   5  NCN-Err Slave-Coll · Recv/Tx/Proto-Err · Temp-Warn }
     //
