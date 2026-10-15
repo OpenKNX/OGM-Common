@@ -49,6 +49,24 @@ static uint8_t __openKnxSetupCompleted = 0;
     #endif
 #endif
 
+// RP2040-E1 caps the hardware watchdog at ~8.4 s. A 1 s timer keeps feeding it while loop() fed within the last
+// MAX - HW + tick, so a stalled loop() resets 16..17 s after its last feed (earlier by a delayed tick); IRQs off reset within 8 s.
+#if defined(OPENKNX_WATCHDOG) && defined(ARDUINO_ARCH_RP2040) && defined(PICO_RP2040) && PICO_RP2040 && OPENKNX_WATCHDOG_MAX_PERIOD > 8
+    #define OPENKNX_WATCHDOG_EXTEND
+static constexpr uint32_t kWdHwPeriodMs = 8000;
+static constexpr uint32_t kWdTickMs = 1000;
+static volatile uint32_t __openKnxWatchdogLoopFeed = 0;
+static repeating_timer_t __openKnxWatchdogTimer;
+static bool __openKnxWatchdogTimerActive = false;
+
+static bool openKnxWatchdogExtend(repeating_timer_t *)
+{
+    if (millis() - __openKnxWatchdogLoopFeed < OPENKNX_WATCHDOG_MAX_PERIOD * 1000 - kWdHwPeriodMs + kWdTickMs)
+        watchdog_update();
+    return true;
+}
+#endif
+
 namespace OpenKNX
 {
     uint32_t Watchdog::maxPeriod()
@@ -114,6 +132,9 @@ namespace OpenKNX
 
         if (!active()) return;
     #if defined(ARDUINO_ARCH_RP2040)
+        #ifdef OPENKNX_WATCHDOG_EXTEND
+        __openKnxWatchdogLoopFeed = millis();
+        #endif
         watchdog_update();
     #elif defined(ARDUINO_ARCH_ESP32)
         esp_task_wdt_reset();
@@ -133,7 +154,14 @@ namespace OpenKNX
         logInfoP("Start with a watchtime of %is", OPENKNX_WATCHDOG_MAX_PERIOD);
         _active = true;
     #if defined(ARDUINO_ARCH_RP2040)
+        #ifdef OPENKNX_WATCHDOG_EXTEND
+        __openKnxWatchdogLoopFeed = millis();
+        watchdog_enable(kWdHwPeriodMs, true);
+        __openKnxWatchdogTimerActive = add_repeating_timer_ms(kWdTickMs, openKnxWatchdogExtend, nullptr, &__openKnxWatchdogTimer);
+        if (!__openKnxWatchdogTimerActive) logErrorP("No timer to extend the watchdog, it fires after %us", (unsigned)(kWdHwPeriodMs / 1000));
+        #else
         watchdog_enable(OPENKNX_WATCHDOG_MAX_PERIOD * 1000, true);
+        #endif
     #elif defined(ARDUINO_ARCH_SAMD)
         GCLK->GENDIV.reg = GCLK_GENDIV_ID(2) | GCLK_GENDIV_DIV(4);
         GCLK->GENCTRL.reg = GCLK_GENCTRL_ID(2) | GCLK_GENCTRL_GENEN |
@@ -256,6 +284,10 @@ namespace OpenKNX
         _active = false;
 #ifdef OPENKNX_WATCHDOG
     #ifdef ARDUINO_ARCH_RP2040
+        #ifdef OPENKNX_WATCHDOG_EXTEND
+        if (__openKnxWatchdogTimerActive) cancel_repeating_timer(&__openKnxWatchdogTimer);
+        __openKnxWatchdogTimerActive = false;
+        #endif
         watchdog_disable();
     #elif defined(ARDUINO_ARCH_SAMD)
         WDT->CTRL.bit.ENABLE = 0;
