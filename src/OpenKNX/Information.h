@@ -93,8 +93,8 @@ namespace OpenKNX
 
         std::string humanFirmwareVersion(bool withHash = false)
         {
-            char buffer[20] = {};
-            sprintf(buffer, withHash ? "%i.%i.%i+%s" : "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11), MAIN_Version);
+            char buffer[52] = {}; // "15.15.31+" and a short git hash, which git extends up to 40 characters
+            snprintf(buffer, sizeof(buffer), withHash ? "%i.%i.%i+%s" : "%i.%i.%i", ((firmwareVersion() & 0x03C0) >> 6), (firmwareVersion() & 0x000F), ((firmwareVersion() & 0xF800) >> 11), MAIN_Version);
             return std::string(buffer);
         }
 
