@@ -117,6 +117,23 @@ ParamBASE_HeartbeatDelayTimeMS
 | `OPENKNX_TIME_TESTCOMMAND` | - | Enable time test commands |
 | `OPENKNX_OVERRIDE_MASK_VERSION` | - | Override mask version for media type mismatch |
 
+#### Flash Layout
+
+| Define | RP2040/RP2350, SAMD | ESP32 | Function |
+|--------|---------------------|-------|----------|
+| `KNX_FLASH_OFFSET` / `KNX_FLASH_SIZE` | mandatory | optional | Position and size of the KNX data |
+| `OPENKNX_FLASH_OFFSET` / `OPENKNX_FLASH_SIZE` | mandatory | optional | Position and size of the OpenKNX data |
+
+On ESP32 the data lives in the partitions `knx` and `openknx` of the partition table (`board_build.partitions`, by default from `ESP32_4MB`/`_8MB`/`_16MB`). Without an offset flag that table is used unchanged. When an offset is set, `prepare_esp32_partitions.py` moves the matching row to offset and size from the flags; the size flag is then required. Offsets must be multiples of 64 KiB, sizes of 4 KiB, and the build stops on an overlap. Override a value as on the RP2040:
+
+```ini
+build_flags =
+  -D KNX_FLASH_OFFSET=0x290000
+  -D KNX_FLASH_SIZE=0x19000
+```
+
+A changed layout reaches a device only by USB flash (`firmware.factory.bin`), since OTA does not write the partition table. A moved `knx` partition starts empty, so the device needs a new ETS download. A device that still has the old table logs an error at startup.
+
 ---
 
 ### Memory Management
