@@ -6,6 +6,20 @@
 
 namespace OpenKNX
 {
+#if defined(ARDUINO_ARCH_ESP32) && (defined(KNX_FLASH_OFFSET) || defined(OPENKNX_FLASH_OFFSET))
+    /**
+     * @brief Logs an error when a flashed partition differs from the layout the firmware was built for.
+     * @note OTA does not write the partition table, so the device keeps using the partition it has.
+     */
+    static void checkFlashPartition(const char *id, Flash::Driver &flash, uint32_t offset, uint32_t size)
+    {
+        if (flash.startOffset() == offset && flash.size() == size)
+            return;
+        logError("Hardware<Flash>", "%s partition 0x%08X/0x%X differs from build 0x%08X/0x%X, partition table not flashed?",
+                 id, (unsigned)flash.startOffset(), (unsigned)flash.size(), (unsigned)offset, (unsigned)size);
+    }
+#endif
+
     void Hardware::init()
     {
         // initFlash();
@@ -66,6 +80,12 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_ESP32
         openknx.openknxFlash.init("openknx");
         openknx.knxFlash.init("knx");
+    #ifdef OPENKNX_FLASH_OFFSET
+        checkFlashPartition("openknx", openknx.openknxFlash, OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
+    #endif
+    #ifdef KNX_FLASH_OFFSET
+        checkFlashPartition("knx", openknx.knxFlash, KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
+    #endif
 #else
         openknx.openknxFlash.init("openknx", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
         openknx.knxFlash.init("knx", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
