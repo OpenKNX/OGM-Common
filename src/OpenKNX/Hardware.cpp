@@ -2,6 +2,9 @@
 
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
+    #ifdef ARDUINO_ARCH_RP2040
+        #include <pico_base/pico/ota_command.h> // OTACmdPage: the page the bootloader reads
+    #endif
 #endif
 
 namespace OpenKNX
@@ -133,6 +136,86 @@ namespace OpenKNX
         {
             fatalError(FATAL_INIT_FILESYSTEM, "Unable to initalize filesystem");
         }
+    #if defined(ARDUINO_ARCH_RP2040)
+        reclaimStagedUpdate(); // before any module can open a file of the same name
+    #endif
+    }
+#endif
+
+#if OPENKNX_LITTLE_FS && defined(ARDUINO_ARCH_RP2040)
+    static constexpr const char *OTA_STAGED_RECORD = "/ota.staged";
+    static constexpr const char *OTA_COMMAND_FILE = "/otacommand.bin";
+
+    void Hardware::noteStagedUpdate(const char *path)
+    {
+        LittleFS.remove(OTA_STAGED_RECORD);
+        if (path == nullptr || path[0] == 0) return;
+
+        // Only a complete, signed command page counts: the core's Updater ignores a failed commit, and a record
+        // pointing at an old, already used page would release an image that was never applied.
+        File cmd = LittleFS.open(OTA_COMMAND_FILE, "r");
+        if (!cmd) return;
+        // Sign, count and the first entry up to its file name: 80 bytes instead of the whole page on the stack.
+        constexpr size_t nameAt = offsetof(OTACmdPage, cmd) + offsetof(commandEntry, write.filename);
+        constexpr size_t nameLen = sizeof(commandEntry::write.filename);
+        uint8_t head[nameAt + nameLen] = {};
+        const bool valid = cmd.size() == sizeof(OTACmdPage) && cmd.read(head, sizeof(head)) == sizeof(head) &&
+                           memcmp(head, "Pico OTA", 8) == 0 && strncmp((const char *)head + nameAt, path, nameLen) == 0;
+        cmd.close();
+        if (!valid) return;
+
+        File rec = LittleFS.open(OTA_STAGED_RECORD, "w");
+        if (!rec) return;
+        rec.print(path);
+        rec.close();
+    }
+
+    /**
+     * @brief Give back an image once the bootloader has run the command that named it.
+     * @details The record is written only after a complete commit; the bootloader erases the data block of
+     *          otacommand.bin only after a complete copy. While the signature is there it retries at the next
+     *          boot and needs the image, so nothing is touched.
+     */
+    void Hardware::reclaimStagedUpdate()
+    {
+        File rec = LittleFS.open(OTA_STAGED_RECORD, "r");
+        if (!rec) return;
+        char path[72] = {};
+        const bool fits = rec.size() < sizeof(path);
+        if (fits) rec.read((uint8_t *)path, sizeof(path) - 1);
+        rec.close();
+        if (!fits || path[0] == 0)
+        {
+            LittleFS.remove(OTA_STAGED_RECORD); // cannot name the image reliably: keep it, drop the record
+            return;
+        }
+
+        File cmd = LittleFS.open(OTA_COMMAND_FILE, "r");
+        if (!cmd)
+        {
+            LittleFS.remove(OTA_STAGED_RECORD);
+            return;
+        }
+        if (cmd.size() != sizeof(OTACmdPage))
+        {
+            // The bootloader reads exactly one page, so it can never run this one: drop it, keep the image.
+            cmd.close();
+            LittleFS.remove(OTA_COMMAND_FILE);
+            LittleFS.remove(OTA_STAGED_RECORD);
+            return;
+        }
+        char sign[8] = {};
+        const bool pending = cmd.read((uint8_t *)sign, sizeof(sign)) == sizeof(sign) && memcmp(sign, "Pico OTA", sizeof(sign)) == 0;
+        cmd.close();
+        if (pending) return;
+
+        File img = LittleFS.open(path, "r");
+        const uint32_t size = img ? (uint32_t)img.size() : 0;
+        if (img) img.close();
+        LittleFS.remove(path);
+        LittleFS.remove(OTA_COMMAND_FILE);
+        LittleFS.remove(OTA_STAGED_RECORD);
+        logInfo("OTA", "Reclaimed %u bytes: the bootloader has run the update staged as %s", (unsigned)size, path);
     }
 #endif
 

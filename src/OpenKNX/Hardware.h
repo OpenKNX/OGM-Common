@@ -37,6 +37,9 @@ namespace OpenKNX
     {
       private:
         uint8_t features = 0;
+#if OPENKNX_LITTLE_FS && defined(ARDUINO_ARCH_RP2040)
+        void reclaimStagedUpdate(); // release an image the bootloader has applied (runs right after the mount)
+#endif
 
       public:
         // Initialize or HW detection
@@ -49,6 +52,14 @@ namespace OpenKNX
 #if OPENKNX_LITTLE_FS
         // Filesystem
         void initFilesystem();
+#endif
+#if OPENKNX_LITTLE_FS && defined(ARDUINO_ARCH_RP2040)
+        /**
+         * @brief Name the image a picoOTA command was just committed for; nullptr forgets a previous one.
+         * @details Written only while otacommand.bin holds a complete signed page. The bootloader leaves the
+         *          image in LittleFS; the next start removes it once the command shows it ran.
+         */
+        void noteStagedUpdate(const char *path);
 #endif
         void initFlash();
         void initButtons();
