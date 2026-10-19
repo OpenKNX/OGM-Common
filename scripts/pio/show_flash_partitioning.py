@@ -182,21 +182,31 @@ def show_flash_partitioning(source, target, env):
         fs_size = env["FS_END"] - env["FS_START"]
         # Measured, not guessed. The fixed 0.65 was optimistic: a real image of this project compresses
         # to about 0.668, so the estimate came in ~19 KB LOW on a megabyte -- and that is exactly the
-        # margin this check exists to judge. The binary is right there by the time this runs, so it is
-        # gzipped for real; the ratio only stands in when it is not (a link-only run).
+        # margin this check exists to judge. This runs after checkprogsize, BEFORE firmware.bin of this
+        # build is written: the file on disk is the previous build's (or none after a clean). So the image
+        # is cut from the ELF just linked -- objcopy -O binary gives the same bytes as firmware.bin.
         OTA_COMPRESS_RATIO = 0.67
         FS_USABLE_FRACTION = 0.90
         est_compressed = int(firmware_end * OTA_COMPRESS_RATIO)
         est_measured = False
         try:
             import gzip as _gzip
-            _bin = os.path.join(env.subst("$BUILD_DIR"), "firmware.bin")
-            if os.path.isfile(_bin):
+            import shutil as _sh
+            import subprocess as _sp
+            import tempfile as _tf
+            _elf = env.subst("$BUILD_DIR/${PROGNAME}.elf")
+            _tmp = _tf.mkdtemp()
+            try:
+                _bin = os.path.join(_tmp, "image.bin")
+                _sp.run([env.subst("$OBJCOPY"), "-O", "binary", _elf, _bin], check=True, capture_output=True)
                 with open(_bin, "rb") as _f:
                     est_compressed = len(_gzip.compress(_f.read(), 9))
                     est_measured = True
+            finally:
+                _sh.rmtree(_tmp, ignore_errors=True)  # a scanner holding the file must not void the measurement
         except Exception as _e:
-            print("{}    (could not measure the compressed size: {}){}".format(C.GRAY, _e, C.END))
+            _why = (getattr(_e, "stderr", b"") or b"").decode(errors="replace").strip() or _e
+            print("{}    (could not measure the compressed size: {}){}".format(C.GRAY, _why, C.END))
         fs_usable = int(fs_size * FS_USABLE_FRACTION)
         opt_in_assert = any(
             (d == "OPENKNX_OTA_FS_ASSERT") or
@@ -250,12 +260,12 @@ def show_flash_partitioning(source, target, env):
         if est_compressed > fs_usable:
             row(G_FAIL, C.RED, "full image · gzip", est_compressed, est_compressed,
                 "needs {} of {} usable".format(human_bytes(est_compressed), human_bytes(fs_usable)))
-            if not est_measured:
-                print("{}    (estimated from a ratio - the binary was not there to measure){}".format(C.GRAY, C.END))
         elif est_compressed > int(fs_size * 0.82):
             row("!", C.AMBER, "full image · gzip", est_compressed, est_compressed, "headroom is tight")
         else:
             row(G_OK, C.GREEN, "full image · gzip", est_compressed, est_compressed)
+        if not est_measured:
+            print("{}    (estimated from a ratio - the image could not be cut from the ELF){}".format(C.GRAY, C.END))
 
         if not delta_on:
             row("·", C.GRAY, "delta patch", None, None, "add -D OPENKNX_FTC_DELTA_UPDATE (or the MANAGER profile) to offer it")
