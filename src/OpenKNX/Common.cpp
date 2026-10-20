@@ -428,6 +428,25 @@ namespace OpenKNX
         openknx.watchdog.loop();
 #endif
 
+#if defined(OPENKNX_OTA_EXCLUSIVE) && (defined(KNX_IP_WIFI) || defined(KNX_IP_LAN))
+        // Network OTA: every other service stays silent, a blocking one stalls the transfer
+        if (_otaActive)
+        {
+            _ledFunctions.loop();
+            openknx.leds.loop();
+#if defined(OPENKNX_WIRE_PIO) || defined(OPENKNX_WIRE1_PIO)
+    #ifdef OPENKNX_I2C_USE_ASYNC_QUEUE
+            OPENKNX_GPIO_WIRE.processQueue();
+    #endif
+#endif
+#ifdef DEVICE_DISPLAY_MODULE
+            openknxDisplayModule.loop(knx.configured());
+#endif
+            RUNTIME_MEASURE_END(_runtimeLoop);
+            return;
+        }
+#endif
+
 #ifdef OPENKNX_LOOPTIME_WARNING
         uint32_t start = millis();
 #endif

@@ -85,6 +85,7 @@ ParamBASE_HeartbeatDelayTimeMS
 | `OPENKNX_MAX_LOOPTIME` | 4000 | µs | Soft limit for loop execution time |
 | `OPENKNX_LOOPTIME_WARNING` | 7 | ms | Issue warning if loop exceeds this time |
 | `OPENKNX_LOOPTIME_WARNING_INTERVAL` | 1000 | ms | Warning interval for console output |
+| `OPENKNX_OTA_EXCLUSIVE` | - | - | Dev/test aid, not for production (network builds only): during a network OTA (OFM-Network) `loop()` runs only watchdog, LEDs and display, KNX and all other modules pause. Use it to tell whether a failing OTA is caused by a module that blocks in `loop()` (espota aborts after 10 s without an answer) |
 
 #### Debug & Development
 

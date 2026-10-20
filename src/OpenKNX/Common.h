@@ -25,6 +25,9 @@ namespace OpenKNX
 #endif
         uint8_t _currentModule = 0;
         uint32_t _loopMicros = 0;
+#if defined(OPENKNX_OTA_EXCLUSIVE) && (defined(KNX_IP_WIFI) || defined(KNX_IP_LAN))
+        bool _otaActive = false;
+#endif
         volatile bool _setup0Ready = false;
 #ifdef OPENKNX_DUALCORE
         volatile bool _setup1Ready = false;
@@ -136,6 +139,12 @@ namespace OpenKNX
         bool afterStartupDelay();
         void processAfterStartupDelay();
         void skipLooptimeWarning();
+#if defined(OPENKNX_OTA_EXCLUSIVE) && (defined(KNX_IP_WIFI) || defined(KNX_IP_LAN))
+        /** @brief Dev/test opt-in -D OPENKNX_OTA_EXCLUSIVE: during a network OTA loop() runs only watchdog, LEDs and display,
+         *         to tell whether a failing OTA is caused by a module that blocks in loop(). Not meant for production. */
+        void setOtaActive(bool active) { _otaActive = active; }
+        bool otaActive() const { return _otaActive; }
+#endif
         void restart();
 
         void collectHeapStats();
