@@ -61,6 +61,10 @@ if($settings.compileWith -eq "openknxproducer")
     $IsMacOS = $false; $IsLinux = $false; $IsWindows = $true
   }
 
+  # OPENKNX_SKIP_KNXPROD=1 (set by an OAM's Build-Release.ps1 -SkipKnxprod): no producer run. include/knxprod.h
+  # and the ETS data below stay from the last run; what gets packed is reported instead of taken silently.
+  $skipKnxprod = ($env:OPENKNX_SKIP_KNXPROD -eq "1")
+
   # check for existance of OpenKNXProducer
   $OpenKNXproducer = "~/bin/OpenKNXproducer.exe"
 
@@ -68,7 +72,11 @@ if($settings.compileWith -eq "openknxproducer")
     $OpenKNXproducer = "/usr/local/bin/OpenKNXproducer"
   }
 
-  if (Test-Path $OpenKNXproducer -PathType Leaf) {
+  if ($skipKnxprod) {
+    $OpenKNXproducer = $null
+    Write-Host "Skipping knxprod creation (SkipKnxprod): include/knxprod.h and the ETS data stay from the last OpenKNXproducer run" -ForegroundColor Yellow
+  }
+  elseif (Test-Path $OpenKNXproducer -PathType Leaf) {
     Write-Host "OpenKNXproducer found at $OpenKNXproducer"
   }
   else {
@@ -91,8 +99,15 @@ if($settings.compileWith -eq "openknxproducer")
     }
     Write-Host "Created release/$($settings.releaseName).knxprod" -ForegroundColor Blue
   }
-  else {
+  elseif (-not $skipKnxprod) {
     Write-Host "OpenKNXproducer is not Installed. Skipping knxprod file creation." -ForegroundColor Yellow
+  }
+  if ($skipKnxprod) {
+    $etsXml = "src/$($settings.releaseName).debug.xml"
+    $etsBag = "src/$($settings.releaseName).baggages"
+    if (Test-Path -Path $etsXml) { Write-Host "  ETS XML packed from the last run: $etsXml ($((Get-Item $etsXml).LastWriteTime))" -ForegroundColor Yellow }
+    else { Write-Host "  no $etsXml - the package has no ETS application" -ForegroundColor Red }
+    if (-not (Test-Path -Path $etsBag)) { Write-Host "  no $etsBag - none in this package (a producer run moves them into its own package)" -ForegroundColor Yellow }
   }
   if (Test-Path -Path "src/$($settings.releaseName).debug.xml") {
     Copy-Item "src/$($settings.releaseName).debug.xml" "release/data/$($settings.targetName).xml"
