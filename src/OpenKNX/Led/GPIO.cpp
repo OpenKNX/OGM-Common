@@ -86,26 +86,17 @@ namespace OpenKNX
             }
         }
 
-        // Flush pending I2C write; main loop only, never from ISR
+        // Flush pending I2C write; flush context only (RP2040 main loop, ESP32 flush task), never from ISR
         void GPIO::flushPendingI2C()
         {
             if (!_isI2C || !_hasPendingI2C)
                 return;
 
-            int result = -1;
-            for (int retry = 0; retry < 10 && result != 0; retry++)
-            {
-                result = openknx.gpio.digitalWrite(_pin, _pendingI2CState ? _activeOn : !_activeOn);
-                if (result != 0 && retry < 9)
-                    delayMicroseconds(100);
-            }
-
-            if (result == 0)
-            {
-                _currentLedBrightness = _pendingI2CBrightness;
-                _hasPendingI2C = false;
-            }
-            // still failing after retries: keep pending flag for next loop
+            // Clear before reading the state: a tick landing during the write re-flags its newer state.
+            _hasPendingI2C = false;
+            const bool state = _pendingI2CState;
+            if (openknx.gpio.digitalWrite(_pin, state ? _activeOn : !_activeOn) != 0)
+                _hasPendingI2C = true; // failed: retry on the next flush, no busy wait here
         }
 
         // Re-assert pin direction (OUTPUT) + level; recovers a PCA9557 CONFIG-register glitch
