@@ -186,12 +186,12 @@ namespace OpenKNX
 
     void TimerInterrupt::processLeds()
     {
-#ifdef OPENKNX_SERIALLED_ENABLE
-    #ifdef ARDUINO_ARCH_ESP32
-        return;
-    #endif
-#endif
+#if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_ESP32)
+        // serial LEDs run from their own 10 ms timer; only the I2C soft-PWM needs this tick
+        openknx.leds.i2cTimer();
+#else
         openknx.leds.timer();
+#endif
     }
 
 #ifdef ARDUINO_ARCH_RP2040

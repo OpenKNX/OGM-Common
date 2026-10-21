@@ -66,6 +66,14 @@ namespace OpenKNX
              */
             void timer(bool doNotCheckMillis = false);
 
+#if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_ESP32)
+            /*
+             * ESP32 with serial LEDs: soft-PWM tick for the I2C expander LEDs, called by TimerInterrupt;
+             * timer() then runs from the 10 ms serial-LED timer for all other LEDs.
+             */
+            void i2cTimer();
+#endif
+
             /*
              * use in normal loop or loop1
              */

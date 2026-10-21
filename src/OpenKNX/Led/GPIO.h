@@ -29,6 +29,7 @@ namespace OpenKNX
             void reassertI2C();     // re-assert expander pin direction+level; recovers CONFIG-register glitch, main loop only
 
             long getPin() { return _pin; }
+            bool isI2C() const { return _isI2C; }
             GPIO* asGPIO() override { return this; }
         };
     } // namespace Led

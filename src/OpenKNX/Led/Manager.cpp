@@ -127,16 +127,43 @@ namespace OpenKNX
             if (!_init)
                 return;
 
+#if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_ESP32)
+            // Called from the 10 ms serial-LED timer; I2C soft-PWM LEDs run from i2cTimer() on the tick.
+            for (const auto& pair : _leds)
+            {
+                GPIO* gpio = pair.second->asGPIO();
+                if (!gpio || !gpio->isI2C())
+                    pair.second->loop();
+            }
+#else
             _pwmCycle = (_pwmCycle + 1) % _pwmSteps;
 
             for (const auto& pair : _leds)
                 pair.second->loop();
+#endif
 
 #ifdef OPENKNX_SERIALLED_ENABLE
             if (_serialLedManager)
                 _serialLedManager->writeLeds();
 #endif
         }
+
+#if defined(OPENKNX_SERIALLED_ENABLE) && defined(ARDUINO_ARCH_ESP32)
+        void Manager::i2cTimer()
+        {
+            if (!_init)
+                return;
+
+            _pwmCycle = (_pwmCycle + 1) % _pwmSteps;
+
+            for (const auto& pair : _leds)
+            {
+                GPIO* gpio = pair.second->asGPIO();
+                if (gpio && gpio->isI2C())
+                    gpio->loop();
+            }
+        }
+#endif
 
         // Flush all pending I2C LED writes; the PCA95xx leaf takes the shared Wire1 mutex, so do
         // not lock here. ESP32: driven at ~50 Hz from the esp_timer flush task for smooth dimming.
