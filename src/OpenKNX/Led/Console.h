@@ -203,7 +203,7 @@ namespace OpenKNX
                         
                         uint8_t cycle = Manager::getPwmCycle();
                         uint8_t steps = Manager::getPwmSteps();
-                        uint8_t updateHz = Manager::getTimerUpdateHz();
+                        uint16_t updateHz = Manager::getTimerUpdateHz();
                         float effectiveHz = (float)updateHz / (float)steps;
                         openknx.logger.logWithPrefixAndValues("PWM", "Current Cycle: %d/%d (%dHz update, %.1fHz effective)", (int)cycle, (int)(steps-1), (int)updateHz, effectiveHz);
                         openknx.logger.logWithPrefixAndValues("PWM", "Configuration: %d steps, %dms timer", (int)steps, 1000/updateHz);
@@ -266,7 +266,7 @@ namespace OpenKNX
                         }
                         
                         Manager::setPwmSteps((uint8_t)newSteps);
-                        uint8_t updateHz = Manager::getTimerUpdateHz();
+                        uint16_t updateHz = Manager::getTimerUpdateHz();
                         float effectiveHz = (float)updateHz / (float)newSteps;
                         openknx.logger.logWithPrefixAndValues("PWM", "PWM steps set to %d (%.1fHz effective @ %dHz update)", 
                             newSteps, effectiveHz, (int)updateHz);
@@ -319,7 +319,7 @@ namespace OpenKNX
                         bool isI2C = (gpio && gpio->getPin() > 0xFF);
                         
                         uint8_t steps = Manager::getPwmSteps();
-                        uint8_t updateHz = Manager::getTimerUpdateHz();
+                        uint16_t updateHz = Manager::getTimerUpdateHz();
                         float effectiveHz = (float)updateHz / (float)steps;
                         
                         if (demoTokens.size() > 1)
