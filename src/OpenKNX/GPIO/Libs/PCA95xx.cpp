@@ -340,7 +340,11 @@ PCA95XX_error_t PCA95XX::readI2CBuffer(uint8_t *dest, PCA95XX_REGISTER_t startRe
         return PCA95XX_ERROR_READ;
     }
 
-    _i2cPort->requestFrom((uint8_t)_deviceAddress, (uint8_t)len);
+    // A short read would hand read() = -1 (0xFF) to the caller as valid data
+    if (_i2cPort->requestFrom((uint8_t)_deviceAddress, (uint8_t)len) != len)
+    {
+        return PCA95XX_ERROR_READ;
+    }
     for (int i = 0; i < len; i++)
     {
         dest[i] = _i2cPort->read();
