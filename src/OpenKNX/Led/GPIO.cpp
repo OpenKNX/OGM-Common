@@ -59,16 +59,15 @@ namespace OpenKNX
 
                 const bool willBeOn = (currentCycle < dutyCycle);
 
-                if (willBeOn == _lastPwmState && calcBrightness == _currentLedBrightness)
+                _currentLedBrightness = calcBrightness;
+                if (willBeOn == _lastPwmState)
                     return;
 
                 _lastPwmState = willBeOn;
 
-                // ISR sets flag only; main loop does the blocking I2C write
+                // tick sets the flag only; the flush context does the blocking I2C write
                 _pendingI2CState = willBeOn;
-                _pendingI2CBrightness = calcBrightness;
                 _hasPendingI2C = true;
-                _currentLedBrightness = calcBrightness;
                 return;
             }
             else

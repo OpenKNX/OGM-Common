@@ -17,7 +17,6 @@ namespace OpenKNX
             volatile bool _isDimmable = true;
             volatile bool _isI2C = false;               // I2C expander pin
             volatile bool _pendingI2CState = false;     // pending ON/OFF state
-            volatile uint8_t _pendingI2CBrightness = 0; // pending brightness
             volatile bool _hasPendingI2C = false;       // I2C write pending (set by tick, cleared by flush)
             volatile bool _lastPwmState = false;        // last PWM state, for change detection
 
