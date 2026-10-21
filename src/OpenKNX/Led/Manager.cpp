@@ -165,8 +165,8 @@ namespace OpenKNX
         }
 #endif
 
-        // Flush all pending I2C LED writes; the PCA95xx leaf takes the shared Wire1 mutex, so do
-        // not lock here. ESP32: driven at ~50 Hz from the esp_timer flush task for smooth dimming.
+        // Flush all pending I2C LED writes, then the low-rate reassert; the PCA95xx leaf takes the
+        // shared Wire1 mutex, so do not lock here. ESP32: driven from the flush task on every tick.
         void Manager::flushI2C()
         {
             if (!_init)
@@ -178,20 +178,10 @@ namespace OpenKNX
                 if (gpio)
                     gpio->flushPendingI2C();
             }
-        }
-
-        void Manager::loop()
-        {
-            if (!_init)
-                return;
-
-            // RP2040 only: flush here. On ESP32 the flush task owns it at tick rate.
-#ifndef ARDUINO_ARCH_ESP32
-            flushI2C();
-#endif
 
             // Self-heal (500 ms): re-assert each I2C LED pin direction+level; recovers a PCA9557
             // CONFIG-register glitch on the display-shared Wire1 without a reboot. Do not go below ~300 ms.
+            // Runs here so one context writes the expander outputs (no _cachedOutput race on ESP32).
             static uint32_t lastReassertMs = 0;
             const uint32_t now = millis();
             if (now - lastReassertMs >= 500)
@@ -204,6 +194,17 @@ namespace OpenKNX
                         gpio->reassertI2C();
                 }
             }
+        }
+
+        void Manager::loop()
+        {
+            if (!_init)
+                return;
+
+            // RP2040 only: flush here. On ESP32 the flush task owns it at tick rate.
+#ifndef ARDUINO_ARCH_ESP32
+            flushI2C();
+#endif
         }
 
         Led::Base* Manager::getProgLed()

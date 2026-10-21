@@ -80,8 +80,8 @@ namespace OpenKNX
             void loop();
 
             /*
-             * Flush all pending I2C LED writes now.
-             * ESP32: called at ~50 Hz from the esp_timer flush task so the front LED dims smoothly.
+             * Flush all pending I2C LED writes now, plus the low-rate reassert.
+             * ESP32: called on every tick from the flush task. RP2040: called from loop().
              * The PCA95xx leaf takes the shared Wire1 mutex; safe from task context, never a hard ISR.
              */
             void flushI2C();

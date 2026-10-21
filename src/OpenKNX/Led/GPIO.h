@@ -26,7 +26,7 @@ namespace OpenKNX
             GPIO(long pin = -1, long activeOn = HIGH, bool isDimmable = true, uint8_t maxBrightness = OPENKNX_LEDGPIO_MAX_BRIGHTNESS);
             void init() override;
             void flushPendingI2C(); // flush pending I2C write; flush context only, never from ISR
-            void reassertI2C();     // re-assert expander pin direction+level; recovers CONFIG-register glitch, main loop only
+            void reassertI2C();     // re-assert expander pin direction+level; recovers CONFIG-register glitch, flush context only
 
             long getPin() { return _pin; }
             bool isI2C() const { return _isI2C; }

@@ -219,8 +219,8 @@ PCA95XX_error_t PCA95XX::write(uint8_t pin, uint8_t value)
 #endif
 
     // Blocking I2C transaction runs with interrupts enabled: its completion path is IRQ-driven, so
-    // holding IRQs off across it deadlocked the display-shared bus. Race-free because write() is only
-    // reached from the core0 main loop (GPIO::flushPendingI2C); the ISR only sets pending flags.
+    // holding IRQs off across it deadlocked the display-shared bus. Race-free because LED outputs are only
+    // written from the LED flush context (RP2040 main loop, ESP32 flush task); the tick only sets pending flags.
     return writeI2CRegister(newOutput, PCA95XX_REGISTER_OUTPUT_PORT);
 }
 

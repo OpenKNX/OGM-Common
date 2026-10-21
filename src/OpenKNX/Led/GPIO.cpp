@@ -100,7 +100,7 @@ namespace OpenKNX
 
         // Re-assert pin direction (OUTPUT) + level; recovers a PCA9557 CONFIG-register glitch
         // on the display-shared Wire1 that flips the pin to INPUT (LED dark, unrevivable by writes).
-        // Called at a low rate from Manager::loop() so the glitch self-heals without a reboot.
+        // Called at a low rate from Manager::flushI2C() so the glitch self-heals without a reboot.
         void GPIO::reassertI2C()
         {
             if (!_isI2C || !_initialized)
