@@ -29,6 +29,13 @@
     #include "PIOI2CWire.h"
 #endif
 
+/*
+ * I2C scheduler: board-selected bus object openknxScheduledWire (opt-in)
+ */
+#ifdef OPENKNX_I2C_SCHEDULER
+    #include "ScheduledWire.h"
+#endif
+
 /* ****************************************************************************
  * Check Configuration Defines
  * @note Throw errors and stop compilation if required defines are missing
