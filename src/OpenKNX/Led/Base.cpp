@@ -20,6 +20,26 @@ namespace OpenKNX
                 return;
             }
 
+#ifdef OPENKNX_CONSOLE_DEV
+            // Console test (Prio 1b)
+            if (_testMode != TestMode::Off)
+            {
+                const int32_t sinceStart = (int32_t)(_lastMillis - _testStartMs);
+                const uint32_t elapsed = sinceStart > 0 ? sinceStart : 0; // start set on the other core after this tick read millis()
+                const uint32_t period = _testPeriodMs ? _testPeriodMs : 1;
+                uint8_t value = _testLevel;
+                if (_testMode == TestMode::Blink)
+                    value = ((elapsed / period) & 1) ? 0 : _testLevel;
+                else if (_testMode == TestMode::Sweep)
+                {
+                    const uint32_t phase = elapsed % (2 * period);
+                    value = (phase < period ? phase : 2 * period - phase) * _testLevel / period;
+                }
+                writeLed(value);
+                return;
+            }
+#endif
+
             // FatalError (Prio 2)
             if (_errorMode)
             {
@@ -193,6 +213,20 @@ namespace OpenKNX
             }
 
             _debugHeartbeat = millis();
+        }
+#endif
+
+#ifdef OPENKNX_CONSOLE_DEV
+        void Base::test(TestMode mode, uint8_t level, uint16_t periodMs)
+        {
+            // do nothing if not initialized
+            if (!_initialized) return;
+
+            _testMode = TestMode::Off; // the tick never sees half-set values
+            _testLevel = level;
+            _testPeriodMs = periodMs;
+            _testStartMs = millis();
+            _testMode = mode;
         }
 #endif
 

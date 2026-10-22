@@ -36,6 +36,24 @@ namespace OpenKNX
             Led::Effects::Blink * volatile _debugEffect = nullptr; // volatile pointer for interrupt safety!
 #endif
 
+#ifdef OPENKNX_CONSOLE_DEV
+          public:
+            enum class TestMode : uint8_t
+            {
+                Off = 0, // function state is shown
+                Level,   // fixed brightness
+                Blink,   // level / off, period per half
+                Sweep    // 0 -> level -> 0, period per ramp
+            };
+
+          protected:
+            // console test override (leds pwm ...): plain values, no heap effect, read by the tick
+            volatile TestMode _testMode = TestMode::Off;
+            volatile uint8_t _testLevel = 0;
+            volatile uint16_t _testPeriodMs = 0;
+            volatile uint32_t _testStartMs = 0;
+#endif
+
             /*
              * write led state based on bool
              */
@@ -161,6 +179,15 @@ namespace OpenKNX
              * Get current brightness (0-255)
              */
             inline uint8_t getCurrentBrightness() const { return _currentLedBrightness; }
+
+#ifdef OPENKNX_CONSOLE_DEV
+            /*
+             * Console test override: shows level/blink/sweep instead of the function state until
+             * TestMode::Off. Only powerSave wins over it. Main loop only.
+             */
+            void test(TestMode mode, uint8_t level = 255, uint16_t periodMs = 0);
+            inline TestMode testMode() const { return _testMode; }
+#endif
 
             /*
              * Get a logPrefix as string
