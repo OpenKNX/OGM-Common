@@ -99,6 +99,7 @@ namespace OpenKNX
              *gets the Led for identifier, dummyLed if not available
              */
             Led::Base* getLed(uint8_t identifier);
+            inline bool hasLed(uint8_t identifier) { return _leds.find(identifier) != _leds.end(); }
 
             /*
              * Called by Common to Disable during SAVE Trigger
