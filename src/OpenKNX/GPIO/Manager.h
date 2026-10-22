@@ -31,6 +31,8 @@ namespace OpenKNX
             // int attachInterrupt(openknx_gpio_number_t pin, void (*callback)(void), PinStatus mode);
             void attachInterrupt(openknx_gpio_number_t pin, std::function<void(openknx_gpio_number_t, bool)> callback, PinStatus mode);
             bool isInitialized(uint8_t expander);
+            /// @brief Output register of an expander pin (I2C scheduler); false for MCU pins and unsupported types.
+            bool outputRegister(openknx_gpio_number_t pin, uint8_t& address, uint8_t& reg, uint8_t& bit, bool& autoIncrement);
         };
     } // namespace GPIO
 } // namespace OpenKNX

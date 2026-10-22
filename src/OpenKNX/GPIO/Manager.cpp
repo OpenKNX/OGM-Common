@@ -89,6 +89,46 @@ namespace OpenKNX
             return GPIOExpanders[expander]->getInitState() == GPIOInitState::OK;
         }
 
+        bool Manager::outputRegister(openknx_gpio_number_t pin, uint8_t& address, uint8_t& reg, uint8_t& bit, bool& autoIncrement)
+        {
+#if OPENKNX_GPIO_NUM > 0
+            const uint8_t expander = pin >> 8;
+            const uint8_t localPin = pin & 0xff;
+            if (expander == 0 || expander > OPENKNX_GPIO_NUM)
+                return false;
+            switch (GPIO_TYPES[expander])
+            {
+                case OPENKNX_GPIO_T_PCA9557:
+                case OPENKNX_GPIO_T_PCA9554:
+                case OPENKNX_GPIO_T_TCA6408:
+                    if (localPin > 7)
+                        return false;
+                    reg = 0x01; // output port
+                    bit = localPin;
+                    autoIncrement = false;
+                    break;
+                case OPENKNX_GPIO_T_TCA9555:
+                    if (localPin > 15)
+                        return false;
+                    reg = localPin < 8 ? 0x02 : 0x03; // output port 0 / 1
+                    bit = localPin & 0x07;
+                    autoIncrement = true;
+                    break;
+                default:
+                    return false;
+            }
+            address = (uint8_t)GPIO_ADDRS[expander];
+            return true;
+#else
+            (void)pin;
+            (void)address;
+            (void)reg;
+            (void)bit;
+            (void)autoIncrement;
+            return false;
+#endif
+        }
+
         void Manager::showInitResults()
         {
 #if OPENKNX_GPIO_NUM > 0
