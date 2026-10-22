@@ -94,6 +94,9 @@ namespace OpenKNX
         void FunctionGroup::addLed(Led::Base* led)
         {
             _active = true;
+            for (auto known : _leds)
+                if (known == led)
+                    return; // setup() can run more than once
             _leds.push_back(led);
         }
 
