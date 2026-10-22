@@ -1,5 +1,6 @@
 #include "OpenKNX/Led/GPIO.h"
 #include "OpenKNX/Facade.h"
+#include "OpenKNX/I2C/ScheduledWire.h"
 #include "OpenKNX/Led/Manager.h"
 
 namespace OpenKNX
@@ -35,6 +36,14 @@ namespace OpenKNX
                 openknx.gpio.pinMode(_pin, OUTPUT);
                 openknx.gpio.digitalWrite(_pin, !_activeOn);
             }
+
+#ifdef OPENKNX_I2C_SCHEDULER
+            // the scheduler drives the PWM edges of expander pins on its bus
+            uint8_t address, reg, bit;
+            bool autoIncrement;
+            if (_isI2C && openknx.gpio.outputRegister(_pin, address, reg, bit, autoIncrement))
+                _scheduledLed = openknxScheduledWire.addLed(address, reg, bit, _activeOn == HIGH, autoIncrement);
+#endif
         }
 
         void GPIO::writeLed(uint8_t brightness)
@@ -47,6 +56,14 @@ namespace OpenKNX
             // I2C expanders: software PWM driven by Manager's global cycle
             if (_isI2C)
             {
+#ifdef OPENKNX_I2C_SCHEDULER
+                if (_scheduledLed >= 0)
+                {
+                    _currentLedBrightness = calcBrightness;
+                    openknxScheduledWire.setLed(_scheduledLed, calcBrightness);
+                    return;
+                }
+#endif
                 uint8_t currentCycle = Manager::getPwmCycle();
                 uint8_t pwmSteps = Manager::getPwmSteps();
 

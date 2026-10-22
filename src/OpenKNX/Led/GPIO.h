@@ -19,6 +19,9 @@ namespace OpenKNX
             volatile bool _pendingI2CState = false;     // pending ON/OFF state
             volatile bool _hasPendingI2C = false;       // I2C write pending (set by tick, cleared by flush)
             volatile bool _lastPwmState = false;        // last PWM state, for change detection
+#ifdef OPENKNX_I2C_SCHEDULER
+            int8_t _scheduledLed = -1; // LED index in the I2C scheduler; -1 = soft-PWM via pending flags
+#endif
 
             void writeLed(uint8_t brightness) override;
 
@@ -30,6 +33,9 @@ namespace OpenKNX
 
             long getPin() { return _pin; }
             bool isI2C() const { return _isI2C; }
+#ifdef OPENKNX_I2C_SCHEDULER
+            bool isScheduled() const { return _scheduledLed >= 0; }
+#endif
             GPIO* asGPIO() override { return this; }
         };
     } // namespace Led

@@ -1,5 +1,6 @@
 #include "OpenKNX/Led/Manager.h"
 #include "OpenKNX/Facade.h"
+#include "OpenKNX/I2C/ScheduledWire.h"
 #include "OpenKNX/TimerInterrupt.h" // For OPENKNX_INTERRUPT_TIMER_MS
 
 namespace OpenKNX
@@ -166,7 +167,7 @@ namespace OpenKNX
 #endif
 
         // Flush all pending I2C LED writes, then the low-rate reassert; the PCA95xx leaf takes the
-        // shared Wire1 mutex, so do not lock here. ESP32: driven from the flush task on every tick.
+        // shared Wire1 mutex, so do not lock here. ESP32 without the I2C scheduler: driven from the flush task on every tick.
         void Manager::flushI2C()
         {
             if (!_init)
@@ -201,9 +202,12 @@ namespace OpenKNX
             if (!_init)
                 return;
 
-            // RP2040 only: flush here. On ESP32 the flush task owns it at tick rate.
-#ifndef ARDUINO_ARCH_ESP32
+            // Flush here, except on ESP32 without the I2C scheduler: there the flush task owns it at tick rate.
+#if !defined(ARDUINO_ARCH_ESP32) || defined(OPENKNX_I2C_SCHEDULER)
             flushI2C();
+#endif
+#if defined(OPENKNX_I2C_SCHEDULER) && defined(OPENKNX_CONSOLE_DEV)
+            openknxScheduledWire.loop(); // bus stress of leds pwm stress ... bus
 #endif
         }
 

@@ -102,7 +102,7 @@ bool __isr __time_critical_func(timerInterruptCallback1)(repeating_timer *t)
     #endif
 #endif
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined(ARDUINO_ARCH_ESP32) && !defined(OPENKNX_I2C_SCHEDULER)
 // Anti-flicker: the blocking LED-I2C flush runs in its own task so it never delays the PWM tick.
 static TaskHandle_t s_ledFlushTask = nullptr;
 static void openKnxLedFlushTask(void *)
@@ -134,14 +134,19 @@ namespace OpenKNX
         // Create the flush task first so its handle is valid before the tick can notify it.
         // Priority below the esp_timer service task (so the tick always preempts) but above the
         // Arduino loop + lwIP + display render, so the flush wins the Wire1 mutex between page chunks.
+        // With the I2C scheduler there is no flush task: the scheduler writes the LED edges.
+        #ifndef OPENKNX_I2C_SCHEDULER
         xTaskCreatePinnedToCore(openKnxLedFlushTask, "OpenKnxLedFlush", 4096, nullptr,
                                 configMAX_PRIORITIES - 4, &s_ledFlushTask, tskNO_AFFINITY);
+        #endif
 
         const esp_timer_create_args_t timerArgs = {
             .callback = [](void *arg) {
                 openknx.timerInterrupt.interrupt(); // PWM tick: compute pending states, no I2C
+        #ifndef OPENKNX_I2C_SCHEDULER
                 if (s_ledFlushTask)
                     xTaskNotifyGive(s_ledFlushTask);
+        #endif
             },
             .arg = nullptr,
             .dispatch_method = ESP_TIMER_TASK,
