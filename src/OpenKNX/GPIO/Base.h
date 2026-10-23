@@ -20,6 +20,12 @@ namespace OpenKNX
             virtual void GPIOpinMode(uint8_t pin, int mode, bool preset, int status) = 0;
             virtual int GPIOdigitalWrite(uint8_t pin, int status) = 0; // Returns 0 on success, -1 on error
             virtual bool GPIOdigitalRead(uint8_t pin) = 0;
+            // All input pins of the expander in one read (bit n = pin n); 0 on success, -1 if not supported
+            virtual int GPIOdigitalReadPort(uint16_t& value)
+            {
+                (void)value;
+                return -1;
+            }
             virtual void GPIOattachInterrupt(uint8_t pin, std::function<void(openknx_gpio_number_t, bool)> callback, PinStatus mode) {}
 
             virtual inline const bool isInitialized() { return false; }

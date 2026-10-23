@@ -253,6 +253,19 @@ uint8_t PCA95XX::getInputRegister()
     return 0; // Unsafe
 }
 
+// All input pins in one register read, with the error recovery of read()
+PCA95XX_error_t PCA95XX::readInputs(uint8_t *destination)
+{
+    uint8_t inputRegister = 0;
+    PCA95XX_error_t err = readI2CRegister(&inputRegister, PCA95XX_REGISTER_INPUT_PORT);
+    if (err == PCA95XX_ERROR_SUCCESS)
+        _lastValidInput = inputRegister;
+    else
+        inputRegister = _lastValidInput;
+    *destination = inputRegister;
+    return err;
+}
+
 // Safe reading of a pin
 PCA95XX_error_t PCA95XX::read(uint8_t *destination, uint8_t pin)
 {

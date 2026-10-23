@@ -28,6 +28,8 @@ namespace OpenKNX
             void pinMode(openknx_gpio_number_t pin, int mode, bool preset = false, int status = 0);
             int digitalWrite(openknx_gpio_number_t pin, int status); // Returns 0 on success, -1 on error
             bool digitalRead(openknx_gpio_number_t pin);
+            /// @brief All input pins of an expander (1..n) in one read, bit n = pin n; false for MCU pins or unsupported types.
+            bool digitalReadPort(uint8_t expander, uint16_t& value);
             // int attachInterrupt(openknx_gpio_number_t pin, void (*callback)(void), PinStatus mode);
             void attachInterrupt(openknx_gpio_number_t pin, std::function<void(openknx_gpio_number_t, bool)> callback, PinStatus mode);
             bool isInitialized(uint8_t expander);

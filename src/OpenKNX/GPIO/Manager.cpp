@@ -84,6 +84,13 @@ namespace OpenKNX
             }
         }
 
+        bool Manager::digitalReadPort(uint8_t expander, uint16_t& value)
+        {
+            if (expander == 0 || expander > OPENKNX_GPIO_NUM)
+                return false;
+            return GPIOExpanders[expander]->GPIOdigitalReadPort(value) == 0;
+        }
+
         bool Manager::isInitialized(uint8_t expander)
         {
             return GPIOExpanders[expander]->getInitState() == GPIOInitState::OK;

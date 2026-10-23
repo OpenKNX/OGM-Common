@@ -114,6 +114,8 @@ class PCA95XX
     // getInputRegister can be used to read the whole input register
     PCA95XX_error_t getInputRegister(uint8_t *destination); // Returns error if problem
     uint8_t getInputRegister();                             // May return erroneous data if read fails
+    // readInputs reads all input pins at once; on a failed read it returns the last valid value, like read()
+    PCA95XX_error_t readInputs(uint8_t *destination);
 
     // read and digitalRead can be used to read a pin
     PCA95XX_error_t read(uint8_t *destination, uint8_t pin);

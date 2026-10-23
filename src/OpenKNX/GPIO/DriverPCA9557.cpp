@@ -68,5 +68,14 @@ namespace OpenKNX
             }
             return _pca->digitalRead(pin);
         }
+
+        // All 8 inputs in one register read; a failed read gives the last valid value, like GPIOdigitalRead()
+        int DriverPCA9557::GPIOdigitalReadPort(uint16_t& value)
+        {
+            uint8_t inputs = 0;
+            _pca->readInputs(&inputs);
+            value = inputs;
+            return 0;
+        }
     } // namespace GPIO
 } // namespace OpenKNX

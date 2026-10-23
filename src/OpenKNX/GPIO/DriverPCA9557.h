@@ -19,6 +19,7 @@ namespace OpenKNX
             virtual void GPIOpinMode(uint8_t pin, int mode, bool preset, int status) override;
             virtual int GPIOdigitalWrite(uint8_t pin, int status) override;
             virtual bool GPIOdigitalRead(uint8_t pin) override;
+            virtual int GPIOdigitalReadPort(uint16_t& value) override;
 
             virtual inline const bool isInitialized() { return _initState == GPIOInitState::OK; }
             virtual inline void setInitState(const GPIOInitState state) { _initState = state; }
