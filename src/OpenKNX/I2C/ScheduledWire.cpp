@@ -14,6 +14,7 @@
         #include "esp32-hal-i2c.h"
         #include "esp_timer.h"
     #else
+        #include "hardware/clocks.h"
         #include "pico/time.h"
     #endif
 
@@ -61,14 +62,6 @@ namespace
             // bus busy: release() notifies again when the transfer ends
         }
     }
-    #else
-    int64_t eventAlarm(alarm_id_t, void*)
-    {
-        if (!openknxScheduledWire.runEvents())
-            return kPeriodUs; // bus busy: release() re-arms this alarm at the transfer end; this is only a fallback
-        const int32_t delta = (int32_t)(openknxScheduledWire.nextEventUs() - nowUs());
-        return delta < 1 ? 1 : delta;
-    }
     #endif
 } // namespace
 
@@ -89,22 +82,43 @@ namespace OpenKNX
 
         // ---------------------------------------------------------------- timing / bus ownership
 
-        uint32_t ScheduledWire::transferUs(size_t writeBytes, size_t readBytes) const
+        uint32_t SCHED_RAM(ScheduledWire::transferUs)(size_t writeBytes, size_t readBytes) const
         {
             uint32_t bits = 2; // START + STOP
             if (writeBytes || !readBytes)
                 bits += (1 + writeBytes) * 9; // address + data; a 0-byte write is an address probe
             if (readBytes)
                 bits += 1 + (1 + readBytes) * 9; // repeated START + address + data
+    #ifdef ARDUINO_ARCH_ESP32
             const uint32_t kHz = _clkHz >= 1000 ? _clkHz / 1000 : 1;
             return bits * 1000UL / kHz + OPENKNX_I2C_SCHEDULER_OVERHEAD_US;
+    #else
+            return (bits * _bitNs + 999) / 1000 + OPENKNX_I2C_SCHEDULER_OVERHEAD_US;
+    #endif
         }
 
         void ScheduledWire::updateTiming()
         {
+    #ifdef ARDUINO_ARCH_RP2040
+            // SCL period as i2c_set_baudrate() programs it (DW_apb_i2c: low LCNT + 1, high HCNT + SPKLEN + 7 cycles),
+            // plus the rise time, which the controller waits for before it counts the high time
+            const uint32_t freq = clock_get_hz(clk_sys);
+            const uint32_t hz = _clkHz >= 1000 ? _clkHz : 1000;
+            if (freq >= hz * 20) // i2c_set_baudrate() needs lcnt and hcnt >= 8
+            {
+                const uint32_t period = (freq + hz / 2) / hz;
+                const uint32_t lcnt = period * 3 / 5;
+                const uint32_t hcnt = period - lcnt;
+                const uint32_t spklen = lcnt < 16 ? 1 : lcnt / 16;
+                _bitNs = (uint32_t)((uint64_t)(lcnt + 1 + hcnt + spklen + 7) * 1000000000ULL / freq) + OPENKNX_I2C_SCHEDULER_RISE_NS;
+            }
+            else
+                _bitNs = 1000000000UL / hz + OPENKNX_I2C_SCHEDULER_RISE_NS; // clock not known yet (static init)
+    #endif
             _edgeUs = transferUs(2, 0) + kMarginUs;
         }
 
+    #ifdef ARDUINO_ARCH_ESP32
         // Wait until the transfer ends before the next edge, then own the bus. A transfer longer than
         // any gap gets the bus after one period; the next edge then waits for it.
         void ScheduledWire::grant(uint32_t durationUs, bool driverTransfer)
@@ -148,29 +162,16 @@ namespace OpenKNX
             const bool eventWaiting = _eventWaiting;
             _eventWaiting = false;
             schedUnlock(state);
-    #ifdef ARDUINO_ARCH_ESP32
             if (eventWaiting && s_busTask)
                 xTaskNotifyGive(s_busTask);
-    #else
-            if (eventWaiting && _running)
-            {
-                // run the waiting edge now instead of polling (main loop context, the alarm IRQ cannot be mid-callback)
-                alarm_pool_t* pool = openknx.timerInterrupt.alarmPool();
-                const alarm_id_t id = alarm_pool_add_alarm_in_us(pool, 1, eventAlarm, nullptr, true);
-                if (id > 0) // keep the old alarm (5 ms fallback) when no slot is free
-                {
-                    alarm_pool_cancel_alarm(pool, _alarmId);
-                    _alarmId = id;
-                }
-            }
-    #endif
         }
+    #endif
 
         // ---------------------------------------------------------------- output-register merge
 
         // A driver write to an LED output register keeps its non-LED bits; the LED bits get the PWM level.
         // Runs while the bus is owned, so the PWM state cannot change before the transfer.
-        uint8_t ScheduledWire::mergeOutputWrite(uint8_t address, uint8_t* data, size_t len)
+        uint8_t SCHED_RAM(ScheduledWire::mergeOutputWrite)(uint8_t address, uint8_t* data, size_t len)
         {
             uint8_t ports = 0;
             if (len < 2)
@@ -196,7 +197,7 @@ namespace OpenKNX
             return ports;
         }
 
-        void ScheduledWire::commitOutputWrite(uint8_t ports, bool ok)
+        void SCHED_RAM(ScheduledWire::commitOutputWrite)(uint8_t ports, bool ok)
         {
             for (uint8_t p = 0; ports; p++, ports >>= 1)
             {
@@ -209,6 +210,20 @@ namespace OpenKNX
 
         // ---------------------------------------------------------------- PWM engine
 
+        // Period start: LEDs on; otherwise the off-edges that are due.
+        void SCHED_RAM(ScheduledWire::advanceEvent)(uint32_t now, bool lightDimmed)
+        {
+            if (_offIndex >= _offCount)
+                beginPeriod(now, lightDimmed);
+            else
+                while (_offIndex < _offCount && (int32_t)(now - (_periodStartUs + _off[_offIndex].atUs)) >= -(int32_t)kSlackUs)
+                {
+                    _ports[_off[_offIndex].port].onMask &= ~_off[_offIndex].mask;
+                    _offIndex++;
+                }
+        }
+
+    #ifdef ARDUINO_ARCH_ESP32
         bool ScheduledWire::runEvents()
         {
             uint32_t state = schedLock();
@@ -245,22 +260,10 @@ namespace OpenKNX
             schedUnlock(state);
             return true;
         }
-
-        // Period start: LEDs on; otherwise the off-edges that are due.
-        void ScheduledWire::advanceEvent(uint32_t now)
-        {
-            if (_offIndex >= _offCount)
-                beginPeriod(now);
-            else
-                while (_offIndex < _offCount && (int32_t)(now - (_periodStartUs + _off[_offIndex].atUs)) >= -(int32_t)kSlackUs)
-                {
-                    _ports[_off[_offIndex].port].onMask &= ~_off[_offIndex].mask;
-                    _offIndex++;
-                }
-        }
+    #endif
 
         // A dimmed LED read after the last event decision still needs a free next period start.
-        bool ScheduledWire::dimmedLeds() const
+        bool SCHED_RAM(ScheduledWire::dimmedLeds)() const
         {
             const uint8_t ledCount = _ledCount;
             for (uint8_t i = 0; i < ledCount; i++)
@@ -269,9 +272,11 @@ namespace OpenKNX
             return false;
         }
 
-        // Switch all lit LEDs on and plan their off-edges for this period.
-        void ScheduledWire::beginPeriod(uint32_t now)
+        // Switch all lit LEDs on and plan their off-edges for this period. Without lightDimmed (a transfer runs
+        // over this start) a newly dimmed LED keeps its last state for one period, so no pulse is stretched.
+        void SCHED_RAM(ScheduledWire::beginPeriod)(uint32_t now, bool lightDimmed)
         {
+            uint8_t lastOn[OPENKNX_I2C_SCHEDULER_MAX_PORTS];
             uint32_t start = _periodStartUs + kPeriodUs;
             if (!_periodValid || (int32_t)(now - start) > (int32_t)kPeriodUs)
                 start = now; // first period, or resync after a stall (flash write, long transfer)
@@ -280,7 +285,10 @@ namespace OpenKNX
 
             const uint8_t portCount = _portCount;
             for (uint8_t p = 0; p < portCount; p++)
+            {
+                lastOn[p] = _ports[p].onMask;
                 _ports[p].onMask = 0;
+            }
 
             _offCount = 0;
             _offIndex = 0;
@@ -292,9 +300,15 @@ namespace OpenKNX
                 if (brightness == 0)
                     continue;
                 uint32_t onUs = (uint32_t)brightness * kPeriodUs / 255;
+                const bool full = !hasOffEdge(brightness); // full, or an off-edge too close to the next on-edge: stays on
+                if (!full && !lightDimmed)
+                {
+                    _ports[led.port].onMask |= lastOn[led.port] & led.mask; // fading down from full: stays on, from off: stays off
+                    continue;
+                }
                 _ports[led.port].onMask |= led.mask; // any brightness > 0 lights, at least for the shortest pulse
-                if (!hasOffEdge(brightness))
-                    continue; // full, or an off-edge too close to the next on-edge: stays on
+                if (full)
+                    continue;
                 if (onUs < _edgeUs)
                     onUs = _edgeUs;
                 uint8_t j = _offCount++;
@@ -311,6 +325,7 @@ namespace OpenKNX
                     _off[j].atUs = _off[j - 1].atUs;
         }
 
+    #ifdef ARDUINO_ARCH_ESP32
         void ScheduledWire::writePorts(uint32_t now)
         {
             const uint8_t portCount = _portCount;
@@ -348,12 +363,7 @@ namespace OpenKNX
         bool ScheduledWire::writeRaw(uint8_t address, uint8_t reg, uint8_t value)
         {
             const uint8_t buf[2] = {reg, value};
-    #ifdef ARDUINO_ARCH_ESP32
             return i2cWrite(num, address, buf, 2, 2) == ESP_OK;
-    #else
-            // timeout: a few write times, so a stuck bus blocks the alarm IRQ only briefly
-            return i2c_write_blocking_until(_inst, address, buf, 2, false, make_timeout_time_us(4 * _edgeUs)) == 2;
-    #endif
         }
 
         // Starts the PWM engine; false if its task/timer could not be created (LEDs then stay on the pending-flag path).
@@ -365,7 +375,6 @@ namespace OpenKNX
             _offCount = 0;
             _offIndex = 0;
             _nextEventUs = nowUs() + 1000;
-    #ifdef ARDUINO_ARCH_ESP32
             // above loop task and lwIP, below the esp_timer service task that wakes it
             if (xTaskCreatePinnedToCore(busTask, "OpenKnxI2C", 3072, nullptr, configMAX_PRIORITIES - 4, &s_busTask, tskNO_AFFINITY) != pdPASS)
                 return false;
@@ -383,17 +392,9 @@ namespace OpenKNX
             }
             _running = true;
             armEventTimer();
-    #else
-            _running = true;
-            _alarmId = alarm_pool_add_alarm_in_us(openknx.timerInterrupt.alarmPool(), 1000, eventAlarm, nullptr, true);
-            if (_alarmId <= 0)
-            {
-                _running = false;
-                return false;
-            }
-    #endif
             return true;
         }
+    #endif
 
         int8_t ScheduledWire::addLed(uint8_t address, uint8_t reg, uint8_t bit, bool activeHigh, bool autoIncrement)
         {
@@ -419,7 +420,11 @@ namespace OpenKNX
                 return -1;
 
             // publish while owning the bus: the engine never sees a half-set port or LED
+    #ifdef ARDUINO_ARCH_RP2040
+            const uint32_t state = schedLock();
+    #else
             grant(0, false);
+    #endif
             if (p == _portCount)
             {
                 Port& port = _ports[p];
@@ -444,29 +449,46 @@ namespace OpenKNX
             _leds[index].mask = mask;
             _leds[index].brightness = 0;
             _ledCount = index + 1;
+    #ifdef ARDUINO_ARCH_RP2040
+            schedUnlock(state);
+    #else
             release();
+    #endif
             return (int8_t)index;
         }
 
     #ifdef OPENKNX_CONSOLE_DEV
         ScheduledWire::Stats ScheduledWire::stats()
         {
+        #ifdef ARDUINO_ARCH_RP2040
+            const uint32_t state = schedLock(); // IRQ-side counters are written under the lock
+            const Stats copy = _stats;
+            schedUnlock(state);
+        #else
             grant(0, false); // the engine cannot run, so it writes no counter meanwhile ...
             const uint32_t state = schedLock(); // ... and busyRetries is written under the lock
             const Stats copy = _stats;
             schedUnlock(state);
             release();
+        #endif
             return copy;
         }
 
         void ScheduledWire::resetStats()
         {
+        #ifdef ARDUINO_ARCH_RP2040
+            const uint32_t state = schedLock(); // IRQ-side counters are written under the lock
+            _stats = {};
+            _stats.sinceMs = millis();
+            schedUnlock(state);
+        #else
             grant(0, false); // the engine cannot run, so only busyRetries can change ...
             const uint32_t state = schedLock(); // ... and that one is written under the lock
             _stats = {};
             _stats.sinceMs = millis();
             schedUnlock(state);
             release();
+        #endif
         }
 
         // ---------------------------------------------------------------- bus stress
@@ -595,118 +617,6 @@ namespace OpenKNX
                 updateTiming();
             }
             return ok;
-        }
-    #else
-        void ScheduledWire::beginTransmission(uint8_t address)
-        {
-            if (_deferredWrite)
-                transmit(); // endTransmission(false) without requestFrom(): send that write with STOP first
-            _txAddress = address;
-            _txLen = 0;
-            _txOpen = true;
-            TwoWire::beginTransmission(address);
-        }
-
-        size_t ScheduledWire::write(uint8_t data)
-        {
-            if (!_txOpen)
-                return 0; // no transmission open, like TwoWire
-            if (_txLen < sizeof(_txHead))
-            {
-                _txHead[_txLen++] = data; // forwarded at the end, after the merge
-                return 1;
-            }
-            if (_txLen == sizeof(_txHead))
-                forwardHead(); // longer than a register write: no merge, hand the head over now
-            const size_t n = TwoWire::write(data);
-            if (n)
-                _txLen++;
-            return n;
-        }
-
-        void ScheduledWire::forwardHead()
-        {
-            const size_t count = _txLen < sizeof(_txHead) ? _txLen : sizeof(_txHead);
-            for (size_t i = 0; i < count; i++)
-                TwoWire::write(_txHead[i]);
-        }
-
-        // Send the pending write with STOP; the merge runs while the bus is owned.
-        uint8_t ScheduledWire::transmit()
-        {
-            _deferredWrite = false;
-            grant(transferUs(_txLen, 0));
-            uint8_t ports = 0;
-            if (_txLen <= sizeof(_txHead))
-            {
-                ports = mergeOutputWrite(_txAddress, _txHead, _txLen);
-                forwardHead();
-            }
-            _inTransfer = true;
-            const uint8_t ret = TwoWire::endTransmission(true);
-            _inTransfer = false;
-            commitOutputWrite(ports, ret == 0);
-            release();
-            SCHED_STAT(if (ret != 0 && !_inStress) _stats.transferErrors++);
-            _txOpen = false;
-            _txLen = 0;
-            return ret;
-        }
-
-        uint8_t ScheduledWire::endTransmission(bool stopBit)
-        {
-            if (!stopBit)
-            {
-                _deferredWrite = true; // sent by the following requestFrom() in the same gap
-                _txOpen = false;       // no more data after endTransmission(), like TwoWire
-                return 0;
-            }
-            return transmit();
-        }
-
-        size_t ScheduledWire::requestFrom(uint8_t address, size_t len, bool stopBit)
-        {
-            const bool writeFirst = _deferredWrite;
-            _deferredWrite = false;
-            grant(transferUs(writeFirst ? _txLen : 0, len));
-            size_t got = 0;
-            bool ok = true;
-            uint8_t ports = 0;
-            _inTransfer = true;
-            if (writeFirst)
-            {
-                if (_txLen <= sizeof(_txHead))
-                {
-                    ports = mergeOutputWrite(_txAddress, _txHead, _txLen);
-                    forwardHead();
-                }
-                ok = TwoWire::endTransmission(false) == 0;
-            }
-            if (ok)
-                got = TwoWire::requestFrom(address, len, stopBit);
-            _inTransfer = false;
-            commitOutputWrite(ports, ok);
-            release();
-            SCHED_STAT(if (got != len && !_inStress) _stats.transferErrors++);
-            if (writeFirst)
-                _txLen = 0; // the deferred write is used up; an open transmission keeps its bytes
-            return got;
-        }
-
-        void ScheduledWire::setClock(uint32_t freqHz)
-        {
-            if (freqHz == _clkHz)
-                return; // drivers set the same clock before every transfer
-            if (_inTransfer)
-            {
-                TwoWire::setClock(freqHz); // timeout recovery inside a transfer: the bus is already owned
-                return;
-            }
-            grant(OPENKNX_I2C_SCHEDULER_OVERHEAD_US, false);
-            TwoWire::setClock(freqHz);
-            release();
-            _clkHz = freqHz;
-            updateTiming();
         }
     #endif
     } // namespace I2C

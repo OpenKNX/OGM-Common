@@ -225,7 +225,12 @@ namespace OpenKNX
     #ifdef ARDUINO_ARCH_ESP32
                     openknx.logger.logWithPrefixAndValues("LED writes", "%.2f%% of the time, in the bus task", (double)st.edgeWriteUs / (elapsedMs * 10.0));
     #else
-                    openknx.logger.logWithPrefixAndValues("LED writes", "%.2f%% of core 0 in the alarm IRQ", (double)st.edgeWriteUs / (elapsedMs * 10.0));
+                {
+                    openknx.logger.logWithPrefixAndValues("Engine IRQs", "%.2f%% of core 0, input reads %lu, recoveries %lu", (double)st.edgeWriteUs / (elapsedMs * 10.0),
+                                                          (unsigned long)st.inputReads, (unsigned long)st.recoveries);
+                    openknx.logger.logWithPrefixAndValues("Queued writes", "%lu, errors %lu, queue full %lu",
+                                                          (unsigned long)st.queued, (unsigned long)st.queueErrors, (unsigned long)st.queueFull);
+                }
     #endif
                 openknx.logger.logWithPrefixAndValues("Bus stress", "%s, reads %lu, errors %lu",
                                                       openknxScheduledWire.stressingBus() ? "on" : "off",
