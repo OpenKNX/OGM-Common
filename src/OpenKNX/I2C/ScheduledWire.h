@@ -122,8 +122,12 @@ namespace OpenKNX
                 uint32_t transferErrors; // failed or short driver transfers
                 uint32_t stressReads;    // bus stress: expander reads
                 uint32_t stressErrors;
+                uint64_t waitUs;         // caller time spent waiting for a gap (driver transfers)
+                uint64_t transferUs;     // caller time from the gap to the end of the transfer
+                uint64_t edgeWriteUs;    // time in LED edge writes (RP2040: alarm IRQ, taken from the loop; ESP32: bus task)
+                uint32_t sinceMs;        // millis() of the last reset; base of the shares above
             };
-            inline const Stats& stats() const { return _stats; }
+            Stats stats(); // copy taken while owning the bus, so no counter is read half-updated; main loop only
             void resetStats(); // owns the bus meanwhile, so no counter update is lost
             // late/maxLateUs count only events that held transfers back; transfers/maxWaitUs/forced only driver transfers
             /// @brief Bus stress: loop() reads the first LED expander's register 0 several times per call.
@@ -176,6 +180,9 @@ namespace OpenKNX
     #ifdef OPENKNX_CONSOLE_DEV
             Stats _stats = {};
             volatile bool _stressBus = false;
+            uint32_t _grantUs = 0;      // start of the counted transfer
+            bool _grantCounted = false; // release() adds the transfer time
+            bool _inStress = false;     // bus-stress reads are not counted as driver transfers
     #endif
             uint32_t _clkHz = 100000;
             uint32_t _edgeUs = 0; // one LED write incl. margin; shortest pulse and edge spacing

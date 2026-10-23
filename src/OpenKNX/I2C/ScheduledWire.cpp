@@ -130,12 +130,15 @@ namespace OpenKNX
                 {
                     _busy = true;
                     schedUnlock(state);
-                    SCHED_STAT(if (driverTransfer) {
+                    SCHED_STAT(if (driverTransfer && !_inStress) {
                         _stats.transfers++;
                         if (now - start > _stats.maxWaitUs)
                             _stats.maxWaitUs = now - start;
                         if (!fits)
                             _stats.forced++;
+                        _stats.waitUs += now - start;
+                        _grantUs = now;
+                        _grantCounted = true;
                     });
                     (void)driverTransfer;
                     return;
@@ -146,6 +149,10 @@ namespace OpenKNX
 
         void ScheduledWire::release()
         {
+            SCHED_STAT(if (_grantCounted) {
+                _stats.transferUs += nowUs() - _grantUs;
+                _grantCounted = false;
+            });
             const uint32_t state = schedLock();
             _busy = false;
             const bool eventWaiting = _eventWaiting;
@@ -312,7 +319,9 @@ namespace OpenKNX
                 const uint8_t value = (port.other & ~port.ledMask) | ((port.onMask ^ port.activeLowMask) & port.ledMask);
                 if (port.writtenValid && value == port.written)
                     continue;
+                SCHED_STAT(const uint32_t writeStart = nowUs());
                 port.writtenValid = writeRaw(port.address, port.reg, value); // failed: retried on the next event
+                SCHED_STAT(_stats.edgeWriteUs += nowUs() - writeStart);
                 port.written = value;
                 if (port.writtenValid)
                 {
@@ -433,11 +442,22 @@ namespace OpenKNX
         }
 
     #ifdef OPENKNX_CONSOLE_DEV
+        ScheduledWire::Stats ScheduledWire::stats()
+        {
+            grant(0, false); // the engine cannot run, so it writes no counter meanwhile ...
+            const uint32_t state = schedLock(); // ... and busyRetries is written under the lock
+            const Stats copy = _stats;
+            schedUnlock(state);
+            release();
+            return copy;
+        }
+
         void ScheduledWire::resetStats()
         {
             grant(0, false); // the engine cannot run, so only busyRetries can change ...
             const uint32_t state = schedLock(); // ... and that one is written under the lock
             _stats = {};
+            _stats.sinceMs = millis();
             schedUnlock(state);
             release();
         }
@@ -449,6 +469,7 @@ namespace OpenKNX
             if (!_stressBus || !_portCount)
                 return;
             const uint8_t address = _ports[0].address;
+            _inStress = true;
             for (uint8_t i = 0; i < kStressReads; i++)
             {
                 beginTransmission(address);
@@ -464,6 +485,7 @@ namespace OpenKNX
             beginTransmission(address);
             write(0x01);
             endTransmission();
+            _inStress = false;
         }
     #endif
 
@@ -492,7 +514,7 @@ namespace OpenKNX
             const esp_err_t err = i2cWrite(num, txAddress, txBuffer, txLength, _timeOutMillis);
             commitOutputWrite(ports, err == ESP_OK);
             release();
-            SCHED_STAT(if (err != ESP_OK) _stats.transferErrors++);
+            SCHED_STAT(if (err != ESP_OK && !_inStress) _stats.transferErrors++);
         #if !CONFIG_DISABLE_HAL_LOCKS
             currentTaskHandle = NULL;
             xSemaphoreGive(lock);
@@ -544,7 +566,7 @@ namespace OpenKNX
                     i2cRead(num, address, rxBuffer, len, _timeOutMillis, &rxLength);
                 commitOutputWrite(ports, rxLength == len);
                 release();
-                SCHED_STAT(if (rxLength != len) _stats.transferErrors++);
+                SCHED_STAT(if (rxLength != len && !_inStress) _stats.transferErrors++);
             }
         #if !CONFIG_DISABLE_HAL_LOCKS
             currentTaskHandle = NULL;
@@ -618,7 +640,7 @@ namespace OpenKNX
             _inTransfer = false;
             commitOutputWrite(ports, ret == 0);
             release();
-            SCHED_STAT(if (ret != 0) _stats.transferErrors++);
+            SCHED_STAT(if (ret != 0 && !_inStress) _stats.transferErrors++);
             _txOpen = false;
             _txLen = 0;
             return ret;
@@ -658,7 +680,7 @@ namespace OpenKNX
             _inTransfer = false;
             commitOutputWrite(ports, ok);
             release();
-            SCHED_STAT(if (got != len) _stats.transferErrors++);
+            SCHED_STAT(if (got != len && !_inStress) _stats.transferErrors++);
             if (writeFirst)
                 _txLen = 0; // the deferred write is used up; an open transmission keeps its bytes
             return got;

@@ -206,7 +206,7 @@ namespace OpenKNX
 #ifdef OPENKNX_I2C_SCHEDULER
                 const uint32_t edgeUs = openknxScheduledWire.edgeUs();
                 const uint32_t periodUs = OpenKNX::I2C::ScheduledWire::periodUs();
-                const auto& st = openknxScheduledWire.stats();
+                const auto st = openknxScheduledWire.stats();
                 openknx.logger.logWithPrefixAndValues("Scheduler", "%d Hz, period %lu us, shortest pulse %lu us (%.1f%%)",
                                                       (int)OPENKNX_I2C_SCHEDULER_PWM_HZ, (unsigned long)periodUs, (unsigned long)edgeUs,
                                                       edgeUs * 100.0f / periodUs);
@@ -216,6 +216,17 @@ namespace OpenKNX
                 openknx.logger.logWithPrefixAndValues("Transfers", "%lu, max wait %lu us, forced %lu, errors %lu",
                                                       (unsigned long)st.transfers, (unsigned long)st.maxWaitUs,
                                                       (unsigned long)st.forced, (unsigned long)st.transferErrors);
+                const uint32_t elapsedMs = millis() - st.sinceMs;
+                if (elapsedMs > 0)
+                    openknx.logger.logWithPrefixAndValues("Loop in I2C", "%.2f%% over %lu s (wait %.2f%%, transfer %.2f%%)",
+                                                          (double)(st.waitUs + st.transferUs) / (elapsedMs * 10.0), (unsigned long)(elapsedMs / 1000),
+                                                          (double)st.waitUs / (elapsedMs * 10.0), (double)st.transferUs / (elapsedMs * 10.0));
+                if (elapsedMs > 0)
+    #ifdef ARDUINO_ARCH_ESP32
+                    openknx.logger.logWithPrefixAndValues("LED writes", "%.2f%% of the time, in the bus task", (double)st.edgeWriteUs / (elapsedMs * 10.0));
+    #else
+                    openknx.logger.logWithPrefixAndValues("LED writes", "%.2f%% of core 0 in the alarm IRQ", (double)st.edgeWriteUs / (elapsedMs * 10.0));
+    #endif
                 openknx.logger.logWithPrefixAndValues("Bus stress", "%s, reads %lu, errors %lu",
                                                       openknxScheduledWire.stressingBus() ? "on" : "off",
                                                       (unsigned long)st.stressReads, (unsigned long)st.stressErrors);
