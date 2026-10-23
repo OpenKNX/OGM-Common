@@ -27,17 +27,7 @@ OpenKNX::I2C::ScheduledWire openknxScheduledWire;
 
 namespace
 {
-    constexpr uint32_t kPeriodUs = 1000000UL / OPENKNX_I2C_SCHEDULER_PWM_HZ;
-    constexpr uint32_t kMarginUs = 20;      // gap between a transfer end and the next edge
-    constexpr uint32_t kSlackUs = 10;       // edges this close are run in one event
-    #ifdef OPENKNX_CONSOLE_DEV
-    constexpr uint32_t kLateUs = 50;        // stats: an event later than this counts as late
-    constexpr uint8_t kStressReads = 4;     // bus stress: expander reads per loop()
-    #endif
-    constexpr uint32_t kHoldUs = 100000;    // LED writes paused after kHoldFailures failed writes in a row
-    constexpr uint8_t kHoldFailures = 3;
-    static_assert(kPeriodUs <= 0xFFFF, "OPENKNX_I2C_SCHEDULER_PWM_HZ too low for 16-bit edge offsets");
-    static_assert(OPENKNX_I2C_SCHEDULER_MAX_PORTS <= 8, "port bitmask is 8 bit");
+    constexpr uint32_t kPeriodUs = OpenKNX::I2C::ScheduledWire::periodUs();
 
     inline uint32_t nowUs()
     {
@@ -236,30 +226,47 @@ namespace OpenKNX
             const int32_t lateUs = (int32_t)(now - _nextEventUs);
             if (lateUs >= -(int32_t)kSlackUs) // an early wake-up only re-arms
             {
-                SCHED_STAT(_stats.events++; if (_nextEventBlocks) { // a non-blocking period start may wait for a transfer by design
+                SCHED_STAT(_stats.events++; if (_startBlocks) { // a non-blocking period start may wait for a transfer by design
                     if (lateUs > (int32_t)kLateUs)
                         _stats.late++;
                     if (lateUs > 0 && (uint32_t)lateUs > _stats.maxLateUs)
                         _stats.maxLateUs = lateUs;
                 });
 
-                if (_offIndex >= _offCount)
-                    beginPeriod(now);
-                else
-                    while (_offIndex < _offCount && (int32_t)(now - (_periodStartUs + _off[_offIndex].atUs)) >= -(int32_t)kSlackUs)
-                    {
-                        _ports[_off[_offIndex].port].onMask &= ~_off[_offIndex].mask;
-                        _offIndex++;
-                    }
+                advanceEvent(now);
                 writePorts(now);
             }
 
             state = schedLock();
             _nextEventUs = _offIndex < _offCount ? _periodStartUs + _off[_offIndex].atUs : _periodStartUs + kPeriodUs;
-            _nextEventBlocks = _offCount > 0; // static LEDs: the next period start does not hold other transfers back
+            _startBlocks = _offCount > 0 || dimmedLeds(); // static LEDs: the next period start does not hold other transfers back
+            _nextEventBlocks = _startBlocks;
             _busy = false;
             schedUnlock(state);
             return true;
+        }
+
+        // Period start: LEDs on; otherwise the off-edges that are due.
+        void ScheduledWire::advanceEvent(uint32_t now)
+        {
+            if (_offIndex >= _offCount)
+                beginPeriod(now);
+            else
+                while (_offIndex < _offCount && (int32_t)(now - (_periodStartUs + _off[_offIndex].atUs)) >= -(int32_t)kSlackUs)
+                {
+                    _ports[_off[_offIndex].port].onMask &= ~_off[_offIndex].mask;
+                    _offIndex++;
+                }
+        }
+
+        // A dimmed LED read after the last event decision still needs a free next period start.
+        bool ScheduledWire::dimmedLeds() const
+        {
+            const uint8_t ledCount = _ledCount;
+            for (uint8_t i = 0; i < ledCount; i++)
+                if (hasOffEdge(_leds[i].brightness))
+                    return true;
+            return false;
         }
 
         // Switch all lit LEDs on and plan their off-edges for this period.
@@ -286,7 +293,7 @@ namespace OpenKNX
                     continue;
                 uint32_t onUs = (uint32_t)brightness * kPeriodUs / 255;
                 _ports[led.port].onMask |= led.mask; // any brightness > 0 lights, at least for the shortest pulse
-                if (brightness == 255 || onUs > kPeriodUs - _edgeUs)
+                if (!hasOffEdge(brightness))
                     continue; // full, or an off-edge too close to the next on-edge: stays on
                 if (onUs < _edgeUs)
                     onUs = _edgeUs;

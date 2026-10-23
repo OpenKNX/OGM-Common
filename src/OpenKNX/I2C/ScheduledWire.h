@@ -95,8 +95,17 @@ namespace OpenKNX
              */
             inline void setLed(int8_t led, uint8_t brightness)
             {
-                if (led >= 0 && led < _ledCount)
-                    _leds[led].brightness = brightness;
+                if (led < 0 || led >= _ledCount)
+                    return;
+    #ifdef ARDUINO_ARCH_ESP32
+                portENTER_CRITICAL(&_mux); // runEvents() decides the next start from the brightness on another core
+    #endif
+                _leds[led].brightness = brightness;
+                if (hasOffEdge(brightness))
+                    _nextEventBlocks = true; // the next period start plans an off-edge: transfers leave it free from now on
+    #ifdef ARDUINO_ARCH_ESP32
+                portEXIT_CRITICAL(&_mux);
+    #endif
             }
 
             /**
@@ -140,6 +149,15 @@ namespace OpenKNX
     #endif
 
           private:
+            static constexpr uint32_t kMarginUs = 20;   // gap between a transfer end and the next edge
+            static constexpr uint32_t kSlackUs = 10;    // edges this close are run in one event
+    #ifdef OPENKNX_CONSOLE_DEV
+            static constexpr uint32_t kLateUs = 50;     // stats: an event later than this counts as late
+            static constexpr uint8_t kStressReads = 4;  // bus stress: expander reads per loop()
+    #endif
+            static constexpr uint32_t kHoldUs = 100000; // LED writes paused after kHoldFailures failed writes in a row
+            static constexpr uint8_t kHoldFailures = 3;
+
             struct Port
             {
                 uint8_t address;
@@ -190,6 +208,7 @@ namespace OpenKNX
             bool _periodValid = false;
             volatile uint32_t _nextEventUs = 0;
             volatile bool _nextEventBlocks = true; // the next event writes LEDs; a period start without dimmed LEDs does not wait
+            bool _startBlocks = true;              // _nextEventBlocks as the last event stored it (setLed() may raise the flag later)
             volatile bool _running = false;
             volatile bool _busy = false;
             volatile bool _eventWaiting = false;
@@ -226,10 +245,19 @@ namespace OpenKNX
             uint8_t mergeOutputWrite(uint8_t address, uint8_t* data, size_t len);
             void commitOutputWrite(uint8_t ports, bool ok);
             void beginPeriod(uint32_t now);
+            void advanceEvent(uint32_t now);
+            bool dimmedLeds() const;
+            /// @brief The LED gets an off-edge in the period (dimmed, not too close to full).
+            inline bool hasOffEdge(uint8_t brightness) const
+            {
+                return brightness != 0 && brightness != 255 && (uint32_t)brightness * periodUs() / 255 <= periodUs() - _edgeUs;
+            }
             void writePorts(uint32_t now);
             bool writeRaw(uint8_t address, uint8_t reg, uint8_t value);
             bool start();
         };
+        static_assert(ScheduledWire::periodUs() <= 0xFFFF, "OPENKNX_I2C_SCHEDULER_PWM_HZ too low for 16-bit edge offsets");
+        static_assert(OPENKNX_I2C_SCHEDULER_MAX_PORTS <= 8, "port bitmask is 8 bit");
     } // namespace I2C
 } // namespace OpenKNX
 
