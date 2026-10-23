@@ -5,6 +5,9 @@
 #include "DriverTCA6408.h"
 #include "DriverTCA9555.h"
 #include "OpenKNX.h"
+#if defined(OPENKNX_I2C_SCHEDULER) && defined(ARDUINO_ARCH_RP2040) && OPENKNX_GPIO_NUM > 0
+    #include "OpenKNX/I2C/ScheduledWire.h"
+#endif
 
 namespace OpenKNX
 {
@@ -81,6 +84,12 @@ namespace OpenKNX
                         GPIOExpanders[i]->setInitState(GPIOInitState::TypeUnknown);
 #endif
                 }
+#if defined(OPENKNX_I2C_SCHEDULER) && defined(ARDUINO_ARCH_RP2040) && OPENKNX_GPIO_NUM > 0
+                // PCA9557/PCA9554 inputs on the scheduled bus are read by the engine in the bus gaps
+                if ((GPIO_TYPES[i] == OPENKNX_GPIO_T_PCA9557 || GPIO_TYPES[i] == OPENKNX_GPIO_T_PCA9554) &&
+                    &OPENKNX_GPIO_WIRE == &openknxScheduledWire && GPIOExpanders[i]->getInitState() == GPIOInitState::OK)
+                    openknxScheduledWire.watchInputs((uint8_t)GPIO_ADDRS[i], GPIO_TYPES[i] == OPENKNX_GPIO_T_PCA9554);
+#endif
             }
         }
 
@@ -88,6 +97,10 @@ namespace OpenKNX
         {
             if (expander == 0 || expander > OPENKNX_GPIO_NUM)
                 return false;
+#if defined(OPENKNX_I2C_SCHEDULER) && defined(ARDUINO_ARCH_RP2040) && OPENKNX_GPIO_NUM > 0
+            if (&OPENKNX_GPIO_WIRE == &openknxScheduledWire && openknxScheduledWire.cachedInputs((uint8_t)GPIO_ADDRS[expander], value))
+                return true;
+#endif
             return GPIOExpanders[expander]->GPIOdigitalReadPort(value) == 0;
         }
 
@@ -205,6 +218,12 @@ namespace OpenKNX
                 logErrorP("GPIOModule::digitalRead: invalid pin id %u", pin);
                 return 0;
             }
+#if defined(OPENKNX_I2C_SCHEDULER) && defined(ARDUINO_ARCH_RP2040) && OPENKNX_GPIO_NUM > 0
+            uint16_t inputs;
+            if (expander > 0 && localpin >= 0 && localpin < 8 && &OPENKNX_GPIO_WIRE == &openknxScheduledWire &&
+                openknxScheduledWire.cachedInputs((uint8_t)GPIO_ADDRS[expander], inputs))
+                return (inputs >> localpin) & 1;
+#endif
             return GPIOExpanders[expander]->GPIOdigitalRead(localpin);
         }
 
