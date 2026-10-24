@@ -27,12 +27,15 @@ project, lib_builders, basepath = resolve_project(env)
 
 # A flat map {library name: version}; the tree structure is not kept, only names + versions.
 library_versions = dict()
+# {library name: directory}; the name (library.json) may differ from the folder name under lib/.
+library_paths = dict()
 
 
 def get_all_library_dependencies(root):
     for lb in root.depbuilders:
         pkg = PackageItem(lb.path)
         library_versions[str(lb.name)] = str(pkg.metadata.version if pkg.metadata else lb.version)
+        library_paths[str(lb.name)] = lb.path
         if lb.depbuilders:
             get_all_library_dependencies(lb)
 
@@ -51,6 +54,7 @@ def add_local_lib_folder_versions(all_lib_builders):
             continue
         pkg = PackageItem(lb.path)
         library_versions[str(lb.name)] = str(pkg.metadata.version if pkg.metadata else lb.version)
+        library_paths[str(lb.name)] = str(lib_path)
 
 
 def add_all_local_lib_dirs():
@@ -79,15 +83,22 @@ def add_all_local_lib_dirs():
             if pkg.metadata and pkg.metadata.version:
                 lib_version = pkg.metadata.version
         library_versions[str(lib_name)] = str(lib_version)
+        library_paths[str(lib_name)] = str(lib_dir)
 
 
 def get_git_version(path):
+    """Short HEAD hash of the git checkout at path; None when it is not one or the path is missing."""
     try:
         result = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
                                 capture_output=True, text=True, cwd=path, check=True)
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
-        return False
+    except (subprocess.CalledProcessError, OSError):
+        return None
+
+
+def library_dir(name):
+    """Directory of a library: the one PlatformIO resolved, else lib/<name>."""
+    return library_paths.get(name, base_dir / basepath / name)
 
 
 def get_ets_version(version_string):
@@ -112,20 +123,18 @@ openknx_modules = {k: v for k, v in library_versions.items() if k.startswith("OG
 # append the git short hash to each module version
 base_dir = pathlib.Path().resolve()
 for name, lib_version in openknx_modules.items():
-    try:
-        git_version = get_git_version(base_dir / basepath / name)
-        if git_version is not None:
-            if lib_version is not None and lib_version != "None":
-                openknx_modules[name] = lib_version.split("+")[0] + "+" + git_version
-            else:
-                openknx_modules[name] = git_version
-    except NotADirectoryError:
-        pass
+    git_version = get_git_version(library_dir(name))
+    if git_version:
+        if lib_version is not None and lib_version != "None":
+            openknx_modules[name] = lib_version.split("+")[0] + "+" + git_version
+        else:
+            openknx_modules[name] = git_version
 
 version_lines = ["#pragma once\n\n"]
+knx_git = get_git_version(library_dir("knx"))
 version_lines.append("#define MAIN_Version \"{}\"\n".format(get_git_version(base_dir)))
 version_lines.append("#define KNX_Version \"{}\"\n".format(
-    library_versions["knx"] + "+" + get_git_version(base_dir / basepath / "knx")))
+    library_versions["knx"] + ("+" + knx_git if knx_git else "")))
 for name, version in openknx_modules.items():
     define_name = "MODULE_" + name.split("-")[1]
     version_lines.append("#define {} \"{}\"\n".format(define_name + "_Version", version))
