@@ -39,8 +39,8 @@ Here's a high-level description of what it does:
 # Optional Input Parameters
 param(
   # Set the Git checkout mode
-  [ValidateSet("None", "Branch", "Hash")]
-  [string]$GitCheckoutMode= "Hash", # None, Branch or Hash. Default is Hash
+  [ValidateSet("None", "Branch", "Hash", "HashReset")]
+  [string]$GitCheckoutMode= "Hash", # None, Branch, Hash or HashReset. Default is Hash
 
   # Force the script to recreate symbolic links
   [switch]$ForceRecreateSymLinks= $true, # Default is $true
@@ -402,8 +402,8 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
 
         if($CloneModeHash) {
           $CheckOutTarget = $($dependedProject.Hash)  # Optional: If the CloneModeHash is true, use the Hash
-        } else {
-          $CheckOutTarget = $($dependedProject.Branch) # If the CloneModeHash is false (default), use the Branch
+        } else { 
+          $CheckOutTarget = $($dependedProject.Branch) # If the CloneModeHash is not Hash (Branch or HashReset) use the Branch
         }
 
         # For git-version >=2.23, use the 'switch' command for branch-restore
@@ -425,8 +425,16 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
           throw "Git checkout failed with exit code $LASTEXITCODE"
         }
 
+        if($GitCheckoutMode -eq "HashReset") {
+            if($Verbose) { 
+              Invoke-Expression "$GitCmd reset --hard $($dependedProject.Hash)"
+            } else { 
+              Invoke-Expression "$GitCmd reset --hard $($dependedProject.Hash) -q" | Out-Null
+            }
+        }
+
         if($true) { 
-          $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { "Branch '$($dependedProject.Branch)'" }
+          $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { if($GitCheckoutMode -eq "HashReset") { "Branch '$($dependedProject.Branch)' with Hash '$($dependedProject.Hash)'" } else {"Branch '$($dependedProject.Branch)'"} }
           Write-Host "- CloneRepository - '$($dependedProject.ProjectName)' $($checkoutTarget) Checked out."([Char]0x221A) -ForegroundColor Green 
         }
       }
