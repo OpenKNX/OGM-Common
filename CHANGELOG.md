@@ -8,6 +8,7 @@
     * Small HOTFIX: DPT 251.600 (RGBW) check was incorrect (expected 4 Bytes, correct are 6 Bytes).
 * Fix (ESP32): GPIO expanders did not build on ESP32 — `GPIO::Manager::init()` called `setSDA()`/`setSCL()`, which only exist in arduino-pico. On ESP32 the pins are now passed to `OPENKNX_GPIO_WIRE.begin(sda, scl)` instead; the `OPENKNX_GPIO_SDA`/`OPENKNX_GPIO_SCL` defines are unchanged
 * Fix(TZ): Definition for "UTC +6 Stunden" was broken
+* Update: RTTStream to 1.4.1 (with "Update to Segger RTT v7.92")
 * (Development) Feature: Optional long runtime warning (above configurable threshold) for module loop runtime
 
 ## 1.9.1: 2026-08-14
