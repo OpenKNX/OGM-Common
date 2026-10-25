@@ -1,8 +1,8 @@
 # Changes
 
-## ec/v2.0.0-beta.2: 2026-10-15
+## ec/v2.0.0-beta.2: 2026-10-25
 
-Fixes and build tooling on top of `ec/v2.0.0-beta.1`.
+Fixes, OTA, I2C expander LEDs and build tooling on top of `ec/v2.0.0-beta.1`.
 
 * Change: the KNX and system info widgets label Address and Number in English; comments and an I2C console line are English
 * Fix (RP2040): the watchdog fires after the configured 16 s. Erratum RP2040-E1 caps the hardware at about 8.4 s, so it fired after 8.4 s; a 1 s timer now feeds it while `loop()` runs, so a stalled `loop()` resets after 16 to 17 s and a core with interrupts off still within 8 s. RP2350, ESP32 and SAMD are unchanged
@@ -15,6 +15,30 @@ Fixes and build tooling on top of `ec/v2.0.0-beta.1`.
 * Fix (ESP32, custom IDF build): the `.bin` carries the four OpenKNX identity bytes. The IDF script list had no `patch_esp32.py`; both lists now take the shared `[esp32_scripts_common]`, so `platformio.esp32.ini` is required in `extra_configs` of every project that uses `[esp32idf]`
 * Feature (ESP32, custom IDF build): a product with `OPENKNX_WEBSERVER` stops on the IDF script list, which generates no `include/webassets.h`, instead of failing on the missing header or linking a stale one
 * Change: the release scripts look for the desktop tool as oknx under `Tools/oknx/<OS>/<arch>/`; a release that still ships the old name is reported as missing
+* Fix: the firmware version text with a git hash has room for a long hash; a short hash longer than 10 characters overflowed the 20-byte stack buffer
+
+**OTA**
+* Feature (RP2040): an applied picoOTA image is removed at the next start once the bootloader has erased its command; it stayed in LittleFS and blocked the next upload on a 2 MB RP2040. A pending or unreadable command is left alone
+* Feature: dev/test switch `OPENKNX_OTA_EXCLUSIVE` -- during a network OTA `loop()` runs only watchdog, LEDs, I2C queue and display, so a module that blocks in `loop()` shows as the cause of a failing OTA. Not for production
+
+**I2C expander LEDs and inputs**
+* Feature: `OPENKNX_I2C_SCHEDULER` (RP2040, RP2350, ESP32; opt-in per board) writes the soft-PWM edges of expander LEDs at fixed times (200 Hz) on a shared I2C bus and runs driver transfers in the gaps. RP2040/RP2350: transfers up to 33 write / 16 read octets run from the I2C IRQ, display chunks are queued without waiting, expander inputs are read every 10 ms and served from that cache, a stuck transfer is aborted and the bus cleared with 9 SCL pulses. Refused at compile time with `OPENKNX_WIRE_PIO` and on RP2350 RISC-V
+* Fix (soft-PWM without scheduler): a tick during the I2C flush write is kept; an expander write is queued only on a level change; on ESP32 with serial LEDs the I2C LEDs tick every 3 ms instead of every 10 ms; the 500 ms reassert runs in the LED flush context
+* Fix (PCA95xx): a short register read is reported as a read error. It returned 0xFF as input data, so the REG2 front panel reported UP, DOWN, OK and RIGHT pressed at once
+* Feature: `digitalReadPort()` reads all inputs of a PCA9557/PCA9554 port in one transfer; `outputRegister()` names the output register of an expander pin
+* Fix: an LED is added only once per function group; the setup ran twice, so every effect call built its effect twice
+
+**Console** (`OPENKNX_CONSOLE_DEV`)
+* Change: without the switch `leds` offers only `leds status`; with it a test override per LED (level, blink, sweep) and `leds pwm status/set/demo/blink/stress/stop`, with scheduler counters and the share of loop time spent in I2C
+* Fix: `leds pwm` printed the timer rate as an 8-bit value (77 Hz instead of 333 Hz)
+
+**Build**
+* Fix: `versions.h` takes a library's git hash from the folder PlatformIO resolved, not from `lib/<library.json name>`; OFM-LightManager stopped the build with FileNotFoundError
+* Fix (ESP32): the generated partition table is named `partitions_openknx.csv`; the old name gave an invalid `ARDUINO_PARTITION_` macro and a warning in every translation unit
+* Change: the flash report measures the knxOTA image cut from the linked ELF instead of the previous build's `firmware.bin`
+* Feature: `OPENKNX_SKIP_KNXPROD=1` lets the release preprocess skip the producer and pack the ETS data of its last run
+* Change: producer warning 003 for the unused `newline()` helper of `Common.script.js` is suppressed
+* Fix: the release build detects an IDF build from the env section of the project config and adds a firmware to `content.xml` only once
 
 ## ec/v2.0.0-beta.1: 2026-09-15
 
