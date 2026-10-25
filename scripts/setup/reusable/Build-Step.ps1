@@ -96,13 +96,23 @@ else {
 }
 
 # --------------------------------------------------------------------------- #
-# Layer 1: Static IDF build detection -- quick check for "custom_idf_build = true" in pio project config.
+# Layer 1: Static IDF build detection -- quick check for "custom_idf_build = true" in the env section of pio project config.
 # Runs BEFORE 'pio run' and gives an early warning for long builds.
 # --------------------------------------------------------------------------- #
 $isIdfBuild = $false
 try {
-    $pioConfigOutput = & $pioExe project config -e $pioEnv 2>$null | Out-String
-    if ($pioConfigOutput -match "custom_idf_build\s*=\s*(true|yes|1)") {
+    # JSON: [[section, [[option, value], ...]], ...], extends already resolved
+    $pioConfig = (& $pioPath project config --json-output 2>$null | Out-String) | ConvertFrom-Json -ErrorAction Stop
+    # pwsh 6+ unrolls a one-section result to the section itself; 5.1 keeps the outer array
+    if ($pioConfig.Count -gt 0 -and $pioConfig[0] -is [string]) { $pioConfig = , $pioConfig }
+    $idfFlag = $null
+    foreach ($section in @($pioConfig)) {
+        if ($section[0] -ne "env:$pioEnv") { continue }
+        foreach ($option in @($section[1])) {
+            if ($option[0] -eq "custom_idf_build") { $idfFlag = "$($option[1])" }
+        }
+    }
+    if ($idfFlag -match "^(true|yes|1)$") {
         Write-Host ""
         $isIdfBuild = $true
         Write-Host "[$pioEnv] IDF build detected (custom_idf_build = true)"
