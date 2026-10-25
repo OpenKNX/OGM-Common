@@ -511,7 +511,7 @@ $releaseTarget = "$CopyItem_Target_Data/content.xml"
 if (Test-Path -Path $releaseTarget -PathType Leaf) {
   # Add entry to content.xml. If entry already exists, do nothing. If not, add it. If file does not exist, create it.
   $XMLContent = "         <Product Name=""$productName"" Firmware=""../Firmware/$CopyItem_Target_Device/$CopyItem_Target_Name"" Processor=""$processor"" />"
-  $lineExists = Select-String -Path $fileName -Pattern $XMLContent -Quiet
+  $lineExists = Select-String -Path $releaseTarget -Pattern $XMLContent -SimpleMatch -CaseSensitive -Quiet
   if (-not $lineExists) { Add-Content -Path $releaseTarget -Value $XMLContent }
 }
 else {
