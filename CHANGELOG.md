@@ -6,6 +6,8 @@
   * Resulting changes:
     * Disable ReadOnInitFlag for KOs
     * Small HOTFIX: DPT 251.600 (RGBW) check was incorrect (expected 4 Bytes, correct are 6 Bytes).
+* Fix (Time/Sun): Sun-rise/-set were calculated by UTC day, not local day
+  * BREAKING Change: Provide sun-rise/set as DateTime as day may differ in utc
 * Fix (ESP32): GPIO expanders did not build on ESP32 — `GPIO::Manager::init()` called `setSDA()`/`setSCL()`, which only exist in arduino-pico. On ESP32 the pins are now passed to `OPENKNX_GPIO_WIRE.begin(sda, scl)` instead; the `OPENKNX_GPIO_SDA`/`OPENKNX_GPIO_SCL` defines are unchanged
 * Fix(TZ): Definition for "UTC +6 Stunden" was broken
 * (Development) Feature: Optional long runtime warning (above configurable threshold) for module loop runtime
