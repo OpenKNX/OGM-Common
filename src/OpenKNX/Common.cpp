@@ -281,7 +281,10 @@ namespace OpenKNX
         knx.bau().deviceObject().firmwareName(FIRMWARE_NAME);
     #endif
     #ifdef MAIN_Version
-        knx.bau().deviceObject().firmwareBuild(MAIN_Version); // short git hash of this build
+        // "X.Y.Z+githash", cut to the element limit; static, because the Property keeps the pointer
+        static char buildVersion[MAX_ELEM_BUILD_VERSION + 1] = {};
+        snprintf(buildVersion, sizeof(buildVersion), "%s", openknx.info.humanFirmwareVersion(true).c_str());
+        knx.bau().deviceObject().buildVersion(buildVersion);
     #endif
     #ifdef BUILD_TIMESTAMP
         knx.bau().deviceObject().buildTimestamp(BUILD_TIMESTAMP);
