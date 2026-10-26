@@ -260,8 +260,9 @@ function Get-KnxProperty {
 .SYNOPSIS
     Reads a text Property (one ISO 8859-1 octet per element) and returns it as a string.
 .DESCRIPTION
-    Start index 0 answers the current element count; the count field of a read is 4 bit wide,
-    so the text is fetched in blocks of at most 15.
+    Start index 0 answers the current element count. Over device management the count field
+    allows blocks of 15; a device on the bus answers in an L_Data_Standard Frame, which carries
+    at most 9 data octets (03_03_07 Fig. 47, 03_02_02 2.2.4), so -Pa reads in blocks of 9.
 #>
 function Get-KnxPropertyText {
     param(
@@ -287,8 +288,9 @@ function Get-KnxPropertyText {
 
         $all = New-Object System.Collections.Generic.List[byte]
         $index = 1
+        $maxBlock = if ($Pa) { 9 } else { 15 }
         while ($index -le $count) {
-            $block = [Math]::Min(15, $count - $index + 1)
+            $block = [Math]::Min($maxBlock, $count - $index + 1)
             $part = Get-KnxProperty -InterfaceIp $InterfaceIp -PropertyId $PropertyId -Pa $Pa `
                 -Elements $block -StartIndex $index -Connection $Connection
             if ($null -eq $part -or $part.Length -eq 0) { break }
