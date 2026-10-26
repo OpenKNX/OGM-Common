@@ -47,7 +47,7 @@ param(
     [Parameter(Mandatory = $true)][Alias('i')][string] $InterfaceIp,
     [string] $Pa,
     [int] $Port = 3671,
-    [int[]] $Property = @(2, 9, 15, 16, 19, 25, 52, 55, 78, 83, 203, 204, 205, 206, 207),
+    [int[]] $Property = @(2, 9, 15, 16, 19, 25, 52, 55, 78, 83, 202, 203, 204, 205, 206, 207),
     [int] $TimeoutMs = 2000
 )
 
@@ -68,10 +68,11 @@ $KNOWN = @{
     55  = @{ Name = 'Product ID';                Kind = 'Hex'   }
     78  = @{ Name = 'Hardware Type';             Kind = 'Hex'   }
     83  = @{ Name = 'Device Descriptor (Mask)';  Kind = 'Hex'   }
+    202 = @{ Name = 'Struct Info (OpenKNX)';     Kind = 'Struct' }
     203 = @{ Name = 'Firmware Name (OpenKNX)';   Kind = 'Text'  }
     204 = @{ Name = 'Device Name ab Werk';       Kind = 'Text'  }
     205 = @{ Name = 'Build-Zeitstempel';         Kind = 'Stamp' }
-    206 = @{ Name = 'Build (Git)';               Kind = 'Text'  }
+    206 = @{ Name = 'Build-Version';             Kind = 'Text'  }
     207 = @{ Name = 'Chip (MCU)';                Kind = 'Text'  }
 }
 
@@ -83,6 +84,15 @@ function Format-Value([hashtable] $Info, [byte[]] $Bytes) {
             # DPT_Version: 5 bit revision | 5 bit major | 6 bit minor - the revision is capped at 31 here
             $v = ((([int] $Bytes[0]) -shl 8) -bor [int] $Bytes[1])
             return "{0}.{1} rev {2}" -f (($v -shr 6) -band 0x1F), ($v -band 0x3F), (($v -shr 11) -band 0x1F)
+        }
+        'Struct' {
+            # 9 octets: "OpenKNX", layout version, bit n = PID 202 + n present
+            if ($Bytes.Length -lt 9) { return (($Bytes | ForEach-Object { "{0:X2}" -f $_ }) -join ' ') }
+            $tag = (($Bytes[0..6] | ForEach-Object { [char] $_ }) -join '')
+            if ($tag -cne 'OpenKNX') { return "kein OpenKNX: " + (($Bytes | ForEach-Object { "{0:X2}" -f $_ }) -join ' ') }
+            $pids = @()
+            for ($bit = 0; $bit -lt 8; $bit++) { if (($Bytes[8] -shr $bit) -band 1) { $pids += (202 + $bit) } }
+            return "OpenKNX  Version {0}  PIDs {1}" -f $Bytes[7], ($pids -join ', ')
         }
         'Retry' { return "0x{0:X2}  (Busy {1} / Nak {2})" -f $Bytes[0], ((($Bytes[0] -shr 4) -band 7)), ($Bytes[0] -band 7) }
         'Stamp' {
