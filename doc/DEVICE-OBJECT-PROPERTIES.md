@@ -5,10 +5,10 @@ KNX-konform ist, und wie man ihn ausliest.
 
 | | |
 |---|---|
-| Stand | 13.09.2026 |
+| Stand | 13.09.2026, PID 202 und 206 am 26.10.2026 |
 | Betrifft | jedes Gerät auf `lib/knx` + `OGM-Common` (TP, IP, Koppler, RF) |
 | Beispielgerät | IP-Interface REG1, `11.11.0.210` (5.0.13), Maske 0x07B0 |
-| Status | gebaut, auf ESP32 HW-verifiziert, noch nicht committet |
+| Status | gebaut, auf ESP32 HW-verifiziert; PID 202 und der neue Inhalt von 206 (26.10.2026) nur gebaut, nicht am Gerät gemessen |
 | Offen | eine Entscheidung zu PID 2, siehe Abschnitt 9 |
 
 ---
@@ -42,7 +42,7 @@ Nummerierung ist historisch gewachsen, nicht lückenlos durchgezählt.
 |---|---|---|
 | 1 – 50 | **objekttyp-unabhängig** — in *jedem* Interface Object dieselbe Bedeutung | `03_05_01` §4.2 |
 | 51 – 200 | **objekttyp-spezifisch** — PID 51 heißt im Device Object etwas anderes als im Router Object | `03_05_01` §4.3 ff. |
-| ab 202 | **herstellerspezifisch**, frei verwendbar | `03_05_01` §4.3.1, S. 43 |
+| ab 202 | **herstellerspezifisch**: *"Properties in the Device Object above 201 shall be manufacturer specific."* | `03_05_01` §4.3.1, S. 43 |
 
 PID 5, 6, 7 und 13 zum Beispiel *existieren* im Bereich 1–50, gehören aber zu ladbaren Objekten
 (Lade- und Laufzeit-Steuerung, Programmversion) und haben im Device Object nichts verloren. Ein
@@ -79,17 +79,18 @@ Elementgröße, die der Typ vorgibt — `PDT_GENERIC_10` heißt schlicht: 10 Byt
 | 78 | PID_HARDWARE_TYPE | PDT_GENERIC_06 `0x16` | 6 B | 1 | 6 B | R3 / W3 | `00 00 A5 02 13 00` | OpenKnxId, App-Nummer, App-Version | bisher |
 | 82 | PID_RF_DOMAIN_ADDRESS | PDT_GENERIC_06 `0x16` | 6 B | 1 | 6 B | R3 / W3 | — | nur auf RF-Masken vorhanden | bisher |
 | 83 | PID_DEVICE_DESCRIPTOR | PDT_GENERIC_02 `0x12` | 2 B | 1 | 2 B | R3 / ro | `0x07B0` | Maskenversion, vom BAU gesetzt | bisher |
+| **202** | **PID_MFR_STRUCT_INFO** | PDT_GENERIC_09 `0x19` | 9 B | 1 | 9 B | R3 / ro | `4F 70 65 6E 4B 4E 58 01 3F` | fest: `"OpenKNX"`, Strukturversion 1, Bit n = PID 202 + n vorhanden — siehe unten | **NEU** |
 | **203** | **PID_MFR_FIRMWARE_NAME** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 48 | 48 B | R3 / ro | `IP-Interface (Dev)` | `MAIN_FirmwareName` (knxprod.h) | **NEU** |
 | **204** | **PID_MFR_DEVICE_NAME** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 80 | 80 B | R3 / ro | `OpenKNX REG1 Basismodul LAN+TP` | `DEVICE_NAME` — unveränderlich, auch wenn PID 2 überschrieben wurde | **NEU** |
 | **205** | **PID_MFR_BUILD_TIMESTAMP** | PDT_UNSIGNED_LONG `0x09` | 4 B | 1 | 4 B | R3 / ro | `6A A7 B1 94` → 2026-09-14 09:50:28 | `BUILD_TIMESTAMP` — Sekunden seit 1970, `0` = nicht gesetzt | **NEU** |
-| **206** | **PID_MFR_FIRMWARE_BUILD** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 16 | 16 B | R3 / ro | `b90b324` | `MAIN_Version` (kurzer Git-Hash) | **NEU** |
+| **206** | **PID_MFR_BUILD_VERSION** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 16 | 16 B | R3 / ro | `1.3.0+b90b324` | `X.Y.Z+Git-Kurzhash` aus `openknx.info.humanFirmwareVersion(true)`, derselben Zeile wie die Konsole | **NEU** |
 | **207** | **PID_MFR_MCU** | PDT_UNSIGNED_CHAR `0x02` | 1 B | 16 | 16 B | R3 / ro | `ESP32` | `OPENKNX_MCU_NAME` (Chip der Firmware) | **NEU** |
 
 **Zugriff** in der Form *Lesestufe / Schreibstufe*. `R3` heißt: ohne Authentisierung lesbar
 (Stufe 3 ist die niedrigste Hürde). `ro` heißt: das Gerät weist jeden Schreibversuch ab.
 
-**Elf Felder sind neu:** 2, 9, 16, 19, 52, 55, 203, 204, 205, 206, 207 — das Device Object wächst damit von
-14 auf 25 Felder (Maske 07B0).
+**Zwölf Felder sind neu:** 2, 9, 16, 19, 52, 55, 202, 203, 204, 205, 206, 207 — das Device Object wächst damit von
+14 auf 26 Felder (Maske 07B0).
 
 Die Maxima sind frei gewählt, nicht vorgegeben. Weil die nur lesbaren Textfelder direkt aus dem Flash
 lesen (`CallbackProperty`), kostet ein hohes Maximum dort **null RAM** — es begrenzt nur, wie weit ein
@@ -97,6 +98,33 @@ Lesezugriff reichen darf und was der Deskriptor meldet. Gemessen über alle 103 
 OGM-HardwareConfig ist der längste `DEVICE_NAME` **46 Zeichen**, die längste `DEVICE_ID` **32**. Einzig
 bei PID 2 kostet das Maximum etwas, weil dort ein Schreibpuffer belegt wird: 80 Byte Heap, und das erst
 beim ersten Schreibzugriff.
+
+### PID 202: wem der Herstellerbereich gehört
+
+Ab PID 202 belegt jeder Hersteller das Device Object nach eigenem Ermessen, Siemens etwa 203 und 204 (siehe
+Abschnitt 10). PID 12 hilft dabei nicht: `00FA` ist eine Kennung der KNX Association, die auch andere
+verwenden. Deshalb nennt die erste Hersteller-PID den Eigentümer selbst:
+
+| Byte | Inhalt | Wert |
+|---|---|---|
+| 0–6 | Kennung `OpenKNX` in ASCII, geschrieben wie der USB-Herstellername und der mDNS-Dienst | `4F 70 65 6E 4B 4E 58` |
+| 7 | Strukturversion der PIDs ab 203; steigt, wenn sich Bedeutung oder Format einer davon ändert | `01` |
+| 8 | Bitmaske der vorhandenen PIDs, Bit n = PID 202 + n | `3F` = 202 bis 207 |
+
+**Leseregel:** zuerst PID 202 lesen; PIDs ab 203 nur auswerten, wenn 202 mit `OpenKNX` beginnt und ihr Bit
+gesetzt ist. Ein Gerät ohne 202 meldet 0 Elemente, ein Werkzeug zeigt dann keine OpenKNX-Angaben.
+
+**Warum genau 9 Oktette:** Die Antwort auf `A_PropertyValue_Read` trägt ihre Daten ab Oktett 12
+(`03_03_07` Fig. 47, S. 63), ein `L_Data_Standard Frame` zählt *"0…14 characters … starting with octet 7"*
+(`03_02_02` §2.2.4, S. 28). Für Daten bleiben also 9 Oktette; alles darüber braucht einen
+`L_Data_Extended Frame` (ebd., *"APDU > 15 octets"*). Ein Element lässt sich nicht auf zwei Lesezugriffe
+verteilen, deshalb bleibt PID 202 bei 9 Oktetten. PID 55 (10 Oktette, von der Spec vorgegeben) braucht
+schon heute einen Extended Frame.
+
+PID 201/202 am KNXnet/IP-Parameterobjekt (Objekttyp 11, Tunnel-Reservierung, ETS
+`LdCtrlWriteProp ObjType="11"`) ist ein anderes Objekt: PIDs ab 51 gelten nur in ihrem Objekttyp
+(`03_05_01` §4.3). Im Enum von `property.h` steht der Wert 202 dadurch zweimal; das ist zulässig, kein
+`switch` verwendet ihn.
 
 ---
 
@@ -142,6 +170,7 @@ Die Profiltabelle fürs Device Object steht in **Anhang A.2.3, gedruckte Seiten 
 | 71 | *leer* | für 07B0 nicht spezifiziert | ro, vorhanden | offen | `03_05_01` §4.3.22, S. 72 | Vol 6 A.2.3, S. 139 |
 | 78 | `(3/1)` | optional, beschreibbar Stufe 1 | RW Stufe 3 | ja | `03_05_01` §4.3.28, S. 78 | Vol 6 A.2.3, S. 140 |
 | 83 | *leer* | für 07B0 nicht spezifiziert | ro, vorhanden | offen | `03_05_01` §4.3.33, S. 82 | Vol 6 A.2.3, S. 140 |
+| **202** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
 | **203** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
 | **204** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
 | **205** | Herstellerbereich | frei verwendbar | ro | ja | `03_05_01` §4.3.1, S. 43 | — |
@@ -171,7 +200,7 @@ Standard fordert Persistenz hier auch nicht: wo er sie will, schreibt er es ausd
 ```
 
 **Deshalb gibt es PID 204.** Sobald PID 2 überschreibbar ist, könnte ein Management-Client die
-Herstellerangabe zerstören. PID 204 hält denselben Text unveränderlich bereit. `ftc` zeigt die Zeile
+Herstellerangabe zerstören. PID 204 hält denselben Text unveränderlich bereit. `oknx` zeigt die Zeile
 "Gerätename (ab Werk)" nur an, wenn sie von PID 2 abweicht.
 
 ### Was pro Maske ausgebaut wird
@@ -217,14 +246,14 @@ Objektindex **0**, dazu die PID. Zwei Eigenheiten muss ein Leser kennen
 Ein Lesezugriff über die aktuelle Länge hinaus wird mit *"0 Elemente, keine Daten"* beantwortet,
 nicht gekürzt (Prüfvorschrift `08_03_07` §2.13.6, S. 53). Genau so ist es implementiert.
 
-### 4.2 Mit ftc
+### 4.2 Mit oknx
 
 ```
 # das Interface selbst  (Weg: KNXnet/IP-Gerätemanagement)
-ftc -i 11.11.0.210 info
+oknx -i 11.11.0.210 info
 
 # ein Gerät am Bus     (Weg: Tunnel + A_PropertyValue_Read)
-ftc -i 11.11.0.210 5.0.13 info
+oknx -i 11.11.0.210 5.0.13 info
 
   Bestellnr.        IP-Iface
   Gerätename       OpenKNX REG1 Basismodul LAN+TP
@@ -283,6 +312,10 @@ Das Beispielskript nimmt dieselben beiden Wege:
   PID 206  Build (Git)                b90b324
   PID 207  Chip (MCU)                 ESP32
 ```
+
+*Nachtrag 26.10.2026:* Seitdem liest das Skript zusätzlich PID 202 (Zeile `Struct Info (OpenKNX)`, z. B.
+`OpenKNX  Version 1  PIDs 202, 203, 204, 205, 206, 207`), und PID 206 heißt `Build-Version` und zeigt
+`X.Y.Z+Git-Kurzhash`. Die Ausgabe oben ist die vom 14.09.
 
 Vier Fallen stecken im Modul, und jede davon ist beim Bauen aufgeschlagen:
 
@@ -343,7 +376,7 @@ Dokumenten allein nicht beweisen. Wer es hart sehen will, schneidet einen Downlo
 `PropertyValue_Write` mit `Obj=00, Prop=02`:
 
 ```bash
-ftc -i <zweite-schnittstelle> bm --log ~/ets-download.log --seconds 120
+oknx -i <zweite-schnittstelle> bm --log ~/ets-download.log --seconds 120
 grep -i "PropertyValue_Write" ~/ets-download.log
 ```
 
@@ -352,7 +385,7 @@ grep -i "PropertyValue_Write" ~/ets-download.log
 Nein — und es gibt auch keinen Weg dafür. KNX kennt **keinen Mechanismus, mit dem ein Gerät seine
 Properties ankündigt**. Ein Werkzeug findet sie nur auf zwei Arten:
 
-1. Es fragt gezielt eine PID ab, die es kennt (so machen es ETS beim Download, `ftc` und das
+1. Es fragt gezielt eine PID ab, die es kennt (so machen es ETS beim Download, `oknx` und das
    PowerShell-Skript).
 2. Es läuft die Liste per `A_PropertyDescription_Read` mit aufsteigendem *Property Index* durch und
    bekommt zu jedem Eintrag PID, Typ und maximale Elementzahl zurück (`03_03_07` §3.4.3.3, S. 56).
@@ -403,8 +436,8 @@ umgesetzt.
 | Werte einspeisen (`setupKnxDeviceInformation`) | `lib/OGM-Common/src/OpenKNX/Common.cpp` |
 | Gerätename und Hardware-Kennung je Board | `lib/OGM-HardwareConfig/include/HardwareConfig/...` |
 | Bestellnummer, Firmware-Name, App-Nummer | `include/knxprod.h` (vom openknxproducer erzeugt) |
-| Auslesen am Interface | `ftc-cli/src/core/DeviceMgmt.h` |
-| Auslesen an einem Gerät am Bus | `ftc-cli/src/core/DeviceText.h` |
+| Auslesen am Interface | `oknx/src/core/DeviceMgmt.h` |
+| Auslesen an einem Gerät am Bus | `oknx/src/core/DeviceText.h` |
 | PowerShell-Referenz | `scripts/knx/Read-KnxDeviceObject.ps1` |
 
 ---
@@ -417,7 +450,7 @@ UTF-8 kodiert; `"OpenKNX UP1 Präsenzmelder+"` hat 26 Zeichen, aber 27 UTF-8-Byt
 passiert beim Lesen im Gerät: aus `C3 A4` wird das eine Oktett `E4`. Nicht abbildbare Zeichen
 (Euro-Zeichen, Emoji) werden zu `?`.
 
-Zum Anzeigen muss ein Werkzeug den umgekehrten Weg gehen — `ftc` und das PowerShell-Skript tun das
+Zum Anzeigen muss ein Werkzeug den umgekehrten Weg gehen — `oknx` und das PowerShell-Skript tun das
 (Codepage 28591).
 
 > Hinweis: dieselbe Klausel nennt in ihrer Kopfzeile `DPT_UTF_8 (28.001)`, was dem eigenen
@@ -436,7 +469,7 @@ Zum Anzeigen muss ein Werkzeug den umgekehrten Weg gehen — `ftc` und das Power
 |---|---|
 | Hosttests (ASan + UBSan) | grün — Textpfad, Lese-/Schreibsemantik, Grenzen, Schreibschutz |
 | Flash-Abbild | auf allen fünf Masken unverändert, Byte-für-Byte geprüft + Cross-Restore |
-| Builds | 12 Firmware-Umgebungen + 8 ftc-Plattformen |
+| Builds | 12 Firmware-Umgebungen + 8 oknx-Plattformen |
 | Unabhängige Reviews | drei Prüfer (Spec, Speichersicherheit, Shared-Lib-Regression), alle Befunde abgearbeitet |
 | **Hardware** | **ESP32** (`11.11.0.210`, Maske 07B0) und, am 2026-10-13 mit PID 207 zusammen, **RP2040** (Router `11.11.0.126`, Maske 091A): Gerätename, Firmware-Name, Chip, Build-Kennung und Build-Zeitpunkt gelesen, direkt und über den Bus. RP2350 und die übrigen ESP-Chips sind **nicht am Gerät verifiziert**. |
 
@@ -469,7 +502,7 @@ auftaucht, das Geräte benennen will, ist **D** der Weg, nicht C.
 ## 10. Was machen andere Hersteller?
 
 Gemessen, nicht recherchiert: Device Objects von Fremdgeräten im Netz, ausgelesen mit
-`scripts/knx/Read-KnxDeviceObject.ps1` (Gerätemanagement) bzw. `ftc <pa> info` (über den Bus).
+`scripts/knx/Read-KnxDeviceObject.ps1` (Gerätemanagement) bzw. `oknx -i <ip> <pa> info` (über den Bus).
 
 | Gerät | Hersteller | Maske | Art | PID 2 Name | PID 19 HW-Kennung | PID 21 Beschreibung | PID 55 Produkt-ID |
 |---|---|---|---|:---:|:---:|:---:|:---:|
@@ -508,8 +541,9 @@ Weitere Beobachtungen:
 FB 00 00 01 CC 10 01 FD FF      1 Element, 2 Oktette - nichts mit unserem Gerätenamen zu tun
 ```
 
-  Genau das hatte `ftc` anfangs falsch gemacht und Siemens-Daten als "Firmware-Name" angezeigt. Ist
-  behoben: PIDs über 201 werden nur gelesen, wenn PID 12 `0x00FA` meldet.
+  Genau das hatte `ftc` (heute `oknx`) anfangs falsch gemacht und Siemens-Daten als "Firmware-Name" angezeigt. Damals
+  behoben über PID 12 `0x00FA`. Seit 26.10.2026 entscheidet PID 202: `oknx` liest PIDs ab 203 nur, wenn
+  202 mit `OpenKNX` beginnt und die PID als vorhanden markiert (Abschnitt 2).
 
 **Einschränkung der Stichprobe:** sieben Geräte, vier Hersteller. Den Hersteller `0x00E1` konnte ich
 lokal keinem Namen zuordnen — keine KNX-Master-Daten verfügbar. Produktive Geräte wurden ausschließlich
@@ -549,10 +583,11 @@ OpenKnxId `0xAD`, App-Nummer 0, App-Version 8 → 0.8.
 | 71 | IO_LIST | vorhandene Objekttypen | BAU | |
 | 78 | HARDWARE_TYPE | `00 00 AD 00 08 00` | OpenKnxId, App, Version | |
 | 83 | DEVICE_DESCRIPTOR | Maskenversion | BAU | |
+| 202 | MFR_STRUCT_INFO | `OpenKNX` 01 3F | fest | **NEU** |
 | 203 | MFR_FIRMWARE_NAME | `OpenKNX NeoPixel` | `MAIN_FirmwareName` | **NEU** |
 | 204 | MFR_DEVICE_NAME | `OpenKNX REG2 PiPico2 V1` | `DEVICE_NAME`, unveränderlich | **NEU** |
 | 205 | MFR_BUILD_TIMESTAMP | Sekunden seit 1970 | `BUILD_TIMESTAMP` | **NEU** |
-| 206 | MFR_FIRMWARE_BUILD | Git-Kurzhash | `MAIN_Version` | **NEU** |
+| 206 | MFR_BUILD_VERSION | `X.Y.Z+Git-Kurzhash` | `humanFirmwareVersion(true)` | **NEU** |
 | 207 | MFR_MCU | `RP2350` | `OPENKNX_MCU_NAME` | **NEU** |
 
 **Dieses Produkt war vom Bestellnummer-Fehler betroffen:** `"NeoPixel"` sind 8 Zeichen, also 9 Byte mit
@@ -584,10 +619,11 @@ OpenKnxId `0xA5`, App-Nummer 2, App-Version 19 → 1.3.
 | 71 | IO_LIST | 6–8 Objekttypen | |
 | 78 | HARDWARE_TYPE | `00 00 A5 02 13 00` | |
 | 83 | DEVICE_DESCRIPTOR | `07 B0` | |
+| 202 | MFR_STRUCT_INFO | `OpenKNX` 01 3F | **NEU** |
 | 203 | MFR_FIRMWARE_NAME | `IP-Interface (Dev)` | **NEU** |
 | 204 | MFR_DEVICE_NAME | `OpenKNX REG2 PiPico2 V1 Ethernet` | **NEU** |
 | 205 | MFR_BUILD_TIMESTAMP | `6A A7 B1 94` = 2026-09-14 09:50:28 | **NEU** |
-| 206 | MFR_FIRMWARE_BUILD | `b90b324` | **NEU** |
+| 206 | MFR_BUILD_VERSION | `1.3.0+b90b324` | **NEU** |
 | 207 | MFR_MCU | `RP2350` | **NEU** |
 
 ### 11.3 OAM-Meter auf REG2 PiPico V1 DeviceDisplay Meter
@@ -616,10 +652,11 @@ OpenKnxId `0xA3`, App-Nummer 4, App-Version 7 → 0.7.
 | 71 | IO_LIST | Objekttypen | |
 | 78 | HARDWARE_TYPE | `00 00 A3 04 07 00` | |
 | 83 | DEVICE_DESCRIPTOR | Maskenversion | |
+| 202 | MFR_STRUCT_INFO | `OpenKNX` 01 3F | **NEU** |
 | 203 | MFR_FIRMWARE_NAME | `Zaehlermodul (Beta)` | **NEU** |
 | 204 | MFR_DEVICE_NAME | `OpenKNX REG2 PiPico V1 DeviceDisplay Meter` | **NEU** |
 | 205 | MFR_BUILD_TIMESTAMP | Sekunden seit 1970 | **NEU** |
-| 206 | MFR_FIRMWARE_BUILD | Git-Kurzhash | **NEU** |
+| 206 | MFR_BUILD_VERSION | `X.Y.Z+Git-Kurzhash` | **NEU** |
 | 207 | MFR_MCU | `RP2040` | **NEU** |
 
 **Hier greift die 10-Zeichen-Grenze sichtbar:** `MAIN_OrderNumber` ist „OpenKnxMeter" mit 12 Zeichen, auf
@@ -642,14 +679,14 @@ dem Bus heißt das Produkt „OpenKnxMet". Kein Fehler im Code, sondern der hart
 
 ---
 
-## 12. Vorschlag: Board-Prüfung für `ftc knxota`
+## 12. Vorschlag: Board-Prüfung für `oknx knxota`
 
 Der eigentliche Nutzen der neuen Felder liegt nicht im Anzeigen, sondern im **Verhindern eines falschen
 Flashvorgangs**.
 
 ### Was heute verglichen wird
 
-`ftc knxota` liest die Kennung aus der `.uf2` und vergleicht sie mit dem Gerät. Der Stempel sitzt im
+`oknx knxota` liest die Kennung aus der `.uf2` und vergleicht sie mit dem Gerät. Der Stempel sitzt im
 UF2-Block bei Offset 288 und ist 8 Byte lang (`lib/OGM-Common/scripts/pio/patch_uf2.py`):
 
 ```
@@ -657,7 +694,7 @@ Offset  288  289  290  291   292        293        294          295
 Inhalt   08  'K'  'N'  'X'   OpenKnxId  AppNummer  AppVersion   Revision
 ```
 
-Verglichen wird in `ftc-cli/src/cli/KnxOta.h`, `compareVersions()`: OpenKnxId, App-Nummer und Version.
+Verglichen wird in `oknx/src/cli/KnxOta.h`, `compareVersions()`: OpenKnxId, App-Nummer und Version.
 **Das Board kommt darin nicht vor.**
 
 ### Die Lücke
@@ -681,7 +718,7 @@ Fehlt nur die Dateiseite. Konkret drei Schritte:
    steht `DEVICE_HW_ID` aber nicht drin — es kommt aus einem Board-Header. Der Wert muss also entweder
    über den Präprozessor aufgelöst oder beim Build in die generierte Datei geschrieben werden.
    Dasselbe gilt sinngemäß für `patch_esp32.py`.
-2. **`Uf2Identity` um `hwId` erweitern** (`ftc-cli/src/core/Uf2.h`).
+2. **`Uf2Identity` um `hwId` erweitern** (`oknx/src/core/Uf2.h`).
 3. **`compareVersions()` um ein Urteil `DifferentHardware` ergänzen** — abweisen, nur mit `--force`
    durchlassen, und in der Fehlermeldung beide Klartextnamen zeigen:
 
@@ -755,7 +792,7 @@ auf der Gerätekonsole.
 | `Number: $A11E` | **78** und **55** | OpenKnxId + App-Nummer stehen in beiden, PID 78 ist der ETS-Vergleichswert |
 | `KNX-Type: Router (091A)` | **83** | `PID_DEVICE_DESCRIPTOR`, die Maskenversion |
 | `Address: 5.0.0` | **57** + **58** | oberes und unteres Byte der physikalischen Adresse |
-| `This Firmware: 8.0.0+f78503f` | **25** + **9** + **206** | die Zahlen aus den genormten Properties, der Git-Hash als Text in 206 — zusammen ergibt das die Zeile exakt |
+| `This Firmware: 8.0.0+f78503f` | **206** | seit 26.10.2026 die ganze Zeile als Text, aus derselben Funktion wie die Konsole (`humanFirmwareVersion(true)`); die Zahlen stehen weiterhin auch in **25** und **9** |
 | `Buildtime: 2026-09-13 08:17:09` | **205** | `BUILD_TIMESTAMP` als 32-Bit-Sekunden, damit ein Werkzeug rechnen und nicht parsen muss |
 
 ### Was bewusst **nicht** auf den Bus geht
@@ -765,7 +802,7 @@ auf der Gerätekonsole.
 | `KNX: 2.4.0-ec.beta.1+8af2cd5`, `Common:`, `Network:`, `FileTransfer:`, `DeviceDisplay:`, `SDCardModule:` | Acht Modulversionen wären acht weitere Properties oder ein langer Text. Sie ändern sich pro Produkt und sind über `ftc <pa> con` → `version` vollständig abrufbar. Der Git-Hash der Firmware in PID 206 identifiziert den Gesamtstand ohnehin eindeutig |
 | `Free memory`, `Free stack size`, `Watchdog`, `CPU-Temp`, `CPU-Mode` | Laufzeitzustand, kein Steckbrief. Ändert sich sekündlich, gehört in die Konsole und in die Weboberfläche |
 | `Hostname`, `Network: Established (11.11.0.126)` | steht bereits im KNXnet/IP-Parameterobjekt (Objekttyp 11) — dort gehört es hin, nicht ins Device Object |
-| `(Configured)` beim Programmierstatus | steckt in den Ladezuständen der Tabellenobjekte, die `ftc` ohnehin liest |
+| `(Configured)` beim Programmierstatus | steckt in den Ladezuständen der Tabellenobjekte, die `oknx` ohnehin liest |
 
 ### Warum PID 205 nur vier Oktette hat
 
@@ -800,7 +837,7 @@ PID 205  Firmware Version + Build   1.3 rev 0   gebaut 2026-09-14 09:05:21
 PID 206  Build (Git)                b90b324
 ```
 
-Und so setzt `ftc` es wieder zusammen, auf beiden Wegen:
+Und so setzt `oknx` es wieder zusammen, auf beiden Wegen:
 
 ```
 Firmware-Name     IP-Interface (Dev)
@@ -823,14 +860,15 @@ läuft über. Deshalb hier verbindlich, was gilt.
 | **2 / 204** Gerätename | `DEVICE_NAME` | ≤ 80 Zeichen | Länge meldet 80, der Rest ist nicht lesbar | `maxElements` im Gerät |
 | **19** Hardware-Kennung | `DEVICE_ID` | ≤ 40 Zeichen | dito | `maxElements` |
 | **203** Firmware-Name | `MAIN_FirmwareName` | ≤ 48 Zeichen | dito | `maxElements` |
-| **206** Build-Kennung | `MAIN_Version` | ≤ 16 Zeichen | dito | `maxElements` |
+| **206** Build-Version | `humanFirmwareVersion(true)` | ≤ 16 Zeichen | dito | `maxElements` |
 | **207** Chip | `OPENKNX_MCU_NAME` | ≤ 16 Zeichen | dito | `maxElements` |
 | **25** Major | `MAIN_ApplicationVersion` oberes Nibble | **0…15** | nicht darstellbar — das Makro ist *ein* Byte | der Typ selbst |
 | **25** Minor | unteres Nibble | **0…15** | dito | der Typ selbst |
 | **25** Revision | `openknx.init(rev)`, dann `& 0x1F` | **0…31** | **32 meldet 0** — stiller Überlauf | *niemand* |
 | **9** Revision | `openknx.init(rev)`, volles Oktett | 0…255 | nicht möglich, `uint8_t` | der Typ selbst |
 | **205** Zeitstempel | `BUILD_TIMESTAMP` | bis 07.02.2106 | `uint32`-Überlauf | der Typ selbst |
-| **206** Build-Kennung | `MAIN_Version` | ≤ 16 Zeichen | wird gekürzt | `maxElements` |
+| **206** Build-Version | `humanFirmwareVersion(true)` | ≤ 16 Zeichen | wird gekürzt; `X.Y.Z+` hat höchstens 9 Zeichen, vom Hash bleiben also mindestens 7 | `maxElements` |
+| **202** Strukturangabe | fest | 9 Oktette | — | der Typ selbst |
 | **207** Chip | `OPENKNX_MCU_NAME` | ≤ 16 Zeichen | wird gekürzt | `maxElements` |
 | **55** Hardware-ID | `DEVICE_HW_ID` | 0x0000…0xFFFF | — | `uint16` |
 | **52** Wiederholungen | Vorgabe `0x33` | Bit 7 und 3 müssen 0 sein | wird auf `& 0x77` maskiert | der Code |
@@ -907,10 +945,11 @@ Grundsatz: jede Angabe hat **einen** Platz. Vier Überschneidungen bleiben, jede
 |---|---|---|
 | Gerätename | **2** und **204** | Absicht. PID 2 darf ein Management-Client überschreiben, PID 204 nie — sonst wäre die Herstellerangabe verlierbar |
 | Herstellercode | **12** und **55** Oktett 0-1 | **keine Doppelung.** PID 12 ist laut §4.2.12 der *„manufacturer of the device"*, PID 55 Oktett 0-1 heißt laut §4.3.6 *„Application Manufacturer"* — Gerätehersteller gegen Anwendungshersteller. Bei OEM-Geräten laufen die auseinander, bei OpenKNX sind beide `0x00FA`. Die Aufteilung von PID 55 ist vorgeschrieben, die zwei Oktette lassen sich nicht weglassen |
+| Version | **25** + **9** und **206** | Absicht (26.10.2026): 206 trägt `X.Y.Z+Git-Kurzhash` als fertige Zeile, damit ein Werkzeug nichts zusammensetzen muss. Die Revision steht in 206 wie in 25 nur 5 Bit breit |
 | Revision | **25** und **9** | keine echte Doppelung, sondern unterschiedliche Genauigkeit: PID 25 kappt bei 31, PID 9 trägt bis 255. §4.2.9 bietet beide Orte ausdrücklich an — ETS liest PID 25, ein Werkzeug PID 9 |
 
 Bewusst **nicht** doppelt abgelegt: Seriennummer (nur 11), Maske (nur 83), Hardware-ID (nur 55),
-Bestellnummer (nur 15), Firmware-Name (nur 203), Build-Kennung (nur 206), Build-Zeitstempel (nur 205),
+Bestellnummer (nur 15), Firmware-Name (nur 203), Git-Hash (nur 206), Build-Zeitstempel (nur 205),
 Chip (nur 207), Major und Minor (nur 25).
 
 Der erste Entwurf von PID 205 trug Major, Minor und Revision zusätzlich mit — das war eine echte
@@ -941,7 +980,7 @@ darauf, dass dieselbe Zahl auch in PID 25 steckt.
 | Major | **25** | Bits 10-6 von `DPT_Version` | 0…15 (Quelle ist ein Nibble) |
 | Minor | **25** | Bits 5-0 | 0…15 (dito) |
 | Revision | **25** *und* **9** | 25: Bits 15-11 → **0…31**  ·  9: volles Oktett → **0…255** | siehe unten |
-| Build-Kennung | **206** | Text, Git-Kurzhash | ≤ 16 Zeichen |
+| Build-Version | **206** | Text, `X.Y.Z+Git-Kurzhash` | ≤ 16 Zeichen |
 | Chip (MCU) | **207** | Text, z. B. `RP2040`, `ESP32-S3` | ≤ 16 Zeichen |
 | Build-Zeitpunkt | **205** | `uint32`, Sekunden seit 1970 | bis 2106 |
 
@@ -964,9 +1003,12 @@ PID  9  ->  0          Revision, voll
 PID 206 ->  b90b324    Build-Kennung
 PID 205 ->  1789372228 Build-Zeitpunkt
             ------------------------------------------------
-ftc:        Firmware-Stand   1.3.0+b90b324
+oknx:       Firmware-Stand   1.3.0+b90b324
             Gebaut           2026-09-14 09:50:28
 ```
+
+*Nachtrag 26.10.2026:* PID 206 liefert die Zeile seitdem fertig (`1.3.0+b90b324`). `oknx` setzt sie nur
+noch aus PID 25 und 9 zusammen, wenn ein Gerät 206 nicht hat, und dann ohne Hash.
 
 ### Und was ist `[0]` in „Version: [0] 1.3"?
 
@@ -1011,7 +1053,7 @@ genau das, was `LdCtrlCompareProp` braucht, **ohne neue Property**:
 ```
 
 (`InlineData` ist „REG2-PP2-V1-ETH" in ASCII-Hex.) Damit weigert sich ETS, ein Produkt auf das falsche
-Board zu programmieren — dieselbe Prüfung, die Abschnitt 12 für `ftc knxota` vorschlägt, nur eben in
+Board zu programmieren — dieselbe Prüfung, die Abschnitt 12 für `oknx knxota` vorschlägt, nur eben in
 ETS.
 
 Drei Dinge sind dabei zu beachten:
@@ -1067,9 +1109,10 @@ diese Doku als Regel formuliert: **Bestellnummer auf zehn Zeichen planen.**
 | 16 | `00` | **NEU** |
 | 52 | `33` | **NEU** |
 | 78 | `00 00 A0 12 56 00` — OpenKnxId `0xA0`, App 18, Version 0x56 | |
+| 202 | `OpenKNX` 01 + Bitmaske | **NEU** |
 | 203 | `RaumController` | **NEU** |
 | 205 | Build-Zeitstempel | **NEU** |
-| 206 | Git-Kurzhash | **NEU** |
+| 206 | `X.Y.Z+Git-Kurzhash` | **NEU** |
 | **55** | **fehlt** auf diesen drei Boards — sie definieren keine `DEVICE_HW_ID` | **NEU** |
 
 ### Die boardabhängigen Felder
@@ -1090,7 +1133,7 @@ aber 27 UTF-8-Bytes**, weil `ä` in der Quelle `C3 A4` ist. Auf dem Bus steht ei
 ### Was ein Werkzeug daraus zusammensetzt
 
 ```
-ftc -i <ip> <pa> info
+oknx -i <ip> <pa> info
 
   Bestellnr.             OpenKnxRau
   Geraetename            OpenKNX UP1 Präsenzmelder+

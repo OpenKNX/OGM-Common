@@ -18,7 +18,7 @@ Property als leer. Kein Fehler, kein Abbruch, keine Pflicht.
 
 Der Code dafür steht am Ende von `Common::initKnx()` in `src/OpenKNX/Common.cpp`.
 
-> **Voraussetzung: knx-Stack ab `2.5.0-beta.1`.** Ältere Stände kennen die Setter nicht. Der Block ist
+> **Voraussetzung: knx-Stack mit dem Branch `ec/feat-device-information`.** Ältere Stände kennen die Setter nicht. Der Block ist
 > deshalb in `#ifdef KNX_HAS_DEVICE_INFORMATION` geklammert und fällt dort weg — OGM-Common übersetzt
 > gegen alte und neue Stände. Abschnitt 11 erklärt den Mechanismus.
 
@@ -52,10 +52,11 @@ da, **NEU** kam mit ihr dazu. Entfernt wurde nichts.
 | 78 | `PID_HARDWARE_TYPE` | `MAIN_OpenKnxId`, `MAIN_ApplicationNumber`, `MAIN_ApplicationVersion` | `PDT_GENERIC_06` | ALT |
 | 82 | `PID_RF_DOMAIN_ADDRESS_CEMI_SERVER` | RF-Domänenadresse; nur unter `USE_RF` vorhanden | `PDT_GENERIC_06` | ALT |
 | 83 | `PID_DEVICE_DESCRIPTOR` | Maskenversion, ggf. `OPENKNX_OVERRIDE_MASK_VERSION` | `PDT_GENERIC_02` | ALT |
+| **202** | **`PID_MFR_STRUCT_INFO`** | fest im Stack: `"OpenKNX"`, Strukturversion, Bit n = PID 202 + n vorhanden | `PDT_GENERIC_09` | **NEU** |
 | **203** | **`PID_MFR_FIRMWARE_NAME`** | **`MAIN_FirmwareName`**, ersatzweise `FIRMWARE_NAME` | `PDT_UNSIGNED_CHAR` | **NEU** |
 | **204** | **`PID_MFR_DEVICE_NAME`** | wie PID 2, aber dauerhaft schreibgeschützt | `PDT_UNSIGNED_CHAR` | **NEU** |
 | **205** | **`PID_MFR_BUILD_TIMESTAMP`** | **`BUILD_TIMESTAMP`** | `PDT_UNSIGNED_LONG` | **NEU** |
-| **206** | **`PID_MFR_FIRMWARE_BUILD`** | **`MAIN_Version`** (Git-Kurzhash) | `PDT_UNSIGNED_CHAR` | **NEU** |
+| **206** | **`PID_MFR_BUILD_VERSION`** | **`X.Y.Z+Git-Kurzhash`** aus `openknx.info.humanFirmwareVersion(true)` | `PDT_UNSIGNED_CHAR` | **NEU** |
 | **207** | **`PID_MFR_MCU`** | **`OPENKNX_MCU_NAME`** (Chip, z. B. `RP2040`) | `PDT_UNSIGNED_CHAR` | **NEU** |
 
 **Bilanz: 15 vorhanden, 10 neu, 0 entfernt.** Einige Felder sind maskenabhängig ausgeblendet — PID 9
@@ -74,7 +75,7 @@ Nur diese sieben. Alles andere setzt der Stack oder OGM-Common ohne Zutun.
 | Gerätename | `DEVICE_NAME` | `HARDWARE_NAME` | 2 und 204 | 80 Zeichen |
 | Hardware-Kennung | `DEVICE_ID` | — | 19 | 40 Zeichen |
 | Firmware-Name | `MAIN_FirmwareName` | `FIRMWARE_NAME` | 203 | 48 Zeichen |
-| Build (Git-Kurzhash) | `MAIN_Version` | — | 206 | 16 Zeichen |
+| Build-Version | `MAIN_ApplicationVersion`, Revision, `MAIN_Version` | — | 206 | 16 Zeichen |
 | Chip (MCU) | `OPENKNX_MCU_NAME` | — | 207 | 16 Zeichen |
 | Build-Zeitpunkt | `BUILD_TIMESTAMP` | — | 205 | 4 Oktette |
 | Firmware-Revision | `FIRMWARE_REVISION` | `init(revision)` | 9 | 0–255 |
@@ -144,8 +145,11 @@ Zwei getrennte Dateien, beide im PlatformIO-Vorlauf erzeugt.
 ```
 
 `BUILD_TIMESTAMP` sind Sekunden seit der Epoche und gehen unverändert auf PID 205. `MAIN_Version` ist
-der Git-Kurzhash des Builds und geht auf PID 206 — damit lässt sich am Bus feststellen, aus welchem
-Stand ein Gerät gebaut wurde, was die Versionsnummer allein nicht leistet.
+der Git-Kurzhash des Builds und geht, zusammen mit der Versionsnummer, als `X.Y.Z+Git-Kurzhash` auf
+PID 206 — dieselbe Zeile, die die Konsole zeigt (`humanFirmwareVersion(true)`). Damit lässt sich am Bus
+feststellen, aus welchem Stand ein Gerät gebaut wurde, was die Versionsnummer allein nicht leistet.
+`Common.cpp` legt die Zeile einmal in einem statischen Puffer ab, weil die Property nur den Zeiger hält,
+und kürzt sie auf 16 Zeichen; `X.Y.Z+` hat höchstens 9, vom Hash bleiben also mindestens 7.
 
 `OPENKNX_MCU_NAME` legt `Common.cpp` selbst fest, aus den Makros der Toolchain, und es geht auf PID 207:
 
@@ -219,7 +223,8 @@ Die Grenzen stehen in `knx/src/knx/device_object.h`:
 #define MAX_ELEM_OBJECT_NAME        80
 #define MAX_ELEM_MANUFACTURER_DATA  40
 #define MAX_ELEM_FIRMWARE_NAME      48
-#define MAX_ELEM_FIRMWARE_BUILD     16
+#define MAX_ELEM_BUILD_VERSION      16
+#define LEN_MFR_STRUCT_INFO          9   // PID 202, fest
 ```
 
 ---
@@ -249,8 +254,8 @@ keinen `apiVersion`-Sprung, und kein Gerät verliert beim Update seine Konfigura
 ## 7. Auslesen
 
 ```bash
-ftc -i <ip> info              # die Schnittstelle über sich selbst
-ftc -i <ip> <pa> info         # ein Busgerät über die Schnittstelle
+oknx -i <ip> info             # die Schnittstelle über sich selbst
+oknx -i <ip> <pa> info        # ein Busgerät über die Schnittstelle
 ```
 
 ```powershell
@@ -270,16 +275,17 @@ ETS zeigt die Felder nicht in der Oberfläche an — sie sind über die Property
 
 ## 8. Herstellerbereich: Belegung
 
-Ab PID 202 gehört der Bereich dem Hersteller (03_05_01 §4.3.1). Der PID ist ein Oktett, es gibt also
-**54 Plätze, 202 bis 255**.
+Ab PID 202 gehört der Bereich dem Hersteller (03_05_01 §4.3.1, S. 43: *"Properties in the Device Object
+above 201 shall be manufacturer specific."*). Der PID ist ein Oktett, es gibt also **54 Plätze, 202 bis
+255**.
 
 | PID | Name | Bedeutung |
 |----:|---|---|
-| 202 | — | frei auf dem Device Object; der Name `PID_CUSTOM_RESERVED_TUNNELS_IP` ist im gemeinsamen Enum von `property.h` schon vergeben und gehört dem KNXnet/IP-Parameterobjekt |
+| 202 | `PID_MFR_STRUCT_INFO` | Eigentümer und Aufbau des Bereichs: `"OpenKNX"`, Strukturversion, Bitmaske der vorhandenen PIDs (Aufbau in `DEVICE-OBJECT-PROPERTIES.md` Abschnitt 2). Im Enum von `property.h` steht 202 auch als `PID_CUSTOM_RESERVED_TUNNELS_IP`; das gehört dem KNXnet/IP-Parameterobjekt, einem anderen Objekt |
 | 203 | `PID_MFR_FIRMWARE_NAME` | Firmware-Name |
 | 204 | `PID_MFR_DEVICE_NAME` | Gerätename ab Werk |
 | 205 | `PID_MFR_BUILD_TIMESTAMP` | Build-Zeitpunkt |
-| 206 | `PID_MFR_FIRMWARE_BUILD` | Git-Kurzhash |
+| 206 | `PID_MFR_BUILD_VERSION` | `X.Y.Z+Git-Kurzhash` |
 | 207 | `PID_MFR_MCU` | Chip, für den die Firmware gebaut ist |
 | 208–255 | frei | |
 
@@ -288,9 +294,12 @@ Ab PID 202 gehört der Bereich dem Hersteller (03_05_01 §4.3.1). Der PID ist ei
 1. Die nächste freie Nummer nehmen und **diese Tabelle im selben Commit fortschreiben**. Es gibt keine
    vorreservierten Platzhalter — ein leeres `PID_MFR_CUSTOM_1` lädt dazu ein, dass zwei Produkte
    unabhängig dieselbe Nummer greifen.
-2. Nur lesen, wenn PID 12 `0x00FA` meldet. Nummern über 201 bedeuten je Hersteller etwas anderes; zwei
-   Siemens-Geräte antworten auf 203 und 204 mit völlig fremden Daten. Wer das nicht prüft, zeigt fremde
-   Bytes als OpenKNX-Feld an.
+2. Nur lesen, wenn PID 202 mit `OpenKNX` beginnt und das Bit der PID gesetzt ist (Bit n = PID 202 + n),
+   und das Bit beim Anlegen mitpflegen: der Stack setzt es selbst, sobald die Property im Device Object
+   existiert. Nummern über 201 bedeuten je Hersteller etwas anderes; zwei Siemens-Geräte antworten auf
+   203 und 204 mit völlig fremden Daten. PID 12 `0x00FA` reicht als Prüfung nicht, die Kennung vergibt
+   die KNX Association und andere verwenden sie auch. Die Bitmaske reicht bis 209; was darüber liegt,
+   braucht eine neue Strukturversion.
 3. `CallbackProperty` statt `DataProperty` verwenden, wenn der Wert nicht persistent sein soll — sonst
    wächst das Flash-Abbild und jedes bestehende Gerät braucht eine Neuprogrammierung.
 4. Schreibgeschützte Properties gehören als `CallbackProperty` **ohne** Schreib-Callback angelegt.
@@ -329,12 +338,13 @@ schlimmere Verstoß.
 | 78 | `PID_HARDWARE_TYPE` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | 82 | `PID_RF_DOMAIN_ADDRESS` | — | — | ✓ | ✓ | — |
 | 83 | `PID_DEVICE_DESCRIPTOR` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **202** | **`PID_MFR_STRUCT_INFO`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **203** | **`PID_MFR_FIRMWARE_NAME`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **204** | **`PID_MFR_DEVICE_NAME`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **205** | **`PID_MFR_BUILD_TIMESTAMP`** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **206** | **`PID_MFR_FIRMWARE_BUILD`** | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **206** | **`PID_MFR_BUILD_VERSION`** | ✓ | ✓ | ✓ | ✓ | ✓ |
 | **207** | **`PID_MFR_MCU`** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| | **Summe** | **24** | **23** | **25** | **23** | **22** |
+| | **Summe** | **25** | **24** | **26** | **24** | **23** |
 
 Die Summenzeile ist nicht gerechnet, sondern gemessen: die Property-Listen wurden für alle fünf Masken
 übersetzt und gezählt (vorher 14 / 14 / 15 / 15 / 14).
@@ -409,8 +419,8 @@ prüfen, und die Falle mit schreibgeschützten `DataProperty`.
 ## 11. Voraussetzung: knx-Stand, und wie ältere abgefangen werden
 
 Der Block braucht sieben Setter auf `DeviceObject` — `deviceName()`, `hardwareId()`, `firmwareName()`,
-`firmwareBuild()`, `buildTimestamp()`, `firmwareRevision()` und `productId()`. Die gibt es ab
-**`2.5.0-beta.1`**. Ein älterer Stack kennt sie nicht. Der achte, `mcu()`, kam später dazu und hat
+`buildVersion()`, `buildTimestamp()`, `firmwareRevision()` und `productId()`. Die gibt es bisher nur auf
+dem Branch `ec/feat-device-information` von knx, in keinem Tag. Ein älterer Stack kennt sie nicht. Der achte, `mcu()`, kam später dazu und hat
 deshalb einen eigenen Schalter, `KNX_HAS_DEVICE_MCU`.
 
 ### Der Schalter
@@ -425,7 +435,7 @@ deshalb einen eigenen Schalter, `KNX_HAS_DEVICE_MCU`.
 
 ```c
 #ifdef KNX_HAS_DEVICE_INFORMATION
-    ... deviceName / hardwareId / firmwareName / firmwareBuild / buildTimestamp
+    ... deviceName / hardwareId / firmwareName / buildVersion / buildTimestamp
         firmwareRevision / productId ...
 #endif
 ```
