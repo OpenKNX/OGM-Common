@@ -18,7 +18,7 @@ import gzip
 import os
 import subprocess
 import sys
-from os.path import basename, join
+from os.path import basename
 
 sys.path.insert(0, next((p for p in ("lib/OGM-Common/scripts/pio", "scripts/pio")
                          if os.path.exists(os.path.join(p, "_pio_common.py"))), "."))
@@ -295,14 +295,6 @@ def _report(images, total, app_max=0):
     print("    {}[{}{}{}{}]{}".format(C.GRAY, C.GREEN, G_BAR * fill, C.GRAY, G_DOT * (width - fill - 2), C.END))
 
 
-try:
-    sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
-    import esptool  # noqa: F401  (presence check only; the merge runs as a subprocess)
-except Exception:
-    print("Installing esptool...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "esptool"])
-
-
 def esp32_create_combined_bin(source, target, env):
     build_dir = env.subst("$BUILD_DIR")
     prog_name = env.subst("${PROGNAME}")
@@ -323,7 +315,11 @@ def esp32_create_combined_bin(source, target, env):
     # Each extra image EXACTLY once: appending them twice puts the same file at the same offset, which
     # esptool >= 5.x rejects as an overlap ("Detected overlap at address: 0x0").
     images = []
-    cmd = ["esptool", "--chip", chip, "merge-bin", "-o", out,
+    tool_dir = platform.get_package_dir("tool-esptoolpy")
+    tool_env = os.environ.copy()
+    tool_env["PYTHONPATH"] = os.pathsep.join(
+        filter(None, [tool_dir, tool_env.get("PYTHONPATH", "")]))
+    cmd = [sys.executable, "-m", "esptool", "--chip", chip, "merge-bin", "-o", out,
            "--flash-mode", flash_mode, "--flash-freq", flash_freq, "--flash-size", flash_size]
     for offset, image in env["FLASH_EXTRA_IMAGES"]:
         off = int(env.subst(str(offset)), 16)
@@ -358,10 +354,14 @@ def esp32_create_combined_bin(source, target, env):
             _ota_fit(app_size, fs, fw, part)
 
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True, env=tool_env)
     except subprocess.CalledProcessError as err:
         # Only now is the exact command worth printing — it is what you need to reproduce the failure.
         print(f"{C.AMBER}esptool failed:{C.END}\n{err.stderr or err.stdout}")
+        print(f"{C.GRAY}{' '.join(cmd)}{C.END}")
+        raise
+    except OSError as err:
+        print(f"{C.AMBER}esptool could not be started:{C.END}\n{err}")
         print(f"{C.GRAY}{' '.join(cmd)}{C.END}")
         raise
 
