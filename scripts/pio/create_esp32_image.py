@@ -12,7 +12,6 @@
 # ---------------------------------------------------------------------------
 
 Import("env")
-platform = env.PioPlatform()
 
 import gzip
 import os
@@ -315,11 +314,8 @@ def esp32_create_combined_bin(source, target, env):
     # Each extra image EXACTLY once: appending them twice puts the same file at the same offset, which
     # esptool >= 5.x rejects as an overlap ("Detected overlap at address: 0x0").
     images = []
-    tool_dir = platform.get_package_dir("tool-esptoolpy")
-    tool_env = os.environ.copy()
-    tool_env["PYTHONPATH"] = os.pathsep.join(
-        filter(None, [tool_dir, tool_env.get("PYTHONPATH", "")]))
-    cmd = [sys.executable, "-m", "esptool", "--chip", chip, "merge-bin", "-o", out,
+    python = env.subst("$PYTHONEXE")
+    cmd = [python, env.subst("$OBJCOPY"), "--chip", chip, "merge-bin", "-o", out,
            "--flash-mode", flash_mode, "--flash-freq", flash_freq, "--flash-size", flash_size]
     for offset, image in env["FLASH_EXTRA_IMAGES"]:
         off = int(env.subst(str(offset)), 16)
@@ -354,7 +350,7 @@ def esp32_create_combined_bin(source, target, env):
             _ota_fit(app_size, fs, fw, part)
 
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True, env=tool_env)
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as err:
         # Only now is the exact command worth printing — it is what you need to reproduce the failure.
         print(f"{C.AMBER}esptool failed:{C.END}\n{err.stderr or err.stdout}")
