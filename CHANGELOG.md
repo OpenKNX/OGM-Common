@@ -1,6 +1,6 @@
 # Changes
 
-## ec/v2.0.0-beta.2: 2026-10-25
+## ec/v2.0.0-beta.2: 2026-10-29
 
 Fixes, OTA, I2C expander LEDs and build tooling on top of `ec/v2.0.0-beta.1`.
 
@@ -39,6 +39,7 @@ Fixes, OTA, I2C expander LEDs and build tooling on top of `ec/v2.0.0-beta.1`.
 * Feature: `OPENKNX_SKIP_KNXPROD=1` lets the release preprocess skip the producer and pack the ETS data of its last run
 * Change: producer warning 003 for the unused `newline()` helper of `Common.script.js` is suppressed
 * Fix: the release build detects an IDF build from the env section of the project config and adds a firmware to `content.xml` only once
+* Fix (ESP32): the factory image `firmware.factory.bin` is merged with the esptool the ESP32 platform configures, run as `$PYTHONEXE $OBJCOPY merge-bin`, instead of an `esptool` executable from the PATH; the script no longer installs esptool through pip. Built for IP-Interface on the REG1 LAN TP Base (ESP32) and the REG2 Pico ESP (ESP32-S3) with esptool 5.0.2: bootloader and app sit at their offsets, the app is byte-identical to `firmware.bin`
 
 ## ec/v2.0.0-beta.1: 2026-09-15
 
