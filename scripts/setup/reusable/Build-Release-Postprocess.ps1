@@ -125,12 +125,14 @@ exit `$LASTEXITCODE
 }
 
 
-# create dependency file
-if (Test-Path -Path dependencies.txt -PathType Leaf) {
-  Remove-Item dependencies.txt
-}
+# create dependency file; on an error the previous file stays and the release continues
 lib/OGM-Common/scripts/setup/reusable/Build-Dependencies.ps1
-Get-Content dependencies.txt
+if (!$?) {
+  Write-Host "WARN: dependencies.txt was not updated - it still lists the previous build" -ForegroundColor Magenta
+}
+if (Test-Path -Path dependencies.txt -PathType Leaf) {
+  Get-Content dependencies.txt
+}
 
 # (re-)create restore directory
 lib/OGM-Common/scripts/setup/reusable/Build-Project-Restore.ps1

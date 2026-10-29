@@ -19,6 +19,27 @@ $dependencies += "------- Built with -------"
 
 $failed = $false
 
+# Git must start here: below, a failing git call reads as "no git repository" and the module
+# would silently drop out of the list
+$gitVersion = "git not found in PATH"
+$gitRuns = $false
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    $global:LASTEXITCODE = -1 # stays -1 if the executable cannot be started at all
+    $gitVersion = "git could not be started"
+    $gitVersion = & git --version 2>&1
+    $gitRuns = ($LASTEXITCODE -eq 0)
+}
+if (-not $gitRuns) {
+    Write-Host "ERROR: Git cannot be started: $gitVersion" -ForegroundColor Red
+    # Intel (x64) PowerShell on Apple Silicon: the Git of the Command Line Tools fails under Rosetta
+    if ($IsMacOS -and ("$(& /usr/sbin/sysctl -n sysctl.proc_translated 2>$null)".Trim() -eq '1')) {
+        Write-Host "PowerShell runs as an Intel (x64) process under Rosetta on an Apple Silicon Mac." -ForegroundColor Yellow
+        Write-Host "Use the ARM PowerShell (e.g. 'brew install powershell') and build again." -ForegroundColor Yellow
+    }
+    Write-Host "ABORT: No update of 'dependencies.txt'" -ForegroundColor Red
+    exit 1
+}
+
 $subprojects = Get-ChildItem -Directory lib
 # $project = $(Split-Path $(Get-Location) -Leaf)
 $projects = @()
@@ -81,4 +102,4 @@ if ($failed) {
     exit 1
 }
 
-$dependencies | Set-Content dependencies.txt -Encoding UTF8
+$dependencies | Set-Content dependencies.txt -Encoding UTF8 -ErrorAction Stop
