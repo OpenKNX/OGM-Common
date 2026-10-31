@@ -283,17 +283,15 @@ def show_flash_partitioning(source, target, env):
         if delta_on:
             print("{}    a normal release costs ~{} % of the image over the bus and ~{} % on the filesystem{}".format(
                 C.GRAY, int(PATCH_OVER_BUS * 100), int(PATCH_ON_DISK * 100), C.END))
-        # knxOTA is not the only way to reach a device without touching it. ArduinoOTA streams straight
-        # into the application area and stages nothing at all, so a filesystem too small for knxOTA says
-        # nothing about whether the device can be updated remotely -- worth stating, or the reader walks
-        # away believing USB is the only option left.
-        print("{}    other ways in: ArduinoOTA over the network (stages nothing) · USB (.uf2 via BOOTSEL){}".format(
+        # On RP ArduinoOTA stages too: the arduino-pico Updater writes the received gzip image to LittleFS as
+        # "firmware.bin" and picoOTA copies it at boot, so it needs the same room as the full knxOTA image.
+        print("{}    other ways in: ArduinoOTA over the network (stages the same gzip image) · USB (.uf2 via BOOTSEL, stages nothing){}".format(
             C.GRAY, C.END))
 
         if est_compressed > fs_usable:
             # Genuine miss. Does NOT fail the build by itself (other OAMs must not break); only the
             # opt-in OPENKNX_OTA_FS_ASSERT hard-fails.
-            err("knxOTA will not fit", "use ArduinoOTA over the network or USB, or enlarge board_build.filesystem_size / shrink firmware (est. {} > usable {})".format(
+            err("knxOTA will not fit", "ArduinoOTA stages the same image and needs the same room: use USB, or enlarge board_build.filesystem_size / shrink firmware (est. {} > usable {})".format(
                 human_bytes(est_compressed), human_bytes(fs_usable)))
             if opt_in_assert:
                 sys.stdout.flush()
