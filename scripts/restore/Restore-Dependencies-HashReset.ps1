@@ -8,8 +8,8 @@ FILEPATH: restore/Restore-Dependencies-HashReset.ps1
 
 param(
   # Set the Git checkout mode
-  [ValidateSet("None", "Branch", "Hash", "HashReset")]
-  [string]$GitCheckoutMode= "HashReset", # None, Branch, Hash or HashReset. Default is HashReset
+  [ValidateSet("Branch", "Hash", "HashReset")]
+  [string]$GitCheckoutMode = "HashReset", # Default is HashReset. WARNING: discards local changes, see Restore-Dependencies.ps1
 
   # Force the script to recreate symbolic links
   [switch]$ForceRecreateSymLinks = $true, # Default is $true

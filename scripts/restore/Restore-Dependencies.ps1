@@ -34,6 +34,17 @@ Here's a high-level description of what it does:
   7. The script checks if each project file exists. If a project file does not exist, it outputs a message to the user.
 
   8. Many core functions of the script are modularized and can be used outside of this script, providing flexibility and reusability.
+
+GitCheckoutMode (parameter -GitCheckoutMode, see also the wrapper scripts Restore-Dependencies-*.ps1):
+  - Hash      (default) Checks out the commit hash from dependencies.txt. Results in a detached HEAD.
+  - Branch    Checks out the branch from dependencies.txt and pulls the latest changes (fast-forward only).
+  - HashReset Checks out the branch from dependencies.txt and moves it with 'git reset --hard' to the hash
+              from dependencies.txt. No detached HEAD, the branch is behind its remote branch afterwards.
+              Use this to build a release exactly on the pinned versions.
+              WARNING: 'git reset --hard' discards local changes and local commits. Therefore a dependency is
+              NOT touched and the script exits with code 1 if the hash is unknown or not part of the remote
+              branch, if there are uncommitted changes in tracked files or if local commits would be lost.
+  - None      No git operation, only the symbolic links in 'lib' are (re)created.
 #>
 
 # Optional Input Parameters
@@ -286,6 +297,29 @@ function Get-ProjectFiles($subprojects) {
   # Return the list of project files
   return $projectFiles
 }
+function Test-HashResetSafety($RepoDir, $Branch, $Hash) {
+  # Checks before 'git reset --hard <Hash>' on <Branch>, must be called after 'git fetch'.
+  # Returns $null if it is safe, otherwise the reason why not.
+  $commit = & git -C $RepoDir rev-parse --verify --quiet "$Hash^{commit}" 2>$null
+  if ($LASTEXITCODE -ne 0) { return "Commit '$Hash' does not exist (unknown hash or fetch failed)." }
+
+  # the hash has to be part of the remote branch, otherwise the branch would be moved to a foreign commit
+  $null = & git -C $RepoDir merge-base --is-ancestor $commit "origin/$Branch" 2>$null
+  if ($LASTEXITCODE -ne 0) { return "Commit '$Hash' is not part of branch 'origin/$Branch'." }
+
+  $dirty = @(& git -C $RepoDir status --porcelain --untracked-files=no 2>$null)
+  if ($dirty.Count -gt 0) { return "$($dirty.Count) uncommitted change(s) in tracked files would be discarded. Commit, stash or discard them first." }
+
+  # local commits which are on no remote: on the local branch (reset) or on a detached HEAD (switch)
+  $lost = @()
+  $null = & git -C $RepoDir show-ref --verify --quiet "refs/heads/$Branch" 2>$null
+  if ($LASTEXITCODE -eq 0) { $lost += @(& git -C $RepoDir rev-list "refs/heads/$Branch" --not $commit --remotes 2>$null) }
+  $null = & git -C $RepoDir symbolic-ref --quiet HEAD 2>$null
+  if ($LASTEXITCODE -ne 0) { $lost += @(& git -C $RepoDir rev-list HEAD --not --branches --remotes 2>$null) }
+  if ($lost.Count -gt 0) { return "$($lost.Count) local commit(s) which are on no remote would be lost. Push them or create a branch for them first." }
+  return $null
+}
+
 function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $CloneModeHash= $false) {
   # Loop through each depended project
   if($CloneModeHash -and $Verbose) { Write-Host "- CloneRepository - Using hash" -ForegroundColor Green }
@@ -378,7 +412,8 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
       }
     } 
     # If the project is found, check out to the specific branch
-    if(-not $hashMatch -or -not $branchMatch) 
+    # HashReset always runs the checks below, also if branch and hash already match
+    if(-not $hashMatch -or -not $branchMatch -or $GitCheckoutMode -eq "HashReset")
     {
       if($Verbose) { Write-Host "- CloneRepository - Found: "$dependedProject.ProjectName" - "$dependedProject.URL -ForegroundColor Green }
       
@@ -402,7 +437,7 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
 
         if($CloneModeHash) {
           $CheckOutTarget = $($dependedProject.Hash)  # Optional: If the CloneModeHash is true, use the Hash
-        } else { 
+        } else {
           $CheckOutTarget = $($dependedProject.Branch) # If the CloneModeHash is not Hash (Branch or HashReset) use the Branch
         }
 
@@ -416,9 +451,17 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
         # Let's do the git checkout
         if($Verbose) { 
           Invoke-Expression "$GitCmd fetch --all"
-          Invoke-Expression "$GitCmd $CheckOutMethod $($CheckOutTarget)"
         } else { 
           Invoke-Expression "$GitCmd fetch --all -q" | Out-Null
+        }
+        # HashReset: check before touching anything that 'reset --hard' cannot destroy local work
+        if($GitCheckoutMode -eq "HashReset") {
+          $safetyError = Test-HashResetSafety $CloneTarget $dependedProject.Branch $dependedProject.Hash
+          if ($safetyError) { throw $safetyError }
+        }
+        if($Verbose) { 
+          Invoke-Expression "$GitCmd $CheckOutMethod $($CheckOutTarget)"
+        } else { 
           Invoke-Expression "$GitCmd $CheckOutMethod $($CheckOutTarget) -q" | Out-Null
         }
         if ($LASTEXITCODE -ne 0) {
@@ -426,10 +469,13 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
         }
 
         if($GitCheckoutMode -eq "HashReset") {
-            if($Verbose) { 
+            if($Verbose) {
               Invoke-Expression "$GitCmd reset --hard $($dependedProject.Hash)"
-            } else { 
+            } else {
               Invoke-Expression "$GitCmd reset --hard $($dependedProject.Hash) -q" | Out-Null
+            }
+            if ($LASTEXITCODE -ne 0) {
+              throw "Git reset --hard failed with exit code $LASTEXITCODE"
             }
         }
 
@@ -440,8 +486,12 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
       }
       catch {
         # If cannot check out to the branch, catch the error
-        $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { "Branch '$($dependedProject.Branch)'" }
+        $checkoutTarget = if ($CloneModeHash) {  "Hash '$($dependedProject.Hash)'" } else { if($GitCheckoutMode -eq "HashReset") { "Branch '$($dependedProject.Branch)' with Hash '$($dependedProject.Hash)'" } else {"Branch '$($dependedProject.Branch)'"} }
         Write-Host "- CloneRepository - $($dependedProject.ProjectName) - Checkout Error! Cannot checkout $($checkoutTarget)."([Char]0x2717) -ForegroundColor Red
+        if($GitCheckoutMode -eq "HashReset") {
+          Write-Host "    Reason: $($_.Exception.Message)" -ForegroundColor Red
+          $script:HashResetFailed = $true
+        }
       }
     }
 
@@ -712,4 +762,9 @@ if ($GitCheckoutMode -ne "None") {
 
 if($Verbose) { Write-Host -ForegroundColor Yellow "- Checking and creating symbolic links for each project file." }
 CreateSymbolicLink $projectDir $projectFilesGitInfo
+if ($script:HashResetFailed) {
+  # HashReset is used for release builds, these must not continue on a state which differs from dependencies.txt
+  OpenKNX_ShowLogo -AddCustomText "Restore Dependencies: FAILED $([Char]0x2717)"
+  exit 1
+}
 OpenKNX_ShowLogo -AddCustomText "Restore Dependencies: Done $([Char]0x221A)"
