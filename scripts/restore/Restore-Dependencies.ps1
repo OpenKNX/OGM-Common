@@ -400,11 +400,11 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
             Write-Host "- CloneRepository - Failed Cloning "$dependedProject.ProjectName": '$GitClone' to '$CloneTarget' "([Char]0x2717) -ForegroundColor Red
             # exit 1 expected, but error-handling should be consistent
             # TODO: extend restore script error-handling and check for possible side-effects
+          } else {
+            Write-Host "- CloneRepository - Cloned "$dependedProject.ProjectName": '$GitClone' to '$CloneTarget' "([Char]0x221A) -ForegroundColor Green
           }
           #git clone -q '$GitClone' '$CloneTarget.ToString()'
         }
-        
-        if($true) { Write-Host "- CloneRepository - Cloned "$dependedProject.ProjectName": '$GitClone' to '$CloneTarget' "([Char]0x221A) -ForegroundColor Green }
       }
       # If the repository does not exist, catch the error
       catch {
