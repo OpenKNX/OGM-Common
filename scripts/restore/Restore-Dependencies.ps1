@@ -538,9 +538,10 @@ function Get-GitInfo($path) {
     $LongCommitHash = "git --git-dir ""$($TargetDir)"" log -1 --pretty=format:'%H'"
     $RemoteOriginURL = "git --git-dir ""$($TargetDir)"" config --get remote.origin.url"
     
-    if($Verbose) { $ShortCommitHash= Invoke-Expression $ShortCommitHash } else { $ShortCommitHash= Invoke-Expression $ShortCommitHash | Out-Null }
-    if($Verbose) { $LongCommitHash= Invoke-Expression $LongCommitHash } else { $LongCommitHash= Invoke-Expression $LongCommitHash | Out-Null }
-    if($Verbose) { $RemoteOriginURL = Invoke-Expression $RemoteOriginURL } else { $RemoteOriginURL = Invoke-Expression $RemoteOriginURL  | Out-Null }
+    # capture the output in any case, '| Out-Null' would assign $null
+    $ShortCommitHash= Invoke-Expression $ShortCommitHash
+    $LongCommitHash= Invoke-Expression $LongCommitHash
+    $RemoteOriginURL = Invoke-Expression $RemoteOriginURL
     
     if($Verbose) { Write-Host "GitInfo - Found git repo in directory: $path" -ForegroundColor Green }
     
