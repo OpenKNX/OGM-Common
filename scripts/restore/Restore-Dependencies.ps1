@@ -448,7 +448,8 @@ function CloneRepository($projectFilesGitInfo, $dependedProjects, $CloneDir, $Cl
     # Repository exists and the correct branch or hash is already checked out
     # if freshly cloned or checkout, no action needed but when switched or correct branch was set, we need to pull last changes
     # if CloneMode Branch, check if the branch is up-to-date
-    if (-not $CloneModeHash)
+    # not in HashReset mode: a pull would fast-forward the branch past the requested hash again
+    if (-not $CloneModeHash -and $GitCheckoutMode -ne "HashReset")
     {
       if($Verbose) { Write-Host "- CloneRepository - Pull: "$dependedProject.ProjectName" - "$dependedProject.URL -ForegroundColor Green }
       try{
