@@ -127,6 +127,36 @@ Die obigen Schritte erfolgen automatisiert vom Build-Script und werden weiter un
 
 > Die Konsequenz ist, dass es in keinem OpenKNX-Projekt die Datei hardware.h geben darf.
 
+## **Restore-Skripte**
+
+Die von einem Projekt verwendeten Module stehen mit Commit-Hash, Branch und URL in der Datei `dependencies.txt` im Projektverzeichnis. Die Restore-Skripte klonen diese Module neben das Projektverzeichnis (`../<Modulname>`), bringen sie auf den gewünschten Stand und legen im `lib`-Verzeichnis symbolische Links darauf an.
+
+Die Skripte liegen in
+
+    lib/OGM-Common/scripts/restore/
+
+und werden bei einem Release-Build in das `restore`-Verzeichnis des Projekts kopiert. Sie werden aus dem `restore`-Verzeichnis heraus gestartet, z.B.
+
+    cd restore
+    ./Restore-Dependencies-Branch.ps1
+
+Das eigentliche Skript ist `Restore-Dependencies.ps1`, der Parameter `-GitCheckoutMode` bestimmt, auf welchen Stand die Module gebracht werden. Die übrigen Skripte sind Wrapper mit einem anderen Standardwert für diesen Parameter:
+
+| Skript | GitCheckoutMode | Ergebnis |
+|--------|-----------------|----------|
+| `Restore-Dependencies.ps1` | `Hash` (Standard) | Checkout des Commits aus `dependencies.txt`, die Module stehen auf einem **Detached HEAD**. |
+| `Restore-Dependencies-Branch.ps1` | `Branch` | Checkout des Branches aus `dependencies.txt` und `git pull --ff-only`, also der neueste Stand des Branches. Der Hash wird ignoriert. |
+| `Restore-Dependencies-HashReset.ps1` | `HashReset` | Checkout des Branches aus `dependencies.txt` und anschließend `git reset --hard <Hash>`. Die Module stehen exakt auf dem Hash, aber auf dem Branch (kein Detached HEAD) und sind ggf. "behind" gegenüber origin. Gedacht für Release-Builds auf exakt den Ständen aus `dependencies.txt`. |
+| `Restore-Dependencies-LinksOnly.ps1` | `None` | Keine Git-Operation, es werden nur die symbolischen Links neu angelegt. |
+
+> **Achtung beim Modus HashReset:** `git reset --hard` verwirft lokale Änderungen und lokale Commits auf dem Branch. Damit dabei nichts verloren geht, wird ein Modul **nicht** angefasst und das Skript endet mit einem Fehler (Exit-Code 1), wenn
+>
+> * der Hash nach `git fetch` lokal nicht existiert oder nicht Teil des Remote-Branches ist,
+> * das Modul uncommittete Änderungen an versionierten Dateien hat,
+> * der lokale Branch (oder ein Detached HEAD) Commits enthält, die auf keinem Remote-Branch liegen.
+>
+> Das gilt auch, wenn ein Modul bereits auf Branch und Hash steht. In diesen Fällen müssen die Änderungen zuerst committet und gepusht, gestasht oder verworfen werden. Unversionierte Dateien bleiben unberührt.
+
 ## **Build-Skripte**
 
 Um einen "Build auf Knopfdruck" - wie von PlatformIO unterstützt - auch in OpenKNX zu ermöglichen, wird ein Build-Skript vor dem eigentlichen PIO-Buildvorgang ausgeführt. Die build-Skripte findet man in 
