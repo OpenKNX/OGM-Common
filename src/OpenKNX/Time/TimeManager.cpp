@@ -132,6 +132,7 @@ namespace OpenKNX
                 logInfoP("%s", time.dayOfWeekString());
                 if (isInaccurate())
                     logInfoP("Time is inaccurate");
+#ifndef OPENKNX_LOGIC_IGNORE
 #ifdef LOG_HolidayKo
                 if (openknx.calendar.isWorkingDayToday())
                     logInfoP("Today is a working day");
@@ -141,6 +142,7 @@ namespace OpenKNX
                     logInfoP("Tomorrow is a working day");
                 else
                     logInfoP("Tomorrow is a non-working day");
+#endif
 #endif
             }
             else

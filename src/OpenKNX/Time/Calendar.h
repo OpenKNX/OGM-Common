@@ -47,6 +47,7 @@ namespace OpenKNX
              */
             DateOnly getForthAdvent();
 
+#ifndef OPENKNX_LOGIC_IGNORE
 #ifdef LOG_HolidayKo
             // Working day functions are currently depending on OFM-LogicModule.
             // This will be changed in the future.
@@ -74,6 +75,7 @@ namespace OpenKNX
              * @return true, if the next day after current date is within Monday to Friday and not a holiday enabled in configuration
              */
             bool isWorkingDayTomorrow();
+#endif
 #endif
         };
     } // namespace Time
