@@ -1,6 +1,8 @@
 #include "OpenKNX.h"
+#ifndef OPENKNX_LOGIC_IGNORE
 #ifdef LOG_HolidayKo
     #include "Logic.h"
+#endif
 #endif
 
 namespace OpenKNX
@@ -103,6 +105,7 @@ namespace OpenKNX
             return _fourthAdvent;
         }
 
+#ifndef OPENKNX_LOGIC_IGNORE
 #ifdef LOG_HolidayKo
         // Functions are currently depending on the logic modul implementation of holiday calculation
         bool Calendar::isHolidayToday()
@@ -129,6 +132,6 @@ namespace OpenKNX
                    !isHolidayTomorrow();
         }
 #endif
-
+#endif
     } // namespace Time
 } // namespace OpenKNX
