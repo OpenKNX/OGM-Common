@@ -872,7 +872,7 @@ namespace OpenKNX
             openknx.modules.list[i]->processBeforeRestart();
         }
 
-        openknx.flash.save();
+        openknx.flash.save(true); // forced: a save in the last 3 min must not drop what the modules just prepared
         logIndentDown();
         logInfoP("System will restart now");
         delay(10);
