@@ -71,7 +71,13 @@ function BASE_getUnsupportedEtsModules(device, online, progress, context) {
     for (var i = 0; i < baseModuleIdPrefix.length - 1; i++) {
         var moduleActive = ((modulesBitfield >> i) & 1) == 0;
         var paramName = "BASE_ModuleEnabled_" + baseModuleIdPrefix[i + 1];
-        var parModuleId = device.getParameterByName(paramName);
+        // a module without a row in the module list has no ParameterRef: ETS throws instead of returning nothing
+        var parModuleId = null;
+        try {
+            parModuleId = device.getParameterByName(paramName);
+        } catch (e) {
+            Log.info("Common: " + paramName + " has no row in the module list");
+        }
         if (parModuleId) 
             if (sync)
                 parModuleId.value = moduleActive;
