@@ -1,5 +1,14 @@
 # Changes
 
+## ec/v2.0.0-beta.3: 2026-11-05
+
+Flash and module sync fixes and a direct time getter on top of `ec/v2.0.0-beta.2`, with `v1dev` merged.
+
+* Fix: a restart always saves the flash. A save in the last 3 minutes dropped it, so data the modules prepared for the restart was lost
+* Fix: `OPENKNX_LOGIC_IGNORE` allows the logic application without the logic firmware. `LOG_HolidayKo` in `knxprod.h` pulled in `Logic.h`, so such a firmware did not build
+* Fix (module sync): a module without a channel of its own has no row in the module list. The button skips it and logs the name; before, it stopped there and never reached the unsupported modules
+* Feature: `TimeManager::getUnixTime()` returns the clock in a few microseconds, without the conversion over the local time
+
 ## ec/v2.0.0-beta.2: 2026-10-29
 
 Fixes, OTA, I2C expander LEDs and build tooling on top of `ec/v2.0.0-beta.1`.
