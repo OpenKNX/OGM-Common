@@ -107,6 +107,7 @@ ParamBASE_HeartbeatDelayTimeMS
 | `OPENKNX_RUNTIME_STAT` | - | - | Enable runtime statistics collection |
 | `OPENKNX_RUNTIME_STAT_BUCKETN` | 16 | - | Number of histogram buckets |
 | `OPENKNX_RUNTIME_STAT_BUCKETS` | default | µs | Histogram bucket limits (comma-separated) |
+| `OPENKNX_RUNTIME_STAT_MODULE_WARNING` | - | µs | Threshold to show the module loop runtime warning |
 
 #### File System & Time
 

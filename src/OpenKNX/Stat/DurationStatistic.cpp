@@ -1,6 +1,7 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
 
-// TODO/LIMITATION: Counter Overflow ist possible and will result in wrong results (for long? runtimes)!
+// LIMITATION: Counter Overflow is possible and will result in wrong results (for long? runtimes)!
+//             This is accepted, as runtime-statistics are not expected to be used in PROD environments
 
 #include "OpenKNX/Log/Logger.h"
 #include "knx.h"
@@ -78,8 +79,6 @@ namespace OpenKNX
             // Using information of min- and maximum value can reduce the interval and thereby improve the result.
             double factor = 1.0 * (medianCount - cumulatedCountLower) / durationBucket[medianIndex];
             return medianMin + (medianMax - medianMin) * factor;
-
-            // TODO check usage of one side open interval?
         }
 
         uint32_t DurationStatistic::sum_ms()

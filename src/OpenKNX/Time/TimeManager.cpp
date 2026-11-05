@@ -132,6 +132,7 @@ namespace OpenKNX
                 logInfoP("%s", time.dayOfWeekString());
                 if (isInaccurate())
                     logInfoP("Time is inaccurate");
+#ifndef OPENKNX_LOGIC_IGNORE
 #ifdef LOG_HolidayKo
                 if (openknx.calendar.isWorkingDayToday())
                     logInfoP("Today is a working day");
@@ -141,6 +142,7 @@ namespace OpenKNX
                     logInfoP("Tomorrow is a working day");
                 else
                     logInfoP("Tomorrow is a non-working day");
+#endif
 #endif
             }
             else
@@ -489,7 +491,7 @@ namespace OpenKNX
                         timezoneString = "CET-5CET-6,366,367";
                         break;
                     case 6:
-                        timezoneString = "CET-CET-7,366,367";
+                        timezoneString = "CET-6CET-7,366,367";
                         break;
                     case 7:
                         timezoneString = "CET-7CET-8,366,367";

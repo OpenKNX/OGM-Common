@@ -1,9 +1,11 @@
 #include "OpenKNX/Stat/RuntimeStat.h"
 #include "OpenKNX/Facade.h"
 
-// TODO/LIMITATION: Counter Overflow ist possible and will result in wrong results (for long? runtimes)!
+// LIMITATION: Counter Overflow is possible and will result in wrong results (for long? runtimes)!
+//             This is accepted, as runtime-statistics are not expected to be used in PROD environments
 
-// TODO/Feature: Allow pause measuring for special case handling
+
+// TODO/Feature: Allow pause measuring for special case handling, especially long debug outputs on console
 // TODO/Feature: add measuring for core1
 // TODO/Improvement: check integration of RuntimeStat in Module
 // TODO/Feature: Allow measurement of Channels
@@ -12,26 +14,6 @@ namespace OpenKNX
 {
     namespace Stat
     {
-
-        void RuntimeStat::measureTimeBegin()
-        {
-            _begin_us = micros();
-
-            // measure waiting-time between two loops
-            if (_end_us > 0)
-            {
-                _wait.measure(_begin_us - _end_us);
-            }
-        }
-
-        void RuntimeStat::measureTimeEnd()
-        {
-            // store end only once at the beginning, as getting the time twice might increase error
-            _end_us = micros();
-
-            _run.measure(_end_us - _begin_us);
-        }
-
         void RuntimeStat::showStatHeader()
         {
             openknx.logger.logWithPrefixAndValues("RuntimeStat", "@ type  param unit    value_run   value_wait");
