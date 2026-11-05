@@ -790,6 +790,11 @@ namespace OpenKNX
             return DateTime(_timeClock.getTime());
         }
 
+        time_t TimeManager::getUnixTime()
+        {
+            return _timeClock.getTime();
+        }
+
         DateTime TimeManager::getUtcTime()
         {
             return DateTime(_timeClock.getTime(), true);

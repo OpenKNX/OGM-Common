@@ -153,6 +153,10 @@ namespace OpenKNX
              */
             DateTime getUtcTime();
             /*
+             * returns the Unix time of the clock, without a conversion
+             */
+            time_t getUnixTime();
+            /*
              * returns true, if the time was a least one time set
              */
             bool isValid();
