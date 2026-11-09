@@ -118,6 +118,7 @@ $_strings = @{
             Menu3 = '  [3] difference to an older release  .okd   knxOTA, oknx - a fraction again'
             Menu4 = '  [4] image + compressed'
             MenuAsk = 'choice'
+            PressEnter = '  Press Enter to exit'
             GzWrote = '  {0,-52} {1,10:N0} B  ->  {2}  ({3} %)'
             GzSkip = '  {0,-52} .gz already there - overwrite with -Force'
             DeltaPick = '  Difference to WHICH version? It has to be the one RUNNING on the target.'
@@ -140,6 +141,7 @@ $_strings = @{
             Menu3 = '  [3] Differenz zu einer Vorversion  .okd   knxOTA, oknx - nochmal ein Bruchteil'
             Menu4 = '  [4] Abbild + komprimiert'
             MenuAsk = 'Auswahl'
+            PressEnter = '  Drücke Enter zum Beenden'
             GzWrote = '  {0,-52} {1,10:N0} B  ->  {2}  ({3} %)'
             GzSkip = '  {0,-52} .gz liegt bereits vor - mit -Force überschreiben'
             DeltaPick = '  Differenz zu WELCHER Fassung? Es muss die sein, die auf dem Ziel LÄUFT.'
@@ -179,6 +181,12 @@ else {
         $answer = Read-Host "  $Prompt$suffix"
         if (-not $answer) { return $Default }
         return $answer.Trim()
+    }
+    function OpenKNX_WaitExit {   # same as in OpenKNX-UI-Generic.ps1, keep both identical
+        param([string]$Prompt, [switch]$Skip)
+        if ($Skip -or -not [Environment]::UserInteractive) { return }
+        try { if ([Console]::IsInputRedirected) { return } } catch { }
+        try { [void](Read-Host $Prompt -ErrorAction Stop) } catch { }
     }
 }
 
@@ -265,9 +273,15 @@ if (-not $NoMenu -and -not $Gzip -and -not $All -and -not $Delta -and $_canAsk) 
 }
 if ($All) { $Gzip = $true }
 
+# Started through the menu (e.g. by double-click): hold the window on every way out. Switches: no pause.
+function Exit-Prepare([int]$Code) {
+    if ($_asked) { OpenKNX_WaitExit $s.PressEnter }
+    exit $Code
+}
+
 if (-not (Test-Path $Path)) {
     Write-Host ($s.NotFound -f $Path) -ForegroundColor Red
-    exit 1
+    Exit-Prepare 1
 }
 $files = @()
 if (Test-Path -PathType Container $Path) {
@@ -279,7 +293,7 @@ else { $files += (Resolve-Path $Path).Path }
 if ($files.Count -eq 0) {
     Write-Host $s.NoPkg -ForegroundColor Yellow
     Write-Host ""
-    exit 1
+    Exit-Prepare 1
 }
 
 $done = 0
@@ -349,7 +363,7 @@ if ($Delta) {
     }
     if (-not $new) {
         Write-Host $s.NoPkg -ForegroundColor Yellow
-        exit 1
+        Exit-Prepare 1
     }
     $newDir = Split-Path -Parent $new
 
@@ -368,7 +382,7 @@ if ($Delta) {
             Write-Host ""
             Write-Host $s.DeltaNone -ForegroundColor Yellow
             Write-Host ""
-            exit 1
+            Exit-Prepare 1
         }
         Write-Host ""
         Write-Host $s.DeltaPick -ForegroundColor Yellow
@@ -394,7 +408,7 @@ if ($Delta) {
             }
             if (-not $old -or -not (Test-Path -PathType Leaf $old)) {
                 Write-Host ($s.NotFound -f $old) -ForegroundColor Red
-                exit 1
+                Exit-Prepare 1
             }
             $old = (Resolve-Path $old).Path
         }
@@ -406,7 +420,7 @@ if ($Delta) {
         $tmpImg = OpenKNX_GetAppImage -Path $old
         if ($null -eq $tmpImg) {
             Write-Host ("  {0,-52} {1}" -f (Split-Path -Leaf $old), $s.NoImg) -ForegroundColor Yellow
-            exit 1
+            Exit-Prepare 1
         }
         $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ((Split-Path -Leaf $old) + ".app.bin")
         [System.IO.File]::WriteAllBytes($tmp, $tmpImg)
@@ -426,7 +440,7 @@ if ($Delta) {
         Write-Host ""
         Write-Host $s.DeltaNoOknx -ForegroundColor Yellow
         Write-Host ""
-        exit 1
+        Exit-Prepare 1
     }
 
     $out = [System.IO.Path]::ChangeExtension($new, $null).TrimEnd('.') -replace '\.app$', ''
@@ -437,7 +451,7 @@ if ($Delta) {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -PathType Leaf $out)) {
         Write-Host ($s.DeltaFail -f $LASTEXITCODE) -ForegroundColor Red
         Write-Host ""
-        exit 1
+        Exit-Prepare 1
     }
     $len = (Get-Item $out).Length
     $pct = [math]::Round($len * 100.0 / [math]::Max((Get-Item $new).Length, 1))
@@ -449,3 +463,4 @@ Write-Host ""
 if ($done -gt 0) { Write-Host ($s.Wrote -f $done) -ForegroundColor Green }
 Write-Host $s.What -ForegroundColor DarkGray
 Write-Host ""
+if ($_asked) { OpenKNX_WaitExit $s.PressEnter }

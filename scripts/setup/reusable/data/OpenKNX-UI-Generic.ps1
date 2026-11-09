@@ -230,6 +230,15 @@ function OpenKNX_ReadChoice {
     return $answer.Trim()
 }
 
+function OpenKNX_WaitExit {
+    <# @brief Hold the window until Enter, so a script started by double-click keeps its last output readable.
+       Returns at once with -Skip or when nobody can type (non-interactive session, redirected input, -NonInteractive). #>
+    param([string]$Prompt, [switch]$Skip)
+    if ($Skip -or -not [Environment]::UserInteractive) { return }
+    try { if ([Console]::IsInputRedirected) { return } } catch { }
+    try { [void](Read-Host $Prompt -ErrorAction Stop) } catch { }
+}
+
 
 function OpenKNX_SelectInteractive {
     <#

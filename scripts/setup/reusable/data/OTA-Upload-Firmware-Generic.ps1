@@ -66,7 +66,7 @@ param(
     [string]$Lang = "",
     [Alias('h')]
     [switch]$Help,
-    [switch]$AutoExit,               # never pause on error; default pauses so the window stays readable
+    [switch]$AutoExit,               # never pause at the end; default pauses so the window stays readable
     [switch]$Force                   # skip the chip / product guards (they abort or ask by default)
 )
 
@@ -696,5 +696,6 @@ if ($code -eq 0) {
 }
 else { Write-Host $s.Failed -ForegroundColor Red }
 Write-Host ""
-if ($code -ne 0 -and -not $AutoExit) { Read-Host $s.PressEnter }
+if ($code -ne 0) { if (-not $AutoExit) { Read-Host $s.PressEnter } }
+elseif ($_haveUi) { OpenKNX_WaitExit $s.PressEnter -Skip:$AutoExit }  # success: keep the reboot note readable
 exit $code

@@ -43,6 +43,9 @@ FILEPATH: OGM-Common/scripts/setup/reusable/data/KNX-Upload-Firmware-Generic.ps1
 .PARAMETER Lang
     DE or EN. Omitted: taken from the system locale, defaulting to DE.
 
+.PARAMETER AutoExit
+    Never wait for Enter at the end. Without it the window stays open until Enter, except after a cancel.
+
 .EXAMPLE
     ./KNX-Upload-Firmware.ps1
     # knxota asks for what it cannot find out by itself
@@ -65,7 +68,8 @@ param(
     [string]$Pa = "",
     [string]$From = "",
     [switch]$NoDelta,
-    [string]$Lang = ""
+    [string]$Lang = "",
+    [switch]$AutoExit
 )
 
 Set-StrictMode -Version Latest
@@ -116,6 +120,7 @@ $_strings = @{
         NotComplete    = '  the transfer did not complete - the reason is in the result box above.'
         NoReturn       = '  the device has not answered since the restart - see the output above.'
         Failed         = '  the update did not complete - see the output above.'
+        PressEnter     = '  Press Enter to exit'
     }
     DE = @{
         Way            = 'KNX-Bus'
@@ -146,6 +151,7 @@ $_strings = @{
         NotComplete    = '  die Übertragung wurde nicht abgeschlossen - der Grund steht im Ergebnis-Kasten oben.'
         NoReturn       = '  das Gerät hat sich seit dem Neustart nicht gemeldet - siehe die Ausgabe oben.'
         Failed         = '  das Update wurde nicht abgeschlossen - siehe die Ausgabe oben.'
+        PressEnter     = '  Drücke Enter zum Beenden'
     }
 }
 $s = $_strings[$_lang]
@@ -161,6 +167,7 @@ if (-not (Test-Path -PathType Leaf $uiPath)) {
     Write-Host "  $uiPath" -ForegroundColor DarkGray
     Write-Host "  It ships in the same folder; this release package is incomplete." -ForegroundColor DarkGray
     Write-Host ""
+    if (-not $AutoExit) { [void](Read-Host $s.PressEnter) }
     exit 1
 }
 . $uiPath
@@ -172,6 +179,7 @@ else { $callerDir = $PWD.Path }
 if (-not $FirmwareFile) {
     OpenKNX_ShowLogo $s.Way
     Write-Host $s.NoFirmware -ForegroundColor Red
+    OpenKNX_WaitExit $s.PressEnter -Skip:$AutoExit
     exit 1
 }
 if (Test-Path -PathType Leaf $FirmwareFile) { $fw = (Resolve-Path $FirmwareFile).Path }
@@ -179,6 +187,7 @@ else { $fw = Join-Path $callerDir $FirmwareFile }
 if (-not (Test-Path -PathType Leaf $fw)) {
     OpenKNX_ShowLogo $s.Way
     Write-Host ($s.NotFound -f $FirmwareFile) -ForegroundColor Red
+    OpenKNX_WaitExit $s.PressEnter -Skip:$AutoExit
     exit 1
 }
 
@@ -260,6 +269,7 @@ if (-not $oknx) {
     Write-Host $s.OknxMissing5 -ForegroundColor DarkGray
     Write-Host $s.OknxMissing6 -ForegroundColor DarkGray
     Write-Host ""
+    OpenKNX_WaitExit $s.PressEnter -Skip:$AutoExit
     exit 1
 }
 
@@ -294,4 +304,5 @@ switch ($rc) {
     6 { Write-Host $s.NoReturn -ForegroundColor Red }
     default { Write-Host $s.Failed -ForegroundColor Red }
 }
+if ($rc -ne 130) { OpenKNX_WaitExit $s.PressEnter -Skip:$AutoExit }  # 130 = cancelled in knxota: exit at once
 exit $rc
