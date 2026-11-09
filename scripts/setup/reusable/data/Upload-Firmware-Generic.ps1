@@ -2507,6 +2507,7 @@ if ($Chip -eq 'RP2040') {
         # ── Info option ──────────────────────────────────────────────────────
         $lastPort  = Wait-ForSerialPort { ScanPicoPorts } 15 $serialBefore
         $showInfo  = $true
+        $infoShown = $false
         while ($showInfo) {
             Write-Host
             Write-Host "  [I]  $($s.OptInfo)"
@@ -2514,7 +2515,7 @@ if ($Chip -eq 'RP2040') {
             Write-Host
             $ic = Read-Choice "$($s.ChoicePrompt) [I/X]" @('I','X')
             if ($ic -eq 'X') { $showInfo = $false }
-            else { $showInfo = -not (Show-DeviceInfo $lastPort) }  # retry on timeout
+            else { $infoShown = Show-DeviceInfo $lastPort; $showInfo = -not $infoShown }  # retry on timeout
         }
 
         if ($script:MultiMode) {
@@ -2525,7 +2526,7 @@ if ($Chip -eq 'RP2040') {
             if ($continueFlashing) { Write-Host }
         } else {
             $continueFlashing = $false
-            WaitOrPause 1
+            if ($infoShown) { WaitOrPause }  # info: stay until Enter; [X]: exit at once
         }
     }
 
@@ -2706,7 +2707,8 @@ elseif ($Chip -eq 'ESP32') {
         }
 
         # ── Info option ──────────────────────────────────────────────────────
-        $showInfo = $true
+        $showInfo  = $true
+        $infoShown = $false
         while ($showInfo) {
             Write-Host
             Write-Host "  [I]  $($s.OptInfo)"
@@ -2714,7 +2716,7 @@ elseif ($Chip -eq 'ESP32') {
             Write-Host
             $ic = Read-Choice "$($s.ChoicePrompt) [I/X]" @('I','X')
             if ($ic -eq 'X') { $showInfo = $false }
-            else { $showInfo = -not (Show-DeviceInfo $selected.Path) }  # retry on timeout
+            else { $infoShown = Show-DeviceInfo $selected.Path; $showInfo = -not $infoShown }  # retry on timeout
         }
 
         if ($script:MultiMode) {
@@ -2725,7 +2727,7 @@ elseif ($Chip -eq 'ESP32') {
             if ($continueFlashing) { Write-Host }
         } else {
             $continueFlashing = $false
-            WaitOrPause 10
+            if ($infoShown) { WaitOrPause }  # info: stay until Enter; [X]: exit at once
         }
     }
 
