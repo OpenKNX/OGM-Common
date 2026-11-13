@@ -185,14 +185,14 @@ namespace OpenKNX
         #else
             #pragma error "Invalid KNX_UART_NUM defined"
         #endif
-        knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART, true, true));
+        knx.platform().interface(new TPUart::Interface::RP2040(KNX_UART_RX_PIN, KNX_UART_TX_PIN, KNX_UART));
     #else
         #pragma GCC error "No valid KNX UART interface defined (KNX_UART_NUM, KNX_UART_RX_PIN, KNX_UART_TX_PIN)"
     #endif
     #if MASK_VERSION == 0x091A
-        knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerReceivedFrame(
+        knx.bau().getSecondaryDataLinkLayer()->getTPUart().registerFrameCallback(
     #else
-        knx.bau().getDataLinkLayer()->getTPUart().registerReceivedFrame(
+        knx.bau().getDataLinkLayer()->getTPUart().registerFrameCallback(
     #endif
             [](TPUart::Frame& tpFrame) {
                 // Process received frame

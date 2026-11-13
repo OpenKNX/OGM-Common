@@ -2,6 +2,8 @@
 
 ## upcoming releases
 
+* Update: Use the new TPUart 2.0 API (needs knx 2.5.0 / TPUart 2.0.0): `registerFrameCallback()` instead of `registerReceivedFrame()`, `bcuStateName()` instead of `getBcuStateInfo()`, and the RP2040 interface without the ignored `irq`/`dma` parameters
+* Feature (Console): Detailed BCU statistics in the `bcu` command (chip, baud rate, bus load, tick timing, RX/TX counters, queue peaks, errors). The search buffer values of the old output are gone, as TPUart 2.0 has no search buffer
 * Update: Increase minimum OpenKNXproducer version to 4.3.12 (from 4.3.5 in Common.share.xml)
   * Resulting changes:
     * Disable ReadOnInitFlag for KOs
