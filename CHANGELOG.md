@@ -11,6 +11,9 @@
 * Change (ESP32): the LED flush task is only started with an LED on an I2C expander; without one its stack stays free
 * Change: the time manager converts the local time only after a new second, a set time or a change of the daylight saving mode instead of in every loop; the sun calculation converts the time only once per minute
 * Fix (ESP32-S3, ESP32-P4 with PSRAM): `PsramAllocator` throws `std::bad_alloc` like `std::allocator` when the memory is short; a container got a null pointer before
+* Fix: started by double-click, `OTA-Upload-Firmware-Generic.ps1` and `KNX-Upload-Firmware-Generic.ps1` keep the result on screen until Enter, `Prepare-Firmware-Generic.ps1` when started through its menu; the window closed at once (OTA after a successful upload, the other two on every way out) and took result and error messages with it. With `-AutoExit` (OTA, KNX) or without an interactive input they exit at once
+* Fix: `Upload-Firmware-Generic.ps1` keeps the device info of [I] on screen until Enter instead of closing the window after 1 s (RP2040) or 10 s (ESP32); [X] in single mode ends the script at once
+* New: `custom_flash_size` (`hwcfg` or a size such as `8MB`) sets the flash size and layout of an env. `hwcfg` takes `DEVICE_FLASH_SIZE_MB` from the hardware header; ESP32 takes the largest `esp32_<N>mb.csv` that fits or `custom_flash_partitions`, RP2040/RP2350 set the maximum size and the file system or `custom_fs_size`. Without it the ini values stay; the build stops on an invalid size or a file system that overlaps the KNX/OPENKNX region
 
 ## ec/v2.0.0-beta.3: 2026-11-05
 
