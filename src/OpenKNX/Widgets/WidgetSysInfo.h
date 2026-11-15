@@ -9,25 +9,20 @@
 #ifdef DEVICE_DISPLAY_MODULE
 #pragma once
 
-// Multi-page system-information widget provided by OGM-Common.
-// Lives in OGM-Common but subclasses the DeviceDisplay Widget base (OFM-DeviceDisplay).
-// The Widget base + i2cDisplay come from OFM-DeviceDisplay; PlatformIO puts that
-// library's src/ on the include path, so the bare "Widget.h" / "DeviceDisplay.h"
-// includes resolve exactly like OFM-SDCard/src/Widgets/WidgetSDCard.h does.
+// Lives in OGM-Common but subclasses the DeviceDisplay Widget base (OFM-DeviceDisplay); PlatformIO puts
+// that library's src/ on the include path, so the bare includes resolve like in OFM-SDCard.
 #include "Widget.h"
 #include "DeviceDisplay.h"
 
 namespace OpenKNX
 {
-    // Four rotating pages built from the OpenKNX facades (openknx.info / freeMemory /
-    // openknx.logger.buildUptime). Draw basis: header + countdown like
-    // WidgetSDCard::drawSDInfo, a 4-line key/value body and an "n/4" page indicator.
-    // Auto-paging derives the per-page dwell time from displayTime / pageCount.
+    /**
+     * @brief Status card plus four expert pages (device, firmware, runtime, diagnostics).
+     * The WidgetsManager rotates and flips the pages; the widget only draws what the OpenKNX facades hold.
+     */
     class WidgetSysInfo : public Widget
     {
       public:
-        static constexpr size_t PAGE_COUNT = 4; // Geraet / Firmware / Runtime / Diagnose
-
         const std::string logPrefix() { return "WidgetSysInfo"; }
         WidgetSysInfo(uint32_t displayTime, WidgetFlags action);
 
@@ -54,12 +49,12 @@ namespace OpenKNX
         void setDisplayModule(i2cDisplay *displayModule) override;
         i2cDisplay *getDisplayModule() const override;
 
-        // Multi-page interface
+        // Pages: page 0 is the card; without auto paging the rotation shows only page 0.
         size_t getPageCount() const override { return PAGE_COUNT; }
-        size_t getCurrentPage() const override { return _currentPage; }
+        size_t getCurrentPage() const override { return _page; }
         void setPage(size_t page) override;
-        void nextPage() override;
-        void prevPage() override;
+        void nextPage() override { setPage((_page + 1) % PAGE_COUNT); }
+        void prevPage() override { setPage((_page + PAGE_COUNT - 1) % PAGE_COUNT); }
 
         // KNX type label derived from the KNX MASK_VERSION.
         //   0x091A -> "Router 091A", 0x07B0 -> "TP Device 07B0",
@@ -67,24 +62,33 @@ namespace OpenKNX
         static std::string knxTypeLabel(uint16_t maskVersion);
 
       private:
+        enum Page : uint8_t
+        {
+            PAGE_CARD = 0,
+            PAGE_DEVICE,
+            PAGE_FIRMWARE,
+            PAGE_RUNTIME,
+            PAGE_DIAGNOSTICS,
+            PAGE_COUNT
+        };
+
+        static constexpr uint32_t REDRAW_INTERVAL_MS = 1000;
+
         WidgetState _state;
         uint32_t _displayTime;
         WidgetFlags _action;
         i2cDisplay *_display;
-        std::string _name = "System-Info";
+        std::string _name = "System-Info"; // rotation settings are stored by this name: never rename it
+        size_t _page = 0;
+        uint32_t _lastDraw = 0;
+        bool _forceRedraw = true;
 
-        size_t _currentPage = 0;      // 0..PAGE_COUNT-1
-        uint32_t _lastUpdate = 0;     // last 1x/s redraw
-        uint32_t _lastPageFlip = 0;   // auto-paging timer base
-        uint32_t _startTime = 0;      // countdown base (like WidgetSDCard)
-
-        // Auto-paging dwell per page = displayTime / PAGE_COUNT (min clamp).
-        uint32_t pageDwellMs() const;
-
-        void drawSysInfo();
-        void drawHeader();                                   // header line + countdown + divider + "n/4"
-        void drawPageBody();                                 // 4-line key/value body for the current page
-        void drawKeyValueRow(uint8_t row, const char *key, const std::string &value);
+        void drawPage();
+        void drawCard(Adafruit_SSD1306 &d);
+        void drawDevice(Adafruit_SSD1306 &d);
+        void drawFirmware(Adafruit_SSD1306 &d);
+        void drawRuntime(Adafruit_SSD1306 &d);
+        void drawDiagnostics(Adafruit_SSD1306 &d);
     };
 
 } // namespace OpenKNX

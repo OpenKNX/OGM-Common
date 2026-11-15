@@ -8,10 +8,70 @@
  */
 #ifdef DEVICE_DISPLAY_MODULE
     #include "WidgetSysInfo.h"
+    #include "DisplayUi.h"
+    #include "Icons/UiIcons.h"
     #include "OpenKNX.h"
+    #include <string.h>
 
 namespace OpenKNX
 {
+    namespace
+    {
+        /** @brief Card symbol: chip with four pins on each side, in x47..80 y0..27. */
+        void drawChipSymbol(Adafruit_SSD1306 &d)
+        {
+            d.drawRoundRect(52, 4, 24, 20, 2, WHITE);
+            d.drawRect(58, 10, 12, 8, WHITE);
+            for (int16_t i = 0; i < 4; i++)
+            {
+                d.drawFastHLine(47, (int16_t)(7 + i * 4), 5, WHITE);
+                d.drawFastHLine(76, (int16_t)(7 + i * 4), 5, WHITE);
+            }
+            for (int16_t i = 0; i < 4; i++)
+            {
+                d.drawFastVLine((int16_t)(56 + i * 5), 0, 4, WHITE);
+                d.drawFastVLine((int16_t)(56 + i * 5), 24, 4, WHITE);
+            }
+        }
+
+        /**
+         * @brief Ui::row() that wraps a value too long for its row onto the next row, at the same column.
+         * Breaks at the last space that fits if the rest then fits too, else after a full row; the second row is cut
+         * with "...". Returns the rows used.
+         */
+        uint8_t rowWrap(Adafruit_SSD1306 &d, uint8_t row, const char *label, const char *value, uint8_t labelCols)
+        {
+            const int16_t room = (int16_t)((d.width() - Ui::ValueEnd) / Ui::CharW - labelCols);
+            const int16_t len = (int16_t)strlen(value);
+            if (len <= room || room < 4)
+            {
+                Ui::row(d, row, label, value, labelCols);
+                return 1;
+            }
+            int16_t cut = room, next = room;
+            for (int16_t i = room; i > 0; i--)
+            {
+                if (value[i] == ' ')
+                {
+                    if (len - i - 1 <= room)
+                    {
+                        cut = i;
+                        next = (int16_t)(i + 1);
+                    }
+                    break;
+                }
+            }
+            if (value[next] == ' ') next++; // a break inside the word must not start the second row with a space
+            Ui::row(d, row, label, nullptr);
+            const int16_t x = (int16_t)(labelCols * Ui::CharW);
+            const int16_t y = (int16_t)(Ui::Row0 + Ui::Pitch * row);
+            d.setCursor(x, y);
+            for (int16_t i = 0; i < cut; i++)
+                d.write(value[i]);
+            Ui::printCut(d, x, (int16_t)(y + Ui::Pitch), value + next, room);
+            return 2;
+        }
+    } // namespace
 
     WidgetSysInfo::WidgetSysInfo(uint32_t displayTime, WidgetFlags action)
         : _state(WidgetState::STOPPED), _displayTime(displayTime), _action(action), _display(nullptr)
@@ -63,32 +123,15 @@ namespace OpenKNX
         return _display;
     }
 
-    // ---- Multi-page interface -------------------------------------------
+    // ---- Pages ------------------------------------------------------------------
     void WidgetSysInfo::setPage(size_t page)
     {
         if (page >= PAGE_COUNT) page = PAGE_COUNT - 1;
-        _currentPage = page;
-        _lastPageFlip = millis();
-    }
-
-    void WidgetSysInfo::nextPage()
-    {
-        _currentPage = (_currentPage + 1) % PAGE_COUNT;
-        _lastPageFlip = millis();
-    }
-
-    void WidgetSysInfo::prevPage()
-    {
-        _currentPage = (_currentPage + PAGE_COUNT - 1) % PAGE_COUNT;
-        _lastPageFlip = millis();
-    }
-
-    uint32_t WidgetSysInfo::pageDwellMs() const
-    {
-        // Auto-paging timing: whole widget window split across all pages.
-        uint32_t dwell = (_displayTime > 0) ? (_displayTime / PAGE_COUNT) : 1000;
-        if (dwell < 500) dwell = 500; // keep each page readable
-        return dwell;
+        if (page != _page)
+        {
+            _page = page;
+            _forceRedraw = true;
+        }
     }
 
     // ---- Lifecycle --------------------------------------------------------------
@@ -107,10 +150,7 @@ namespace OpenKNX
         if (_state == WidgetState::RUNNING) return;
         logDebugP("Start...");
         _state = WidgetState::RUNNING;
-        _currentPage = 0;
-        _startTime = millis();
-        _lastPageFlip = _startTime;
-        _lastUpdate = 0; // force an immediate redraw on the first loop
+        _forceRedraw = true;
     }
 
     void WidgetSysInfo::stop()
@@ -139,179 +179,121 @@ namespace OpenKNX
         {
             logDebugP("Resume...");
             _state = WidgetState::RUNNING;
+            _forceRedraw = true;
         }
     }
 
     void WidgetSysInfo::loop()
     {
-        if (_state != WidgetState::RUNNING || !_display) return;
+        if (_state != WidgetState::RUNNING || !_display || !_display->display) return;
 
-        uint32_t now = millis();
-
-        // Auto-paging: advance the page once its dwell time elapsed. Pause freezes EVERYTHING
-        // — including this internal page advance (the manager's updateAutoPaging is already
-        // pause-gated, so the internal timer must be too; a pause is a pause).
-        bool paused = false;
-        if (openknxDisplayModule.getWidgetManager())
-            paused = openknxDisplayModule.getWidgetManager()->isRotationPaused();
-
-        if (!paused && (uint32_t)(now - _lastPageFlip) >= pageDwellMs())
+        // Non-blocking: redraw once per second for the live values, at once after a page change.
+        const uint32_t now = millis();
+        if (_forceRedraw || now - _lastDraw >= REDRAW_INTERVAL_MS)
         {
-            _currentPage = (_currentPage + 1) % PAGE_COUNT;
-            _lastPageFlip = now;
-            _lastUpdate = 0; // redraw immediately on page change
-        }
-        else if (paused)
-        {
-            _lastPageFlip = now; // don't accumulate while paused -> no page jump on resume
-        }
-
-        // Redraw 1x/s to refresh live values + countdown.
-        if (_lastUpdate == 0 || (uint32_t)(now - _lastUpdate) >= 1000)
-        {
-            _lastUpdate = now;
-            drawSysInfo();
+            _lastDraw = now;
+            _forceRedraw = false;
+            drawPage();
         }
     }
 
     // ---- Drawing ----------------------------------------------------------------
-    void WidgetSysInfo::drawSysInfo()
+    void WidgetSysInfo::drawPage()
     {
-        if (!_display || !_display->display)
+        Adafruit_SSD1306 &d = *_display->display;
+        Ui::begin(d);
+        d.clearDisplay();
+
+        switch (_page)
         {
-            logErrorP("Display or display driver is NULL.");
-            return;
+            case PAGE_DEVICE: drawDevice(d); break;
+            case PAGE_FIRMWARE: drawFirmware(d); break;
+            case PAGE_RUNTIME: drawRuntime(d); break;
+            case PAGE_DIAGNOSTICS: drawDiagnostics(d); break;
+            default: drawCard(d); break;
         }
-
-        _display->display->clearDisplay();
-        _display->display->setTextColor(WHITE);
-        _display->display->setTextSize(1);
-        _display->display->setTextWrap(false);
-
-        drawHeader();
-        drawPageBody();
 
         _display->displayBuff();
     }
 
-    void WidgetSysInfo::drawHeader()
+    /** @brief Check mark and "Running"; warning and "Restarted" while the watchdog reset counter is not 0. */
+    void WidgetSysInfo::drawCard(Adafruit_SSD1306 &d)
     {
-        const uint16_t screenW = _display->GetDisplayWidth();
-
-        // Title left, like every other widget.
-        const std::string &title = getName();
-        _display->display->setCursor(0, 0);
-        _display->display->print(title.c_str());
-
-        // Countdown marker travelling along the header divider, mirroring
-        // WidgetSDCard::drawSDInfo so all rotating widgets look consistent.
-        if (_displayTime > 0)
-        {
-            uint32_t elapsed = millis() - _startTime;
-            if (elapsed > _displayTime) elapsed = _displayTime;
-            uint16_t markerX = (uint16_t)(((uint32_t)screenW * elapsed) / _displayTime);
-            _display->display->fillCircle(markerX, 10, 2, WHITE);
-            _display->display->drawCircle(markerX, 10, 2, BLACK);
-        }
-
-        _display->display->drawLine(0, 10, screenW, 10, WHITE);
-
-        // Page indicator: dots, not "n/N". They end at screenW-12 because the manager owns the
-        // corner there (pause/play glyph, busmon badge).
-        const int16_t startX = (int16_t)screenW - 12 - (int16_t)PAGE_COUNT * 6;
-        for (uint8_t i = 0; i < PAGE_COUNT; i++)
-        {
-            const int16_t x = startX + i * 6 + 2;
-            if (i == _currentPage)
-                _display->display->fillCircle(x, 4, 2, WHITE);
-            else
-                _display->display->drawCircle(x, 4, 1, WHITE);
-        }
-    }
-
-    void WidgetSysInfo::drawKeyValueRow(uint8_t row, const char *key, const std::string &value)
-    {
-        // Four key/value rows starting below the header divider (y = 10).
-        const int16_t y = (int16_t)(15 + row * 12);
-        _display->display->setCursor(0, y);
-        _display->display->print(key);
-        _display->display->print(": ");
-        _display->display->print(value.c_str());
-    }
-
-    void WidgetSysInfo::drawPageBody()
-    {
-        switch (_currentPage)
-        {
-            case 0: // Gerät
-            {
-                drawKeyValueRow(0, "ID", openknx.info.firmwareName());
-                drawKeyValueRow(1, "SN", openknx.info.humanSerialNumber());
-                drawKeyValueRow(2, "PA", openknx.info.humanIndividualAddress());
-                break;
-            }
-            case 1: // Firmware
-            {
-                drawKeyValueRow(0, "Version", openknx.info.humanFirmwareVersion());
-                drawKeyValueRow(1, "Number", openknx.info.humanFirmwareNumber());
-                drawKeyValueRow(2, "KNX", knxTypeLabel(MASK_VERSION));
-                break;
-            }
-            case 2: // Runtime
-            {
-                char freeBuf[24] = {};
-                snprintf(freeBuf, sizeof(freeBuf), "%.1f KiB", (float)freeMemory() / 1024.0f);
-                drawKeyValueRow(0, "Free", std::string(freeBuf));
-
-                // PSRAM only exists on ESP32 boards that have it (RP2040 has none) -> the row is
-                // omitted entirely there instead of showing a placeholder; Uptime shifts up.
-                uint8_t rtRow = 1;
-    #if defined(ARDUINO_ARCH_ESP32) && defined(BOARD_HAS_PSRAM)
-                char psramBuf[24] = {};
-                snprintf(psramBuf, sizeof(psramBuf), "%.0f KiB", (float)ESP.getFreePsram() / 1024.0f);
-                drawKeyValueRow(rtRow++, "PSRAM", std::string(psramBuf));
+        char detail[24];
+        snprintf(detail, sizeof(detail), "Up %s", openknx.logger.buildUptime().c_str());
+        // Without the watchdog the counter sits in uninitialised RAM and is never written.
+    #if defined(OPENKNX_WATCHDOG) && !defined(OPENKNX_DEBUGGER)
+        const bool restarted = openknx.watchdog.resets() > 0;
+    #else
+        const bool restarted = false;
     #endif
-                drawKeyValueRow(rtRow, "Uptime", openknx.logger.buildUptime());
-                break;
-            }
-            case 3: // Diagnose -- values the console shows but the display never did
-            {
-                char buf[24] = {};
+        Ui::statusCard(d, drawChipSymbol, restarted ? Ui::kBadgeWarn : Ui::kBadgeOk, restarted ? "Restarted" : "Running", detail);
+        Ui::pageDots(d, PAGE_COUNT, PAGE_CARD);
+    }
 
-                // The MINIMUM matters, not the current value: a leak shows in the low-water mark.
-                snprintf(buf, sizeof(buf), "%.1f KiB", (float)openknx.common.freeMemoryMin() / 1024.0f);
-                drawKeyValueRow(0, "Heap min", std::string(buf));
+    void WidgetSysInfo::drawDevice(Adafruit_SSD1306 &d)
+    {
+        Ui::header(d, "Device", PAGE_COUNT, PAGE_DEVICE);
+        uint8_t r = rowWrap(d, 0, "ID", openknx.info.firmwareName().c_str(), 3);
+        Ui::row(d, r++, "SN", openknx.info.humanSerialNumber().c_str(), 3);
+        Ui::row(d, r, "PA", openknx.info.humanIndividualAddress().c_str(), 3);
+    }
+
+    void WidgetSysInfo::drawFirmware(Adafruit_SSD1306 &d)
+    {
+        Ui::header(d, "Firmware", PAGE_COUNT, PAGE_FIRMWARE);
+        Ui::row(d, 0, "Version", openknx.info.humanFirmwareVersion().c_str(), 8);
+        Ui::row(d, 1, "Number", openknx.info.humanFirmwareNumber().c_str(), 8);
+        Ui::row(d, 2, "KNX", knxTypeLabel(MASK_VERSION).c_str(), 8);
+    }
+
+    void WidgetSysInfo::drawRuntime(Adafruit_SSD1306 &d)
+    {
+        Ui::header(d, "Runtime", PAGE_COUNT, PAGE_RUNTIME);
+        char b[24];
+        snprintf(b, sizeof(b), "%.1f KiB", (float)freeMemory() / 1024.0f);
+        Ui::row(d, 0, "Free", b, 7);
+
+        // PSRAM only exists on ESP32 boards that have it: elsewhere the row is left out and Uptime moves up.
+        uint8_t r = 1;
+    #if defined(ARDUINO_ARCH_ESP32) && defined(BOARD_HAS_PSRAM)
+        snprintf(b, sizeof(b), "%.0f KiB", (float)ESP.getFreePsram() / 1024.0f);
+        Ui::row(d, r++, "PSRAM", b, 7);
+    #endif
+        Ui::row(d, r, "Uptime", openknx.logger.buildUptime().c_str(), 7);
+    }
+
+    void WidgetSysInfo::drawDiagnostics(Adafruit_SSD1306 &d)
+    {
+        Ui::header(d, "Diagnostics", PAGE_COUNT, PAGE_DIAGNOSTICS);
+        char b[24];
+
+        // The low-water mark, not the current value: a leak shows there.
+        snprintf(b, sizeof(b), "%.1f KiB", (float)openknx.common.freeMemoryMin() / 1024.0f);
+        Ui::row(d, 0, "Heap min", b, 9);
 
     #ifdef OPENKNX_DUALCORE
-                snprintf(buf, sizeof(buf), "%i / %i B", openknx.common.freeStackMin(),
-                         openknx.common.freeStackMin1());
+        snprintf(b, sizeof(b), "%i/%i B", openknx.common.freeStackMin(), openknx.common.freeStackMin1());
     #else
-                snprintf(buf, sizeof(buf), "%i B", openknx.common.freeStackMin());
+        snprintf(b, sizeof(b), "%i B", openknx.common.freeStackMin());
     #endif
-                drawKeyValueRow(1, "Stack", std::string(buf));
+        Ui::row(d, 1, "Stack", b, 9);
 
-                // Silent restarts are invisible otherwise.
-                if (openknx.watchdog.active())
-                    snprintf(buf, sizeof(buf), "%u (%us)", (unsigned)openknx.watchdog.resets(),
-                             (unsigned)openknx.watchdog.maxPeriod());
-                else
-                    snprintf(buf, sizeof(buf), "off");
-                drawKeyValueRow(2, "Watchdog", std::string(buf));
+        // Consecutive watchdog restarts and the reset period.
+        if (openknx.watchdog.active())
+            snprintf(b, sizeof(b), "%u (%us)", (unsigned)openknx.watchdog.resets(), (unsigned)openknx.watchdog.maxPeriod());
+        else
+            snprintf(b, sizeof(b), "off");
+        Ui::row(d, 2, "Watchdog", b, 9);
 
     #if defined(ARDUINO_ARCH_ESP32)
-                snprintf(buf, sizeof(buf), "%s %u MHz", ESP.getChipModel(), (unsigned)getCpuFrequencyMhz());
+        snprintf(b, sizeof(b), "%s %u MHz", ESP.getChipModel(), (unsigned)getCpuFrequencyMhz());
     #elif defined(ARDUINO_ARCH_RP2040)
-                snprintf(buf, sizeof(buf), "RP %u MHz", (unsigned)(F_CPU / 1000000UL));
+        snprintf(b, sizeof(b), "RP %u MHz", (unsigned)(F_CPU / 1000000UL));
     #else
-                snprintf(buf, sizeof(buf), "-");
+        snprintf(b, sizeof(b), "-");
     #endif
-                drawKeyValueRow(3, "Chip", std::string(buf));
-                break;
-            }
-
-            default:
-                break;
-        }
+        Ui::row(d, 3, "Chip", b, 9);
     }
 
 } // namespace OpenKNX
