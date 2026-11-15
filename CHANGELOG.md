@@ -1,5 +1,17 @@
 # Changes
 
+## ec/v2.0.0-beta.4: not released
+
+* Fix: a flash save no longer aborts the device when the heap is short. The sector buffer of each flash driver is allocated in `init()`; when that fails, a write is dropped with an error line instead of a throwing `new`
+* Fix (ESP32): `Upload-Firmware-Generic.ps1` read the chip of a firmware named `...-ESP32-P4-...` as a classic ESP32 and refused the flash on an ESP32-P4 as a chip mismatch; the name now yields ESP32-P4 (also ESP32-C6, ESP32-S3 with a separator)
+* Change (RP2040, RP2350): `erase all` also erases the EEPROM sector of the core (the WiFi credentials of OFM-Network)
+* Change (ESP32): the ESP32 targets build with pioarduino 55.03.312-1 (Arduino core 3.3.12, ESP-IDF 5.5.5) instead of 54.03.21-2 (core 3.2.1, IDF 5.4.2); one platform for every ESP32 target, the ESP32-P4 included; this platform needs PlatformIO Core 6.2.0 or newer (6.1.x refuses it)
+* Note: the sector buffers of both flash drivers (4 KB each) are now held from the start; before they came with the first write
+* New (ESP32, with `OPENKNX_CONSOLE_MEM_DETAIL`): `mem tasks` shows the never used stack of every task and the heap blocks by size; `mem modules` shows the heap each module took in its init, setup and after-startup call (allocations of other tasks in that time count too)
+* Change (ESP32): the LED flush task is only started with an LED on an I2C expander; without one its stack stays free
+* Change: the time manager converts the local time only after a new second, a set time or a change of the daylight saving mode instead of in every loop; the sun calculation converts the time only once per minute
+* Fix (ESP32-S3, ESP32-P4 with PSRAM): `PsramAllocator` throws `std::bad_alloc` like `std::allocator` when the memory is short; a container got a null pointer before
+
 ## ec/v2.0.0-beta.3: 2026-11-05
 
 Flash and module sync fixes and a direct time getter on top of `ec/v2.0.0-beta.2`, with `v1dev` merged.
