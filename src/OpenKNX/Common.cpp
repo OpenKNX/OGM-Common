@@ -1,5 +1,8 @@
 #include "OpenKNX/Common.h"
 #include "OpenKNX/Facade.h"
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+    #include <esp_heap_caps.h> // heap taken per module ("mem modules")
+#endif
 #if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32) // ESP-only: heap_caps_* is ESP-IDF
     #include "OpenKNX/Heap/HeapCheck.h"
 #endif
@@ -265,7 +268,15 @@ namespace OpenKNX
 
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+            const size_t heapBefore = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
             openknx.modules.list[i]->init();
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+            openknx.modules.heapUsed[i] += (int32_t)heapBefore - (int32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
+        }
 
         openknx.ledFunctions.setup();
 
@@ -283,7 +294,13 @@ namespace OpenKNX
         // Handle setup of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+            const size_t heapBefore = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
             openknx.modules.list[i]->setup(configured);
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+            openknx.modules.heapUsed[i] += (int32_t)heapBefore - (int32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
 #if defined(OPENKNX_HEAP_INTEGRITY_TRACE) && defined(ARDUINO_ARCH_ESP32)
             OPENKNX_HEAPCHK((std::string("setup ") + openknx.modules.list[i]->name()).c_str());
 #endif
@@ -708,7 +725,13 @@ namespace OpenKNX
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+            const size_t heapBefore = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
             openknx.modules.list[i]->processAfterStartupDelay();
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+            openknx.modules.heapUsed[i] += (int32_t)heapBefore - (int32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+#endif
         }
 
         logIndentDown();

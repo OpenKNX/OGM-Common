@@ -92,6 +92,7 @@ ParamBASE_HeartbeatDelayTimeMS
 | Define | Default | Function |
 |--------|---------|----------|
 | `OPENKNX_DEBUG` | - | Enable debug mode |
+| `OPENKNX_CONSOLE_MEM_DETAIL` | - | ESP32: console commands `mem tasks` (unused stack per task, heap blocks) and `mem modules` (heap per module at start) |
 | `OPENKNX_TRACE1..5` | - | Enable tracing with regex filters |
 | `OPENKNX_DEBUGGER` | - | Enable SWD debugger support (disables watchdog) |
 | `OPENKNX_RTT` | - | Enable RTT mode (disable USB serial) |

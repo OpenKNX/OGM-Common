@@ -78,6 +78,10 @@ namespace OpenKNX
         void printHelpLine(const char* command, const char* message);
         bool processCommand(std::string cmd, bool diagnoseKo = false);
         void showMemory(bool diagnoseKo = false);
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+        /** @brief Unused stack bytes per task and the block count of the internal heap: where memory can be won. */
+        void showMemoryTasks();
+#endif
         void processSerialInput();
         void showInformations();
         void showVersions();

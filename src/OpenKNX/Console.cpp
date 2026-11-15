@@ -5,6 +5,10 @@
 #include "OpenKNX/I2C/WireWrapper.h" // defines OPENKNX_I2C_USE_PIO when PIO I2C is configured
 #include "OpenKNX/Led/Console.h"
 #include "buildtime.h"
+#include <cstring>
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+#include <esp_timer.h> // mem tasks: duration of the stack scan
+#endif
 
 #ifdef ARDUINO_ARCH_RP2040
 extern uint32_t _EEPROM_start; // linker: last flash sector, core EEPROM emulation (WiFi credentials of OFM-Network)
@@ -145,6 +149,23 @@ namespace OpenKNX
         {
             showMemory(diagnoseKo);
         }
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+        else if (!diagnoseKo && cmd == "mem tasks")
+        {
+            showMemoryTasks();
+        }
+        else if (!diagnoseKo && cmd == "mem modules")
+        {
+            // what each module took during init, setup and after the startup delay; other tasks allocate meanwhile (+-1 KB)
+            int32_t sum = 0;
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+            {
+                sum += openknx.modules.heapUsed[i];
+                openknx.logger.logWithPrefixAndValues("Module", "%-24s %7d bytes", openknx.modules.list[i]->name().c_str(), (int)openknx.modules.heapUsed[i]);
+            }
+            openknx.logger.logWithPrefixAndValues("Modules", "%u, together %d bytes of internal heap", (unsigned)openknx.modules.count, (int)sum);
+        }
+#endif
         else if (!diagnoseKo && (cmd == "p" || cmd == "prog"))
         {
             knx.toggleProgMode();
@@ -989,6 +1010,10 @@ namespace OpenKNX
         printHelpLine("uptime, u", "Show uptime");
         printHelpLine("version, v", "Show compiled versions");
         printHelpLine("memory, mem", "Show memory usage");
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+        printHelpLine("mem tasks", "Show unused stack per task and heap blocks");
+        printHelpLine("mem modules", "Show the heap each module took at start");
+#endif
         printHelpLine("mem 0xXXXXXXXX", "Show memory content (64byte) starting at 0xXXXXXXXX");
         printHelpLine("flash knx", "Show knx flash content");
         printHelpLine("flash openknx", "Show openknx flash content");
@@ -1080,6 +1105,120 @@ namespace OpenKNX
 #endif
         openknx.logger.logWithPrefixAndValues("Uptime", "%s", uptimeStr.c_str());
     }
+
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+    void Console::showMemoryTasks()
+    {
+        // The stack size itself is not read: heap_caps_get_allocated_size() asserts on static stacks (idle, RTC).
+        const UBaseType_t count = uxTaskGetNumberOfTasks() + 4; // tasks created meanwhile
+        // the names are copied at once: pcTaskName points into the control block of a task that may end meanwhile
+        typedef char TaskName[configMAX_TASK_NAME_LEN];
+        TaskStatus_t* tasks = (TaskStatus_t*)malloc(count * (sizeof(TaskStatus_t) + sizeof(TaskName)));
+        if (tasks == nullptr)
+        {
+            openknx.logger.logWithPrefix("Tasks", "no memory for the task list");
+            return;
+        }
+        TaskName* names = (TaskName*)(tasks + count);
+        const int64_t scanAt = esp_timer_get_time();
+        const UBaseType_t got = uxTaskGetSystemState(tasks, count, nullptr); // scans every stack in a critical section
+        const int64_t scanUs = esp_timer_get_time() - scanAt;
+        for (UBaseType_t i = 0; i < got; i++)
+        {
+            strncpy(names[i], tasks[i].pcTaskName, sizeof(TaskName) - 1);
+            names[i][sizeof(TaskName) - 1] = '\0';
+        }
+        uint32_t unusedSum = 0;
+        for (UBaseType_t i = 0; i < got; i++)
+        {
+            const TaskStatus_t& t = tasks[i];
+            unusedSum += t.usStackHighWaterMark; // bytes: StackType_t is uint8_t on ESP32
+            openknx.logger.logWithPrefixAndValues("Task", "%-16s pinned %2d prio %2u never used %5u bytes of stack",
+                                                  names[i], t.xCoreID == tskNO_AFFINITY ? -1 : (int)t.xCoreID,
+                                                  (unsigned)t.uxCurrentPriority, (unsigned)t.usStackHighWaterMark);
+        }
+        openknx.logger.logWithPrefixAndValues("Tasks", "%u, stack never used in total %u bytes, scan %u us", (unsigned)got,
+                                              (unsigned)unusedSum, (unsigned)scanUs);
+
+        // Who holds the heap: used blocks by size class, the largest ones, and free/largest per region.
+        // The walker runs under the heap lock: it only counts into this block (on the stack, ~400 bytes), printing follows after.
+        struct HeapWalk
+        {
+            enum : uint8_t { Classes = 10, Top = 12, Regions = 12 }; // a local class has no static members
+            uint32_t count[Classes], bytes[Classes];
+            uint32_t topSize[Top];
+            uintptr_t topPtr[Top];
+            intptr_t regionStart[Regions];
+            uint32_t regionFree[Regions], regionLargest[Regions], regionUsed[Regions];
+            uint8_t regions;
+        };
+        HeapWalk walk;
+        memset(&walk, 0, sizeof(walk));
+        heap_caps_walk(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT, [](walker_heap_into_t heap, walker_block_info_t block, void* user) -> bool {
+            HeapWalk& w = *(HeapWalk*)user;
+            uint8_t r = 0;
+            while (r < w.regions && w.regionStart[r] != heap.start)
+                r++;
+            if (r == w.regions && w.regions < HeapWalk::Regions)
+                w.regionStart[w.regions++] = heap.start;
+            const bool known = r < w.regions;
+            if (!block.used)
+            {
+                if (known)
+                {
+                    w.regionFree[r] += block.size;
+                    if (block.size > w.regionLargest[r]) w.regionLargest[r] = block.size;
+                }
+                return true;
+            }
+            if (known) w.regionUsed[r] += block.size;
+            uint8_t c = 0; // 32, 64, ... 8192, more
+            while (c < HeapWalk::Classes - 1 && block.size > (32u << c))
+                c++;
+            w.count[c]++;
+            w.bytes[c] += block.size;
+            for (uint8_t t = 0; t < HeapWalk::Top; t++) // keep the largest used blocks, descending
+                if (block.size > w.topSize[t])
+                {
+                    memmove(&w.topSize[t + 1], &w.topSize[t], (HeapWalk::Top - 1 - t) * sizeof(uint32_t));
+                    memmove(&w.topPtr[t + 1], &w.topPtr[t], (HeapWalk::Top - 1 - t) * sizeof(uintptr_t));
+                    w.topSize[t] = block.size;
+                    w.topPtr[t] = (uintptr_t)block.ptr;
+                    break;
+                }
+            return true;
+        }, &walk);
+        for (uint8_t c = 0; c < HeapWalk::Classes; c++)
+            if (walk.count[c])
+                openknx.logger.logWithPrefixAndValues("Heap used", c < HeapWalk::Classes - 1 ? "<= %5u bytes: %4u blocks, %6u bytes" : " > %5u bytes: %4u blocks, %6u bytes",
+                                                      (unsigned)(c < HeapWalk::Classes - 1 ? 32u << c : 32u << (c - 1)), (unsigned)walk.count[c], (unsigned)walk.bytes[c]);
+        // The owner of a large block, where it is known: a task stack or the KNX stack object
+        const uintptr_t bau = (uintptr_t)&knx.bau();
+        for (uint8_t t = 0; t < HeapWalk::Top && walk.topSize[t]; t++)
+        {
+            const uintptr_t a = walk.topPtr[t], e = a + walk.topSize[t];
+            static const char kBau[] = "knx stack (BAU)";
+            const char* owner = (bau >= a && bau < e) ? kBau : "?";
+            for (UBaseType_t i = 0; i < got && owner[0] == '?'; i++)
+                if ((uintptr_t)tasks[i].pxStackBase >= a && (uintptr_t)tasks[i].pxStackBase < e)
+                    owner = names[i];
+            openknx.logger.logWithPrefixAndValues("Heap block", "%6u bytes at 0x%08x: %s%s", (unsigned)walk.topSize[t], (unsigned)a, owner,
+                                                  owner[0] == '?' || owner == kBau ? "" : " stack");
+        }
+        free(tasks);
+        for (uint8_t r = 0; r < walk.regions; r++)
+            openknx.logger.logWithPrefixAndValues("Heap region", "0x%08x used %6u free %6u largest %6u bytes", (unsigned)walk.regionStart[r],
+                                                  (unsigned)walk.regionUsed[r], (unsigned)walk.regionFree[r], (unsigned)walk.regionLargest[r]);
+
+        // Many free blocks with a small largest one: the heap is split, not only full
+        multi_heap_info_t info = {};
+        heap_caps_get_info(&info, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+        openknx.logger.logWithPrefixAndValues("Heap internal", "allocated %u in %u blocks, free %u in %u blocks, largest %u, min %u bytes",
+                                              (unsigned)info.total_allocated_bytes, (unsigned)info.allocated_blocks,
+                                              (unsigned)info.total_free_bytes, (unsigned)info.free_blocks,
+                                              (unsigned)info.largest_free_block, (unsigned)info.minimum_free_bytes);
+    }
+#endif
 
     void Console::showMemory(bool diagnoseKo /* = false */)
     {
