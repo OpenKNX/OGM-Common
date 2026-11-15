@@ -18,6 +18,7 @@ namespace OpenKNX
             friend Console;
             uint8_t _lastHour = 0;
             uint8_t _lastMinute = 0;
+            time_t _lastMinuteStamp = -1; // unix time / 60 of the last calculation: the cheap check before getUtcTime()
             bool _sunCalculationValid = false;
             float _azimuth = 0;
             float _elevation = 0;

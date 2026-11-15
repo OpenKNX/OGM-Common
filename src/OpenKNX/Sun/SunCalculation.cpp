@@ -18,6 +18,10 @@ namespace OpenKNX
         {
             if (openknx.time.isValid())
             {
+                const time_t minuteStamp = openknx.time.getUnixTime() / 60; // UTC minutes: no conversion per loop
+                if (minuteStamp == _lastMinuteStamp)
+                    return;
+                _lastMinuteStamp = minuteStamp;
                 DateTime utc = openknx.time.getUtcTime();
                 if (utc.hour != _lastHour || utc.minute != _lastMinute)
                 {
