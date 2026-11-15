@@ -94,6 +94,7 @@ namespace OpenKNX
             bool _lastValidInLoop = false;
             time_t _lastUpdatedByProviderTimeStamp =0;
             time_t _lastTimeStamp = 0;
+            bool _localTimeBuilt = false; // _lastLocalTimeInLoop belongs to _lastTimeStamp: rebuilt once per second, not per loop
             uint8_t _ledState = 0;
             uint8_t _lastSecondChange = 0;
             unsigned long _timerLedOn = 0;

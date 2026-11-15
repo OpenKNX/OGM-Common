@@ -398,6 +398,7 @@ namespace OpenKNX
             std::string timezoneString = buildTimezoneString(daylightSavingMode);
             setenv("TZ", timezoneString.c_str(), 1);
             tzset();
+            _localTimeBuilt = false; // the local time of the same stamp changes
         }
 
         std::string TimeManager::buildTimezoneString(DaylightSavingMode daylightSavingMode)
@@ -537,11 +538,16 @@ namespace OpenKNX
         void TimeManager::loop()
         {
             _timeClock.loop();
-            _lastTimeStamp = _timeClock.getTime();
+            const time_t stamp = _timeClock.getTime();
+            const bool stampChanged = stamp != _lastTimeStamp;
+            _lastTimeStamp = stamp;
             if (_timeProvider != nullptr)
-                _timeProvider->loop();
+                _timeProvider->loop(); // may set the time: new stamp and _timeSetEventNeeded
 
-            DateTime localTime = DateTime(_lastTimeStamp);
+            // DateTime() converts with the DST rules and is the costly part: only after a new stamp, a set time or a zone change
+            const bool rebuild = !_localTimeBuilt || stampChanged || _timeSetEventNeeded;
+            DateTime localTime = rebuild ? DateTime(_lastTimeStamp) : _lastLocalTimeInLoop;
+            _localTimeBuilt = true;
             TimeChangedEvents timeChangeEvents = (TimeChangedEvents)0;
             if (_timeSetEventNeeded)
             {
