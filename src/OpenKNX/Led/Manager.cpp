@@ -59,6 +59,18 @@ namespace OpenKNX
                 pair.second->init();
 
             _init = true;
+#if defined(ARDUINO_ARCH_ESP32) && !defined(OPENKNX_I2C_SCHEDULER)
+            // the flush task only writes I2C expander LEDs: without one it would wake every tick for nothing
+            for (const auto& pair : _leds)
+            {
+                GPIO* gpio = pair.second->asGPIO();
+                if (gpio && gpio->isI2C())
+                {
+                    openknx.timerInterrupt.startLedFlush();
+                    break;
+                }
+            }
+#endif
         }
 
         void Manager::addLed(Led::Base* led, uint8_t identifier)

@@ -117,6 +117,18 @@ static void openKnxLedFlushTask(void *)
 
 namespace OpenKNX
 {
+#if defined(ARDUINO_ARCH_ESP32) && !defined(OPENKNX_I2C_SCHEDULER)
+    void TimerInterrupt::startLedFlush()
+    {
+        if (s_ledFlushTask != nullptr)
+            return;
+        // Priority below the esp_timer service task (so the tick always preempts) but above the
+        // Arduino loop + lwIP + display render, so the flush wins the Wire1 mutex between page chunks.
+        xTaskCreatePinnedToCore(openKnxLedFlushTask, "OpenKnxLedFlush", 4096, nullptr,
+                                configMAX_PRIORITIES - 4, &s_ledFlushTask, tskNO_AFFINITY);
+    }
+#endif
+
     void TimerInterrupt::init()
     {
 #if defined(ARDUINO_ARCH_RP2040)
@@ -131,14 +143,8 @@ namespace OpenKNX
     #ifdef ARDUINO_ARCH_ESP32
         // esp_timer periodic timer (precise fixed period, mirror of the RP2040 alarm pool);
         // the callback runs in the esp_timer task and must stay short/non-blocking.
-        // Create the flush task first so its handle is valid before the tick can notify it.
-        // Priority below the esp_timer service task (so the tick always preempts) but above the
-        // Arduino loop + lwIP + display render, so the flush wins the Wire1 mutex between page chunks.
-        // With the I2C scheduler there is no flush task: the scheduler writes the LED edges.
-        #ifndef OPENKNX_I2C_SCHEDULER
-        xTaskCreatePinnedToCore(openKnxLedFlushTask, "OpenKnxLedFlush", 4096, nullptr,
-                                configMAX_PRIORITIES - 4, &s_ledFlushTask, tskNO_AFFINITY);
-        #endif
+        // The flush task follows in startLedFlush(), once the LEDs are known: a board without an I2C LED gets none;
+        // until then the tick notifies nobody (null handle). With the I2C scheduler there is no flush task at all.
 
         const esp_timer_create_args_t timerArgs = {
             .callback = [](void *arg) {

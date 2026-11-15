@@ -40,6 +40,10 @@ namespace OpenKNX
 
       public:
         void init();
+#if defined(ARDUINO_ARCH_ESP32) && !defined(OPENKNX_I2C_SCHEDULER)
+        /** @brief Creates the LED flush task; called by the LED manager only when an I2C expander LED exists. */
+        void startLedFlush();
+#endif
         void interrupt();
 #ifdef ARDUINO_ARCH_RP2040
         alarm_pool_t *alarmPool();
