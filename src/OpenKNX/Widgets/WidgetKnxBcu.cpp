@@ -9,6 +9,8 @@
 #include "knx/config.h"
 #if defined(DEVICE_DISPLAY_MODULE) && defined(KNX_HAS_TP)
     #include "WidgetKnxBcu.h"
+    #include "DisplayUi.h"
+    #include "Icons/UiIcons.h"
     #include "OpenKNX.h"
     #include "knx.h" // knx.bau(), TpUartDataLinkLayer::getTPUart(), TPUart::Statistics
 
@@ -16,23 +18,19 @@ namespace OpenKNX
 {
     namespace
     {
-        std::string uStr(unsigned long v)
-        {
-            char b[16];
-            snprintf(b, sizeof(b), "%lu", v);
-            return std::string(b);
-        }
-
         // Auto-range: smallest "nice" full-scale >= v. The bar scale ratchets up
         // through these steps (never shrinks) so small loads are visible early and
-        // the peak stays readable (mock: 50/100/200/300/500/750/1000...).
-        uint32_t niceScale(uint32_t v)
+        // the peak stays readable.
+        uint16_t niceScale(uint16_t v)
         {
-            static const uint32_t steps[] = {50, 100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000};
+            static const uint16_t steps[] = {50, 100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000};
             for (size_t i = 0; i < sizeof(steps) / sizeof(steps[0]); ++i)
                 if (steps[i] >= v) return steps[i];
             return v; // beyond the table: use the raw value
         }
+
+        /** @brief Row icon of an error counter: check mark at 0, warning triangle otherwise. */
+        const uint8_t *rowState(uint64_t count) { return count ? Ui::kRowWarn : Ui::kRowOk; }
     } // namespace
 
     WidgetKnxBcu::WidgetKnxBcu(uint32_t displayTime, WidgetFlags action)
@@ -52,43 +50,21 @@ namespace OpenKNX
     i2cDisplay *WidgetKnxBcu::getDisplayModule() const { return _display; }
 
     // ---- Coupler-aware DLL accessor --------------------------------------------
-    // 0x091A (IP-Router coupler): the BCU sits on the SECONDARY (TP) DLL.
-    // 0x07B0 (pure TP device):    the BCU is the PRIMARY DLL.
-    // anything else:              no TP-UART BCU -> nullptr (widget shows "-").
+    // 0x091A (IP-Router coupler): the BCU sits on the SECONDARY (TP) DLL; 0x07B0 (TP device): the PRIMARY DLL.
     TpUartDataLinkLayer *WidgetKnxBcu::bcuDll() const
     {
-    #ifdef KNX_HAS_TP
         return KNX_TP_DLL;
-    #else
-        return nullptr;
-    #endif
     }
 
-    // ---- Multi-page ------------------------------------------------------------
+    // ---- Pages ---------------------------------------------------------------
     void WidgetKnxBcu::setPage(size_t page)
     {
         if (page >= PAGE_COUNT) page = PAGE_COUNT - 1;
-        _currentPage = page;
-        _lastPageFlip = millis();
-        _lastUpdate = 0; // redraw immediately
-    }
-    void WidgetKnxBcu::nextPage()
-    {
-        _currentPage = (_currentPage + 1) % PAGE_COUNT;
-        _lastPageFlip = millis();
-        _lastUpdate = 0;
-    }
-    void WidgetKnxBcu::prevPage()
-    {
-        _currentPage = (_currentPage + PAGE_COUNT - 1) % PAGE_COUNT;
-        _lastPageFlip = millis();
-        _lastUpdate = 0;
-    }
-    uint32_t WidgetKnxBcu::pageDwellMs() const
-    {
-        uint32_t dwell = (_displayTime > 0) ? (_displayTime / PAGE_COUNT) : 1000;
-        if (dwell < 800) dwell = 800; // keep pages readable
-        return dwell;
+        if (page != _page)
+        {
+            _page = page;
+            _forceRedraw = true;
+        }
     }
 
     // ---- Lifecycle -------------------------------------------------------------
@@ -100,10 +76,8 @@ namespace OpenKNX
     {
         if (_state == WidgetState::RUNNING) return;
         _state = WidgetState::RUNNING;
-        _currentPage = 0;
-        _startTime = millis();
-        _lastPageFlip = _startTime;
-        _lastUpdate = 0;
+        _forceRedraw = true;
+        _cardShown = false; // the first card frame only records the counters
     }
     void WidgetKnxBcu::stop()
     {
@@ -123,36 +97,22 @@ namespace OpenKNX
         if (_state == WidgetState::PAUSED)
         {
             _state = WidgetState::RUNNING;
-            _lastUpdate = 0;
+            _forceRedraw = true;
+            _cardShown = false;
         }
     }
     void WidgetKnxBcu::loop()
     {
-        if (_state != WidgetState::RUNNING || !_display) return;
-        uint32_t now = millis();
+        if (_state != WidgetState::RUNNING || !_display || !_display->display) return;
 
-        // Internal auto-paging: cycle pages during the dwell. Pause freezes EVERYTHING —
-        // including this internal page advance (the manager's updateAutoPaging is already
-        // pause-gated, so the internal timer must be too; a pause is a pause).
-        bool paused = false;
-        if (openknxDisplayModule.getWidgetManager())
-            paused = openknxDisplayModule.getWidgetManager()->isRotationPaused();
-
-        if (!paused && (uint32_t)(now - _lastPageFlip) >= pageDwellMs())
+        // Non-blocking: refresh the live values once per second (the card 4x for its traffic light),
+        // at once after a page change.
+        const uint32_t now = millis();
+        const uint32_t interval = _page == PAGE_CARD ? CARD_REDRAW_MS : REDRAW_INTERVAL_MS;
+        if (_forceRedraw || now - _lastDraw >= interval)
         {
-            _currentPage = (_currentPage + 1) % PAGE_COUNT;
-            _lastPageFlip = now;
-            _lastUpdate = 0;
-        }
-        else if (paused)
-        {
-            _lastPageFlip = now; // don't accumulate while paused -> no page jump on resume
-        }
-
-        // Refresh live values ~1x/s.
-        if (_lastUpdate == 0 || (uint32_t)(now - _lastUpdate) >= 1000)
-        {
-            _lastUpdate = now;
+            _lastDraw = now;
+            _forceRedraw = false;
             draw();
         }
     }
@@ -162,7 +122,7 @@ namespace OpenKNX
     {
         _lastLoad = openknx.busLoad.currentBytesPerSec();
         _loadPeak = openknx.busLoad.peakBytesPerSec();
-        uint32_t needed = niceScale(_loadPeak);
+        const uint16_t needed = niceScale(_loadPeak);
         if (needed > _loadScale) _loadScale = needed; // ratchet up only (no decay)
     }
 
@@ -181,198 +141,222 @@ namespace OpenKNX
     // ---- Drawing ---------------------------------------------------------------
     void WidgetKnxBcu::draw()
     {
-        if (!_display || !_display->display) return;
-
         updateLoadRatchet();
         TpUartDataLinkLayer *dll = bcuDll();
         sampleCounters(dll);
 
-        _display->display->clearDisplay();
-        _display->display->setTextColor(WHITE);
-        _display->display->setTextSize(1);
-        _display->display->setTextWrap(false);
+        Adafruit_SSD1306 &d = *_display->display;
+        Ui::begin(d);
+        d.clearDisplay();
 
-        drawHeader();
-        drawPageBody(dll);
+        if (_page != PAGE_CARD) _cardShown = false; // traffic meanwhile must not light a device on return
+        switch (_page)
+        {
+            case PAGE_TRAFFIC: drawTraffic(d, dll); break;
+            case PAGE_BYTES: drawBytes(d, dll); break;
+            case PAGE_STATUS: drawStatus(d, dll); break;
+    #ifdef TPUART_BCU_HEALTH
+            case PAGE_HEALTH: drawHealth(d, dll); break;
+            case PAGE_NCN: drawNcn(d, dll); break;
+    #endif
+            default: drawCard(d, dll); break;
+        }
 
         _display->displayBuff();
     }
 
-    void WidgetKnxBcu::drawHeader()
+    // Frame 10 px high with the fill 2 px inside, peak-hold marker, full-scale number right of it.
+    void WidgetKnxBcu::drawLoadBar(Adafruit_SSD1306 &d, int16_t y)
     {
-        const uint16_t w = _display->GetDisplayWidth();
+        constexpr int16_t barW = 92, inner = barW - 2 * Ui::BarPad;
+        const uint16_t scale = _loadScale ? _loadScale : 1;
+        const uint16_t load = _lastLoad > scale ? scale : _lastLoad;
+        Ui::bar(d, 0, y, barW, (uint16_t)((uint32_t)load * 1000 / scale));
 
-        const std::string &title = getName();
-        _display->display->setCursor(0, 0);
-        _display->display->print(title.c_str());
-
-        // Dwell marker on the divider. It has to be drawn here, inside the widget's own rebuild:
-        // drawn from the manager after the fact it would leave a trail, because the frame underneath
-        // is only rebuilt on the widget's redraw interval.
-        if (_displayTime > 0)
+        // Peak marker inside the frame (peak >= load, so at or right of the fill edge); none while the peak is 0.
+        if (_loadPeak > 0)
         {
-            uint32_t elapsed = millis() - _startTime;
-            if (elapsed > _displayTime) elapsed = _displayTime;
-            uint16_t markerX = (uint16_t)(((uint32_t)w * elapsed) / _displayTime);
-            _display->display->fillCircle(markerX, 10, 2, WHITE);
-            _display->display->drawCircle(markerX, 10, 2, BLACK);
+            const uint16_t pk = _loadPeak > scale ? scale : _loadPeak;
+            int16_t px = (int16_t)(Ui::BarPad + (uint32_t)inner * pk / scale);
+            if (px > Ui::BarPad + inner - 1) px = (int16_t)(Ui::BarPad + inner - 1);
+            d.drawFastVLine(px, (int16_t)(y + 1), Ui::BarH - 2, WHITE);
         }
-        _display->display->drawLine(0, 10, w, 10, WHITE);
 
-        // Page indicator: dots, not "n/N". They end at w-12 because the manager owns the corner
-        // (pause/play glyph, busmon badge).
-        const int16_t startX = (int16_t)w - 12 - (int16_t)PAGE_COUNT * 6;
-        for (uint8_t i = 0; i < PAGE_COUNT; i++)
+        char sc[8]; // scale <= 65535
+        snprintf(sc, sizeof(sc), "%u", (unsigned)scale);
+        d.setCursor((int16_t)(barW + 4), (int16_t)(y + 1));
+        d.print(sc);
+    }
+
+    // Device lit by the traffic light of the card, -1 = none; set right before statusCard() draws the symbol.
+    static int8_t s_litDevice = -1;
+
+    /** @brief Card symbol: three devices on a two-wire bus line in x40..79 y2..23, clear of six page dots from x80. */
+    static void drawBusSymbol(Adafruit_SSD1306 &d)
+    {
+        int8_t i = 0;
+        for (int16_t x = 42; x <= 68; x += 13, i++)
         {
-            const int16_t x = startX + i * 6 + 2;
-            if (i == _currentPage)
-                _display->display->fillCircle(x, 4, 2, WHITE);
+            if (i == s_litDevice)
+                d.fillRoundRect(x, 2, 11, 9, 1, WHITE);
             else
-                _display->display->drawCircle(x, 4, 1, WHITE);
+                d.drawRoundRect(x, 2, 11, 9, 1, WHITE);
+            d.drawFastVLine((int16_t)(x + 5), 11, 6, WHITE);
         }
+        d.fillRect(40, 17, 40, 2, WHITE);
+        d.fillRect(40, 22, 40, 2, WHITE);
     }
 
-    // Label left, value right-aligned (mock: labels left, values right).
-    void WidgetKnxBcu::drawKeyValueRow(uint8_t row, const char *key, const std::string &value)
+    /** @brief Page 0, shown by the rotation: bus state as a card, the load as detail. */
+    void WidgetKnxBcu::drawCard(Adafruit_SSD1306 &d, TpUartDataLinkLayer *dll)
     {
-        const int16_t y = (int16_t)(15 + row * 12);
-        const uint16_t w = _display->GetDisplayWidth();
-
-        _display->display->setCursor(0, y);
-        _display->display->print(key);
-
-        int16_t vx = (int16_t)(w - value.length() * 6);
-        const int16_t minX = (int16_t)(strlen(key) * 6 + 6); // never overlap the label
-        if (vx < minX) vx = minX;
-        _display->display->setCursor(vx, y);
-        _display->display->print(value.c_str());
-    }
-
-    // Auto-range bar with peak-hold marker + right-side scale number.
-    void WidgetKnxBcu::drawLoadBar(int16_t y)
-    {
-        const int16_t barX = 0, barW = 92, barH = 9;
-        _display->display->drawRect(barX, y, barW, barH, WHITE);
-
-        const uint32_t scale = _loadScale ? _loadScale : 1;
-        const uint32_t load = _lastLoad > scale ? scale : _lastLoad;
-        const int16_t fillW = (int16_t)((uint32_t)(barW - 2) * load / scale);
-        if (fillW > 0) _display->display->fillRect(barX + 1, y + 1, fillW, barH - 2, WHITE);
-
-        // Peak-hold marker (peak >= load, so it sits at/right of the fill edge).
-        const uint32_t pk = _loadPeak > scale ? scale : _loadPeak;
-        int16_t peakX = (int16_t)(barX + 1 + (uint32_t)(barW - 2) * pk / scale);
-        if (peakX > barX + barW - 2) peakX = (int16_t)(barX + barW - 2);
-        _display->display->drawFastVLine(peakX, y, barH, WHITE);
-
-        char sc[12] = {};
-        snprintf(sc, sizeof(sc), "%lu", (unsigned long)scale);
-        _display->display->setCursor((int16_t)(barX + barW + 4), (int16_t)(y + 1));
-        _display->display->print(sc);
-    }
-
-    void WidgetKnxBcu::drawPageBody(TpUartDataLinkLayer *dll)
-    {
-        const bool ok = (dll != nullptr);
-        switch (_currentPage)
+        const uint8_t *badge = Ui::kBadgeError;
+        const char *word = "Bus lost";
+        const char *detail = "Check KNX line";
+        char b[24];
+        if (!dll)
         {
-            case 0: // Stats-1: TX/RX frames, Load, Peak + auto-range bar
-            {
-                if (ok)
-                {
-                    drawKeyValueRow(0, "TX/RX", humanCount(_txFrames) + "/" + humanCount(_rxFrames));
-                    drawKeyValueRow(1, "Load", humanBytes(_lastLoad) + "/s");
-                    drawKeyValueRow(2, "Peak", humanBytes(_loadPeak) + "/s");
-                }
-                else
-                {
-                    drawKeyValueRow(0, "TX/RX", "-");
-                    drawKeyValueRow(1, "Load", "-");
-                    drawKeyValueRow(2, "Peak", "-");
-                }
-                drawLoadBar(52);
-                break;
-            }
-            case 1: // Stats-2: Discarded/Received bytes, Await/Rep, Overflow
-            {
-                if (ok)
-                {
-                    auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "Discard", humanBytes(_discardedBytes));
-                    drawKeyValueRow(1, "Receiv", humanBytes(_receivedBytes));
-                    drawKeyValueRow(2, "Await/Rep",
-                                    humanCount(dll->getTPUart().getReceiver().getAwaitBytes()) + "/" +
-                                        humanCount(st.getRxRepetitions()));
-                    // Four values in one row: the short form is the only one that fits, and the
-                    // label is shortened with it. All four are 0 on a healthy device.
-                    drawKeyValueRow(3, "Ovf",
-                                    humanCountShort(st.getRxUartOverflow()) + "/" +
-                                        humanCountShort(st.getRxSearchBufferOverflow()) + "/" +
-                                        humanCountShort(st.getRxFrameBufferOverflow()) + "/" +
-                                        humanCountShort(st.getTxOverflowFrameBuffer()));
-                }
-                else
-                {
-                    drawKeyValueRow(0, "Discard", "-");
-                    drawKeyValueRow(1, "Receiv", "-");
-                    drawKeyValueRow(2, "Await/Rep", "-");
-                    drawKeyValueRow(3, "Ovf", "-");
-                }
-                break;
-            }
-            case 2: // Status: BCU connection, baudrate, individual address
-            {
-                const std::string status = ok ? std::string(dll->getTPUart().getBcuStateInfo()) : std::string("-");
-                std::string baud = "-";
-                if (ok && dll->getTPUart().getBaudrate() > 0)
-                    baud = uStr((unsigned long)dll->getTPUart().getBaudrate());
-                drawKeyValueRow(0, "Status", status);
-                drawKeyValueRow(1, "Baud", baud);
-                drawKeyValueRow(2, "Address", openknx.info.humanIndividualAddress());
-                break;
-            }
-    #ifdef TPUART_BCU_HEALTH
-            case 3: // Health
-            {
-                if (ok)
-                {
-                    auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "Resets", humanCount(st.getBcuResets()));
-                    drawKeyValueRow(1, "Disconn", humanCount(st.getBcuDisconnects()));
-                    drawKeyValueRow(2, "CON-resc", humanCount(st.getBcuConRescues()));
-                }
-                else
-                {
-                    drawKeyValueRow(0, "Resets", "-");
-                    drawKeyValueRow(1, "Disconn", "-");
-                    drawKeyValueRow(2, "CON-resc", "-");
-                }
-                break;
-            }
-            case 4: // NCN-Err
-            {
-                if (ok)
-                {
-                    auto &st = dll->getTPUart().getStatistics();
-                    drawKeyValueRow(0, "SlaveColl", humanCount(st.getBcuSlaveCollisions()));
-                    drawKeyValueRow(1, "Recv-Err", humanCount(st.getBcuReceiveErrors()));
-                    drawKeyValueRow(2, "Tx/Proto",
-                                    humanCount(st.getBcuTransmitErrors()) + "/" + humanCount(st.getBcuProtocolErrors()));
-                    drawKeyValueRow(3, "TempWarn", humanCount(st.getBcuTempWarnings()));
-                }
-                else
-                {
-                    drawKeyValueRow(0, "SlaveColl", "-");
-                    drawKeyValueRow(1, "Recv-Err", "-");
-                    drawKeyValueRow(2, "Tx/Proto", "-");
-                    drawKeyValueRow(3, "TempWarn", "-");
-                }
-                break;
-            }
-    #endif
-            default: break;
+            word = "No bus";
+            detail = "No TP link";
         }
+        else
+        {
+            TPUart::DataLinkLayer &tp = dll->getTPUart();
+            switch (tp.getBcuState())
+            {
+                case TPUart::BCU_UNINITIALIZED:
+                    if (uptime() < 30) // only the first 30 s after boot count as start-up (wrap-safe seconds)
+                    {
+                        badge = Ui::kBadgeClock;
+                        word = "Starting";
+                        detail = "TP starting";
+                    }
+                    break;
+                case TPUart::BCU_BUSMONITOR:
+                    badge = nullptr;
+                    word = "Busmon";
+                    detail = "Monitor active";
+                    break;
+                case TPUart::BCU_CONNECTED:
+                    if (tp.busOperational()) // bus power loss shows here before the BCU state follows
+                    {
+                        snprintf(b, sizeof(b), "Load %s/s", humanBytes(_lastLoad).c_str());
+                        badge = Ui::kBadgeOk;
+                        word = "Bus OK";
+                        detail = b;
+                    }
+                    break;
+                default: break; // disconnected: "Bus lost"
+            }
+        }
+        // Traffic light: a new frame since the last card draw lights the next device, no traffic none.
+        const uint32_t frames = (uint32_t)(_txFrames + _rxFrames);
+        s_litDevice = -1;
+        if (dll && _cardShown && frames != _lastFrames)
+        {
+            _blink = (uint8_t)((_blink + 1) % 3);
+            s_litDevice = (int8_t)_blink;
+        }
+        _lastFrames = frames;
+        _cardShown = true;
+        Ui::statusCard(d, drawBusSymbol, badge, word, detail);
+        Ui::pageDots(d, PAGE_COUNT, PAGE_CARD);
     }
+
+    /** @brief Page 1: BCU state, frames, load, peak and the load bar. */
+    void WidgetKnxBcu::drawTraffic(Adafruit_SSD1306 &d, TpUartDataLinkLayer *dll)
+    {
+        Ui::header(d, _name.c_str(), PAGE_COUNT, PAGE_TRAFFIC);
+        char b[24];
+        Ui::row(d, 0, "Status", dll ? dll->getTPUart().getBcuStateInfo() : "-", 7);
+        if (dll)
+            snprintf(b, sizeof(b), "%s/%s", humanCount(_txFrames).c_str(), humanCount(_rxFrames).c_str());
+        else
+            snprintf(b, sizeof(b), "-");
+        Ui::row(d, 1, "TX/RX", b, 7);
+        snprintf(b, sizeof(b), "%s/s", humanBytes(_lastLoad).c_str());
+        Ui::row(d, 2, "Load", dll ? b : "-", 7);
+        snprintf(b, sizeof(b), "%s/s", humanBytes(_loadPeak).c_str());
+        Ui::row(d, 3, "Peak", dll ? b : "-", 7);
+        drawLoadBar(d, 54);
+    }
+
+    /** @brief Page 2: byte counters and overflows; error counters with a check at 0, a warning otherwise. */
+    void WidgetKnxBcu::drawBytes(Adafruit_SSD1306 &d, TpUartDataLinkLayer *dll)
+    {
+        Ui::header(d, "Bytes", PAGE_COUNT, PAGE_BYTES);
+        if (!dll)
+        {
+            static const char *const kLabels[] = {"Discarded", "Received", "Await", "Repeated", "Overflow"};
+            for (uint8_t i = 0; i < 5; i++) Ui::rowIcon(d, i, nullptr, kLabels[i], "-");
+            return;
+        }
+        auto &st = dll->getTPUart().getStatistics();
+        Ui::rowIcon(d, 0, rowState(_discardedBytes), "Discarded", humanBytes(_discardedBytes).c_str());
+        Ui::rowIcon(d, 1, Ui::kRowBus, "Received", humanBytes(_receivedBytes).c_str());
+        Ui::rowIcon(d, 2, Ui::kRowInfo, "Await", humanCount(dll->getTPUart().getReceiver().getAwaitBytes()).c_str());
+        Ui::rowIcon(d, 3, Ui::kRowInfo, "Repeated", humanCount(st.getRxRepetitions()).c_str());
+
+        // UART / search buffer / frame buffer / TX frame buffer: the short form keeps all four on one row.
+        const uint32_t uart = st.getRxUartOverflow(), search = st.getRxSearchBufferOverflow();
+        const uint32_t frame = st.getRxFrameBufferOverflow(), tx = st.getTxOverflowFrameBuffer();
+        char b[24];
+        snprintf(b, sizeof(b), "%s/%s/%s/%s", humanCountShort(uart).c_str(), humanCountShort(search).c_str(),
+                 humanCountShort(frame).c_str(), humanCountShort(tx).c_str());
+        Ui::rowIcon(d, 4, rowState((uint64_t)uart + search + frame + tx), "Overflow", b);
+    }
+
+    /** @brief Page 3: BCU connection, baud rate, individual address. */
+    void WidgetKnxBcu::drawStatus(Adafruit_SSD1306 &d, TpUartDataLinkLayer *dll)
+    {
+        Ui::header(d, "Status", PAGE_COUNT, PAGE_STATUS);
+        char b[12];
+        if (dll && dll->getTPUart().getBaudrate() > 0)
+            snprintf(b, sizeof(b), "%lu", (unsigned long)dll->getTPUart().getBaudrate());
+        else
+            snprintf(b, sizeof(b), "-");
+        Ui::row(d, 0, "Status", dll ? dll->getTPUart().getBcuStateInfo() : "-", 8);
+        Ui::row(d, 1, "Baud", b, 8);
+        Ui::row(d, 2, "Address", openknx.info.humanIndividualAddress().c_str(), 8);
+    }
+
+    #ifdef TPUART_BCU_HEALTH
+    /** @brief Page 4: BCU resets, disconnects, CON rescues. */
+    void WidgetKnxBcu::drawHealth(Adafruit_SSD1306 &d, TpUartDataLinkLayer *dll)
+    {
+        Ui::header(d, "Health", PAGE_COUNT, PAGE_HEALTH);
+        static const char *const kLabels[] = {"Resets", "Disconnects", "CON rescues"};
+        uint32_t v[3] = {};
+        if (dll)
+        {
+            auto &st = dll->getTPUart().getStatistics();
+            v[0] = st.getBcuResets();
+            v[1] = st.getBcuDisconnects();
+            v[2] = st.getBcuConRescues();
+        }
+        for (uint8_t i = 0; i < 3; i++)
+            Ui::rowIcon(d, i, dll ? rowState(v[i]) : nullptr, kLabels[i], dll ? humanCount(v[i]).c_str() : "-");
+    }
+
+    /** @brief Page 5: error counters of the NCN chip. */
+    void WidgetKnxBcu::drawNcn(Adafruit_SSD1306 &d, TpUartDataLinkLayer *dll)
+    {
+        Ui::header(d, "NCN errors", PAGE_COUNT, PAGE_NCN);
+        static const char *const kLabels[] = {"Slave coll.", "Recv errors", "Tx errors", "Proto errors", "Temp warnings"};
+        uint32_t v[5] = {};
+        if (dll)
+        {
+            auto &st = dll->getTPUart().getStatistics();
+            v[0] = st.getBcuSlaveCollisions();
+            v[1] = st.getBcuReceiveErrors();
+            v[2] = st.getBcuTransmitErrors();
+            v[3] = st.getBcuProtocolErrors();
+            v[4] = st.getBcuTempWarnings();
+        }
+        for (uint8_t i = 0; i < 5; i++)
+            Ui::rowIcon(d, i, dll ? rowState(v[i]) : nullptr, kLabels[i], dll ? humanCount(v[i]).c_str() : "-");
+    }
+    #endif
 
 } // namespace OpenKNX
 
