@@ -2,6 +2,8 @@
 
 ## ec/v2.0.0-beta.4: not released
 
+* Change (System-Info widget): page 1 is a status card with a chip symbol, "Running" or "Restarted" after a counted watchdog reset, and the up time; the Device, Firmware, Runtime and Diagnostics pages follow with a fixed label width; a long firmware ID wraps. The widget draws with `OpenKNX::Ui` of OFM-DeviceDisplay and no longer flips its own pages
+* Change (KNX/BCU widget): page 1 is a bus card with three devices on the line: "Bus OK" with the load, "Bus lost", "No bus", "Starting" or "Busmon"; while frames arrive the light steps to the next device every 250 ms. Traffic, Bytes, Status, Health and NCN errors follow with check or warning icons; no own page timer
 * Fix: a flash save no longer aborts the device when the heap is short. The sector buffer of each flash driver is allocated in `init()`; when that fails, a write is dropped with an error line instead of a throwing `new`
 * Fix (ESP32): `Upload-Firmware-Generic.ps1` read the chip of a firmware named `...-ESP32-P4-...` as a classic ESP32 and refused the flash on an ESP32-P4 as a chip mismatch; the name now yields ESP32-P4 (also ESP32-C6, ESP32-S3 with a separator)
 * Change (RP2040, RP2350): `erase all` also erases the EEPROM sector of the core (the WiFi credentials of OFM-Network)
