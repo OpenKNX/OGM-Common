@@ -851,9 +851,9 @@ function Get-Esp32Info($esptool, $port) {
 }
 
 # Extracts the expected ESP variant from a firmware file name (e.g.
-# "...KNeoPiX-ESP32S3_V1.bin" -> "ESP32S3"), or $null if none is present.
+# "...KNeoPiX-ESP32S3_V1.bin" -> "ESP32S3", "...-ESP32-P4-1TP.factory.bin" -> "ESP32-P4"), or $null if none is present.
 function Get-EspFwVariant([string]$fileName) {
-    $m = [regex]::Match($fileName, '(?i)ESP32[A-Z0-9]*')
+    $m = [regex]::Match($fileName, '(?i)ESP32(?:[-_]?[SCHP]\d+)?')
     if ($m.Success) { return $m.Value }
     return $null
 }
