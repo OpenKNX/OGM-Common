@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <cstdint>
+#include <new>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string>
@@ -134,7 +135,14 @@ template <typename T>
 struct PsramAllocator
 {
     using value_type = T;
-    T* allocate(size_t n) { return static_cast<T*>(PSRAM_MALLOC(n * sizeof(T))); }
+    T* allocate(size_t n)
+    {
+        T* p = static_cast<T*>(PSRAM_MALLOC(n * sizeof(T)));
+#if __cpp_exceptions
+        if (!p && n) throw std::bad_alloc(); // as std::allocator: a container must never get nullptr
+#endif
+        return p;
+    }
     void deallocate(T* p, size_t) { free(p); }
 };
 
