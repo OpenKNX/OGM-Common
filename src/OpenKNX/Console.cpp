@@ -6,6 +6,10 @@
 #include "OpenKNX/Led/Console.h"
 #include "buildtime.h"
 
+#ifdef ARDUINO_ARCH_RP2040
+extern uint32_t _EEPROM_start; // linker: last flash sector, core EEPROM emulation (WiFi credentials of OFM-Network)
+#endif
+
 #ifdef ARDUINO_ARCH_ESP32
     #include "esp_heap_caps.h"
 #endif
@@ -1214,6 +1218,9 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         if (mode == EraseMode::All)
         {
+            openknx.logger.logWithPrefix("Erase", "EEPROM sector");
+            if (!__nukeFlash((uint32_t)&_EEPROM_start - XIP_BASE, 4096))
+                openknx.logger.log("Fatal: nuke paramters invalid");
             openknx.logger.logWithPrefix("Erase", "First bytes of Firmware");
             if (!__nukeFlash(0, 4096))
                 openknx.logger.log("Fatal: nuke paramters invalid");
