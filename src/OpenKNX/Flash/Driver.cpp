@@ -1,4 +1,5 @@
 #include "OpenKNX/Flash/Driver.h"
+#include <new>
 #include "OpenKNX/Facade.h"
 
 #ifdef ARDUINO_ARCH_SAMD
@@ -81,6 +82,12 @@ namespace OpenKNX
 #endif
 
             validateParameters();
+
+            // allocated while the heap is still free: a save, the one before a restart too, must not depend on it later
+            if (_buffer == nullptr)
+                _buffer = new (std::nothrow) uint8_t[_sectorSize];
+            if (_buffer == nullptr)
+                logErrorP("no memory for the sector buffer (%u B)", _sectorSize);
         }
 
         std::string Driver::logPrefix()
@@ -178,33 +185,41 @@ namespace OpenKNX
             return false;
         }
 
-        void Driver::loadSector(uint16_t sector, bool force /* = false */)
+        bool Driver::loadSector(uint16_t sector, bool force /* = false */)
         {
             // skip - already loaded and not force
-            if (!force && _buffer != nullptr && sector == _bufferSector)
-                return;
+            if (!force && _loaded && sector == _bufferSector)
+                return true;
 
             // load specific sector
             logTraceP("load buffer for sector %i", sector);
             logIndentUp();
 
             // an other sector is loaded - commit before load
-            if (_buffer != nullptr && sector != _bufferSector)
+            if (_loaded && sector != _bufferSector)
                 commit();
 
-            // initalize buffer for first time
+            // only when init() found no memory: a throwing new here would abort the device
             if (_buffer == nullptr)
-                _buffer = new uint8_t[_sectorSize];
+                _buffer = new (std::nothrow) uint8_t[_sectorSize];
+            if (_buffer == nullptr)
+            {
+                logErrorP("no memory for the sector buffer (%u B), write dropped", _sectorSize);
+                logIndentDown();
+                return false;
+            }
 
             _bufferSector = sector;
             memcpy(_buffer, flashAddress() + _bufferSector * _sectorSize, _sectorSize);
+            _loaded = true;
             logIndentDown();
+            return true;
         }
 
         void Driver::commit()
         {
             // no sector loaded
-            if (_buffer == nullptr)
+            if (!_loaded)
                 return;
 
             logTraceP("commit");
@@ -221,7 +236,8 @@ namespace OpenKNX
             uint16_t sector = sectorOfRelativeAddress(relativeAddress);
 
             // load buffer if needed
-            loadSector(sector);
+            if (!loadSector(sector))
+                return relativeAddress + size;
 
             // position in loaded buffer
             uint16_t bufferPosition = relativeAddress % _sectorSize;
@@ -253,7 +269,8 @@ namespace OpenKNX
             uint16_t sector = sectorOfRelativeAddress(relativeAddress);
 
             // load buffer if needed
-            loadSector(sector);
+            if (!loadSector(sector))
+                return relativeAddress + size;
 
             // position in loaded buffer
             uint16_t bufferPosition = relativeAddress % _sectorSize;

@@ -18,8 +18,9 @@ namespace OpenKNX
             uint16_t _sectorSize = 0;
             uint16_t _pageSize = 0;
 
-            uint8_t *_buffer = nullptr;
+            uint8_t *_buffer = nullptr; // one sector, allocated in init() for the whole run
             uint16_t _bufferSector = 0;
+            bool _loaded = false;       // _buffer holds _bufferSector
 #ifdef ARDUINO_ARCH_ESP32
             uint8_t *_mmap = nullptr;
 #endif
@@ -32,7 +33,7 @@ namespace OpenKNX
 
             void validateParameters();
 
-            void loadSector(uint16_t sector, bool force = false);
+            bool loadSector(uint16_t sector, bool force = false);
 
           public:
 #ifdef ARDUINO_ARCH_ESP32
