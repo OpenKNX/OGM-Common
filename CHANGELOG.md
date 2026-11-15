@@ -10,6 +10,7 @@
     * Small HOTFIX: DPT 251.600 (RGBW) check was incorrect (expected 4 Bytes, correct are 6 Bytes).
 * Fix (ESP32): GPIO expanders did not build on ESP32 — `GPIO::Manager::init()` called `setSDA()`/`setSCL()`, which only exist in arduino-pico. On ESP32 the pins are now passed to `OPENKNX_GPIO_WIRE.begin(sda, scl)` instead; the `OPENKNX_GPIO_SDA`/`OPENKNX_GPIO_SCL` defines are unchanged
 * Fix(TZ): Definition for "UTC +6 Stunden" was broken
+* Update: RTTStream to 1.4.1 (with "Update to Segger RTT v7.92")
 * (Development) Feature: Optional long runtime warning (above configurable threshold) for module loop runtime
 * Feature: Restore script mode `HashReset` (wrapper `Restore-Dependencies-HashReset.ps1`): checks out the branch from `dependencies.txt` and resets it to the pinned hash, so a release can be built on exactly these versions without a detached HEAD. Refuses to touch a dependency with uncommitted changes, unpushed local commits or a hash that is unknown or not part of the branch, and exits with code 1 in that case
 * Doc: Restore scripts and their modes in `doc/Build-and-release-environment.md`
