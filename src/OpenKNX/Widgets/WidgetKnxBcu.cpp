@@ -131,11 +131,19 @@ namespace OpenKNX
     {
         if (dll == nullptr) return;
 
+        // Largest rise of any counter since the last sample: the host UART runs at most 38400 baud 8E1
+        // (3491 bytes/s) and a frame has more than one byte; one second extra for the rounding.
+        static constexpr uint32_t kMaxPerSecond = 3500;
+        const uint32_t now = millis();
+        const uint32_t seconds = (now - _sampleAt) / 1000 + 1;
+        const uint32_t maxRise = seconds > UINT32_MAX / kMaxPerSecond ? UINT32_MAX : seconds * kMaxPerSecond;
+        _sampleAt = now;
+
         auto &st = dll->getTPUart().getStatistics();
-        _txFrames = _wrapTxFrames.update(st.getTxFrames());
-        _rxFrames = _wrapRxFrames.update(st.getRxFrames());
-        _discardedBytes = _wrapDiscarded.update(st.getRxDiscardedBytes());
-        _receivedBytes = _wrapReceived.update(st.getRxReceivedBytes());
+        _txFrames = _wrapTxFrames.update(st.getTxFrames(), maxRise);
+        _rxFrames = _wrapRxFrames.update(st.getRxFrames(), maxRise);
+        _discardedBytes = _wrapDiscarded.update(st.getRxDiscardedBytes(), maxRise);
+        _receivedBytes = _wrapReceived.update(st.getRxReceivedBytes(), maxRise);
     }
 
     // ---- Drawing ---------------------------------------------------------------

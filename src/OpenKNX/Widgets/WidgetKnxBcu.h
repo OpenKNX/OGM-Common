@@ -33,20 +33,22 @@ namespace OpenKNX
     /**
      * @brief Carries a 32-bit statistics counter past its wrap point for display.
      *
-     * The TP-UART counters are `unsigned int` and wrap at 4294967295 - the byte counters reach that
-     * after ~29 days of full TP1 load. Widening them in TPUart would put non-atomic 64-bit
-     * increments into the RX hot path, so the wrap is carried here instead: each sample that comes
-     * out lower than the previous one counts one wrap. Sampling only happens while the widget
-     * itself is running (1x/s), so a wrap that occurs while it is disabled is not seen.
+     * The TP-UART counters are `unsigned int` and wrap at 4294967295; the byte counters reach that after
+     * 14 to 28 days at the host UART limit (38400 or 19200 baud). Widening them in TPUart would put
+     * non-atomic 64-bit increments into the RX hot path, so the wrap is carried here. A drop counts as a
+     * wrap when the counter could have risen past the wrap since the last sample (maxRise), else as a
+     * counter reset (TP-UART reset), after which the value counts from that reset like its source. A reset
+     * after a gap long enough for a wrap counts as a wrap. Not seen: a wrap in a gap after which the counter
+     * is above its last sample again, a second wrap in one gap, and a gap of 49.7 days or more (millis()).
      */
     struct WidgetCounterWrap
     {
         uint32_t last = 0;
         uint16_t wraps = 0;
 
-        uint64_t update(uint32_t value)
+        uint64_t update(uint32_t value, uint32_t maxRise)
         {
-            if (value < last) ++wraps;
+            if (value < last) wraps = (value - last <= maxRise) ? static_cast<uint16_t>(wraps + 1) : 0; // value - last: rise past the wrap
             last = value;
             return ((uint64_t)wraps << 32) | value;
         }
@@ -126,6 +128,7 @@ namespace OpenKNX
         // Wrap-carrying samples of the four counters that can realistically reach 2^32, plus their
         // last sampled value. Sampled once per redraw for ALL pages, not only the visible one.
         WidgetCounterWrap _wrapTxFrames, _wrapRxFrames, _wrapDiscarded, _wrapReceived;
+        uint32_t _sampleAt = 0; // millis() of the last counter sample
         uint64_t _txFrames = 0, _rxFrames = 0, _discardedBytes = 0, _receivedBytes = 0;
 
         // TP-UART DLL for this device (secondary on 0x091A, primary on 0x07B0), or nullptr before it exists.
