@@ -72,9 +72,7 @@ namespace OpenKNX
 
         std::string Logger::buildPrefix(const char* prefix, const char* id)
         {
-            char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH] = {};
-            sprintf(buffer, "%s<%s>", prefix, id);
-            return std::string(buffer);
+            return std::string(prefix) + "<" + id + ">";
         }
 
         std::string Logger::buildPrefix(const std::string& prefix, const int id)
@@ -84,9 +82,7 @@ namespace OpenKNX
 
         std::string Logger::buildPrefix(const char* prefix, const int id)
         {
-            char buffer[OPENKNX_MAX_LOG_PREFIX_LENGTH] = {};
-            sprintf(buffer, "%s<%i>", prefix, id);
-            return std::string(buffer);
+            return buildPrefix(prefix, std::to_string(id).c_str());
         }
 
         void Logger::beforeLog()
