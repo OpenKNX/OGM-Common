@@ -405,6 +405,9 @@ namespace OpenKNX
 
         void Driver::eraseSector(uint16_t sector)
         {
+            if (_loaded && sector == _bufferSector)
+                _loaded = false; // the buffered content of an erased sector must not come back with a later commit
+
             if (!needEraseSector(sector))
             {
                 logTraceP("skip erase sector, because already erased");
