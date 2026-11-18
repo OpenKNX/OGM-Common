@@ -145,10 +145,22 @@ namespace OpenKNX
         {
             showVersions();
         }
+        else if (!diagnoseKo && (cmd == "mem ?" || cmd == "mem stat ?"))
+        {
+            logBegin();
+            showMemHelp();
+            logEnd();
+        }
         else if (cmd == "m" || cmd == "mem" || cmd == "memory")
         {
             showMemory(diagnoseKo);
         }
+#ifdef OPENKNX_MEM_STAT
+        else if (!diagnoseKo && cmd.rfind("mem stat", 0) == 0 && (cmd.size() == 8 || cmd[8] == ' '))
+        {
+            openknx.common.showMemStat(cmd.size() > 9 ? cmd.substr(9) : std::string());
+        }
+#endif
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
         else if (!diagnoseKo && cmd == "mem tasks")
         {
@@ -997,6 +1009,24 @@ namespace OpenKNX
         logEnd();
     }
 
+    /** @brief The mem commands, for 'help' and 'mem ?'. */
+    void Console::showMemHelp()
+    {
+        printHelpLine("memory, mem", "Show memory usage");
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
+        printHelpLine("mem tasks", "Show unused stack per task and heap blocks");
+        printHelpLine("mem modules", "Show the heap each module took at start");
+#endif
+#ifdef OPENKNX_MEM_STAT
+        printHelpLine("mem stat", "Show heap now and lowest since start, per measuring point, trend, lwIP, last events");
+        printHelpLine("mem stat hist", "Show the heap history since start (min, max, slowest point per span)");
+        printHelpLine("mem stat log", "Show the memory events, also those before the last restart");
+        printHelpLine("mem stat lwip", "Show the lwIP pools, lwIP heap and TCP counters");
+        printHelpLine("mem stat reset", "Clear the values per measuring point");
+#endif
+        printHelpLine("mem 0xXXXXXXXX", "Show memory content (64byte) starting at 0xXXXXXXXX");
+    }
+
     void Console::showHelp()
     {
         logBegin();
@@ -1009,12 +1039,7 @@ namespace OpenKNX
         printHelpLine("info, i", "Show general information");
         printHelpLine("uptime, u", "Show uptime");
         printHelpLine("version, v", "Show compiled versions");
-        printHelpLine("memory, mem", "Show memory usage");
-#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
-        printHelpLine("mem tasks", "Show unused stack per task and heap blocks");
-        printHelpLine("mem modules", "Show the heap each module took at start");
-#endif
-        printHelpLine("mem 0xXXXXXXXX", "Show memory content (64byte) starting at 0xXXXXXXXX");
+        showMemHelp();
         printHelpLine("flash knx", "Show knx flash content");
         printHelpLine("flash openknx", "Show openknx flash content");
 #if OPENKNX_LITTLE_FS

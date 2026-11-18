@@ -36,6 +36,12 @@ namespace OpenKNX
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
         int32_t heapUsed[OPENKNX_MAX_MODULES] = {}; // internal heap taken by init(), setup() and processAfterStartupDelay(), "mem modules"
 #endif
+#ifdef OPENKNX_MEM_STAT
+        Stat::MemStat mem[OPENKNX_MAX_MODULES]; // "mem stat"
+    #ifdef OPENKNX_DUALCORE
+        Stat::MemStat mem1[OPENKNX_MAX_MODULES];
+    #endif
+#endif
 #ifdef OPENKNX_RUNTIME_STAT
         // TODO check integration into Module
         Stat::RuntimeStat runtime[OPENKNX_MAX_MODULES];

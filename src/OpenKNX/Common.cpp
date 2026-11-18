@@ -79,6 +79,18 @@ namespace OpenKNX
     #endif
 #endif
         openknx.logger.init();
+#ifdef OPENKNX_MEM_STAT
+        Stat::memDiag.boot();
+        _memLoop.id = Stat::MemDiag::ID_LOOP;
+        _memConsole.id = Stat::MemDiag::ID_CONSOLE;
+        _memKnxStack.id = Stat::MemDiag::ID_KNX;
+        _memGPIO.id = Stat::MemDiag::ID_GPIO;
+        _memTimeManager.id = Stat::MemDiag::ID_TIME;
+    #ifdef ParamBASE_Latitude
+        _memSunCalculation.id = Stat::MemDiag::ID_SUN;
+    #endif
+        _memModuleLoop.id = Stat::MemDiag::ID_MODULES;
+#endif
 
 #ifdef DEVICE_INIT
         DEVICE_INIT();
@@ -266,13 +278,25 @@ namespace OpenKNX
         OPENKNX_HEAPCHK("setup baseline"); // heap state entering setup (after knx.readMemory)
 #endif
 
+#ifdef OPENKNX_MEM_STAT
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            openknx.modules.mem[i].id = Stat::MemDiag::ID_MODULE0 + i;
+    #ifdef OPENKNX_DUALCORE
+            openknx.modules.mem1[i].id = Stat::MemDiag::ID_MODULE1 + i;
+    #endif
+        }
+#endif
+
         // Handle init of modules
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
             const size_t heapBefore = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #endif
+            MEM_STAT_PHASE_BEGIN(openknx.modules.mem[i]);
             openknx.modules.list[i]->init();
+            MEM_STAT_PHASE_END(openknx.modules.mem[i]);
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
             openknx.modules.heapUsed[i] += (int32_t)heapBefore - (int32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #endif
@@ -297,7 +321,9 @@ namespace OpenKNX
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
             const size_t heapBefore = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #endif
+            MEM_STAT_PHASE_BEGIN(openknx.modules.mem[i]);
             openknx.modules.list[i]->setup(configured);
+            MEM_STAT_PHASE_END(openknx.modules.mem[i]);
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
             openknx.modules.heapUsed[i] += (int32_t)heapBefore - (int32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #endif
@@ -436,6 +462,11 @@ namespace OpenKNX
         registerCommonWidgets();
 #endif
 
+#ifdef OPENKNX_MEM_STAT
+        Stat::memDiag.running(Stat::MemDiag::ID_LOOP); // from the first pass on, what runs outside a point is the loop
+        Stat::memDiag.loop();
+#endif
+        MEM_STAT_BEGIN(_memLoop);
         RUNTIME_MEASURE_BEGIN(_runtimeLoop);
 
 #ifdef OPENKNX_HEARTBEAT
@@ -460,6 +491,7 @@ namespace OpenKNX
             openknxDisplayModule.loop(knx.configured());
 #endif
             RUNTIME_MEASURE_END(_runtimeLoop);
+            MEM_STAT_END(_memLoop);
             return;
         }
 #endif
@@ -467,37 +499,65 @@ namespace OpenKNX
 #ifdef OPENKNX_LOOPTIME_WARNING
         uint32_t start = millis();
 #endif
+#if defined(OPENKNX_MEM_STAT) || defined(OPENKNX_LOOPTIME_WARNING)
+        _slowUs = 0;
+        _slowId = 0xFF;
+        uint32_t segUs = micros();
+    #define OPENKNX_SLOW_SEG(ID)              \
+        {                                     \
+            const uint32_t now_ = micros();   \
+            slowNote((ID), now_ - segUs);     \
+            segUs = now_;                     \
+        }
+#else
+    #define OPENKNX_SLOW_SEG(ID)
+#endif
         // loop console helper
+        MEM_STAT_BEGIN(_memConsole);
         RUNTIME_MEASURE_BEGIN(_runtimeConsole);
         openknx.console.loop();
         RUNTIME_MEASURE_END(_runtimeConsole);
+        MEM_STAT_END(_memConsole);
+        OPENKNX_SLOW_SEG(1);
 
 #ifdef OPENKNX_LOOPTIME_WARNING
         uint32_t startStack = millis();
 #endif
         // loop  knx stack
+        MEM_STAT_BEGIN(_memKnxStack); // outside the runtime window: its heap reads are not the stack's time
         RUNTIME_MEASURE_BEGIN(_runtimeKnxStack);
         knx.loop();
         RUNTIME_MEASURE_END(_runtimeKnxStack);
+        MEM_STAT_END(_memKnxStack);
+        OPENKNX_SLOW_SEG(2);
 #ifdef OPENKNX_LOOPTIME_WARNING
         uint32_t endStack = millis();
 #endif
 
         // loop IO
+        MEM_STAT_BEGIN(_memGPIO);
         RUNTIME_MEASURE_BEGIN(_runtimeGPIO);
         openknx.gpio.loop();
         RUNTIME_MEASURE_END(_runtimeGPIO);
+        MEM_STAT_END(_memGPIO);
+        OPENKNX_SLOW_SEG(3);
 
         // loop timemanager helper
+        MEM_STAT_BEGIN(_memTimeManager);
         RUNTIME_MEASURE_BEGIN(_runtimeTimeManager);
         openknx.time.loop();
         RUNTIME_MEASURE_END(_runtimeTimeManager);
+        MEM_STAT_END(_memTimeManager);
+        OPENKNX_SLOW_SEG(4);
 
 #ifdef ParamBASE_Latitude
         // loop sun-timemanager helper
+        MEM_STAT_BEGIN(_memSunCalculation);
         RUNTIME_MEASURE_BEGIN(_runtimeSunCalculation);
         openknx.sun.loop();
         RUNTIME_MEASURE_END(_runtimeSunCalculation);
+        MEM_STAT_END(_memSunCalculation);
+        OPENKNX_SLOW_SEG(5);
 #endif
 
         _ledFunctions.loop();
@@ -540,17 +600,29 @@ namespace OpenKNX
             processAfterStartupDelay();
         }
 
+        OPENKNX_SLOW_SEG(7); // leds, I2C queue, heartbeat, saves, startup delay
+        MEM_STAT_BEGIN(_memModuleLoop);
         RUNTIME_MEASURE_BEGIN(_runtimeModuleLoop);
         processModulesLoop();
         RUNTIME_MEASURE_END(_runtimeModuleLoop);
+        MEM_STAT_END(_memModuleLoop);
 
         RUNTIME_MEASURE_END(_runtimeLoop);
+        MEM_STAT_END(_memLoop);
+#undef OPENKNX_SLOW_SEG
 
 #ifdef OPENKNX_LOOPTIME_WARNING
         // loop took to long and last output is at least 1s ago
         if (!_skipLooptimeWarning && delayCheck(start, OPENKNX_LOOPTIME_WARNING) && delayCheck(_lastLooptimeWarning, OPENKNX_LOOPTIME_WARNING_INTERVAL))
         {
-            logWarningP("Warning: The loop took longer than usual (%i >= %i); stack %i", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack));
+    #ifdef OPENKNX_MEM_STAT
+            char slowName[24];
+            logWarningP("Warning: The loop took longer than usual (%i >= %i); stack %i; slowest %s %u ms", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack),
+                        memLabel(_slowId, slowName, sizeof(slowName)), (unsigned)(_slowUs / 1000));
+    #else
+            logWarningP("Warning: The loop took longer than usual (%i >= %i); stack %i; slowest #%u %u ms", (millis() - start), OPENKNX_LOOPTIME_WARNING, (endStack - startStack),
+                        (unsigned)_slowId, (unsigned)(_slowUs / 1000));
+    #endif
             _lastLooptimeWarning = millis();
         }
 #endif
@@ -641,12 +713,24 @@ namespace OpenKNX
         uint8_t processed = 0;
         do
         {
+            MEM_STAT_BEGIN(openknx.modules.mem[_currentModule]); // outside the runtime window: its heap reads are not the module's time
+#if defined(OPENKNX_MEM_STAT) || defined(OPENKNX_LOOPTIME_WARNING)
+            const uint32_t modUs = micros();
+#endif
             RUNTIME_MEASURE_BEGIN(openknx.modules.runtime[_currentModule]);
             openknx.modules.list[_currentModule]->loop(configured);
 #if OPENKNX_RUNTIME_STAT_MODULE_WARNING > 0
             RUNTIME_MEASURE_END_WARN(openknx.modules.runtime[_currentModule], OPENKNX_RUNTIME_STAT_MODULE_WARNING, openknx.modules.list[_currentModule]->name().c_str());
 #else
             RUNTIME_MEASURE_END(openknx.modules.runtime[_currentModule]);
+#endif
+#if defined(OPENKNX_MEM_STAT) || defined(OPENKNX_LOOPTIME_WARNING)
+            slowNote(16 + _currentModule, micros() - modUs);
+#endif
+#if OPENKNX_MEM_STAT_MODULE_WARNING > 0
+            MEM_STAT_END_WARN(openknx.modules.mem[_currentModule], OPENKNX_MEM_STAT_MODULE_WARNING, openknx.modules.list[_currentModule]->name().c_str());
+#else
+            MEM_STAT_END(openknx.modules.mem[_currentModule]);
 #endif
         }
         while (freeLoopIterate(openknx.modules.count, _currentModule, processed));
@@ -670,9 +754,11 @@ namespace OpenKNX
 
         for (uint8_t i = 0; i < openknx.modules.count; i++)
         {
+            MEM_STAT_BEGIN(openknx.modules.mem1[i]);
             RUNTIME_MEASURE_BEGIN(openknx.modules.runtime1[i]);
             openknx.modules.list[i]->loop1(configured);
             RUNTIME_MEASURE_END(openknx.modules.runtime1[i]);
+            MEM_STAT_END(openknx.modules.mem1[i]);
         }
     }
 #endif
@@ -728,7 +814,9 @@ namespace OpenKNX
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
             const size_t heapBefore = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #endif
+            MEM_STAT_PHASE_BEGIN(openknx.modules.mem[i]);
             openknx.modules.list[i]->processAfterStartupDelay();
+            MEM_STAT_PHASE_END(openknx.modules.mem[i]);
 #if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_MEM_DETAIL)
             openknx.modules.heapUsed[i] += (int32_t)heapBefore - (int32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 #endif
@@ -1190,6 +1278,227 @@ namespace OpenKNX
                 openknx.modules.runtime1[i].showStat(openknx.modules.list[i]->name().c_str(), 1, stat, hist);
     #endif
             }
+        }
+        logIndentDown();
+    }
+#endif
+
+#if defined(OPENKNX_MEM_STAT) || defined(OPENKNX_LOOPTIME_WARNING)
+    void Common::slowNote(uint8_t id, uint32_t us)
+    {
+        if (us > _slowUs)
+        {
+            _slowUs = us;
+            _slowId = id;
+        }
+    #ifdef OPENKNX_MEM_STAT
+        Stat::memDiag.slow(id, us);
+    #endif
+    }
+#endif
+
+#ifdef OPENKNX_MEM_STAT
+    static_assert(OPENKNX_MAX_MODULES <= 32, "mem stat: module ids 16 + i must stay below the core-1 ids at 48");
+
+    void Common::addMemStat(const char* label, Stat::MemStat* m)
+    {
+        if (_memExtraN >= sizeof(_memExtra) / sizeof(_memExtra[0]) || m == nullptr) return;
+        m->id = Stat::MemDiag::ID_EXTRA + _memExtraN;
+        _memExtra[_memExtraN++] = {label, m};
+    }
+
+    const char* Common::memLabel(uint8_t id, char* buf, size_t size)
+    {
+        static const char* const fixed[] = {"_Loop", "_Console", "_KnxStack", "_GPIO", "_Time", "_Sun", "_All_Modules", "_Other", "_Setup"};
+        if (id < sizeof(fixed) / sizeof(fixed[0])) return fixed[id];
+        if (id >= Stat::MemDiag::ID_EXTRA && id < Stat::MemDiag::ID_EXTRA + _memExtraN) return _memExtra[id - Stat::MemDiag::ID_EXTRA].label;
+        const bool core1 = id >= Stat::MemDiag::ID_MODULE1 && id != Stat::MemDiag::ID_NONE && id != Stat::MemDiag::ID_LWIP_HEAP;
+        const uint8_t m = id - (core1 ? Stat::MemDiag::ID_MODULE1 : Stat::MemDiag::ID_MODULE0);
+        if (id >= Stat::MemDiag::ID_MODULE0 && m < openknx.modules.count)
+            snprintf(buf, size, "%s%s", openknx.modules.list[m]->name().c_str(), core1 ? "/1" : "");
+        else
+            snprintf(buf, size, "-");
+        return buf;
+    }
+
+    // Console "mem stat": the report, or one of hist / log / lwip / reset
+    void Common::showMemStat(const std::string& what)
+    {
+        using Stat::MemDiag;
+        auto& d = Stat::memDiag;
+        Stat::MemStat* fixed[] = {&_memLoop, &_memConsole, &_memKnxStack, &_memGPIO, &_memTimeManager,
+    #ifdef ParamBASE_Latitude
+                                  &_memSunCalculation,
+    #endif
+                                  &_memModuleLoop};
+        char name[24];
+        const auto ago = [](uint32_t t) { return t ? humanDuration(t) : std::string("-"); };
+        static const char* const events[] = {"-", "boot", "new failed", "heap low", "lwip error", "tcp drop", "web refused", "slow"};
+    #if defined(ARDUINO_ARCH_RP2040)
+        static const char* const reasons[] = {"unknown", "power on", "run pin", "software", "watchdog", "debug", "glitch", "brownout"};
+    #else
+        static const char* const reasons[] = {"unknown", "power on", "external", "software", "panic", "int watchdog", "task watchdog", "watchdog", "deep sleep", "brownout",
+                                              "sdio", "usb", "jtag", "efuse", "power glitch", "cpu lockup"};
+    #endif
+        const auto showEvent = [&](const MemDiag::Entry& e) {
+            char idName[24];
+            const char* ev = e.code < sizeof(events) / sizeof(events[0]) ? events[e.code] : "?";
+            const char* who = e.code == MemDiag::EV_LWIP ? (e.id == MemDiag::ID_LWIP_HEAP ? "lwip heap" : MemDiag::lwipPoolName(e.id)) : memLabel(e.id, idName, sizeof(idName));
+            char val[24];
+            if (e.code == MemDiag::EV_BOOT)
+                snprintf(val, sizeof(val), "%s", e.value < sizeof(reasons) / sizeof(reasons[0]) ? reasons[e.value] : "?");
+            else
+                snprintf(val, sizeof(val), "%lu", (unsigned long)e.value);
+            openknx.logger.logWithPrefixAndValues("MemStat", "%-11s run %3u core %u  %-12s %-20s %s", humanDuration(e.t).c_str(), (unsigned)e.boot, (unsigned)e.core, ev, who, val);
+        };
+
+        if (what == "reset")
+        {
+            for (auto* m : fixed) m->reset();
+            for (uint8_t i = 0; i < openknx.modules.count; i++)
+            {
+                openknx.modules.mem[i].reset();
+    #ifdef OPENKNX_DUALCORE
+                openknx.modules.mem1[i].reset();
+    #endif
+            }
+            for (uint8_t i = 0; i < _memExtraN; i++) _memExtra[i].m->reset();
+            logInfoP("Memory statistics: values per measuring point cleared (lowest since start, history and events stay)");
+            return;
+        }
+
+        if (what == "hist")
+        {
+            logInfoP("Memory history since start: %u spans of %s (oldest first), free heap min/max in bytes", (unsigned)d.histCount(), humanDuration(d.histSpan()).c_str());
+            logIndentUp();
+            openknx.logger.logWithPrefixAndValues("MemStat", "%-11s %8s %8s %-20s %6s %-20s %5s %5s %4s", "from", "min", "max", "min at", "slow", "slowest", "lwip", "tcp", "web");
+            for (uint8_t i = 0; i < d.histCount(); i++)
+            {
+                const MemDiag::Bucket& b = d.hist(i);
+                char a[24], c[24];
+                char mn[12], mx[12];
+                snprintf(mn, sizeof(mn), "%d", (int)b.minFree * 16);
+                snprintf(mx, sizeof(mx), "%d", (int)b.maxFree * 16);
+                const bool heap = b.minFree != MemDiag::EMPTY;
+                openknx.logger.logWithPrefixAndValues("MemStat", "%-11s %8s %8s %-20s %5u%s %-20s %5u %5u %4u", humanDuration(d.histStart() + i * d.histSpan()).c_str(),
+                                                      heap ? mn : "-", heap ? mx : "-", heap ? memLabel(b.minId, a, sizeof(a)) : "-", (unsigned)b.slowMs, b.slowMs == 0xFFFF ? "+" : " ",
+                                                      memLabel(b.slowId, c, sizeof(c)), (unsigned)b.lwipErr, (unsigned)b.tcpDrop, (unsigned)b.web);
+            }
+            logIndentDown();
+            return;
+        }
+
+        if (what == "log")
+        {
+            logInfoP("Memory events, newest first (run = restart counter, now %u)", (unsigned)d.bootCount());
+            logIndentUp();
+            for (uint8_t i = 0; i < d.logCount(); i++) showEvent(d.logEntry(i));
+            logIndentDown();
+            return;
+        }
+
+        if (what == "lwip")
+        {
+            uint32_t hu0, hm0, ha0;
+            uint16_t he0, d0, m0, r0, x0, v0;
+            if (!MemDiag::lwipPools() && !MemDiag::lwipHeap(hu0, hm0, ha0, he0) && !MemDiag::lwipTcp(d0, m0, r0, x0, v0))
+            {
+                logInfoP("lwIP statistics: not in this build (OPENKNX_LWIP_STATS)");
+                return;
+            }
+            logInfoP("lwIP statistics since start");
+            logIndentUp();
+            if (MemDiag::lwipPools()) openknx.logger.logWithPrefixAndValues("MemStat", "%-20s %6s %6s %6s %6s", "pool", "used", "max", "avail", "err");
+            for (uint8_t i = 0; i < MemDiag::lwipPools(); i++)
+            {
+                uint16_t used, max, avail, err;
+                MemDiag::lwipPool(i, used, max, avail, err);
+                openknx.logger.logWithPrefixAndValues("MemStat", "%-20s %6u %6u %6u %6u", MemDiag::lwipPoolName(i), used, max, avail, err);
+            }
+            uint32_t hu, hm, ha;
+            uint16_t he;
+            if (MemDiag::lwipHeap(hu, hm, ha, he))
+                openknx.logger.logWithPrefixAndValues("MemStat", "%-20s %6lu %6lu %6lu %6u", "lwip heap", (unsigned long)hu, (unsigned long)hm, (unsigned long)ha, he);
+            uint16_t drop, memErr, rtErr, xmit, recv;
+            if (MemDiag::lwipTcp(drop, memErr, rtErr, xmit, recv))
+                openknx.logger.logWithPrefixAndValues("MemStat", "tcp: sent %u, received %u, dropped %u, memory errors %u, routing errors %u", xmit, recv, drop, memErr, rtErr);
+            logIndentDown();
+            return;
+        }
+
+        if (!what.empty())
+        {
+            logInfoP("mem stat: unknown option '%s' (hist, log, lwip, reset)", what.c_str());
+            return;
+        }
+
+        // The report
+        const int32_t free = Stat::freeHeap();
+        logInfoP("Memory statistics (uptime %s, run %u, 1 of %d calls measured)", humanDuration(uptime()).c_str(), (unsigned)d.bootCount(), OPENKNX_MEM_STAT_EVERY);
+        logIndentUp();
+        if (MemDiag::largestFreeBlock() >= 0)
+            openknx.logger.logWithPrefixAndValues("MemStat", "free now %d, largest block %d", (int)free, (int)MemDiag::largestFreeBlock());
+        else
+            openknx.logger.logWithPrefixAndValues("MemStat", "free now %d", (int)free);
+        if (d.lowFree != INT32_MAX)
+            openknx.logger.logWithPrefixAndValues("MemStat", "lowest since start %d at %s in %s (core %u)", (int)d.lowFree, humanDuration(d.lowAt).c_str(), memLabel(d.lowId, name, sizeof(name)), (unsigned)d.lowCore);
+        const auto rec = [&](uint8_t m) { const int32_t v = d.lowRecent(m); return v == INT32_MAX ? -1 : (int)v; };
+        openknx.logger.logWithPrefixAndValues("MemStat", "lowest in the last 1 min %d, 10 min %d", rec(1), rec(10));
+        for (uint32_t w : {3600UL, 86400UL})
+        {
+            uint32_t covered = 0;
+            const int32_t v = d.lowSince(w, covered);
+            if (v != INT32_MAX)
+                openknx.logger.logWithPrefixAndValues("MemStat", "lowest in the last %s: %d (history spans of %s, covers %s)", w == 3600 ? "1 h" : "24 h", (int)v,
+                                                      humanDuration(d.histSpan()).c_str(), humanDuration(covered).c_str());
+        }
+
+        openknx.logger.logWithPrefixAndValues("MemStat", "%-20s %7s %7s %-11s %7s %7s %7s %-11s %9s", "", "start", "kept", "kept at", "freed", "avg", "low", "low at", "samples");
+        const auto row = [&](const char* label, const Stat::MemStat& m) {
+            const int avg = m.samples ? (int)(m.keptSum / (int64_t)m.samples) : 0;
+            openknx.logger.logWithPrefixAndValues("MemStat", "%-20s %7d %7d %-11s %7d %7d %7d %-11s %9lu", label, (int)m.start, (int)m.keptMax, ago(m.keptMaxAt).c_str(), (int)m.freedMax, avg,
+                                                  m.samples ? (int)m.low : -1, ago(m.lowAt).c_str(), (unsigned long)m.samples);
+        };
+        for (auto* m : fixed) row(memLabel(m->id, name, sizeof(name)), *m);
+        for (uint8_t i = 0; i < openknx.modules.count; i++)
+        {
+            row(memLabel(openknx.modules.mem[i].id, name, sizeof(name)), openknx.modules.mem[i]);
+    #ifdef OPENKNX_DUALCORE
+            if (openknx.modules.mem1[i].samples) row(memLabel(openknx.modules.mem1[i].id, name, sizeof(name)), openknx.modules.mem1[i]);
+    #endif
+        }
+        for (uint8_t i = 0; i < _memExtraN; i++) row(_memExtra[i].label, *_memExtra[i].m);
+
+        uint16_t tDrop = 0, tMemErr = 0, tRtErr, tXmit, tRecv;
+        const bool tcp = MemDiag::lwipTcp(tDrop, tMemErr, tRtErr, tXmit, tRecv);
+        if (MemDiag::lwipPools())
+        {
+            uint32_t errs = 0;
+            uint16_t pbufMax = 0, pbufAvail = 0;
+            for (uint8_t i = 0; i < MemDiag::lwipPools(); i++)
+            {
+                uint16_t used, max, avail, err;
+                MemDiag::lwipPool(i, used, max, avail, err);
+                errs += err;
+                if (!strcmp(MemDiag::lwipPoolName(i), "PBUF_POOL"))
+                {
+                    pbufMax = max;
+                    pbufAvail = avail;
+                }
+            }
+            uint32_t hu, hm, ha;
+            uint16_t he = 0;
+            MemDiag::lwipHeap(hu, hm, ha, he);
+            openknx.logger.logWithPrefixAndValues("MemStat", "lwip: pool errors %lu, pbuf pool max %u of %u, lwip heap max %lu of %lu (errors %u), tcp dropped %u, tcp memory errors %u",
+                                                  (unsigned long)errs, pbufMax, pbufAvail, (unsigned long)hm, (unsigned long)ha, he, tDrop, tMemErr);
+        }
+        else if (tcp)
+            openknx.logger.logWithPrefixAndValues("MemStat", "lwip: tcp dropped %u, tcp memory errors %u (pools: mem stat lwip)", tDrop, tMemErr);
+        if (d.webRefusedTotal) openknx.logger.logWithPrefixAndValues("MemStat", "web server: %lu connections turned away", (unsigned long)d.webRefusedTotal);
+        if (d.logCount())
+        {
+            openknx.logger.logWithPrefixAndValues("MemStat", "last events (all: mem stat log):");
+            for (uint8_t i = 0; i < d.logCount() && i < 5; i++) showEvent(d.logEntry(i));
         }
         logIndentDown();
     }

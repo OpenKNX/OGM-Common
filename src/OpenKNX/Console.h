@@ -90,6 +90,7 @@ namespace OpenKNX
         void showMemoryLine(uint8_t* line, uint32_t length, uint8_t* memoryStart);
 
         void showHelp();
+        void showMemHelp();
 
 #ifdef KNX_HAS_TP
         bool bcuDebug()

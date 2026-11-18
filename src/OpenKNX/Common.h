@@ -4,6 +4,7 @@
 #ifdef OPENKNX_RUNTIME_STAT
     #include "OpenKNX/Stat/RuntimeStat.h"
 #endif
+#include "OpenKNX/Stat/MemStat.h"
 #include "OpenKNX/Led/FunctionManager.h"
 #include "OpenKNX/Led/Functions.h"
 #include "OpenKNX/defines.h"
@@ -107,6 +108,30 @@ namespace OpenKNX
         Stat::RuntimeStat _runtimeSunCalculation;
     #endif
 #endif
+#ifdef OPENKNX_MEM_STAT
+        Stat::MemStat _memLoop;
+        Stat::MemStat _memConsole;
+        Stat::MemStat _memKnxStack;
+        Stat::MemStat _memModuleLoop;
+        Stat::MemStat _memGPIO;
+        Stat::MemStat _memTimeManager;
+    #ifdef ParamBASE_Latitude
+        Stat::MemStat _memSunCalculation;
+    #endif
+        const char* memLabel(uint8_t id, char* buf, size_t size);
+        struct MemExtra
+        {
+            const char* label;
+            Stat::MemStat* m;
+        };
+        MemExtra _memExtra[4] = {};
+        uint8_t _memExtraN = 0;
+#endif
+#if defined(OPENKNX_MEM_STAT) || defined(OPENKNX_LOOPTIME_WARNING)
+        uint32_t _slowUs = 0; // longest measuring point of the current loop
+        uint8_t _slowId = 0xFF;
+        void slowNote(uint8_t id, uint32_t us);
+#endif
 
 #ifdef BASE_StartupDelayBase
         uint32_t _startupDelay = 0;
@@ -170,6 +195,11 @@ namespace OpenKNX
 
 #ifdef OPENKNX_RUNTIME_STAT
         void showRuntimeStat(const bool stat = true, const bool hist = false);
+#endif
+#ifdef OPENKNX_MEM_STAT
+        void showMemStat(const std::string& what = std::string());
+        /** @brief Adds a measuring point of a module to "mem stat" (up to 4), e.g. work on the other core. */
+        void addMemStat(const char* label, Stat::MemStat* m);
 #endif
     };
 } // namespace OpenKNX

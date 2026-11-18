@@ -110,6 +110,46 @@ ParamBASE_HeartbeatDelayTimeMS
 | `OPENKNX_RUNTIME_STAT_BUCKETS` | default | µs | Histogram bucket limits (comma-separated) |
 | `OPENKNX_RUNTIME_STAT_MODULE_WARNING` | - | µs | Threshold to show the module loop runtime warning |
 
+#### Memory Statistics
+
+| Define | Default | Unit | Function |
+|--------|---------|------|----------|
+| `OPENKNX_MEM_STAT` | - | - | Enable heap statistics, ESP32 and RP2040/RP2350 (console `mem stat`) |
+| `OPENKNX_MEM_STAT_EVERY` | 8 | - | Every n-th call of a measuring point is measured (power of two up to 128) |
+| `OPENKNX_MEM_STAT_MODULE_WARNING` | - | bytes | Threshold to show a warning when one module loop kept more |
+| `OPENKNX_MEM_STAT_SLOW_LOOP_MS` | 500 | ms | A loop section (console, KNX stack, GPIO, time, sun, the rest, each module) that runs this long is logged as an event |
+| `OPENKNX_LWIP_STATS` | - | - | lwIP counters for `mem stat lwip`. RP2040/RP2350: the product's `lwipopts.h` turns on pools, lwIP heap and TCP. ESP32: needs `CONFIG_LWIP_STATS=y` in `custom_sdkconfig`, the build stops without it; there only TCP, ESP-IDF takes pools and lwIP heap from the normal heap |
+
+The same measuring points as the runtime statistics (loop, console, KNX stack, GPIO, time, sun, all modules, each
+module on core 0 and core 1), and the same macros for any other code: `MEM_STAT_BEGIN(X)` / `MEM_STAT_END(X)`,
+`MEM_STAT_END_WARN(X, bytes, label)`, `MEM_STAT_PHASE_BEGIN(X)` / `MEM_STAT_PHASE_END(X)` around a start phase, with
+`X` a `Stat::MemStat`. Per point: heap taken at start, most one call kept and when, most one call gave back, average,
+lowest free after a call and when.
+
+Device-wide, without heap: the lowest free heap since start with time, point and core; the last 16 minutes at 1 minute
+resolution; a history since start in 64 spans (min and max free, slowest section, lwIP errors, TCP drops, web refusals
+per span; full spans are merged in pairs, so it always reaches back to the start, at a coarser span the longer it runs);
+an event log of 32 entries in RAM that survives a restart but not a power loss (restart with reason and the point that
+ran last, failed `operator new` with the point, new lowest heap, lwIP pool errors, refused web connections, slow
+sections; repeats within 10 s stay one entry). Refused web connections count each refusal, a client that retries its SYN
+counts once per try. A failed `operator new` is logged and then goes on as without the
+handler: RP2040 ends in a restart, ESP32 throws `bad_alloc`. Measured on an RP2040 with 9 modules: about 2.1 KB of RAM, plus
+334 B for `OPENKNX_LWIP_STATS`. With the define off nothing of it is built; `OPENKNX_LOOPTIME_WARNING` alone adds
+the slowest section to its warning (8 B, one `micros()` per section).
+
+| Console | Shows |
+|---------|-------|
+| `mem stat` | Free now, lowest since start, lowest in the last 1 min / 10 min / 1 h / 24 h, the table per point, lwIP summary, last 5 events |
+| `mem stat hist` | The history since start |
+| `mem stat log` | All events, also those before the last restart |
+| `mem stat lwip` | Every lwIP pool (used, max, available, errors), lwIP heap and TCP counters |
+| `mem stat reset` | Clears the values per point; lowest since start, history and events stay |
+
+The heap is global: what the other core or another task takes meanwhile counts for the point that runs. The lowest
+value and the history are kept by the core that runs `Common::loop()` (RP2040 core 0, ESP32 core 1); it sees the other
+core's allocations in the shared heap. On RP2040 `.uninitialized_data` lies outside `.bss`, so the 392 B of the event
+log count as free heap there. Each measured call reads the heap twice (`mallinfo()` on RP2040, under the malloc lock).
+
 #### File System & Time
 
 | Define | Default | Function |
