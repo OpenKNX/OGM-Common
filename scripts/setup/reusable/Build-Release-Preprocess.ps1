@@ -65,12 +65,19 @@ if($settings.compileWith -eq "openknxproducer")
   # and the ETS data below stay from the last run; what gets packed is reported instead of taken silently.
   $skipKnxprod = ($env:OPENKNX_SKIP_KNXPROD -eq "1")
 
-  # Hardware profile (OGM-HardwareConfig HW-Profiler): an OAM with HardwareProfile.xml (project folder, else src/) gets its
+  # Hardware profile (OGM-HardwareConfig HW-Profiler): an OAM with HardwareManifest.xml (project folder, else src/) gets its
   # generated ETS parts and headers before the producer reads them; a lib without the generator stops here instead of failing
   # later in the producer. One manifest serves the Dev and the Release product XML.
-  $hwManifests = @(@("HardwareProfile.xml", "src/HardwareProfile.xml") | Where-Object { Test-Path -Path $_ -PathType Leaf })
+  # old name (before the rename to HardwareManifest): stop with the rename instead of building without the hardware files
+  foreach ($hwOld in @("HardwareProfile.xml", "src/HardwareProfile.xml")) {
+    if (Test-Path -Path $hwOld -PathType Leaf) {
+      Write-Host "$hwOld`: the hardware manifest is now called HardwareManifest.xml - rename it and its .slots file (git mv), root element <HardwareManifest>" -ForegroundColor Red
+      exit 1
+    }
+  }
+  $hwManifests = @(@("HardwareManifest.xml", "src/HardwareManifest.xml") | Where-Object { Test-Path -Path $_ -PathType Leaf })
   if ($hwManifests.Count -gt 1) {
-    Write-Host "Two hardware manifests: HardwareProfile.xml and src/HardwareProfile.xml - keep one (its .slots file belongs next to it)" -ForegroundColor Red
+    Write-Host "Two hardware manifests: HardwareManifest.xml and src/HardwareManifest.xml - keep one (its .slots file belongs next to it)" -ForegroundColor Red
     exit 1
   }
   $hwGenerator = "lib/OGM-HardwareConfig/generator/Build-HardwareProfile.ps1"
@@ -91,7 +98,7 @@ if($settings.compileWith -eq "openknxproducer")
       exit 1
     }
     if ($hwArgs.ContainsKey("Manifest")) {
-      Write-Host "OpenKNXHwProfilerArgs must not set Manifest: the build takes HardwareProfile.xml (project folder, else src/)" -ForegroundColor Red
+      Write-Host "OpenKNXHwProfilerArgs must not set Manifest: the build takes HardwareManifest.xml (project folder, else src/)" -ForegroundColor Red
       exit 1
     }
     Write-Host "Generating hardware files ($hwManifest)..." -ForegroundColor Cyan

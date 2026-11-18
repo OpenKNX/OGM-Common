@@ -238,7 +238,7 @@ Eine Abweichung bedeutet: das XML in `release/data` und der Header stammen aus v
 
 Dieses Skript erzeugt alle notwendigen Verzeichnisse und kopiert alle notwendigen Dateien für das Setup.
 
-Hat das OAM ein Hardware-Profil (`HardwareProfile.xml` im Projektordner, sonst `src/HardwareProfile.xml`) und baut es mit dem OpenKNXproducer (`compileWith`), ruft das Skript vor dem Producer `lib/OGM-HardwareConfig/generator/Build-HardwareProfile.ps1` auf. Ein Manifest gilt für das Dev- und das Release-Produkt. Abbruch des Builds, wenn:
+Hat das OAM ein Hardware-Profil (`HardwareManifest.xml` im Projektordner, sonst `src/HardwareManifest.xml`) und baut es mit dem OpenKNXproducer (`compileWith`), ruft das Skript vor dem Producer `lib/OGM-HardwareConfig/generator/Build-HardwareProfile.ps1` auf. Ein Manifest gilt für das Dev- und das Release-Produkt. Abbruch des Builds, wenn:
 
 - beide Manifeste vorhanden sind (nur eines behalten, die `.slots`-Datei gehört daneben),
 - das Manifest vorhanden ist, `lib/OGM-HardwareConfig` aber keinen Generator hat (Stand ohne `generator/`),
