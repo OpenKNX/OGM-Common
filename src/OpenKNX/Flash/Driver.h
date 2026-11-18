@@ -18,7 +18,11 @@ namespace OpenKNX
             uint16_t _sectorSize = 0;
             uint16_t _pageSize = 0;
 
-            uint8_t *_buffer = nullptr; // one sector, allocated in init() for the whole run
+            uint8_t *_buffer = nullptr; // one sector for the whole run; the facade drivers (openknx, knx) share one
+            bool _shareBuffer = false;  // opt-in: a driver of a module (e.g. one written from a USB IRQ) keeps its own
+            static uint8_t *_sharedBuffer;
+            static uint16_t _sharedSize;
+            static Driver *_sharedOwner; // the driver whose sector the shared buffer holds
             uint16_t _bufferSector = 0;
             bool _loaded = false;       // _buffer holds _bufferSector
 #ifdef ARDUINO_ARCH_ESP32
@@ -43,6 +47,8 @@ namespace OpenKNX
 #endif
             std::string logPrefix();
 
+            /** @brief Before init(): this driver uses the sector buffer shared with the other opted-in drivers. */
+            void shareSectorBuffer() { _shareBuffer = true; }
             void erase();
             void eraseSector(uint16_t sector = 0);
             uint8_t *flashAddress();

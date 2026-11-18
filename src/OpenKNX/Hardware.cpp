@@ -81,6 +81,8 @@ namespace OpenKNX
         logDebug("Hardware<Flash>", "Initialize flash");
         logIndentUp();
 #ifdef ARDUINO_ARCH_ESP32
+        openknx.openknxFlash.shareSectorBuffer();
+        openknx.knxFlash.shareSectorBuffer();
         openknx.openknxFlash.init("openknx");
         openknx.knxFlash.init("knx");
     #ifdef OPENKNX_FLASH_OFFSET
@@ -90,6 +92,8 @@ namespace OpenKNX
         checkFlashPartition("knx", openknx.knxFlash, KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
     #endif
 #else
+        openknx.openknxFlash.shareSectorBuffer();
+        openknx.knxFlash.shareSectorBuffer();
         openknx.openknxFlash.init("openknx", OPENKNX_FLASH_OFFSET, OPENKNX_FLASH_SIZE);
         openknx.knxFlash.init("knx", KNX_FLASH_OFFSET, KNX_FLASH_SIZE);
 #endif

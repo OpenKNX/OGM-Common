@@ -22,6 +22,10 @@ namespace OpenKNX
     namespace Flash
     {
 
+        uint8_t *Driver::_sharedBuffer = nullptr;
+        uint16_t Driver::_sharedSize = 0;
+        Driver *Driver::_sharedOwner = nullptr;
+
 #ifdef ARDUINO_ARCH_ESP32
         void Driver::init(std::string id)
 #else
@@ -83,9 +87,15 @@ namespace OpenKNX
 
             validateParameters();
 
-            // allocated while the heap is still free: a save, the one before a restart too, must not depend on it later
+            // allocated while the heap is still free: a save, the one before a restart too, must not depend on it later.
+            // The opted-in drivers share one buffer: a save writes its sectors in one go, a driver taking it over commits the other first.
+            if (_shareBuffer && _sharedBuffer == nullptr)
+            {
+                _sharedBuffer = new (std::nothrow) uint8_t[_sectorSize];
+                _sharedSize = _sharedBuffer ? _sectorSize : 0;
+            }
             if (_buffer == nullptr)
-                _buffer = new (std::nothrow) uint8_t[_sectorSize];
+                _buffer = (_shareBuffer && _sharedSize >= _sectorSize) ? _sharedBuffer : new (std::nothrow) uint8_t[_sectorSize];
             if (_buffer == nullptr)
                 logErrorP("no memory for the sector buffer (%u B)", _sectorSize);
         }
@@ -198,6 +208,18 @@ namespace OpenKNX
             // an other sector is loaded - commit before load
             if (_loaded && sector != _bufferSector)
                 commit();
+
+            // the shared buffer holds the other driver's sector: that one is written first and no longer counts as loaded
+            if (_buffer != nullptr && _buffer == _sharedBuffer && _sharedOwner != this)
+            {
+                if (_sharedOwner != nullptr)
+                {
+                    _sharedOwner->commit();
+                    _sharedOwner->_loaded = false;
+                }
+                _sharedOwner = this;
+                _loaded = false;
+            }
 
             // only when init() found no memory: a throwing new here would abort the device
             if (_buffer == nullptr)
