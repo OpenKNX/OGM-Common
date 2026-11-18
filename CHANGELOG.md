@@ -3,6 +3,7 @@
 ## ec/v2.0.0-beta.4: not released
 
 * New: `erase data` erases the KNX parameters, the OpenKNX save data and the file system, then restarts; unlike `erase all` it keeps the EEPROM sector and the start of the firmware (RP2040, RP2350). `Console::erase()` is public
+* New (ESP32-S3): `bootloader` restarts into the ROM download mode. `Console::resetToBootloader()` is public, `OPENKNX_CONSOLE_BOOTLOADER` marks the builds that have `bootloader`
 * Fix (KNX/BCU widget): a TP-UART reset sets its counters to 0; the widget counted that as a 32-bit wrap and showed 4294967296 more frames and bytes. A drop counts as a wrap only when the counter could have risen past the wrap since the last sample (at most 3500 per second), else the values count from the reset like the console
 * Change (System-Info widget): page 1 is a status card with a chip symbol, "Running" or "Restarted" after a counted watchdog reset, and the up time; the Device, Firmware, Runtime and Diagnostics pages follow with a fixed label width; a long firmware ID wraps. The widget draws with `OpenKNX::Ui` of OFM-DeviceDisplay and no longer flips its own pages
 * Change (KNX/BCU widget): page 1 is a bus card with three devices on the line: "Bus OK" with the load, "Bus lost", "No bus", "Starting" or "Busmon"; while frames arrive the light steps to the next device every 250 ms. Traffic, Bytes, Status, Health and NCN errors follow with check or warning icons; no own page timer

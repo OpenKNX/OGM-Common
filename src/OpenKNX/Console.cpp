@@ -17,6 +17,11 @@ extern uint32_t _EEPROM_start; // linker: last flash sector, core EEPROM emulati
 #ifdef ARDUINO_ARCH_ESP32
     #include "esp_heap_caps.h"
 #endif
+#if defined(ARDUINO_ARCH_ESP32) && defined(OPENKNX_CONSOLE_BOOTLOADER)
+    #include <esp_system.h>
+    #include <soc/rtc_cntl_reg.h>
+    #include <soc/soc.h>
+#endif
 
 #if OPENKNX_LITTLE_FS
     #include "LittleFS.h"
@@ -324,7 +329,7 @@ namespace OpenKNX
             }
         }
 #endif
-#ifdef ARDUINO_ARCH_RP2040
+#ifdef OPENKNX_CONSOLE_BOOTLOADER
         else if (!diagnoseKo && (cmd == "bootloader"))
         {
             resetToBootloader();
@@ -1074,7 +1079,7 @@ namespace OpenKNX
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase all", "Erase all");
 #endif
-#ifdef ARDUINO_ARCH_RP2040
+#ifdef OPENKNX_CONSOLE_BOOTLOADER
         printHelpLine("bootloader", "Reset into Bootloader Mode");
 #endif
 #ifndef ARDUINO_ARCH_SAMD
@@ -1409,7 +1414,14 @@ namespace OpenKNX
     {
         reset_usb_boot(0, 0);
     }
-#endif // ARDUINO_ARCH_RP2040
+#elif defined(OPENKNX_CONSOLE_BOOTLOADER)
+    void Console::resetToBootloader()
+    {
+        // ESP32-S3: the ROM starts in download mode after this restart (same register write as the core's USB path)
+        REG_WRITE(RTC_CNTL_OPTION1_REG, RTC_CNTL_FORCE_DOWNLOAD_BOOT);
+        esp_restart();
+    }
+#endif
 
 #ifndef ARDUINO_ARCH_SAMD
     void Console::processPinCommand(const std::string& cmd)

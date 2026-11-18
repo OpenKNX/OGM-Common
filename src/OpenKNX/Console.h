@@ -11,6 +11,14 @@ extern "C"
     #include "pico/bootrom.h"
 }
 #endif
+#ifdef ARDUINO_ARCH_ESP32
+    #include <sdkconfig.h>
+#endif
+
+// "bootloader" and Console::resetToBootloader() exist: RP2040/RP2350 USB boot, ESP32-S3 ROM download mode.
+#if defined(ARDUINO_ARCH_RP2040) || defined(CONFIG_IDF_TARGET_ESP32S3)
+    #define OPENKNX_CONSOLE_BOOTLOADER
+#endif
 
 #define CONSOLE_HEADLINE_COLOR 33
 #ifdef ARDUINO_ARCH_SAMD
@@ -50,9 +58,6 @@ namespace OpenKNX
         void sleep();
         uint32_t sleepTime();
         void showWatchdogResets(bool diagnoseKo = false);
-#ifdef ARDUINO_ARCH_RP2040
-        void resetToBootloader();
-#endif
 #if OPENKNX_LITTLE_FS
         void showFilesystem();
         void showFilesystemDirectory(std::string path);
@@ -69,6 +74,10 @@ namespace OpenKNX
         void loop();
         /** @brief Erases the areas of mode, then restarts; blocks for the erase, a filesystem format and 1 s, never returns. */
         void erase(EraseMode mode = EraseMode::All);
+#ifdef OPENKNX_CONSOLE_BOOTLOADER
+        /** @brief Restarts into the USB boot (RP2040/RP2350) or ROM download mode (ESP32-S3); never returns. */
+        void resetToBootloader();
+#endif
         void disableConsole(bool disable, const char* reason = nullptr);
         bool submitLine(const char* line);
 #ifdef OPENKNX_FTC_CONSOLE
