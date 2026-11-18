@@ -330,6 +330,10 @@ namespace OpenKNX
             resetToBootloader();
         }
 #endif
+        else if (!diagnoseKo && (cmd == "erase data"))
+        {
+            erase(EraseMode::Data);
+        }
         else if (!diagnoseKo && (cmd == "erase knx"))
         {
             erase(EraseMode::KnxFlash);
@@ -1063,6 +1067,9 @@ namespace OpenKNX
         printHelpLine("erase openknx", "Erase openknx module data");
 #if OPENKNX_LITTLE_FS
         printHelpLine("erase files", "Erase filesystem");
+        printHelpLine("erase data", "Erase knx, openknx and filesystem");
+#else
+        printHelpLine("erase data", "Erase knx and openknx");
 #endif
 #ifdef ARDUINO_ARCH_RP2040
         printHelpLine("erase all", "Erase all");
@@ -1357,20 +1364,20 @@ namespace OpenKNX
         if (openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3) != nullptr)
             openknx.leds.getLed(Led::LedType::LED_TYPE_INFO3)->off();
 
-        if (mode == EraseMode::All || mode == EraseMode::KnxFlash)
+        if (mode == EraseMode::All || mode == EraseMode::Data || mode == EraseMode::KnxFlash)
         {
             openknx.logger.logWithPrefix("Erase", "KNX parameters");
             openknx.knxFlash.erase();
         }
 
-        if (mode == EraseMode::All || mode == EraseMode::OpenKnxFlash)
+        if (mode == EraseMode::All || mode == EraseMode::Data || mode == EraseMode::OpenKnxFlash)
         {
             openknx.logger.logWithPrefix("Erase", "OpenKNX save data");
             openknx.openknxFlash.erase();
         }
 
 #if OPENKNX_LITTLE_FS
-        if (mode == EraseMode::All || mode == EraseMode::Filesystem)
+        if (mode == EraseMode::All || mode == EraseMode::Data || mode == EraseMode::Filesystem)
         {
             openknx.logger.logWithPrefix("Erase", "Format Filesystem");
             if (LittleFS.format())

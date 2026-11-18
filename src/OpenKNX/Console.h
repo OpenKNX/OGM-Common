@@ -27,7 +27,8 @@ namespace OpenKNX
         All,
         Filesystem,
         KnxFlash,
-        OpenKnxFlash
+        OpenKnxFlash,
+        Data // KNX parameters, OpenKNX save data and filesystem; unlike All it keeps the RP2040 EEPROM and firmware
     };
 
     class Console
@@ -58,7 +59,6 @@ namespace OpenKNX
         void showFilesystemUsage();
         void showFilesystemHelp();
 #endif
-        void erase(EraseMode mode = EraseMode::All);
 #ifndef ARDUINO_ARCH_SAMD
         void processPinCommand(const std::string& cmd);
 #endif
@@ -67,6 +67,8 @@ namespace OpenKNX
       public:
         char prompt[CONSOLE_INPUT_SIZE + 1] = {};
         void loop();
+        /** @brief Erases the areas of mode, then restarts; blocks for the erase, a filesystem format and 1 s, never returns. */
+        void erase(EraseMode mode = EraseMode::All);
         void disableConsole(bool disable, const char* reason = nullptr);
         bool submitLine(const char* line);
 #ifdef OPENKNX_FTC_CONSOLE
