@@ -238,6 +238,14 @@ Eine Abweichung bedeutet: das XML in `release/data` und der Header stammen aus v
 
 Dieses Skript erzeugt alle notwendigen Verzeichnisse und kopiert alle notwendigen Dateien für das Setup.
 
+Hat das OAM ein Hardware-Profil (`HardwareProfile.xml` im Projektordner, sonst `src/HardwareProfile.xml`) und baut es mit dem OpenKNXproducer (`compileWith`), ruft das Skript vor dem Producer `lib/OGM-HardwareConfig/generator/Build-HardwareProfile.ps1` auf. Ein Manifest gilt für das Dev- und das Release-Produkt. Abbruch des Builds, wenn:
+
+- beide Manifeste vorhanden sind (nur eines behalten, die `.slots`-Datei gehört daneben),
+- das Manifest vorhanden ist, `lib/OGM-HardwareConfig` aber keinen Generator hat (Stand ohne `generator/`),
+- der Generator mit einem Fehler endet (Exit-Code ungleich 0; eine unerwartete Ausnahme im Generator beendet das Build-Skript direkt).
+
+Mit `-SkipKnxprod` (`OPENKNX_SKIP_KNXPROD=1`) läuft er nicht, seine Ausgaben bleiben vom letzten Lauf. Weitere Parameter gibt das `Build-Release.ps1` des OAM als Hashtable mit, sie werden per Splatting weitergereicht, z. B. `$global:OpenKNXHwProfilerArgs = @{ Detailed = $true }`; `Manifest` ist darin nicht erlaubt. Die Variable gilt für die ganze PowerShell-Sitzung, das OAM entfernt sie deshalb im `finally` wieder (`Remove-Variable OpenKNXHwProfilerArgs -Scope Global -ErrorAction SilentlyContinue`), wie `OPENKNX_SKIP_KNXPROD`. `Build-knxprod-Generic.ps1` (knxprod ohne Release) ruft den Generator nicht auf und nutzt seine Ausgaben vom letzten Lauf.
+
 #### **Build-Release-Postprocess.ps1
 
 Dieses Skript macht alle Abschlussarbeiten nach einem Release-Build, räumt auf, erzeugt das Release-Zip mit passendem Namen und Versionsnummer und kopiert alles ins release-Verzeichnis.

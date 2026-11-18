@@ -497,6 +497,16 @@ Licensed under GNU GPL v3.0
 
 ---
 
+## Hardware Profile
+
+`Build-Release-Preprocess.ps1` runs `lib/OGM-HardwareConfig/generator/Build-HardwareProfile.ps1` before the OpenKNXproducer
+(`compileWith` openknxproducer) when the project has `HardwareProfile.xml` (project folder, else `src/HardwareProfile.xml`); one
+manifest serves the Dev and the Release product. The build stops on two manifests, on a manifest without the generator in
+`lib/OGM-HardwareConfig`, and on a generator exit code other than 0 (an unexpected exception in the generator ends the build
+script itself); `-SkipKnxprod` (`OPENKNX_SKIP_KNXPROD=1`) skips it. Extra parameters come from the OAM's `Build-Release.ps1` as
+a hashtable that is splatted: `$global:OpenKNXHwProfilerArgs = @{ Detailed = $true }` (no `Manifest`); the variable lives for
+the whole session, so the OAM removes it again in a `finally`. `Build-knxprod-Generic.ps1` does not run the generator.
+
 ## Release Hooks
 
 `Build-Release-Preprocess.ps1` / `Build-Release-Postprocess.ps1` run a release step for every module
