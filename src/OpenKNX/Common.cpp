@@ -1311,6 +1311,10 @@ namespace OpenKNX
     {
         static const char* const fixed[] = {"_Loop", "_Console", "_KnxStack", "_GPIO", "_Time", "_Sun", "_All_Modules", "_Other", "_Setup"};
         if (id < sizeof(fixed) / sizeof(fixed[0])) return fixed[id];
+        static_assert(Stat::MemDiag::ID_EXTRA + sizeof(_memExtra) / sizeof(_memExtra[0]) <= Stat::MemDiag::ID_NET, "MemStat extras run into the network steps");
+        static const char* const net[] = {"Net:EthRx", "Net:Timers", "Net:EthHealth", "Net:Webclient", "Net:LinkOTA", "Net:Web",
+                                          "Net:Mqtt", "Net:DNS", "Notify:lwIP", "Web:lwIP", "Mqtt:lwIP"};
+        if (id >= Stat::MemDiag::ID_NET && id < Stat::MemDiag::ID_NET + sizeof(net) / sizeof(net[0])) return net[id - Stat::MemDiag::ID_NET];
         if (id >= Stat::MemDiag::ID_EXTRA && id < Stat::MemDiag::ID_EXTRA + _memExtraN) return _memExtra[id - Stat::MemDiag::ID_EXTRA].label;
         const bool core1 = id >= Stat::MemDiag::ID_MODULE1 && id != Stat::MemDiag::ID_NONE && id != Stat::MemDiag::ID_LWIP_HEAP;
         const uint8_t m = id - (core1 ? Stat::MemDiag::ID_MODULE1 : Stat::MemDiag::ID_MODULE0);

@@ -103,6 +103,9 @@ namespace OpenKNX
     #define MEM_STAT_PHASE_END(X) (X).phaseEnd();
     #define MEM_STAT_BEGIN(X) (X).begin();
     #define MEM_STAT_END(X) (X).end();
+    #define MEM_CRUMB_CAT2(A, B) A##B
+    #define MEM_CRUMB_CAT(A, B) MEM_CRUMB_CAT2(A, B)
+    #define MEM_CRUMB(STEP) OpenKNX::Stat::MemCrumb MEM_CRUMB_CAT(_memCrumb, __LINE__)(OpenKNX::Stat::MemDiag::ID_NET + (STEP));
     #define MEM_STAT_END_WARN(X, WARN_BYTES, WARN_LABEL)                                                                           \
         {                                                                                                                          \
             const int32_t kept_b = (X).end();                                                                                      \
@@ -110,6 +113,7 @@ namespace OpenKNX
                 openknx.logger.logWithPrefixAndValues(WARN_LABEL, "Warning: MemStat kept %d > %d bytes", (int)kept_b, (int)(WARN_BYTES)); \
         }
 #else
+    #define MEM_CRUMB(STEP)
     #define MEM_STAT_PHASE_BEGIN(X)
     #define MEM_STAT_PHASE_END(X)
     #define MEM_STAT_BEGIN(X)

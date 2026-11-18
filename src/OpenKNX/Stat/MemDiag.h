@@ -50,6 +50,7 @@ namespace OpenKNX
             static constexpr uint8_t ID_LOOP = 0, ID_CONSOLE = 1, ID_KNX = 2, ID_GPIO = 3, ID_TIME = 4, ID_SUN = 5, ID_MODULES = 6, ID_OTHER = 7, ID_SETUP = 8;
             static constexpr uint8_t ID_MODULE0 = 16, ID_MODULE1 = 48, ID_EXTRA = 80, ID_NONE = 0xFF; // ID_EXTRA: points a module adds
             static constexpr uint8_t ID_LWIP_HEAP = 0xFE; // EV_LWIP id of lwIP's own heap; pools are 0..n
+            static constexpr uint8_t ID_NET = 96;         // 96..111: steps inside the network stack (MEM_CRUMB), labels in Common::memLabel
 
             enum Event : uint8_t
             {
@@ -176,6 +177,14 @@ namespace OpenKNX
         };
 
         extern MemDiag memDiag;
+
+        /** @brief Marks a step as the point that runs (the watchdog record names it) and restores the previous one at scope end. */
+        struct MemCrumb
+        {
+            uint8_t prev;
+            explicit MemCrumb(uint8_t id) : prev(memDiag.running(id)) {}
+            ~MemCrumb() { memDiag.running(prev); }
+        };
     } // namespace Stat
 } // namespace OpenKNX
 #endif
