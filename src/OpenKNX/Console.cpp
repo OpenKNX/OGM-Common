@@ -1,4 +1,5 @@
 #include "OpenKNX/Console.h"
+#include "OpenKNX/Fdsk.h"
 #include "OpenKNX/Facade.h"
 #include "OpenKNX/Flash/Driver.h"
 #include "buildtime.h"
@@ -454,6 +455,9 @@ namespace OpenKNX
         openknx.logger.logWithPrefix("Name", HARDWARE_NAME);
 #endif
         openknx.logger.logWithPrefix("Serial number", openknx.info.humanSerialNumber().c_str());
+#ifdef USE_DATASECURE
+        openknx.logger.logWithPrefix("FDSK", OpenKNX::Fdsk::humanFdsk().c_str());
+#endif
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
         openknx.logger.log("Firmware");
