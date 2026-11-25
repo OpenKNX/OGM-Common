@@ -27,7 +27,7 @@ namespace OpenKNX
             }
         } // namespace
 
-        std::string humanFdsk()
+        std::string getCertificate()
         {
             static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 

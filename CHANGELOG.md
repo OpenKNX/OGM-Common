@@ -2,7 +2,7 @@
 
 ## upcoming releases
 
-* Feature (Console): With `USE_DATASECURE` the `info` command shows the KNX Secure certificate as text (FDSK string as entered in the ETS: serial number + FDSK + CRC-4, Base32, 6x6 characters). New helper `OpenKNX::Fdsk::humanFdsk()` (`OpenKNX/Fdsk.h`), needs `SecurityInterfaceObject::fdsk()` from the KNX stack
+* Feature (Console): With `USE_DATASECURE` the `info` command shows the KNX Secure certificate as text (FDSK string as entered in the ETS: serial number + FDSK + CRC-4, Base32, 6x6 characters). New helper `OpenKNX::Fdsk::getCertificate()` (`OpenKNX/Fdsk.h`), needs `SecurityInterfaceObject::fdsk()` from the KNX stack
 * Update: Use the new TPUart 2.0 API (needs knx 2.5.0 / TPUart 2.0.0): `registerFrameCallback()` instead of `registerReceivedFrame()`, `bcuStateName()` instead of `getBcuStateInfo()`, and the RP2040 interface without the ignored `irq`/`dma` parameters
 * Feature (Console): Detailed BCU statistics in the `bcu` command (chip, baud rate, bus load, tick timing, RX/TX counters, queue peaks, errors). The search buffer values of the old output are gone, as TPUart 2.0 has no search buffer
 * Update: Increase minimum OpenKNXproducer version to 4.3.12 (from 4.3.5 in Common.share.xml)

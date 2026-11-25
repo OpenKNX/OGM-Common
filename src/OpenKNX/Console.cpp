@@ -456,7 +456,7 @@ namespace OpenKNX
 #endif
         openknx.logger.logWithPrefix("Serial number", openknx.info.humanSerialNumber().c_str());
 #ifdef USE_DATASECURE
-        openknx.logger.logWithPrefix("FDSK", OpenKNX::Fdsk::humanFdsk().c_str());
+        openknx.logger.logWithPrefix("Gerätezertifikat", OpenKNX::Fdsk::getCertificate().c_str());
 #endif
 
         openknx.logger.color(CONSOLE_HEADLINE_COLOR);
